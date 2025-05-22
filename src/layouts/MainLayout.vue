@@ -1,106 +1,114 @@
 <template>
-  <q-layout view="lHh Lpr lFf">
-    <q-header elevated>
-      <q-toolbar>
-        <q-btn
-          flat
-          dense
-          round
-          icon="menu"
-          aria-label="Menu"
-          @click="toggleLeftDrawer"
-        />
-
-        <q-toolbar-title>
-          Quasar App
-        </q-toolbar-title>
-
-        <div>Quasar v{{ $q.version }}</div>
-      </q-toolbar>
-    </q-header>
-
-    <q-drawer
-      v-model="leftDrawerOpen"
-      show-if-above
-      bordered
+  <div>
+    <q-layout
+      view="lHh Lpr lff"
+      container
+      style="height: 100vh"
+      class="shadow-2 rounded-borders"
     >
-      <q-list>
-        <q-item-label
-          header
+      <q-header elevated class="bg-pink-2">
+        <q-toolbar style="height: 60px; align-items: center">
+          <q-toolbar-title
+            style="
+              color: #132727;
+              padding-left: 30px;
+              font-weight: bold;
+              font-size: 20px;
+              font-style: italic;
+              font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS',
+                sans-serif;
+            "
+          >
+            Peluqueria Marlene ✨💈
+          </q-toolbar-title>
+        </q-toolbar>
+      </q-header>
+
+      <q-drawer v-model="drawer" show-if-above :width="240" :breakpoint="400">
+        <q-scroll-area
+          style="
+            height: calc(100% - 150px);
+            margin-top: 150px;
+            border-right: 1px solid #ddd;
+          "
         >
-          Essential Links
-        </q-item-label>
+          <q-list padding class="q-pt-md">
+            <q-item active clickable v-ripple class="item">
+              <q-item-section avatar>
+                <q-icon name="inbox" />
+              </q-item-section>
 
-        <EssentialLink
-          v-for="link in linksList"
-          :key="link.title"
-          v-bind="link"
+              <q-item-section> Inicio </q-item-section>
+            </q-item>
+
+            <q-item clickable v-ripple class="item">
+              <q-item-section avatar>
+                <q-icon name="star" />
+              </q-item-section>
+
+              <q-item-section> Servicios </q-item-section>
+            </q-item>
+
+            <q-item clickable v-ripple class="item">
+              <q-item-section avatar>
+                <q-icon name="send" />
+              </q-item-section>
+
+              <q-item-section> Planes </q-item-section>
+            </q-item>
+
+            <q-item clickable v-ripple class="item">
+              <q-item-section avatar>
+                <q-icon name="send" />
+              </q-item-section>
+
+              <q-item-section> Promosiones y bonos </q-item-section>
+            </q-item>
+
+            <q-item clickable v-ripple class="item">
+              <q-item-section avatar>
+                <q-icon name="drafts" />
+              </q-item-section>
+
+              <q-item-section> Contactanos </q-item-section>
+            </q-item>
+          </q-list>
+        </q-scroll-area>
+
+        <q-img
+          class="absolute-top"
+          :src="'src/assets/people/rainbow_hair.jpg'"
+          style="height: 150px"
         />
-      </q-list>
-    </q-drawer>
+      </q-drawer>
 
-    <q-page-container>
-      <router-view />
-    </q-page-container>
-  </q-layout>
+      <q-page-container>
+        <router-view />
+      </q-page-container>
+    </q-layout>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import EssentialLink, { EssentialLinkProps } from 'components/EssentialLink.vue';
 
 defineOptions({
-  name: 'MainLayout'
+  name: 'MainLayout',
 });
 
-const linksList: EssentialLinkProps[] = [
-  {
-    title: 'Docs',
-    caption: 'quasar.dev',
-    icon: 'school',
-    link: 'https://quasar.dev'
-  },
-  {
-    title: 'Github',
-    caption: 'github.com/quasarframework',
-    icon: 'code',
-    link: 'https://github.com/quasarframework'
-  },
-  {
-    title: 'Discord Chat Channel',
-    caption: 'chat.quasar.dev',
-    icon: 'chat',
-    link: 'https://chat.quasar.dev'
-  },
-  {
-    title: 'Forum',
-    caption: 'forum.quasar.dev',
-    icon: 'record_voice_over',
-    link: 'https://forum.quasar.dev'
-  },
-  {
-    title: 'Twitter',
-    caption: '@quasarframework',
-    icon: 'rss_feed',
-    link: 'https://twitter.quasar.dev'
-  },
-  {
-    title: 'Facebook',
-    caption: '@QuasarFramework',
-    icon: 'public',
-    link: 'https://facebook.quasar.dev'
-  },
-  {
-    title: 'Quasar Awesome',
-    caption: 'Community Quasar projects',
-    icon: 'favorite',
-    link: 'https://awesome.quasar.dev'
-  }
-];
-
-const leftDrawerOpen = ref(false);
-
-function toggleLeftDrawer () {
-  leftDrawerOpen.value = !leftDrawerOpen.value;
-}
+const drawer = ref(false);
 </script>
+
+<style scoped lang="scss">
+.item {
+  transition: all 0.3s ease;
+  transform-origin: right;
+}
+.item:hover {
+  background-color: #f8bbd0;
+  transform: translateX(-3px) scaleY(1.05); // Desplaza hacia la derecha y expande verticalmente
+  box-shadow: 4px 4px 8px rgba(209, 122, 156, 0.3);
+  border-top-right-radius: 15px; // Borde redondeado en la esquina superior derecha
+  border-bottom-right-radius: 15px; // Borde redondeado en la esquina inferior derecha
+}
+</style>

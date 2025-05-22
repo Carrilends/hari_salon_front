@@ -1,47 +1,50 @@
 <template>
-  <q-page class="row items-center justify-evenly">
-    <example-component
-      title="Example component"
-      active
-      :todos="todos"
-      :meta="meta"
-    ></example-component>
+  <q-page class="row items-start q-px-xl q-pt-xl">
+    <div class="col-12">
+      <div class="row flex flex-center" style="justify-content: space-between">
+        <div v-for="card in menuCards" :key="card.title" class="q-px-xs">
+          <card :imgPath="card.imgPath" :title="card.title" />
+        </div>
+      </div>
+    </div>
+    <div class="row full-width">
+      <schedule class="col-3"/>
+      <principal-banner class="col-9"/>
+    </div>
   </q-page>
 </template>
 
+<!-- Horarios de atencion -->
+<!-- Banner de contacto -->
+
 <script setup lang="ts">
-import { ref } from 'vue';
-import { Todo, Meta } from 'components/models';
-import ExampleComponent from 'components/ExampleComponent.vue';
+import PrincipalBanner from 'src/components/banners/PrincipalBanner.vue';
+import Schedule from 'src/components/banners/Schedule.vue';
+import Card from 'src/components/cards/Card.vue';
+import i18n from 'src/i18n';
+
+const menuCards = [
+  {
+    imgPath: 'src/assets/people/man_hairdress.jpg',
+    title: i18n['en-US'].indexPage.man_cut, // Servicios para caballero
+  },
+  {
+    imgPath: 'src/assets/people/man_hairdress.jpg',
+    title: i18n['en-US'].indexPage.man_cut, // Servicios para dama
+  },
+  {
+    imgPath: 'src/assets/people/man_hairdress.jpg',
+    title: i18n['en-US'].indexPage.man_cut, // Cuidado de manos, pies y rostro (maquillajes, y depilaciones)
+  },
+  {
+    imgPath: 'src/assets/people/man_hairdress.jpg',
+    title: i18n['en-US'].indexPage.man_cut, // Eventos especiales
+  },
+];
+
+console.log(menuCards);
 
 defineOptions({
-  name: 'IndexPage'
-});
-
-const todos = ref<Todo[]>([
-  {
-    id: 1,
-    content: 'ct1'
-  },
-  {
-    id: 2,
-    content: 'ct2'
-  },
-  {
-    id: 3,
-    content: 'ct3'
-  },
-  {
-    id: 4,
-    content: 'ct4'
-  },
-  {
-    id: 5,
-    content: 'ct5'
-  }
-]);
-
-const meta = ref<Meta>({
-  totalCount: 1200
+  name: 'IndexPage',
 });
 </script>
