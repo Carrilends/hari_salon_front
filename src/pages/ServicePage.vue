@@ -1,9 +1,7 @@
 <template>
   <q-page class="row items-start q-px-lg q-pt-lg" style="">
-    <!-- HEAD ESCRITORIO COMPONENT -->
     <div class="col-12 q-pl-md" style="box-shadow: 0 0 10px #dbcbee">
       <div class="row">
-        <!-- INPUT TEXT -->
         <div class="col-6">
           <q-input v-model="text" debounce="1000" style="width: 80%">
             <template v-slot:prepend>
@@ -11,7 +9,6 @@
             </template>
           </q-input>
         </div>
-        <!-- TOGGLE Y FILTROS -->
         <div class="col-3 flex flex-center">
           <q-toggle
             v-model="genre"
@@ -33,7 +30,6 @@
         </div>
       </div>
     </div>
-    <!-- CARDS ESCRITORIO -->
     <div class="col-12" style="box-shadow: 0 0 10px #dbcbee">
       <q-scroll-area
         class="q-py-lg"
@@ -43,7 +39,7 @@
         <div class="row q-gutter-md" style="justify-content: center">
           <TabsByEachService
             v-for="(service, index) in services"
-            @detail-service="serviceId = service.id"
+            @detail-service="() => serviceIdRef = service.id"
             :key="`${index}_${service.id}`"
             class="col-3"
             :props="{
@@ -58,39 +54,29 @@
         </div>
       </q-scroll-area>
     </div>
-    <!-- FOOTER ESCRITORIO -->
     <div class="col-12 q-pa-lg flex flex-center">
       <q-pagination
-        v-model="current"
+        v-model="page"
         color="blue"
-        :max="10"
-        :max-pages="6"
+        :max="totalPages"
         direction-links
-        boundary-links
       />
     </div>
+    <ServiceFilterDialog />
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import { storeToRefs } from 'pinia';
-import { useQuasar } from 'quasar';
-
-import { useServicesStore } from 'src/stores/service-store';
+import { ref } from 'vue';
+import { useService } from 'src/composables/services/useService';
 import { useServices } from 'src/composables/services/useServices';
 import TabsByEachService from 'src/components/servicePage/TabsByEachService.vue';
-import ServiceDialog from 'src/components/dialogs/serviceDialog.vue';
+import ServiceFilterDialog from 'src/components/dialogs/serviceFilterDialog.vue';
 
-// const { screen } = useQuasar()
-const serviceId = ref('');
-const { services /* isLoading */ } = useServices();
+const { services, page, totalPages } = useServices();
+const { serviceIdRef } = useService();
 
-const serviceStore = useServicesStore();
-const { service } = storeToRefs(serviceStore);
-const q = useQuasar();
 
-const current = ref(1);
 const thumbStyle = {
   right: '4px',
   borderRadius: '5px',
@@ -98,30 +84,6 @@ const thumbStyle = {
   width: '5px',
   opacity: '0.75',
 };
-
-watch(
-  () => serviceId.value,
-  async (val) => {
-    if (!val) return;
-    console.log('serviceId', val);
-    await serviceStore.getServiceById(val);
-    q.dialog({
-      component: ServiceDialog,
-      componentProps: {
-        modelValue: true,
-        service: service.value,
-      },
-      persistent: true,
-    })
-      .onOk((e) => {
-        if (e === 'cancel') serviceId.value = ''
-        else {
-          serviceId.value = ''
-          console.log('OKAY', e);
-        }
-      });
-  }
-);
 
 const text = ref('');
 const genre = ref(false);

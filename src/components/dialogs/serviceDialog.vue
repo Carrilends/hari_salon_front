@@ -7,8 +7,8 @@
   >
     <q-card class="my-card">
       <q-carousel
-        animated
         v-model="slide"
+        animated
         navigation
         infinite
         :autoplay="autoplay"
@@ -125,9 +125,11 @@ import Service from 'src/interfaces/service';
 // <!-- LOADING - PLUGIN -->
 // <!-- NOTIFY - PLUGIN -->
 
-const maxSize = 5;
+const { dialogRef, onDialogOK } = useDialogPluginComponent();
 const heavyList: { number: number; class: string }[] = [];
 
+// TODO: Falta hacer el replace con los rostros ideales de cada servicio
+const maxSize = 5;
 for (let i = 0; i < maxSize; i++) {
   heavyList.push({
     number: i,
@@ -145,9 +147,7 @@ const thumbStyle: Partial<CSSStyleDeclaration> = {
   width: '5px',
 };
 
-const { dialogRef, onDialogOK } = useDialogPluginComponent();
-
-const props = defineProps<{ modelValue: boolean; service: Service }>();
+const props = defineProps<{ service: Service }>();
 
 defineEmits([...useDialogPluginComponent.emits]);
 defineOptions({

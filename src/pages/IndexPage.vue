@@ -21,7 +21,11 @@
 import PrincipalBanner from 'src/components/banners/PrincipalBanner.vue';
 import Schedule from 'src/components/banners/Schedule.vue';
 import Card from 'src/components/cards/Card.vue';
+import { useOptions } from 'src/composables/shared/useOptions';
 import i18n from 'src/i18n';
+
+// const { isLoading } = useOptions()
+useOptions()
 
 const menuCards = [
   {
