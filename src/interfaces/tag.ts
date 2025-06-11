@@ -2,10 +2,7 @@ export interface Tag {
   id: string;
   name: string;
   parent?: string;
-}
-
-export interface ChildTag extends Tag {
-  parent: string;
+  selected: boolean;
 }
 
 export interface GenresI extends Tag {

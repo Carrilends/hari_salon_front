@@ -10,23 +10,25 @@
           </q-input>
         </div>
         <div class="col-3 flex flex-center">
-          <q-toggle
-            v-model="genre"
-            :color="genre ? 'pink' : 'blue'"
-            checked-icon="las la-venus"
-            unchecked-icon="las la-mars"
-            size="80px"
-            keep-color
-          />
-        </div>
-        <div class="col-3 flex flex-center">
-          <q-btn
-            class="color-bar"
-            icon="las la-filter"
-            label="Filtros"
-            rounded
-            flat
-          />
+          <div class="filter-badge-wrapper">
+            <q-btn
+              @click="showFilterDialog = true"
+              class="color-bar"
+              icon="las la-filter"
+              label="Filtros"
+              rounded
+              flat
+            />
+            <q-badge
+              v-if="amountOfFilters > 0"
+              color="red"
+              rounded
+              floating
+              class="filter-badge-count"
+            >
+              {{ amountOfFilters > 9 ? '9+' : amountOfFilters }}
+            </q-badge>
+          </div>
         </div>
       </div>
     </div>
@@ -39,7 +41,7 @@
         <div class="row q-gutter-md" style="justify-content: center">
           <TabsByEachService
             v-for="(service, index) in services"
-            @detail-service="() => serviceIdRef = service.id"
+            @detail-service="() => (serviceIdRef = service.id)"
             :key="`${index}_${service.id}`"
             class="col-3"
             :props="{
@@ -62,7 +64,10 @@
         direction-links
       />
     </div>
-    <ServiceFilterDialog />
+    <ServiceFilterDialog
+      v-model:dialog="showFilterDialog"
+      @update:amount="amountOfFilters = $event"
+    />
   </q-page>
 </template>
 
@@ -76,6 +81,9 @@ import ServiceFilterDialog from 'src/components/dialogs/serviceFilterDialog.vue'
 const { services, page, totalPages } = useServices();
 const { serviceIdRef } = useService();
 
+const showFilterDialog = ref(false);
+const amountOfFilters = ref(0);
+
 
 const thumbStyle = {
   right: '4px',
@@ -86,7 +94,6 @@ const thumbStyle = {
 };
 
 const text = ref('');
-const genre = ref(false);
 
 defineOptions({
   name: 'ServicePage',
@@ -96,5 +103,20 @@ defineOptions({
 <style lang="scss" scoped>
 .color-bar {
   background: linear-gradient(100deg, #f8bbd0 0%, #bdc9d7 90%);
+}
+.filter-badge-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.filter-badge-count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 13px;      // Aumenta el tamaño del texto
+  padding: 4px 8px;      // Aumenta el padding para hacerlo más ancho/alto
+  line-height: 1;
+  z-index: 10;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
 }
 </style>

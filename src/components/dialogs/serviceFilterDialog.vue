@@ -1,79 +1,105 @@
 <template>
   <div class="q-pa-md q-gutter-sm">
     <q-dialog v-model="dialog" position="right" full-height>
-      <q-card style="width: 500px">
-        <q-card-section class="row items-center">
-          <div class="col-12 title q-my-md">Busqueda de servicios</div>
-          <!-- GENEROS -->
-          <div class="col-12 q-py-md" style="min-width: 250px">
-            <q-select
-              v-model="selectedGenres"
-              :options="genderOptions"
-              option-value="id"
-              option-label="name"
-              label="Genero(s)"
-              color="indigo-8"
-              multiple
-              filled
-              clearable
-            >
-              <template v-slot:selected-item="scope">
-                <q-chip @remove="() => removeGenre(scope.opt.id)" removable>
-                  <q-avatar
-                    outline
-                    square
-                    :icon="scope.opt.icon"
-                    color="indigo-9"
-                    text-color="white"
-                  />
-                  {{ scope.opt.name }}
+      <q-card class="column full-height" style="width: 500px">
+        <q-card-section class="col q-pa-none" style="overflow-y: auto">
+          <div class="col-row items-center q-pa-md">
+            <div class="col-12 q-my-md badge-container row items-center">
+              <!-- Botón a la izquierda -->
+              <q-btn
+                icon="arrow_back"
+                round
+                outline
+                color="blue"
+                @click="handleBack"
+                class="q-mr-sm glass"
+              />
+
+              <!-- Título -->
+              <div class="title-text">
+                Busqueda de servicios
+                <div v-if="amountOfFilters > 0" class="badge">
+                  {{ amountOfFilters }}
+                </div>
+              </div>
+              <q-btn
+                icon="cleaning_services"
+                round
+                color="blue"
+                @click="cleanFilters"
+                class="q-ml-sm"
+              />
+            </div>
+            <!-- GENEROS -->
+            <div class="col-12 q-py-md" style="min-width: 250px">
+              <q-select
+                v-model="selectedGenres"
+                :options="genderOptions"
+                option-value="id"
+                option-label="name"
+                label="Genero(s)"
+                color="indigo-8"
+                multiple
+                filled
+                clearable
+              >
+                <template v-slot:selected-item="scope">
+                  <q-chip @remove="() => removeGenre(scope.opt.id)" removable>
+                    <q-avatar
+                      outline
+                      square
+                      :icon="scope.opt.icon"
+                      color="indigo-9"
+                      text-color="white"
+                    />
+                    {{ scope.opt.name }}
+                  </q-chip>
+                </template>
+                <template v-slot:option="scope">
+                  <q-item v-bind="scope.itemProps">
+                    <q-item-section avatar>
+                      <q-icon :name="scope.opt.icon" />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label>{{ scope.opt.name }}</q-item-label>
+                    </q-item-section>
+                  </q-item>
+                </template>
+              </q-select>
+            </div>
+            <!-- SERVICIOS DERIVADOS -->
+            <div class="col-12 q-my-md q-pa-sm" style="background: #f2f2f2">
+              <template v-for="p in principalServices" :key="p.id">
+                <q-chip
+                  @click="
+                    pickServices(p.id, !p.selected);
+                    p.selected = !p.selected;
+                  "
+                  :color="p.selected ? 'teal-14' : 'teal'"
+                  :outline="!p.selected"
+                  :class="p.selected ? 'text-white' : 'text-black'"
+                  clickable
+                  icon="event"
+                >
+                  {{ p.name }}
                 </q-chip>
               </template>
-              <template v-slot:option="scope">
-                <q-item v-bind="scope.itemProps">
-                  <q-item-section avatar>
-                    <q-icon :name="scope.opt.icon" />
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label>{{ scope.opt.name }}</q-item-label>
-                  </q-item-section>
-                </q-item>
+              <template v-for="s in servicesToShow" :key="s.id">
+                <q-chip
+                  @click="
+                    pickServices(s.id, !s.selected);
+                    s.selected = !s.selected;
+                  "
+                  :color="s.selected ? 'teal-14' : 'teal'"
+                  :outline="!s.selected"
+                  :class="s.selected ? 'text-white' : 'text-black'"
+                  clickable
+                  icon="event"
+                >
+                  {{ s.name }}
+                </q-chip>
               </template>
-            </q-select>
-          </div>
-          <!-- SERVICIOS GENERALES -->
-          <div class="col-12" style="min-width: 250px">
-            <q-select
-              v-model="principalServicesOptions"
-              @update:model-value="(value) => manageChildServices(value)"
-              :options="principalServices"
-              option-value="id"
-              option-label="name"
-              label="Servicios generales"
-              color="indigo-9"
-              use-chips
-              multiple
-              filled
-            >
-              <template v-slot:option="scope">
-                <q-item v-bind="scope.itemProps">
-                  <q-item-section>
-                    <q-item-label>{{ scope.opt.name }}</q-item-label>
-                  </q-item-section>
-                </q-item>
-              </template>
-            </q-select>
-          </div>
-          <!-- SERVICIOS DERIVADOS -->
-          <div class="col-12 q-my-md q-pa-sm" style="background: #f2f2f2">
-            <q-chip
-              v-for="c in childServices" :key="c.id"
-              outline
-              color="teal-14"
-              icon="event"
-            >
-              {{ c.name }}
-            </q-chip>
+            </div>
           </div>
         </q-card-section>
         <q-separator inset />
@@ -100,17 +126,17 @@
               style="font-size: 16px; font-weight: bold"
             >
               <q-icon name="attach_money" color="green" size="25px" />
-              Precios: {{ label.min }}.000 $ ― {{ label.max }}.000 $
+              Precios: {{ prices.min }}.000 $ ― {{ prices.max }}.000 $
             </div>
             <div style="padding-top: 35px">
               <q-range
                 v-if="includePriceRange"
-                v-model="label"
+                v-model="prices"
                 :min="5"
                 :max="200"
                 :step="1"
-                :left-label-value="label.min + '.000'"
-                :right-label-value="label.max + '.000'"
+                :left-label-value="prices.min + '.000'"
+                :right-label-value="prices.max + '.000'"
                 :disable="!includePriceRange"
                 color="red"
                 track-size="8px"
@@ -120,6 +146,12 @@
             </div>
           </div>
         </q-card-section>
+        <q-card-section
+          class="flex justify-center items-center"
+          style="min-height: 120px"
+        >
+          <q-btn label="Aplicar filtro" color="blue" @click="sendFilter" />
+        </q-card-section>
       </q-card>
     </q-dialog>
     <!-- The display value -->
@@ -127,56 +159,45 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useOptionsStore } from 'stores/options-store';
-import { ChildTag, Genres, GenresI, Tag } from 'src/interfaces/tag';
+import { computed, watch } from 'vue';
+import { useFilterService } from 'src/composables/dialogs/useServiceFilter';
 
-const optionsStore = useOptionsStore();
-const genres = optionsStore.genres;
-const principalServices = optionsStore.principalServices;
-const devivatedServices = optionsStore.restServices;
+const {
+  genderOptions,
+  principalServices,
+  includePriceRange,
+  prices,
+  selectedGenres,
+  servicesToShow,
+  // Computed
+  amountOfFilters,
+  pickServices,
+  cleanFilters,
+  removeGenre,
+  sendFilter
+} = useFilterService()
 
-const dialog = ref(true);
-const includePriceRange = ref(false);
-const selectedGenres = ref([]);
-const principalServicesOptions = ref([]);
-const childServices = ref<ChildTag[]>([]);
-
-
-// Agregar selected en true o false???
-// Actions
-const removeGenre = (genreId: string) => {
-  selectedGenres.value = selectedGenres.value.filter(
-    (genre: GenresI) => genre.id !== genreId
-  );
+const handleBack = () => {
+  dialog.value = false
 };
 
-// En caso de que haya anidacion, siempre preguntar si mi parent esta en los principalServices,
-// porque al fin de cuentas, como todos compartimos el segundo nivel, puedo gestionar esa autoeliminacion
-
-const manageChildServices = (value: Tag[]) => {
-  const currentIds = value.map(serv => serv.id);
-  childServices.value = devivatedServices.filter(s => currentIds.includes(s.parent));
-}
-
-const icons: Record<Genres, string> = {
-  Masculino: 'face',
-  Femenino: 'face_3',
-  Unisex: 'wc',
-  Niños: 'child_care',
-};
-
-const genderOptions = genres.map((genre) => ({
-  ...genre,
-  icon: icons[genre.name],
-}));
-
-const label = ref({
-  min: 15,
-  max: 100,
+watch(amountOfFilters, (newVal) => {
+  emit('update:amount', newVal);
 });
 
-// const open = () => dialog.value = true
+
+const props = defineProps<{ dialog: boolean }>();
+const emit = defineEmits<{
+  (e: 'update:dialog', value: boolean): void;
+  (e: 'update:amount', value: number): void;
+}>();
+
+const dialog = computed({
+  get: () => props.dialog,
+  set: (val) => emit('update:dialog', val),
+});
+
+
 </script>
 
 <style lang="scss" scoped>
@@ -188,5 +209,42 @@ const label = ref({
   border-radius: 10px;
   font-family: Georgia, 'Times New Roman', Times, serif;
   background: linear-gradient(90deg, #f8bbd0 0%, #bdc9d7 90%);
+}
+.badge-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.title-text {
+  position: relative;
+  font-size: 22px;
+  font-weight: bold;
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  background: linear-gradient(90deg, #f8bbd0 0%, #bdc9d7 90%);
+  padding: 10px 16px;
+  border-radius: 10px;
+  flex-grow: 1;
+  text-align: center;
+}
+
+.badge {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  background-color: #e53935; // rojo más fuerte
+  color: white;
+  font-weight: bold;
+  border-radius: 50%;
+  padding: 6px 10px;
+  font-size: 16px;
+  min-width: 28px;
+  min-height: 28px;
+  line-height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  z-index: 10;
 }
 </style>
