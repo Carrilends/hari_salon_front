@@ -1,10 +1,18 @@
 <template>
   <q-page class="row items-start q-px-lg q-pt-lg" style="">
     <div class="col-12 q-pl-md" style="box-shadow: 0 0 10px #dbcbee">
-      <div class="row">
-        <div class="col-6">
-          <q-input v-model="text" debounce="1000" style="width: 80%">
-            <template v-slot:prepend>
+      <div class="row q-my-sm">
+        <div class="col-9">
+          <q-input
+            dense
+            filled
+            clearable
+            color="blue"
+            debounce="1000"
+            label="Busca por nombre del servicio"
+            v-model="filterService.name"
+          >
+            <template v-slot:before>
               <q-icon name="search" />
             </template>
           </q-input>
@@ -58,7 +66,7 @@
     </div>
     <div class="col-12 q-pa-lg flex flex-center">
       <q-pagination
-        v-model="page"
+        v-model="filterService.page"
         color="blue"
         :max="totalPages"
         direction-links
@@ -67,6 +75,7 @@
     <ServiceFilterDialog
       v-model:dialog="showFilterDialog"
       @update:amount="amountOfFilters = $event"
+      @update:services="fetchServices"
     />
   </q-page>
 </template>
@@ -77,13 +86,22 @@ import { useService } from 'src/composables/services/useService';
 import { useServices } from 'src/composables/services/useServices';
 import TabsByEachService from 'src/components/servicePage/TabsByEachService.vue';
 import ServiceFilterDialog from 'src/components/dialogs/serviceFilterDialog.vue';
+import { FilterService } from 'src/composables/dialogs/useServiceFilter';
 
-const { services, page, totalPages } = useServices();
+const { services, filterService, totalPages } = useServices();
 const { serviceIdRef } = useService();
 
 const showFilterDialog = ref(false);
 const amountOfFilters = ref(0);
 
+const fetchServices = (e: FilterService) => {
+  showFilterDialog.value = false;
+  filterService.value.selectedGenres = e.selectedGenres;
+  filterService.value.selectedServicesIDs = e.selectedServicesIDs;
+  filterService.value.includePriceRange = e.includePriceRange;
+  filterService.value.prices.min = e.prices.min;
+  filterService.value.prices.max = e.prices.max;
+};
 
 const thumbStyle = {
   right: '4px',
@@ -92,8 +110,6 @@ const thumbStyle = {
   width: '5px',
   opacity: '0.75',
 };
-
-const text = ref('');
 
 defineOptions({
   name: 'ServicePage',
@@ -113,8 +129,8 @@ defineOptions({
   position: absolute;
   top: -8px;
   right: -8px;
-  font-size: 13px;      // Aumenta el tamaño del texto
-  padding: 4px 8px;      // Aumenta el padding para hacerlo más ancho/alto
+  font-size: 13px; // Aumenta el tamaño del texto
+  padding: 4px 8px; // Aumenta el padding para hacerlo más ancho/alto
   line-height: 1;
   z-index: 10;
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);

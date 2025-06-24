@@ -11,7 +11,7 @@
                 round
                 outline
                 color="blue"
-                @click="handleBack"
+                @click="hide"
                 class="q-mr-sm glass"
               />
 
@@ -34,6 +34,7 @@
             <div class="col-12 q-py-md" style="min-width: 250px">
               <q-select
                 v-model="selectedGenres"
+                @clear="clearGenders"
                 :options="genderOptions"
                 option-value="id"
                 option-label="name"
@@ -68,7 +69,36 @@
               </q-select>
             </div>
             <!-- SERVICIOS DERIVADOS -->
-            <div class="col-12 q-my-md q-pa-sm" style="background: #f2f2f2">
+            <div
+              class="col-12 q-my-md q-pa-sm"
+              style="
+                background: #f2f2f2;
+                border-radius: 8px
+              "
+            >
+              <div class="row">
+                <div class="col-11 flex flex-center">
+                  Listado de servicios:
+                </div>
+                <div
+                  v-if="selectedServicesIDs.length > 0"
+                  class="col-1"
+                >
+                  <q-btn
+                    @click="clearServices"
+                    color="red"
+                    icon="close"
+                    size="sm"
+                    round
+                    flat
+                  />
+                </div>
+              </div>
+            </div>
+            <div
+              class="col-12 q-my-md q-pa-sm"
+              style="background: #f2f2f2"
+            >
               <template v-for="p in principalServices" :key="p.id">
                 <q-chip
                   @click="
@@ -150,7 +180,12 @@
           class="flex justify-center items-center"
           style="min-height: 120px"
         >
-          <q-btn label="Aplicar filtro" color="blue" @click="sendFilter" />
+          <q-btn
+            label="Aplicar filtro"
+            color="blue"
+            @click="sendFilter"
+            :disabled="!amountOfFilters"
+          />
         </q-card-section>
       </q-card>
     </q-dialog>
@@ -159,43 +194,34 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, watch } from 'vue';
-import { useFilterService } from 'src/composables/dialogs/useServiceFilter';
+import { FiltersEmits, useFilterService } from 'src/composables/dialogs/useServiceFilter';
+import {
+  useDialog,
+  type DialogEmits,
+} from 'src/composables/dialogs/useDialogService';
+
+const props = defineProps<{ dialog: boolean }>();
+const emit = defineEmits<DialogEmits & FiltersEmits>();
 
 const {
   genderOptions,
   principalServices,
   includePriceRange,
+  selectedServicesIDs,
   prices,
   selectedGenres,
   servicesToShow,
   // Computed
   amountOfFilters,
+  clearServices,
   pickServices,
   cleanFilters,
   removeGenre,
-  sendFilter
-} = useFilterService()
+  sendFilter,
+  clearGenders
+} = useFilterService(emit);
 
-const handleBack = () => {
-  dialog.value = false
-};
-
-watch(amountOfFilters, (newVal) => {
-  emit('update:amount', newVal);
-});
-
-
-const props = defineProps<{ dialog: boolean }>();
-const emit = defineEmits<{
-  (e: 'update:dialog', value: boolean): void;
-  (e: 'update:amount', value: number): void;
-}>();
-
-const dialog = computed({
-  get: () => props.dialog,
-  set: (val) => emit('update:dialog', val),
-});
+const { dialog, hide } = useDialog(props, emit);
 
 
 </script>

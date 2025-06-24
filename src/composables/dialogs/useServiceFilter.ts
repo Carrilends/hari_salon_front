@@ -2,7 +2,22 @@ import type { GenresI, Tag } from 'src/interfaces/tag';
 import { useOptionsStore } from 'src/stores/options-store';
 import { computed, ref, watch } from 'vue';
 
-export const useFilterService = () => {
+export type FiltersEmits = {
+  (e: 'update:amount', value: number): void;
+  (e: 'update:services', value: FilterService): void;
+};
+
+export type FilterService = {
+  selectedGenres: string[];
+  selectedServicesIDs: string[];
+  includePriceRange: boolean;
+  prices: {
+    min: number;
+    max: number;
+  };
+};
+
+export const useFilterService = (emit: FiltersEmits) => {
   const optionsStore = useOptionsStore();
 
   // Seccion de generos
@@ -22,8 +37,8 @@ export const useFilterService = () => {
   const selectedServicesIDs = ref<string[]>([]);
   const includePriceRange = ref(false);
   const prices = ref({
-    min: 15,
-    max: 100,
+    min: 5,
+    max: 200,
   });
 
   // ---------------- Functions ----------------
@@ -54,17 +69,34 @@ export const useFilterService = () => {
     }));
     selectedServicesIDs.value = [];
     includePriceRange.value = false;
+    sendFilter();
   };
 
   const sendFilter = () => {
-    console.log({
+    emit('update:services', {
       selectedGenres: selectedGenres.value.map((s) => s.id),
       selectedServicesIDs: selectedServicesIDs.value.map((s) => s),
       includePriceRange: includePriceRange.value,
-      prices: prices.value,
+      prices: {
+        min: prices.value.min,
+        max: prices.value.max,
+      },
     });
   };
 
+  const clearGenders = () => (selectedGenres.value = []);
+
+  const clearServices = () => {
+    principalServices.value = principalServices.value.map((s) => ({
+      ...s,
+      selected: false,
+    }));
+    restServices.value = restServices.value.map((s) => ({
+      ...s,
+      selected: false,
+    }));
+    selectedServicesIDs.value = [];
+  };
   // ---------------- Computed ----------------
   const amountOfFilters = computed(() => {
     const genres = selectedGenres.value.length;
@@ -84,10 +116,15 @@ export const useFilterService = () => {
     { deep: true }
   );
 
+  watch(amountOfFilters, (newVal) => {
+    emit('update:amount', newVal);
+  });
+
   return {
     // Pricipales secciones
     genderOptions,
     principalServices,
+    selectedServicesIDs,
     // administracion de secciones
     selectedGenres,
     includePriceRange,
@@ -99,6 +136,8 @@ export const useFilterService = () => {
     pickServices,
     removeGenre,
     cleanFilters,
+    clearServices,
+    clearGenders,
     sendFilter,
   };
 };

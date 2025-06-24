@@ -38,9 +38,6 @@
 </template>
 
 <script setup lang="ts">
-const menuCards: string[] = [];
-
-console.log(menuCards);
 
 defineOptions({
   name: 'scheduleComponent',

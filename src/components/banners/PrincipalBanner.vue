@@ -124,8 +124,6 @@ const services = {
   ]
 }
 
-console.log(services.colmn1)
-
 defineOptions({
   name: 'PrincipalBanner',
 });

@@ -46,8 +46,6 @@ const menuCards = [
   },
 ];
 
-console.log(menuCards);
-
 defineOptions({
   name: 'IndexPage',
 });

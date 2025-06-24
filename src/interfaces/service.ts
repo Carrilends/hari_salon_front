@@ -21,5 +21,17 @@ interface Image {
 interface Detail {
   id: string;
   description: string;
-  specifications: unknown;
+  specifications: Specifications;
+}
+
+export type faceTypes =
+  | 'Round'
+  | 'Oval'
+  | 'Square'
+  | 'Heart'
+  | 'Long'
+  | 'Diamond';
+
+interface Specifications {
+  faceTypes?: faceTypes[];
 }

@@ -20,7 +20,7 @@
             icon="las la-dollar-sign"
             text-color="white"
           />
-          {{ props.props.precio }} COP
+          {{ props.props.precio }}.000 COP
         </q-chip>
 
         <!-- BOTÓN EN ESQUINA INFERIOR DERECHA -->

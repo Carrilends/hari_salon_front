@@ -39,7 +39,7 @@
             icon="las la-dollar-sign"
             text-color="white"
           />
-          <span>{{ props.service.price }} COP</span>
+          <span>{{ props.service.price }}.000 COP</span>
         </q-chip>
         <div class="row flex-center">
           <div
@@ -95,9 +95,7 @@
             >
               <div class="">
                 <q-chip size="16px">
-                  <q-avatar color="red" text-color="white">{{
-                    item.number
-                  }}</q-avatar>
+                  <q-avatar color="red" text-color="white" :icon="item.icon" />
                   {{ item.class }}
                 </q-chip>
               </div>
@@ -119,21 +117,31 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useDialogPluginComponent } from 'quasar';
-import Service from 'src/interfaces/service';
+import Service, { faceTypes } from 'src/interfaces/service';
 
+const props = defineProps<{ service: Service }>();
 // <!-- TAB PANELS -->
 // <!-- LOADING - PLUGIN -->
 // <!-- NOTIFY - PLUGIN -->
 
 const { dialogRef, onDialogOK } = useDialogPluginComponent();
-const heavyList: { number: number; class: string }[] = [];
+const heavyList: { class: string; icon: string }[] = [];
 
-// TODO: Falta hacer el replace con los rostros ideales de cada servicio
-const maxSize = 5;
-for (let i = 0; i < maxSize; i++) {
-  heavyList.push({
-    number: i,
-    class: 'Tipo de cara',
+const convertFaceType: { [key in faceTypes]: string[] } = {
+  Oval: ['Ovalado', 'exposure_zero'],
+  Round: ['Redondo', 'radio_button_unchecked'],
+  Diamond: ['Diamante', 'hov'],
+  Square: ['Cuadrado', 'check_box_outline_blank'],
+  Heart: ['Corazón', 'favorite'],
+  Long: ['Largo', 'exposure_zero'],
+}
+
+if (props.service.detail.specifications.faceTypes) {
+  props.service.detail.specifications.faceTypes.forEach((faceType) => {
+    heavyList.push({
+      icon: convertFaceType[faceType][1],
+      class: convertFaceType[faceType][0] || faceType,
+    });
   });
 }
 
@@ -146,8 +154,6 @@ const thumbStyle: Partial<CSSStyleDeclaration> = {
   backgroundColor: '#027be3',
   width: '5px',
 };
-
-const props = defineProps<{ service: Service }>();
 
 defineEmits([...useDialogPluginComponent.emits]);
 defineOptions({

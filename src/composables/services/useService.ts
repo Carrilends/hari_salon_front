@@ -54,7 +54,6 @@ export const useService = (/* serviceIdRef: Ref<string> */) => {
           storeService.setService({} as Service); // Limpiamos el servicio en el store
         } else {
           serviceIdRef.value = ''; // Limpiamos el ID también al aceptar
-          console.log('OKAY', e);
         }
       });
       // Si no hay un servicio válido (por ejemplo, al limpiar el ID)
