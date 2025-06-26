@@ -2,14 +2,47 @@
   <q-page class="row items-start q-px-xl q-pt-xl">
     <div class="col-12">
       <div class="row flex flex-center" style="justify-content: space-between">
-        <div v-for="card in menuCards" :key="card.title" class="q-px-xs">
-          <card :imgPath="card.imgPath" :title="card.title" />
+        <div class="col-8">
+          <q-list bordered>
+            <q-item
+              v-for="card in menuCards"
+              :key="card.title"
+              class="q-py-md"
+              clickable
+              v-ripple
+            >
+              <!-- style="border: solid 1px #d1d9e6;" -->
+              <q-avatar size="80px" class="q-mr-md">
+                <img :src="card.imgPath" />
+              </q-avatar>
+
+              <q-item-section style="">
+                <q-item-label class="text-h6">
+                  {{ card.title }}
+                </q-item-label>
+                <q-item-label caption>
+                  Hola esta es una descripcion de la tarjeta
+                </q-item-label>
+              </q-item-section>
+
+              <q-item-section side>
+                <q-btn
+                  color="black"
+                  class="q-mt-md"
+                  icon="arrow_forward_ios"
+                  to="/services"
+                  round
+                  size="md"
+                />
+              </q-item-section>
+            </q-item>
+          </q-list>
         </div>
+        <schedule class="col-4" />
       </div>
     </div>
     <div class="row full-width">
-      <schedule class="col-3"/>
-      <principal-banner class="col-9"/>
+      <principal-banner class="col-9" />
     </div>
   </q-page>
 </template>
@@ -20,12 +53,11 @@
 <script setup lang="ts">
 import PrincipalBanner from 'src/components/banners/PrincipalBanner.vue';
 import Schedule from 'src/components/banners/Schedule.vue';
-import Card from 'src/components/cards/Card.vue';
 import { useOptions } from 'src/composables/shared/useOptions';
 import i18n from 'src/i18n';
 
 // const { isLoading } = useOptions()
-useOptions()
+useOptions();
 
 const menuCards = [
   {
@@ -45,6 +77,7 @@ const menuCards = [
     title: i18n['en-US'].indexPage.man_cut, // Eventos especiales
   },
 ];
+console.log(menuCards);
 
 defineOptions({
   name: 'IndexPage',

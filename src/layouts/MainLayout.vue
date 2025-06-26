@@ -1,86 +1,55 @@
 <template>
   <div>
-    <q-layout
-      view="lHh Lpr lff"
-      container
-      style="height: 100vh"
-      class="shadow-2 rounded-borders"
-    >
-      <q-header elevated class="bg-pink-2">
-        <q-toolbar style="height: 60px; align-items: center">
-          <q-toolbar-title
-            style="
-              color: #132727;
-              padding-left: 30px;
-              font-weight: bold;
-              font-size: 20px;
-              font-style: italic;
-              font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS',
-                sans-serif;
-            "
-          >
-            Peluqueria Marlene ✨💈
-          </q-toolbar-title>
-        </q-toolbar>
+    <q-layout container style="height: 100vh" class="shadow-2">
+      <q-header style="background: #525252">
+        <div class="row">
+          <div class="col-3 flex flex-center" style="border: solid red 1px">
+            <div
+              style="
+                font-size: 1.4rem;
+                font-weight: 700;
+                color: white;
+                font-family: system-ui, -apple-system, BlinkMacSystemFont,
+                  'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans',
+                  'Helvetica Neue', sans-serif;
+              "
+            >
+              💈 Peluqueria pecas 💈
+            </div>
+          </div>
+          <div class="col-6" style="border: solid red 1px">
+            <q-tabs
+              v-model="tab"
+              class="text-grey-5 shadow-2"
+              indicator-color="transparent"
+              active-color="white"
+              align="justify"
+            >
+            <!-- la-spa -->
+             <!-- la-shopping-bag -->
+              <q-tab name="mails" icon="self_care" label="Mails" />
+              <q-tab name="mails" icon="mail" label="Mails" />
+              <q-tab name="alarms" icon="alarm" label="Alarms" />
+              <q-tab name="movies" icon="movie" label="Movies" />
+            </q-tabs>
+          </div>
+          <div class="col-3" style="border: solid red 1px">
+            Dialog de reserva
+          </div>
+        </div>
       </q-header>
 
-      <q-drawer v-model="drawer" show-if-above :width="240" :breakpoint="400">
-        <q-scroll-area
-          style="
-            height: calc(100% - 150px);
-            margin-top: 150px;
-            border-right: 1px solid #ddd;
-          "
-        >
-          <q-list padding class="q-pt-md">
-            <q-item active clickable v-ripple class="item">
-              <q-item-section avatar>
-                <q-icon name="inbox" />
-              </q-item-section>
-
-              <q-item-section> Inicio </q-item-section>
-            </q-item>
-
-            <q-item clickable v-ripple class="item">
-              <q-item-section avatar>
-                <q-icon name="star" />
-              </q-item-section>
-
-              <q-item-section> Servicios </q-item-section>
-            </q-item>
-
-            <q-item clickable v-ripple class="item">
-              <q-item-section avatar>
-                <q-icon name="send" />
-              </q-item-section>
-
-              <q-item-section> Planes </q-item-section>
-            </q-item>
-
-            <q-item clickable v-ripple class="item">
-              <q-item-section avatar>
-                <q-icon name="send" />
-              </q-item-section>
-
-              <q-item-section> Promosiones y bonos </q-item-section>
-            </q-item>
-
-            <q-item clickable v-ripple class="item">
-              <q-item-section avatar>
-                <q-icon name="drafts" />
-              </q-item-section>
-
-              <q-item-section> Contactanos </q-item-section>
-            </q-item>
-          </q-list>
-        </q-scroll-area>
-
+      <!-- <q-drawer v-model="drawer" show-if-above :width="240" :breakpoint="400">
+        <q-item-section> Servicios </q-item-section>
+        <q-item-section> Planes </q-item-section>
+        <q-item-section> Promosiones y bonos </q-item-section>
+        <q-item-section> Contactanos </q-item-section>
         <q-img
           class="absolute-top"
           :src="'src/assets/people/rainbow_hair.jpg'"
           style="height: 150px"
         />
-      </q-drawer>
+      </q-drawer> -->
 
       <q-page-container>
         <router-view />
@@ -96,7 +65,7 @@ defineOptions({
   name: 'MainLayout',
 });
 
-const drawer = ref(false);
+const tab = ref('');
 </script>
 
 <style scoped lang="scss">
