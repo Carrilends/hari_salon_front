@@ -1,14 +1,14 @@
 /* eslint-env node */
 
 /*
- * This file runs in a Node context (it's NOT transpiled by Babel), so use only
- * the ES6 features that are supported by your Node version. https://node.green/
- */
+* This file runs in a Node context (it's NOT transpiled by Babel), so use only
+* the ES6 features that are supported by your Node version. https://node.green/
+*/
 
 // Configuration for your app
 // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js
 
-
+const { createSvgIconsPlugin } = require('vite-plugin-svg-icons');
 const { configure } = require('quasar/wrappers');
 const path = require('path');
 
@@ -20,7 +20,7 @@ module.exports = configure(function (/* ctx */) {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli-vite/boot-files
-    boot: ['i18n', 'main'],
+    boot: ['i18n', 'main', 'svg-icons'],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#css
     css: ['app.scss'],
@@ -66,6 +66,10 @@ module.exports = configure(function (/* ctx */) {
       // viteVuePluginOptions: {},
 
       vitePlugins: [
+        createSvgIconsPlugin({
+          iconDirs: [path.resolve(__dirname, 'src/assets/icons')],
+          symbolId: 'icon-[name]', // esto crea ids como: icon-self_care
+        }),
         [
           '@intlify/vite-plugin-vue-i18n',
           {

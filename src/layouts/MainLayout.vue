@@ -1,9 +1,9 @@
 <template>
   <div>
     <q-layout container style="height: 100vh" class="shadow-2">
-      <q-header style="background: #525252">
+      <q-header style="background: #424242">
         <div class="row">
-          <div class="col-3 flex flex-center" style="border: solid red 1px">
+          <div class="col-3 flex flex-center">
             <div
               style="
                 font-size: 1.4rem;
@@ -17,55 +17,66 @@
               💈 Peluqueria pecas 💈
             </div>
           </div>
-          <div class="col-6" style="border: solid red 1px">
+          <div class="col-6">
             <q-tabs
               v-model="tab"
-              class="text-grey-5 shadow-2"
-              indicator-color="transparent"
-              active-color="white"
+              class="text-grey-4"
+              active-bg-color="grey-8"
               align="justify"
             >
-            <!-- la-spa -->
-             <!-- la-shopping-bag -->
-              <q-tab name="mails" icon="self_care" label="Mails" />
-              <q-tab name="mails" icon="mail" label="Mails" />
-              <q-tab name="alarms" icon="alarm" label="Alarms" />
-              <q-tab name="movies" icon="movie" label="Movies" />
+              <!-- la-spa -->
+              <!-- la-shopping-bag -->
+              <q-tab name="services" icon="las la-cut" label="Servicios" />
+              <q-tab
+                name="schedule"
+                icon="alarm"
+                label="Horarios de atencion"
+              />
+              <q-tab name="who" icon="movie" label="¿Quiénes somos?" />
             </q-tabs>
           </div>
-          <div class="col-3" style="border: solid red 1px">
-            Dialog de reserva
+          <div class="col-3 flex flex-center">
+            <q-btn
+              class="color-bar"
+              icon="local_mall"
+              label="Tus servicios"
+              rounded
+              flat
+            />
           </div>
         </div>
       </q-header>
 
-      <!-- <q-drawer v-model="drawer" show-if-above :width="240" :breakpoint="400">
-        <q-item-section> Servicios </q-item-section>
-        <q-item-section> Planes </q-item-section>
-        <q-item-section> Promosiones y bonos </q-item-section>
-        <q-item-section> Contactanos </q-item-section>
-        <q-img
-          class="absolute-top"
-          :src="'src/assets/people/rainbow_hair.jpg'"
-          style="height: 150px"
-        />
-      </q-drawer> -->
-
       <q-page-container>
         <router-view />
+        <whoWeAreDialog v-model:dialog="whoWeAreDialogComponent" />
+        <ourContact v-model:dialog="ourContactDialog" />
       </q-page-container>
     </q-layout>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { watch, ref } from 'vue';
+import whoWeAreDialog from 'src/components/dialogs/whoWeAreDialog.vue';
+import ourContact from 'src/components/dialogs/ourContact.vue';
 
 defineOptions({
   name: 'MainLayout',
 });
 
 const tab = ref('');
+const whoWeAreDialogComponent = ref(false);
+const ourContactDialog = ref(false);
+
+watch(
+  () => tab.value,
+  () => {
+    // whoWeAreDialogComponent.value = !whoWeAreDialogComponent.value; // Cierra el diálogo al cambiar de pestaña
+    ourContactDialog.value = !ourContactDialog.value; // Cierra el diálogo de contacto al cambiar de pestaña
+  },
+);
+
 </script>
 
 <style scoped lang="scss">
@@ -79,5 +90,10 @@ const tab = ref('');
   box-shadow: 4px 4px 8px rgba(209, 122, 156, 0.3);
   border-top-right-radius: 15px; // Borde redondeado en la esquina superior derecha
   border-bottom-right-radius: 15px; // Borde redondeado en la esquina inferior derecha
+}
+
+.color-bar {
+  background: linear-gradient(100deg, #f8bbd0 0%, #bdc9d7 90%);
+  color: black;
 }
 </style>

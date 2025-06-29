@@ -38,11 +38,7 @@
             </q-item>
           </q-list>
         </div>
-        <schedule class="col-4" />
       </div>
-    </div>
-    <div class="row full-width">
-      <principal-banner class="col-9" />
     </div>
   </q-page>
 </template>
@@ -51,8 +47,6 @@
 <!-- Banner de contacto -->
 
 <script setup lang="ts">
-import PrincipalBanner from 'src/components/banners/PrincipalBanner.vue';
-import Schedule from 'src/components/banners/Schedule.vue';
 import { useOptions } from 'src/composables/shared/useOptions';
 import i18n from 'src/i18n';
 
