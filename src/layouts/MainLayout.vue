@@ -5,7 +5,9 @@
         <div class="row">
           <div class="col-3 flex flex-center">
             <div
+              @click="() => { router.push('/') }"
               style="
+                cursor: pointer;
                 font-size: 1.4rem;
                 font-weight: 700;
                 color: white;
@@ -18,28 +20,28 @@
             </div>
           </div>
           <div class="col-6">
-            <q-tabs
-              v-model="tab"
-              class="text-grey-4"
-              active-bg-color="grey-8"
-              align="justify"
-            >
-              <!-- la-spa -->
-              <!-- la-shopping-bag -->
-              <q-tab name="services" icon="las la-cut" label="Servicios" />
-              <q-tab
-                name="schedule"
-                icon="alarm"
-                label="Horarios de atencion"
-              />
-              <q-tab name="who" icon="movie" label="¿Quiénes somos?" />
-            </q-tabs>
+            <div class="row" style="padding: 20px 0;">
+              <div
+                v-for="button in buttons"
+                :key="button.label"
+                class="col flex flex-center"
+              >
+                <q-btn
+                  @click="button.method"
+                  :class="button.class"
+                  :icon="button.icon"
+                  :label="button.label"
+                  rounded
+                  flat
+                />
+              </div>
+            </div>
           </div>
           <div class="col-3 flex flex-center">
             <q-btn
               class="color-bar"
               icon="local_mall"
-              label="Tus servicios"
+              label="Tus reservas"
               rounded
               flat
             />
@@ -49,33 +51,59 @@
 
       <q-page-container>
         <router-view />
-        <whoWeAreDialog v-model:dialog="whoWeAreDialogComponent" />
-        <ourContact v-model:dialog="ourContactDialog" />
+        <whoWeAreDialog v-model:dialog="whoWeAreDialogComponent"/>
+        <ourContact v-model:dialog="ourContactDialog"/>
       </q-page-container>
     </q-layout>
   </div>
 </template>
 
 <script setup lang="ts">
-import { watch, ref } from 'vue';
-import whoWeAreDialog from 'src/components/dialogs/whoWeAreDialog.vue';
+import { ref, onUpdated } from 'vue';
+import { useRouter } from 'vue-router';
 import ourContact from 'src/components/dialogs/ourContact.vue';
+import whoWeAreDialog from 'src/components/dialogs/whoWeAreDialog.vue';
+
+const router = useRouter();
+const whoWeAreDialogComponent = ref(false);
+const ourContactDialog = ref(false);
+
+const buttons = ref([
+  {
+    icon: 'las la-cut',
+    label: 'Servicios',
+    class: 'color-bar q-pr-lg',
+    method: () => router.push('/services')
+  },
+  {
+    icon: 'schedule',
+    label: 'Horarios',
+    class: 'color-bar',
+    method: () => ourContactDialog.value = !ourContactDialog.value,
+  },
+  {
+    icon: 'las la-user-tie',
+    label: '¿Quiénes somos?',
+    class: 'color-bar',
+    method: () => whoWeAreDialogComponent.value = !whoWeAreDialogComponent.value,
+  }
+]);
+
+onUpdated(() => {
+  if (router.currentRoute.value.path === '/') {
+    buttons.value[0].icon = 'las la-cut';
+    buttons.value[0].label = 'Servicios';
+    buttons.value[0].method = () => router.push('/services');
+  } else if (router.currentRoute.value.path === '/services') {
+    buttons.value[0].icon = 'las la-arrow-left';
+    buttons.value[0].label = 'Inicio';
+    buttons.value[0].method = () => router.push('/');
+  }
+})
 
 defineOptions({
   name: 'MainLayout',
 });
-
-const tab = ref('');
-const whoWeAreDialogComponent = ref(false);
-const ourContactDialog = ref(false);
-
-watch(
-  () => tab.value,
-  () => {
-    // whoWeAreDialogComponent.value = !whoWeAreDialogComponent.value; // Cierra el diálogo al cambiar de pestaña
-    ourContactDialog.value = !ourContactDialog.value; // Cierra el diálogo de contacto al cambiar de pestaña
-  },
-);
 
 </script>
 
