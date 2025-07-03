@@ -1,7 +1,20 @@
 <template>
-  <div class="row flex flex-center" style="justify-content: space-between">
-    <div class="col-8">
-      <q-list bordered>
+  <div
+    class="row flex flex-center"
+    style="background: #f5f5f5; width: fit-content; border-radius: 10px;"
+  >
+    <div class="col q-pb-xl q-pt-lg q-px-xl" style="width: 700px; max-width: 1200px">
+      <div
+        class="q-pb-md"
+        style="
+          font-size: 30px;
+          font-family: 'Times New Roman', Times, serif;
+          font-weight: bold;
+        "
+      >
+        Algunos servicios:
+      </div>
+      <q-list bordered style="border-radius: 10px">
         <q-item
           v-for="card in menuCards"
           :key="card.title"
@@ -10,16 +23,16 @@
           v-ripple
         >
           <!-- style="border: solid 1px #d1d9e6;" -->
-          <q-avatar size="80px" class="q-mr-md">
-            <img :src="card.imgPath" />
+          <q-avatar size="80px" class="q-mr-md" style="background: #e3e3e8">
+            <img style="width: 80px;" :src="card.imgPath" />
           </q-avatar>
 
-          <q-item-section style="">
+          <q-item-section>
             <q-item-label class="text-h6">
               {{ card.title }}
             </q-item-label>
             <q-item-label caption>
-              Hola esta es una descripcion de la tarjeta
+              {{ card.description }}
             </q-item-label>
           </q-item-section>
 
@@ -53,18 +66,22 @@ const menuCards = [
   {
     imgPath: 'src/assets/people/man_hairdress.jpg',
     title: i18n['en-US'].indexPage.man_cut, // Servicios para caballero
+    description: 'Redefine tu estilo con cortes modernos, clásicos y servicios de barbería profesional. Afeitado con navaja, arreglo de barba y cuidados especiales para el caballero actual.'
   },
   {
-    imgPath: 'src/assets/people/man_hairdress.jpg',
-    title: i18n['en-US'].indexPage.man_cut, // Servicios para dama
+    imgPath: 'src/assets/people/women-hair-cut.jpg',
+    title: i18n['en-US'].indexPage.woman_cut, // Eventos especiales
+    description: 'Transforma tu look con cortes a la medida, alisados permanentes o temporales y tratamientos que cuidan tu cabello mientras realzan tu belleza natural.'
   },
   {
-    imgPath: 'src/assets/people/man_hairdress.jpg',
-    title: i18n['en-US'].indexPage.man_cut, // Cuidado de manos, pies y rostro (maquillajes, y depilaciones)
+    imgPath: 'src/assets/people/make-up-face-design.jpg',
+    title: i18n['en-US'].indexPage.face_design, // Servicios para dama
+    description: 'Desde maquillaje social hasta técnicas profesionales para eventos, novias o sesiones fotográficas. También ofrecemos limpieza facial, perfilado de cejas y más.'
   },
   {
-    imgPath: 'src/assets/people/man_hairdress.jpg',
-    title: i18n['en-US'].indexPage.man_cut, // Eventos especiales
+    imgPath: 'src/assets/people/nails-design.jpg',
+    title: i18n['en-US'].indexPage.nail_design, // Cuidado de manos, pies y rostro (maquillajes, y depilaciones)
+    description: 'Luce manos y pies impecables con nuestros servicios de cuidado y embellecimiento. Uñas acrílicas, semipermanentes, arte en uñas y tratamientos nutritivos.'
   },
 ];
 

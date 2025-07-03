@@ -1,6 +1,6 @@
 <template>
-  <q-page class="row items-start q-px-lg q-pt-lg" style="">
-    <div class="col-12 q-pl-md" style="box-shadow: 0 0 10px #dbcbee">
+  <q-page class="row items-start q-px-lg q-pt-md">
+    <div class="col-12 q-pl-md q-py-xs box-style">
       <div class="row q-my-sm">
         <div class="col-9">
           <q-input
@@ -40,7 +40,7 @@
         </div>
       </div>
     </div>
-    <div class="col-12" style="box-shadow: 0 0 10px #dbcbee">
+    <div class="col-12 box-style">
       <q-scroll-area
         class="q-py-lg"
         style="height: 680px"
@@ -64,7 +64,7 @@
         </div>
       </q-scroll-area>
     </div>
-    <div class="col-12 q-pa-lg flex flex-center">
+    <div class="col-12 flex flex-center box-style" style="padding: 10px 0;">
       <q-pagination
         v-model="filterService.page"
         color="blue"
@@ -135,4 +135,11 @@ defineOptions({
   z-index: 10;
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
 }
+
+.box-style {
+  box-shadow: 0 0 10px #dbcbee;
+  background: #f5f5f5;
+  border-radius: 10px;
+}
+
 </style>

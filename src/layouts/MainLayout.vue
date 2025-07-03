@@ -1,6 +1,5 @@
 <template>
-  <div>
-    <q-layout container style="height: 100vh" class="shadow-2">
+    <q-layout class="shadow-2 background-image" view="hHh lpR fFf">
       <q-header style="background: #424242">
         <div class="row">
           <div class="col-3 flex flex-center">
@@ -49,13 +48,15 @@
         </div>
       </q-header>
 
-      <q-page-container>
-        <router-view />
-        <whoWeAreDialog v-model:dialog="whoWeAreDialogComponent"/>
-        <ourContact v-model:dialog="ourContactDialog"/>
+      <q-page-container
+        class="row flex-center"
+        style="height: 100vh;"
+      >
+        <router-view class="col-12"/>
       </q-page-container>
+      <whoWeAreDialog v-model:dialog="whoWeAreDialogComponent"/>
+      <ourContact v-model:dialog="ourContactDialog"/>
     </q-layout>
-  </div>
 </template>
 
 <script setup lang="ts">
@@ -95,7 +96,7 @@ onUpdated(() => {
     buttons.value[0].label = 'Servicios';
     buttons.value[0].method = () => router.push('/services');
   } else if (router.currentRoute.value.path === '/services') {
-    buttons.value[0].icon = 'las la-arrow-left';
+    buttons.value[0].icon = 'home';
     buttons.value[0].label = 'Inicio';
     buttons.value[0].method = () => router.push('/');
   }
@@ -119,9 +120,15 @@ defineOptions({
   border-top-right-radius: 15px; // Borde redondeado en la esquina superior derecha
   border-bottom-right-radius: 15px; // Borde redondeado en la esquina inferior derecha
 }
-
 .color-bar {
   background: linear-gradient(100deg, #f8bbd0 0%, #bdc9d7 90%);
   color: black;
+}
+
+.background-image {
+  background-image: url('src/assets/people/rainbow_hair.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 </style>
