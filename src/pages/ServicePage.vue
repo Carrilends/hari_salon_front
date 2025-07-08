@@ -28,13 +28,13 @@
               flat
             />
             <q-badge
-              v-if="amountOfFilters > 0"
+              v-if="externalAmountOfFilters > 0"
               color="red"
               rounded
               floating
               class="filter-badge-count"
             >
-              {{ amountOfFilters > 9 ? '9+' : amountOfFilters }}
+              {{ externalAmountOfFilters > 9 ? '9+' : externalAmountOfFilters }}
             </q-badge>
           </div>
         </div>
@@ -74,7 +74,7 @@
     </div>
     <ServiceFilterDialog
       v-model:dialog="showFilterDialog"
-      @update:amount="amountOfFilters = $event"
+      @update:amount="externalAmountOfFilters = $event"
       @update:services="fetchServices"
     />
   </q-page>
@@ -98,13 +98,13 @@ const { services, filterService, totalPages } = useServices();
 const { serviceIdRef } = useService();
 
 const showFilterDialog = ref(false);
-const amountOfFilters = ref(0);
+const externalAmountOfFilters = ref(0);
 
 const service: MenuCard = history.state?.service;
 
 const fetchServices = (e: FilterService) => {
   showFilterDialog.value = false;
-  // filterService.value.selectedGenres = e.selectedGenres;
+  filterService.value.selectedGenres = e.selectedGenres;
   filterService.value.selectedServicesIDs = e.selectedServicesIDs;
   filterService.value.includePriceRange = e.includePriceRange;
   filterService.value.prices.min = e.prices.min;

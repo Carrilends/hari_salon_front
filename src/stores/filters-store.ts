@@ -82,6 +82,9 @@ export const useFiltersStore = defineStore('filters', () => {
       }));
     },
     clearSelectedServices: () => (selectedServicesIDs.value = []),
+    clearServicesToShow: () => {
+      servicesToShow.value = [];
+    },
   };
 });
 

@@ -19,8 +19,6 @@ export type FilterService = {
 export const useFilterService = (emit: FiltersEmits) => {
   const filtersStore = useFiltersStore();
 
-  // Seccion de servicios seleccionados
-  // Formulario de envio de filtros
   const includePriceRange = ref(false);
   const prices = ref({
     min: 5,
@@ -30,10 +28,9 @@ export const useFilterService = (emit: FiltersEmits) => {
   // ---------------- Functions ----------------
 
   const cleanFilters = () => {
-    filtersStore.clearPrincipalServices();
-    filtersStore.clearRestServices();
-    filtersStore.clearSelectedServices();
+    filtersStore.clearGenders();
     includePriceRange.value = false;
+    clearServices();
     sendFilter();
   };
 
@@ -53,20 +50,23 @@ export const useFilterService = (emit: FiltersEmits) => {
     filtersStore.clearPrincipalServices();
     filtersStore.clearRestServices();
     filtersStore.clearSelectedServices();
+    filtersStore.clearServicesToShow();
   };
+
   // ---------------- Computed ----------------
   const amountOfFilters = computed(() => {
-    // const genres = selectedGenres.value.length;
+    const genres = filtersStore.selectedGenres.length;
     const services = filtersStore.selectedServicesIDs.length;
     const havePrice = includePriceRange.value;
-    return /* genres +  */ services + (havePrice ? 1 : 0);
+    return genres + services + (havePrice ? 1 : 0);
   });
 
-  // ---------------- WATCHERS ----------------
-
-  watch(amountOfFilters, (newVal) => {
-    emit('update:amount', newVal);
-  });
+  watch(
+    () => amountOfFilters.value,
+    (newValue) => {
+      emit('update:amount', newValue);
+    }
+  );
 
   return {
     // Pricipales secciones
