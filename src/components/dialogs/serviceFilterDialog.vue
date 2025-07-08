@@ -33,9 +33,9 @@
             <!-- GENEROS -->
             <div class="col-12 q-py-md" style="min-width: 250px">
               <q-select
-                v-model="selectedGenres"
-                @clear="clearGenders"
-                :options="genderOptions"
+                v-model="filtersStore.selectedGenres"
+                @clear="filtersStore.clearGenders"
+                :options="optionsStore.genres"
                 option-value="id"
                 option-label="name"
                 label="Genero(s)"
@@ -45,7 +45,7 @@
                 clearable
               >
                 <template v-slot:selected-item="scope">
-                  <q-chip @remove="() => removeGenre(scope.opt.id)" removable>
+                  <q-chip @remove="() => filtersStore.removeGenre(scope.opt.id)" removable>
                     <q-avatar
                       outline
                       square
@@ -81,7 +81,7 @@
                   Listado de servicios:
                 </div>
                 <div
-                  v-if="selectedServicesIDs.length > 0"
+                  v-if="filtersStore.selectedServicesIDs.length > 0"
                   class="col-1"
                 >
                   <q-btn
@@ -99,10 +99,10 @@
               class="col-12 q-my-md q-pa-sm"
               style="background: #f2f2f2"
             >
-              <template v-for="p in principalServices" :key="p.id">
+              <template v-for="p in filtersStore.principalServices" :key="p.id">
                 <q-chip
                   @click="
-                    pickServices(p.id, !p.selected);
+                    filtersStore.manageServicesID(p.id, !p.selected);
                     p.selected = !p.selected;
                   "
                   :color="p.selected ? 'teal-14' : 'teal'"
@@ -114,10 +114,10 @@
                   {{ p.name }}
                 </q-chip>
               </template>
-              <template v-for="s in servicesToShow" :key="s.id">
+              <template v-for="s in filtersStore.servicesToShow" :key="s.id">
                 <q-chip
                   @click="
-                    pickServices(s.id, !s.selected);
+                    filtersStore.manageServicesID(s.id, !s.selected);
                     s.selected = !s.selected;
                   "
                   :color="s.selected ? 'teal-14' : 'teal'"
@@ -199,26 +199,23 @@ import {
   useDialog,
   type DialogEmits,
 } from 'src/composables/dialogs/useDialogService';
+import { useOptionsStore } from 'src/stores/options-store';
+import { useFiltersStore } from 'src/stores/filters-store';
+
+const optionsStore = useOptionsStore();
+const filtersStore = useFiltersStore();
 
 const props = defineProps<{ dialog: boolean }>();
 const emit = defineEmits<DialogEmits & FiltersEmits>();
 
 const {
-  genderOptions,
-  principalServices,
   includePriceRange,
-  selectedServicesIDs,
   prices,
-  selectedGenres,
-  servicesToShow,
   // Computed
   amountOfFilters,
   clearServices,
-  pickServices,
   cleanFilters,
-  removeGenre,
   sendFilter,
-  clearGenders
 } = useFilterService(emit);
 
 const { dialog, hide } = useDialog(props, emit);

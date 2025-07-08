@@ -41,7 +41,7 @@
               color="black"
               class="q-mt-md"
               icon="arrow_forward_ios"
-              to="/services"
+              @click="goToService(card)"
               round
               size="md"
             />
@@ -56,17 +56,48 @@
 <!-- Banner de contacto -->
 
 <script setup lang="ts">
-import { useOptions } from 'src/composables/shared/useOptions';
 import i18n from 'src/i18n';
+import { useRouter } from 'vue-router';
+import { useOptions } from 'src/composables/shared/useOptions';
+import { useOptionsStore } from 'src/stores/options-store';
+
+const options = useOptionsStore();
 
 // const { isLoading } = useOptions()
 useOptions();
+
+const router = useRouter();
+function goToService(card: typeof menuCards[0]) {
+  router.push({
+    path: '/services',
+    state: {
+      service: card
+    }
+  });
+}
+
+export interface MenuCard {
+  imgPath: string;
+  title: string;
+  description: string;
+  filterFormat?: {
+    genres?: string[]; // Assuming genres are strings, adjust if necessary
+  };
+}
 
 const menuCards = [
   {
     imgPath: 'src/assets/people/man_hairdress.jpg',
     title: i18n['en-US'].indexPage.man_cut, // Servicios para caballero
-    description: 'Redefine tu estilo con cortes modernos, clásicos y servicios de barbería profesional. Afeitado con navaja, arreglo de barba y cuidados especiales para el caballero actual.'
+    description: 'Redefine tu estilo con cortes modernos, clásicos y servicios de barbería profesional. Afeitado con navaja, arreglo de barba y cuidados especiales para el caballero actual.',
+    filterFormat: {
+      genres: [options.genres[0].id], // Hombre
+      services: [
+        // options.services[0].id, // Corte de cabello
+        // options.services[1].id, // Afeitado
+        // options.services[2].id, // Arreglo de barba
+      ]
+    }
   },
   {
     imgPath: 'src/assets/people/women-hair-cut.jpg',

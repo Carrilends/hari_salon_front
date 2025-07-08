@@ -81,12 +81,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useService } from 'src/composables/services/useService';
 import { useServices } from 'src/composables/services/useServices';
 import TabsByEachService from 'src/components/servicePage/TabsByEachService.vue';
 import ServiceFilterDialog from 'src/components/dialogs/serviceFilterDialog.vue';
 import { FilterService } from 'src/composables/dialogs/useServiceFilter';
+import { useFiltersStore } from 'src/stores/filters-store';
+
+import { MenuCard } from './IndexPage.vue';
+
+const filtersStore = useFiltersStore()
+
 
 const { services, filterService, totalPages } = useServices();
 const { serviceIdRef } = useService();
@@ -94,9 +100,11 @@ const { serviceIdRef } = useService();
 const showFilterDialog = ref(false);
 const amountOfFilters = ref(0);
 
+const service: MenuCard = history.state?.service;
+
 const fetchServices = (e: FilterService) => {
   showFilterDialog.value = false;
-  filterService.value.selectedGenres = e.selectedGenres;
+  // filterService.value.selectedGenres = e.selectedGenres;
   filterService.value.selectedServicesIDs = e.selectedServicesIDs;
   filterService.value.includePriceRange = e.includePriceRange;
   filterService.value.prices.min = e.prices.min;
@@ -110,6 +118,12 @@ const thumbStyle = {
   width: '5px',
   opacity: '0.75',
 };
+
+onMounted(() => {
+  if (service) {
+    filtersStore.setGenres(service.filterFormat?.genres || []);
+  }
+});
 
 defineOptions({
   name: 'ServicePage',
