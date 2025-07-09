@@ -109,7 +109,7 @@
                   :outline="!p.selected"
                   :class="p.selected ? 'text-white' : 'text-black'"
                   clickable
-                  icon="event"
+                  icon="star"
                 >
                   {{ p.name }}
                 </q-chip>
@@ -124,7 +124,7 @@
                   :outline="!s.selected"
                   :class="s.selected ? 'text-white' : 'text-black'"
                   clickable
-                  icon="event"
+                  icon="star"
                 >
                   {{ s.name }}
                 </q-chip>
