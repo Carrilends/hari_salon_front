@@ -38,8 +38,7 @@ export const useFiltersStore = defineStore('filters', () => {
 
   const setServicesToShow = () => {
     servicesToShow.value = restServices.value.filter(
-      (s) =>
-        selectedServicesIDs.value.includes(s.parent || '') || s.selected
+      (s) => selectedServicesIDs.value.includes(s.parent || '') || s.selected
     );
   };
 
@@ -52,7 +51,23 @@ export const useFiltersStore = defineStore('filters', () => {
       );
     }
     setServicesToShow();
-  }
+  };
+
+  const setServicesExternal = (services: string[]) => {
+    selectedServicesIDs.value = services;
+    selectedServicesIDs.value.forEach((id) => {
+      changeSelectedState(id);
+    });
+    setServicesToShow();
+  };
+
+  const changeSelectedState = (id: string) => {
+    const pIndex = principalServices.value.findIndex((s) => s.id === id);
+    if (pIndex !== -1) {
+      principalServices.value[pIndex].selected =
+        !principalServices.value[pIndex].selected;
+    }
+  };
 
   return {
     // state
@@ -66,6 +81,7 @@ export const useFiltersStore = defineStore('filters', () => {
     setGenres,
     setServices,
     setServicesToShow,
+    setServicesExternal,
     manageServicesID,
     removeGenre,
     clearGenders: () => (selectedGenres.value = []),

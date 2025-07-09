@@ -121,7 +121,9 @@ const thumbStyle = {
 
 onMounted(() => {
   if (service) {
+    showFilterDialog.value = true;
     filtersStore.setGenres(service.filterFormat?.genres || []);
+    filtersStore.setServicesExternal(service.filterFormat?.services || []);
   }
 });
 
