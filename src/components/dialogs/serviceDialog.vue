@@ -108,7 +108,8 @@
 
       <q-card-actions align="right">
         <q-btn @click="onDialogOK('cancel')" push color="red" label="Cancelar" />
-        <q-btn @click="onDialogOK" outline color="green" label="Reservar" icon="event" />
+        <!---->
+        <q-btn @click="onDialogOK(props.service)" outline color="green" label="Reservar" icon="event" />
       </q-card-actions>
     </q-card>
   </q-dialog>

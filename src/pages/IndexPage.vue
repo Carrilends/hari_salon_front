@@ -52,9 +52,6 @@
   </div>
 </template>
 
-<!-- Horarios de atencion -->
-<!-- Banner de contacto -->
-
 <script setup lang="ts">
 import i18n from 'src/i18n';
 import { useRouter } from 'vue-router';

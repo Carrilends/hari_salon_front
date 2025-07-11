@@ -7,6 +7,7 @@ import servicesApi from 'src/api/services-api';
 import Service from 'src/interfaces/service';
 import ServiceDialog from 'src/components/dialogs/serviceDialog.vue';
 import { ref } from 'vue';
+import { useBookStore } from 'src/stores/book-store';
 
 // 1. Modificamos getServices para aceptar page y limit
 export const getService = async (id: string): Promise<Service> => {
@@ -18,6 +19,7 @@ export const getService = async (id: string): Promise<Service> => {
 export const useService = (/* serviceIdRef: Ref<string> */) => {
   const q = useQuasar();
   const storeService = useServicesStore();
+  const bookStore = useBookStore();
   const serviceIdRef = ref<string>('');
 
   const { isLoading, data, isFetching } = useQuery<Service>({
@@ -53,7 +55,10 @@ export const useService = (/* serviceIdRef: Ref<string> */) => {
           serviceIdRef.value = ''; // Limpiamos el ID para cerrar el diálogo
           storeService.setService({} as Service); // Limpiamos el servicio en el store
         } else {
-          serviceIdRef.value = ''; // Limpiamos el ID también al aceptar
+          serviceIdRef.value = '';
+          bookStore.addBooking(e);
+          // TODO:LOGICA PARA AAbrir el dialog de reservas
+          // Limpiamos el ID también al aceptar
         }
       });
       // Si no hay un servicio válido (por ejemplo, al limpiar el ID)

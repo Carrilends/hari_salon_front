@@ -6,7 +6,6 @@
   >
     <div class="card-content">
       <div :class="['img-container flex flex-center', { hovered: isHovering }]">
-        <!-- <q-img :src="props.props.principalImg" style="width: 100%; height: 100%" /> -->
         <img
           style="border-radius: 20px 20px 0px 0px; width: 100%; height: 100%"
           :src="(props.props.principalImg && 'src/assets/examples/tupper.jpg')"
@@ -44,10 +43,6 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-// import { faceTypesIcons } from 'src/constants/services/services'
-
-// const tab = ref('style')
-// const slide = ref(1)
 
 const isHovering = ref(false);
 const props = defineProps<{
