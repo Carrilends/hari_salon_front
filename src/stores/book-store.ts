@@ -20,15 +20,22 @@ export const useBookStore = defineStore(
       return bookings.value.length
     })
 
+    const bookingsCost = computed(() => {
+      return bookings.value.reduce((total, booking) => {
+        return total + booking.price;
+      }, 0);
+    });
+
     const showDialogFn = () => showDialog.value = !showDialog.value
 
     return {
       bookings,
       totalBookings,
+      bookingsCost,
       showDialog,
       addBooking,
       removeBooking,
-      showDialogFn
+      showDialogFn,
     };
   },
   { persist: true }

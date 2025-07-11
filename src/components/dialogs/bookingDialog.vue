@@ -16,51 +16,62 @@
               />
 
               <!-- Título -->
-              <div class="title-text">
-                HOLA titulo
-              </div>
-              <q-btn
-                icon="cleaning_services"
-                round
-                color="blue"
-                @click="() => console.log('hola')"
-                class="q-ml-sm"
-              />
-            </div>
-            <!-- GENEROS -->
-            <div class="col-12 q-py-md" style="min-width: 250px">
-              HOLA
+              <div class="title-text">TUS RESERVAS</div>
             </div>
             <!-- SERVICIOS DERIVADOS -->
             <div
               class="col-12 q-my-md q-pa-sm"
-              style="
-                background: #f2f2f2;
-                border-radius: 8px
-              "
+              style="background: #f2f2f2; border-radius: 8px"
             >
               <div class="row">
-                <div class="col-11 flex flex-center">
-                  Listado de servicios:
-                </div>
-                <div
-                  class="col-1"
-                >
-                  <q-btn
-                    color="red"
-                    icon="close"
-                    size="sm"
-                    round
-                    flat
-                  />
-                </div>
+                <!-- TODO: Mostrar texto condicionado si no hay reservas -->
+                <div class="col-11 flex flex-center">Listado de reservas:</div>
               </div>
             </div>
-            <div
-              class="col-12 q-my-md q-pa-sm"
-              style="background: #f2f2f2"
-            >
-              HOLA
+            <div class="col-12 q-my-md q-pa-sm" style="">
+              <q-scroll-area
+                :thumb-style="thumbStyle"
+                :bar-style="barStyle"
+                style="height: 500px"
+              >
+                <q-list class="q-pr-md">
+                  <q-item
+                    v-for="card in bookStore.bookings"
+                    :key="card.id"
+                    class="q-py-md"
+                    clickable
+                    v-ripple
+                  >
+                    <!-- style="border: solid 1px #d1d9e6;" -->
+                    <q-avatar
+                      size="80px"
+                      class="q-mr-md"
+                      style="background: #e3e3e8"
+                    >
+                      <img style="width: 80px" :src="''" />
+                    </q-avatar>
+
+                    <q-item-section>
+                      <q-item-label class="text-h6">
+                        titulo? hehe
+                      </q-item-label>
+                      <q-item-label caption>
+                        Descripción de la reserva
+                      </q-item-label>
+                    </q-item-section>
+
+                    <q-item-section side>
+                      <q-btn
+                        color="black"
+                        class="q-mt-md"
+                        icon="arrow_forward_ios"
+                        round
+                        size="md"
+                      />
+                    </q-item-section>
+                  </q-item>
+                </q-list>
+              </q-scroll-area>
             </div>
           </div>
         </q-card-section>
@@ -69,10 +80,7 @@
           class="flex justify-center items-center"
           style="min-height: 120px"
         >
-          <q-btn
-            label="Aplicar filtro"
-            color="blue"
-          />
+          <q-btn label="Aplicar filtro" color="blue" />
         </q-card-section>
       </q-card>
     </q-dialog>
@@ -86,14 +94,30 @@ import {
   useDialog,
   type DialogEmits,
 } from 'src/composables/dialogs/useDialogService';
+import { useBookStore } from 'src/stores/book-store';
+
+const bookStore = useBookStore()
 
 const props = defineProps<{ dialog: boolean }>();
 const emit = defineEmits<DialogEmits & FiltersEmits>();
 
+const thumbStyle = {
+  right: '4px',
+  borderRadius: '5px',
+  backgroundColor: '#027be3',
+  width: '5px',
+  opacity: '0.75',
+};
+
+const barStyle = {
+  right: '2px',
+  borderRadius: '9px',
+  backgroundColor: '#027be3',
+  width: '9px',
+  opacity: '0.2',
+};
 
 const { dialog, hide } = useDialog(props, emit);
-
-
 </script>
 
 <style lang="scss" scoped>
