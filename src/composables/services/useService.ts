@@ -48,6 +48,7 @@ export const useService = (/* serviceIdRef: Ref<string> */) => {
         component: ServiceDialog,
         componentProps: {
           service: service.value,
+          isFromBooking: false,
         },
         persistent: true,
       }).onOk((e) => {

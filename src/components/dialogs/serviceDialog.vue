@@ -1,7 +1,7 @@
 <template>
   <q-dialog
     ref="dialogRef"
-    persistent
+    :persistent="!props.isFromBooking"
     transition-show="jump-right"
     transition-hide="jump-left"
   >
@@ -106,10 +106,21 @@
 
       <q-separator />
 
-      <q-card-actions align="right">
-        <q-btn @click="onDialogOK('cancel')" push color="red" label="Cancelar" />
+      <q-card-actions v-if="!props.isFromBooking" align="right">
+        <q-btn
+          @click="onDialogOK('cancel')"
+          push
+          color="red"
+          label="Cancelar"
+        />
         <!---->
-        <q-btn @click="onDialogOK(props.service)" outline color="green" label="Reservar" icon="event" />
+        <q-btn
+          @click="onDialogOK(props.service)"
+          outline
+          color="green"
+          label="Reservar"
+          icon="event"
+        />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -120,10 +131,10 @@ import { ref } from 'vue';
 import { useDialogPluginComponent } from 'quasar';
 import Service, { faceTypes } from 'src/interfaces/service';
 
-const props = defineProps<{ service: Service }>();
-// <!-- TAB PANELS -->
-// <!-- LOADING - PLUGIN -->
-// <!-- NOTIFY - PLUGIN -->
+const props = defineProps<{
+  service: Service;
+  isFromBooking: boolean;
+}>();
 
 const { dialogRef, onDialogOK } = useDialogPluginComponent();
 const heavyList: { class: string; icon: string }[] = [];
@@ -135,7 +146,7 @@ const convertFaceType: { [key in faceTypes]: string[] } = {
   Square: ['Cuadrado', 'check_box_outline_blank'],
   Heart: ['Corazón', 'favorite'],
   Long: ['Largo', 'exposure_zero'],
-}
+};
 
 if (props.service.detail.specifications.faceTypes) {
   props.service.detail.specifications.faceTypes.forEach((faceType) => {
