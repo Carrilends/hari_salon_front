@@ -58,7 +58,6 @@ export const useService = (/* serviceIdRef: Ref<string> */) => {
         } else {
           serviceIdRef.value = '';
           bookStore.addBooking(e);
-          // TODO:LOGICA PARA AAbrir el dialog de reservas
           // Limpiamos el ID también al aceptar
         }
       });

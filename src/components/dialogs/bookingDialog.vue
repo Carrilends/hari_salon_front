@@ -28,7 +28,6 @@
               style="background: #f2f2f2; border-radius: 8px"
             >
               <div class="row">
-                <!-- TODO: Mostrar texto condicionado si no hay reservas -->
                 <div class="col-11 flex flex-center">
                   {{
                     bookStore.bookings.length
