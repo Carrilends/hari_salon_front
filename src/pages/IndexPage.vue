@@ -1,9 +1,12 @@
 <template>
   <div
     class="row flex flex-center"
-    style="background: #f5f5f5; width: fit-content; border-radius: 10px;"
+    style="background: #f5f5f5; width: fit-content; border-radius: 10px"
   >
-    <div class="col q-pb-xl q-pt-lg q-px-xl" style="width: 700px; max-width: 1200px">
+    <div
+      class="col q-pb-xl q-pt-lg q-px-xl"
+      style="width: 700px; max-width: 1200px"
+    >
       <div
         class="q-pb-md"
         style="
@@ -22,9 +25,8 @@
           clickable
           v-ripple
         >
-          <!-- style="border: solid 1px #d1d9e6;" -->
           <q-avatar size="80px" class="q-mr-md" style="background: #e3e3e8">
-            <img style="width: 80px;" :src="card.imgPath" />
+            <img style="width: 80px" :src="card.imgPath" />
           </q-avatar>
 
           <q-item-section>
@@ -50,6 +52,27 @@
       </q-list>
     </div>
   </div>
+  <!-- botón flotante con QPageSticky -->
+  <q-page-sticky
+    position="bottom-right"
+    :offset="[18, 18]"
+    style="z-index: 1000"
+  >
+    <div
+      class="flex flex-center q-pa-md"
+      style="background: #e3e3e8; border-radius: 20px"
+    >
+      <div style="font-weight: bold">¿Eres administrador? Ingresa aquí</div>
+      <q-btn
+        color="primary q-ml-md"
+        icon="arrow_forward_ios"
+        unelevated
+        round
+        size="md"
+        @click="goToAdmin"
+      />
+    </div>
+  </q-page-sticky>
 </template>
 
 <script setup lang="ts">
@@ -61,13 +84,18 @@ import { useOptions } from 'src/composables/shared/useOptions';
 useOptions();
 
 const router = useRouter();
-function goToService(card: typeof menuCards[0]) {
+function goToService(card: (typeof menuCards)[0]) {
   router.push({
     path: '/services',
     state: {
-      service: card
-    }
+      service: card,
+    },
   });
+}
+
+// Nueva función para el botón de administrador
+function goToAdmin() {
+  router.push({ path: '/admin' });
 }
 
 export interface MenuCard {
@@ -84,36 +112,40 @@ const menuCards = [
   {
     imgPath: 'src/assets/people/man_hairdress.jpg',
     title: i18n['en-US'].indexPage.man_cut, // Servicios para caballero
-    description: 'Redefine tu estilo con cortes modernos, clásicos y servicios de barbería profesional. Afeitado con navaja, arreglo de barba y cuidados especiales para el caballero actual.',
+    description:
+      'Redefine tu estilo con cortes modernos, clásicos y servicios de barbería profesional. Afeitado con navaja, arreglo de barba y cuidados especiales para el caballero actual.',
     filterFormat: {
       genres: ['559786d2-b1c1-4fb4-8b9c-8aa8f6eff063'], // Hombre
-      services: ['8f22821a-8e2b-435f-87b8-c63a1b83c711']
-    }
+      services: ['8f22821a-8e2b-435f-87b8-c63a1b83c711'],
+    },
   },
   {
     imgPath: 'src/assets/people/women-hair-cut.jpg',
     title: i18n['en-US'].indexPage.woman_cut, // Eventos especiales
-    description: 'Transforma tu look con cortes a la medida, alisados permanentes o temporales y tratamientos que cuidan tu cabello mientras realzan tu belleza natural.',
+    description:
+      'Transforma tu look con cortes a la medida, alisados permanentes o temporales y tratamientos que cuidan tu cabello mientras realzan tu belleza natural.',
     filterFormat: {
       genres: ['41d1765c-108a-4ae4-aec2-c4316981026b'], // Mujer
-      services: ['8f22821a-8e2b-435f-87b8-c63a1b83c711']
-    }
+      services: ['8f22821a-8e2b-435f-87b8-c63a1b83c711'],
+    },
   },
   {
     imgPath: 'src/assets/people/make-up-face-design.jpg',
     title: i18n['en-US'].indexPage.face_design, // Servicios para dama
-    description: 'Desde maquillaje social hasta técnicas profesionales para eventos, novias o sesiones fotográficas. También ofrecemos limpieza facial, perfilado de cejas y más.',
+    description:
+      'Desde maquillaje social hasta técnicas profesionales para eventos, novias o sesiones fotográficas. También ofrecemos limpieza facial, perfilado de cejas y más.',
     filterFormat: {
-      services: ['5908787e-de56-4e6d-a840-c65d02781587']
-    }
+      services: ['5908787e-de56-4e6d-a840-c65d02781587'],
+    },
   },
   {
     imgPath: 'src/assets/people/nails-design.jpg',
     title: i18n['en-US'].indexPage.nail_design, // Cuidado de manos, pies y rostro (maquillajes, y depilaciones)
-    description: 'Luce manos y pies impecables con nuestros servicios de cuidado y embellecimiento. Uñas acrílicas, semipermanentes, arte en uñas y tratamientos nutritivos.',
+    description:
+      'Luce manos y pies impecables con nuestros servicios de cuidado y embellecimiento. Uñas acrílicas, semipermanentes, arte en uñas y tratamientos nutritivos.',
     filterFormat: {
-      services: ['2c94799c-9a73-4a7a-b9a3-26e154b4f7a8']
-    }
+      services: ['2c94799c-9a73-4a7a-b9a3-26e154b4f7a8'],
+    },
   },
 ];
 

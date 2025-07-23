@@ -284,7 +284,6 @@ const { dialog, hide } = useDialog(props, emit);
   align-items: center;
 }
 
-/* al hacer hover en todo el q-item: botones entran con animación “chula” */
 .hoverable:hover .side-btns {
   opacity: 1;
   transform: translateX(0) scale(1);
