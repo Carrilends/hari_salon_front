@@ -1,5 +1,5 @@
 <template>
-  <q-page class="row items-start q-px-lg q-pt-md">
+  <q-page class="row full-width items-start q-px-lg q-pt-md">
     <div class="col-12 q-pl-md q-py-xs box-style">
       <div class="row q-my-sm">
         <div class="col-9">
@@ -64,7 +64,7 @@
         </div>
       </q-scroll-area>
     </div>
-    <div class="col-12 flex flex-center box-style" style="padding: 10px 0;">
+    <div class="col-12 flex flex-center box-style" style="padding: 10px 0">
       <q-pagination
         v-model="filterService.page"
         color="blue"
@@ -91,8 +91,7 @@ import { useFiltersStore } from 'src/stores/filters-store';
 
 import { MenuCard } from './IndexPage.vue';
 
-const filtersStore = useFiltersStore()
-
+const filtersStore = useFiltersStore();
 
 const { services, filterService, totalPages } = useServices();
 const { serviceIdRef } = useService();
@@ -157,5 +156,4 @@ defineOptions({
   background: #f5f5f5;
   border-radius: 10px;
 }
-
 </style>

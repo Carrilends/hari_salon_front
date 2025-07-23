@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="row flex flex-center"
-    style="background: #f5f5f5; width: fit-content; border-radius: 10px"
-  >
+  <div style="background: #f5f5f5">
     <div
       class="col q-pb-xl q-pt-lg q-px-xl"
       style="width: 700px; max-width: 1200px"

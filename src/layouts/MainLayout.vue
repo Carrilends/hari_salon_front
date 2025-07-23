@@ -57,7 +57,11 @@
               floating
               class="filter-badge-count"
             >
-              {{ bookingStore.totalBookings > 9 ? '9+' : bookingStore.totalBookings }}
+              {{
+                bookingStore.totalBookings > 9
+                  ? '9+'
+                  : bookingStore.totalBookings
+              }}
             </q-badge>
           </div>
         </div>
@@ -65,7 +69,7 @@
     </q-header>
 
     <q-page-container class="row flex-center" style="height: 100vh">
-      <router-view class="col-12" />
+      <router-view />
     </q-page-container>
     <whoWeAreDialog v-model:dialog="whoWeAreDialogComponent" />
     <ourContact v-model:dialog="ourContactDialog" />
