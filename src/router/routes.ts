@@ -1,3 +1,4 @@
+import { authRoutes } from 'src/auth/routes';
 import { RouteRecordRaw } from 'vue-router';
 
 const routes: RouteRecordRaw[] = [
@@ -11,6 +12,7 @@ const routes: RouteRecordRaw[] = [
       { path: '/promotions', component: () => import('pages/IndexPage.vue') },
     ],
   },
+  authRoutes,
 
   // Always leave this as last one,
   // but you can also remove it

@@ -92,7 +92,7 @@ function goToService(card: (typeof menuCards)[0]) {
 
 // Nueva función para el botón de administrador
 function goToAdmin() {
-  router.push({ path: '/admin' });
+  router.push({ name: 'login' });
 }
 
 export interface MenuCard {
