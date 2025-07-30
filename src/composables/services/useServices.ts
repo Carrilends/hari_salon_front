@@ -2,7 +2,7 @@ import { computed, ref, watch } from 'vue';
 import { useQuery } from '@tanstack/vue-query';
 
 import { useServicesStore } from 'src/stores/service-store';
-import servicesApi from 'src/api/services-api';
+import { servicesApi } from 'src/api/services-api';
 import Service from 'src/interfaces/service';
 
 type ApiDataWithCount = [Service[], number];

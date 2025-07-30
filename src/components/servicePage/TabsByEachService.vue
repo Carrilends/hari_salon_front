@@ -8,7 +8,7 @@
       <div :class="['img-container flex flex-center', { hovered: isHovering }]">
         <img
           style="border-radius: 20px 20px 0px 0px; width: 100%; height: 100%"
-          :src="(props.props.principalImg && 'src/assets/examples/tupper.jpg')"
+          :src="props.props.principalImg && 'src/assets/examples/tupper.jpg'"
         />
 
         <!-- CHIP EN ESQUINA SUPERIOR DERECHA -->
@@ -22,13 +22,26 @@
           {{ props.props.precio }}.000 COP
         </q-chip>
 
+        <q-btn
+          fab
+          icon="edit"
+          class="btn-overlay-edit"
+          :class="{ visible: isHovering }"
+        />
+        <q-btn
+          fab
+          icon="delete"
+          class="btn-overlay-delete"
+          @click="deleteServiceFn(props.props.id)"
+          :class="{ visible: isHovering }"
+        />
         <!-- BOTÓN EN ESQUINA INFERIOR DERECHA -->
         <q-btn
           fab
           color="primary"
           icon="open_in_new"
           class="btn-overlay"
-          @click="serviceDetail(props.props.id)"
+          @click="emit('detailService', props.props.id)"
           :class="{ visible: isHovering }"
         />
       </div>
@@ -42,8 +55,11 @@
 </template>
 
 <script setup lang="ts">
+import { useQuasar } from 'quasar';
+import { deleteService } from 'src/composables/services/useService';
 import { ref } from 'vue';
 
+const $q = useQuasar();
 const isHovering = ref(false);
 const props = defineProps<{
   props: {
@@ -55,12 +71,18 @@ const props = defineProps<{
   selected: boolean;
 }>();
 
-
-const emit = defineEmits(['detailService']);
-const serviceDetail = (id: string) => {
-  emit('detailService', id);
-}
-
+const emit = defineEmits(['detailService', 'deleteService']);
+const deleteServiceFn = (id: string) => {
+  $q.dialog({
+    title: 'Eliminar servicio',
+    message: '¿Está seguro de que desea eliminar este servicio?',
+    cancel: true,
+    persistent: true,
+  }).onOk(async () => {
+    await deleteService(id);
+    emit('deleteService', id);
+  });
+};
 
 defineOptions({
   name: 'TabsByEachService',
@@ -116,6 +138,56 @@ defineOptions({
   right: 8px;
   border-radius: 10px;
   z-index: 10;
+}
+
+.btn-overlay-edit {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  z-index: 8;
+  color: white;
+  background-color: #5c6bc0;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+}
+
+.btn-overlay-edit.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.btn-overlay-edit.visible:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-overlay-delete {
+  position: absolute;
+  bottom: 8px;
+  left: 70px;
+  z-index: 8;
+  color: white;
+  background-color: #f87379;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+}
+
+.btn-overlay-delete.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.btn-overlay-delete.visible:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .btn-overlay {

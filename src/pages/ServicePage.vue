@@ -2,7 +2,7 @@
   <q-page class="row full-width items-start q-px-lg q-pt-md">
     <div class="col-12 q-pl-md q-py-xs box-style">
       <div class="row q-my-sm">
-        <div class="col-9">
+        <div class="col">
           <q-input
             dense
             filled
@@ -17,7 +17,16 @@
             </template>
           </q-input>
         </div>
-        <div class="col-3 flex flex-center">
+        <div class="col-2 flex flex-center">
+          <q-btn
+            v-if="authStore.roles.includes('admin')"
+            color="indigo-5"
+            icon="las la-plus"
+            label="Crear"
+            rounded
+          />
+        </div>
+        <div class="col-2 flex flex-center">
           <div class="filter-badge-wrapper">
             <q-btn
               @click="showFilterDialog = true"
@@ -50,6 +59,7 @@
           <TabsByEachService
             v-for="(service, index) in services"
             @detail-service="() => (serviceIdRef = service.id)"
+            @delete-service="fetchServices"
             :key="`${index}_${service.id}`"
             class="col-3"
             :props="{
@@ -90,8 +100,10 @@ import { FilterService } from 'src/composables/dialogs/useServiceFilter';
 import { useFiltersStore } from 'src/stores/filters-store';
 
 import { MenuCard } from './IndexPage.vue';
+import { useAuthStore } from 'src/stores/auth-store';
 
 const filtersStore = useFiltersStore();
+const authStore = useAuthStore();
 
 const { services, filterService, totalPages } = useServices();
 const { serviceIdRef } = useService();

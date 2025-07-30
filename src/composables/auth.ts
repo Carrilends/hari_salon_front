@@ -1,7 +1,9 @@
-import { useQuery } from '@tanstack/vue-query';
-import { AuthResponse } from 'src/api/apiTypes';
-import servicesApi from 'src/api/services-api';
 import { ref, watch } from 'vue';
+import { useQuery } from '@tanstack/vue-query';
+
+import { AuthResponse } from 'src/api/apiTypes';
+import { servicesApi } from 'src/api/services-api';
+import { useAuthStore } from 'src/stores/auth-store';
 
 interface LoginBody {
   email: string;
@@ -16,6 +18,8 @@ export const getAuthStatus = async (
 };
 
 export const useAuth = () => {
+  const authStore = useAuthStore();
+
   const loginBody = ref({
     email: '',
     password: '',
@@ -37,10 +41,12 @@ export const useAuth = () => {
   });
 
   watch(data, (newValue) => {
-    console.log('Auth status!! DATA', newValue);
-
     if (newValue !== undefined) {
-      console.log('Auth status updated: DATA', newValue);
+      console.log('Auth data received:', newValue);
+      authStore.token = newValue.token;
+      authStore.fullname = newValue.fullName;
+      authStore.email = newValue.email;
+      authStore.roles = newValue.roles;
     }
   });
 

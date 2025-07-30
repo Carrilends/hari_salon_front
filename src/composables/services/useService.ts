@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/vue-query';
 import { useQuasar } from 'quasar';
 
 import { useServicesStore } from 'src/stores/service-store';
-import servicesApi from 'src/api/services-api';
+import { adminServiceApi, servicesApi } from 'src/api/services-api';
 import Service from 'src/interfaces/service';
 import ServiceDialog from 'src/components/dialogs/serviceDialog.vue';
 import { ref } from 'vue';
@@ -13,6 +13,11 @@ import { useBookStore } from 'src/stores/book-store';
 export const getService = async (id: string): Promise<Service> => {
   const { data } = await servicesApi.get<Service>(`/service/${id}`);
   return data;
+};
+
+// 1.2 Delete
+export const deleteService = async (id: string): Promise<void> => {
+  await adminServiceApi.delete(`/service/${id}`);
 };
 
 // 2. Modificamos useServices para gestionar la paginación

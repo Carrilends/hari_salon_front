@@ -14,12 +14,15 @@
       <q-input
         v-model="username"
         filled
-        label="Username or Email"
+        label="Email"
         color="black"
         outlined
+        type="email"
         :rules="[
           (val) => !!val || 'Requerido',
-          (val) => val.length >= 8 || 'Debe tener al menos 8 caracteres',
+          (val) =>
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) ||
+            'Debe ser un correo válido',
         ]"
       />
 
@@ -33,6 +36,8 @@
         :rules="[
           (val) => !!val || 'Requerido',
           (val) => val.length >= 8 || 'Debe tener al menos 8 caracteres',
+          (val) => /[A-Z]/.test(val) || 'Debe tener al menos una mayúscula',
+          (val) => /[0-9]/.test(val) || 'Debe tener al menos un número',
         ]"
       />
 
@@ -50,10 +55,13 @@
 </template>
 
 <script lang="ts" setup>
-import { useAuth } from 'src/composables/auth';
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+
+import { useAuth } from 'src/composables/auth';
 
 const { loginBody, refetch } = useAuth();
+const router = useRouter();
 
 const username = ref('');
 const password = ref('');
@@ -66,7 +74,10 @@ function submitLogin() {
     password: password.value,
   };
 
-  refetch(); // 🔵 dispara la query manualmente
+  refetch();
+  router.push({
+    path: '/services',
+  });
 }
 </script>
 
