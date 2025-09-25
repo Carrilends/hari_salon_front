@@ -19,21 +19,22 @@
             icon="las la-dollar-sign"
             text-color="white"
           />
-          {{ props.props.precio }}.000 COP
+          {{ props.props.precio }} COP
         </q-chip>
 
         <q-btn
+          v-if="authStore.roles.includes('admin')"
           fab
           icon="edit"
           class="btn-overlay-edit"
           :class="{ visible: isHovering }"
         />
-        <q-btn
-          fab
-          icon="delete"
-          class="btn-overlay-delete"
-          @click="deleteServiceFn(props.props.id)"
+        <!-- BOTÓN DE ELIMINACIÓN -->
+        <DeleteBtn
+          @delete="deleteServiceFn"
+          :element="props.props.id"
           :class="{ visible: isHovering }"
+          class="btn-overlay-delete"
         />
         <!-- BOTÓN EN ESQUINA INFERIOR DERECHA -->
         <q-btn
@@ -57,7 +58,11 @@
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
 import { deleteService } from 'src/composables/services/useService';
+import { useAuthStore } from 'src/stores/auth-store';
 import { ref } from 'vue';
+import DeleteBtn from 'src/components/shared/btns/DeleteBtn.vue';
+
+const authStore = useAuthStore();
 
 const $q = useQuasar();
 const isHovering = ref(false);
@@ -79,8 +84,19 @@ const deleteServiceFn = (id: string) => {
     cancel: true,
     persistent: true,
   }).onOk(async () => {
-    await deleteService(id);
-    emit('deleteService', id);
+    try {
+      await deleteService(id);
+      $q.notify({
+        type: 'positive',
+        message: 'Servicio eliminado correctamente',
+      });
+    } catch (error) {
+      $q.notify({
+        type: 'negative',
+        message: 'Error al eliminar el servicio',
+      });
+    }
+    emit('deleteService', 'delete_service');
   });
 };
 

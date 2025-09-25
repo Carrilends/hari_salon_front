@@ -12,7 +12,8 @@ export const adminServiceApi = axios.create({
 adminServiceApi.interceptors.request.use((config) => {
   const auth = useAuthStore();
   if (auth.token) {
-    config.headers.Authorization = `Bearer ${auth.token}`;
+    config.headers = config.headers ?? {};
+    config.headers['Authorization'] = `Bearer ${auth.token}`;
   }
   return config;
 });

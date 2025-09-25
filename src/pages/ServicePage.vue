@@ -20,6 +20,7 @@
         <div class="col-2 flex flex-center">
           <q-btn
             v-if="authStore.roles.includes('admin')"
+            @click="dialogCreation = true"
             color="indigo-5"
             icon="las la-plus"
             label="Crear"
@@ -87,6 +88,7 @@
       @update:amount="externalAmountOfFilters = $event"
       @update:services="fetchServices"
     />
+    <service-create-edit v-model="dialogCreation" />
   </q-page>
 </template>
 
@@ -98,6 +100,7 @@ import TabsByEachService from 'src/components/servicePage/TabsByEachService.vue'
 import ServiceFilterDialog from 'src/components/dialogs/serviceFilterDialog.vue';
 import { FilterService } from 'src/composables/dialogs/useServiceFilter';
 import { useFiltersStore } from 'src/stores/filters-store';
+import serviceCreateEdit from 'src/components/dialogs/serviceCreateEdit.vue';
 
 import { MenuCard } from './IndexPage.vue';
 import { useAuthStore } from 'src/stores/auth-store';
@@ -105,21 +108,26 @@ import { useAuthStore } from 'src/stores/auth-store';
 const filtersStore = useFiltersStore();
 const authStore = useAuthStore();
 
-const { services, filterService, totalPages } = useServices();
+const { services, filterService, totalPages, refetch } = useServices();
 const { serviceIdRef } = useService();
+const dialogCreation = ref(false);
 
 const showFilterDialog = ref(false);
 const externalAmountOfFilters = ref(0);
 
 const service: MenuCard = history.state?.service;
 
-const fetchServices = (e: FilterService) => {
-  showFilterDialog.value = false;
-  filterService.value.selectedGenres = e.selectedGenres;
-  filterService.value.selectedServicesIDs = e.selectedServicesIDs;
-  filterService.value.includePriceRange = e.includePriceRange;
-  filterService.value.prices.min = e.prices.min;
-  filterService.value.prices.max = e.prices.max;
+const fetchServices = (e: FilterService | string) => {
+  if (typeof e === 'string') {
+    refetch.value++;
+  } else {
+    showFilterDialog.value = false;
+    filterService.value.selectedGenres = e.selectedGenres;
+    filterService.value.selectedServicesIDs = e.selectedServicesIDs;
+    filterService.value.includePriceRange = e.includePriceRange;
+    filterService.value.prices.min = e.prices.min;
+    filterService.value.prices.max = e.prices.max;
+  }
 };
 
 const thumbStyle = {

@@ -66,7 +66,7 @@
               :thumb-style="thumbStyle"
               class="q-pr-md q-pl-sm q-py-sm"
               style="
-                height: 130px;
+                height: 180px;
                 line-height: 1.4;
                 word-spacing: 0.1rem;
                 font-size: 16px;
@@ -77,36 +77,9 @@
           </div>
         </div>
       </q-card-section>
-      <q-card-section class="q-pt-none">
-        <div class="row">
-          <div
-            class="col-12 q-px-sm"
-            style="background-color: #f0f0f0; border-radius: 7px"
-          >
-            <div class="q-pt-xs" style="font-size: 15px; font-weight: bold">
-              Tipos de rostro ideales:
-            </div>
-            <q-virtual-scroll
-              class="custom-scrollbar q-py-sm"
-              style="background-color: #f0f0f0"
-              :items="heavyList"
-              virtual-scroll-horizontal
-              v-slot="{ item }"
-            >
-              <div class="">
-                <q-chip size="16px">
-                  <q-avatar color="red" text-color="white" :icon="item.icon" />
-                  {{ item.class }}
-                </q-chip>
-              </div>
-            </q-virtual-scroll>
-          </div>
-        </div>
-      </q-card-section>
-
+      <q-card-section class="q-pt-none"> </q-card-section>
       <q-separator />
-
-      <q-card-actions v-if="!props.isFromBooking" align="right">
+      <q-card-actions class="q-mt-md" v-if="!props.isFromBooking" align="right">
         <q-btn
           @click="onDialogOK('cancel')"
           push

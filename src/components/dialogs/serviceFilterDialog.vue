@@ -45,7 +45,10 @@
                 clearable
               >
                 <template v-slot:selected-item="scope">
-                  <q-chip @remove="() => filtersStore.removeGenre(scope.opt.id)" removable>
+                  <q-chip
+                    @remove="() => filtersStore.removeGenre(scope.opt.id)"
+                    removable
+                  >
                     <q-avatar
                       outline
                       square
@@ -71,15 +74,10 @@
             <!-- SERVICIOS DERIVADOS -->
             <div
               class="col-12 q-my-md q-pa-sm"
-              style="
-                background: #f2f2f2;
-                border-radius: 8px
-              "
+              style="background: #f2f2f2; border-radius: 8px"
             >
               <div class="row">
-                <div class="col-11 flex flex-center">
-                  Listado de servicios:
-                </div>
+                <div class="col-11 flex flex-center">Listado de servicios:</div>
                 <div
                   v-if="filtersStore.selectedServicesIDs.length > 0"
                   class="col-1"
@@ -95,10 +93,7 @@
                 </div>
               </div>
             </div>
-            <div
-              class="col-12 q-my-md q-pa-sm"
-              style="background: #f2f2f2"
-            >
+            <div class="col-12 q-my-md q-pa-sm" style="background: #f2f2f2">
               <template v-for="p in filtersStore.principalServices" :key="p.id">
                 <q-chip
                   @click="
@@ -194,7 +189,10 @@
   </div>
 </template>
 <script setup lang="ts">
-import { FiltersEmits, useFilterService } from 'src/composables/dialogs/useServiceFilter';
+import {
+  FiltersEmits,
+  useFilterService,
+} from 'src/composables/dialogs/useServiceFilter';
 import {
   useDialog,
   type DialogEmits,
@@ -219,8 +217,6 @@ const {
 } = useFilterService(emit);
 
 const { dialog, hide } = useDialog(props, emit);
-
-
 </script>
 
 <style lang="scss" scoped>

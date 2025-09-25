@@ -33,6 +33,7 @@ export const getServices = async (
 // 2. Modificamos useServices para gestionar la paginación
 export const useServices = () => {
   const storeService = useServicesStore();
+  const refetch = ref(0); // Variable reactiva para forzar el refetch
 
   const filterService = ref<fiilterService>({
     name: '',
@@ -54,7 +55,7 @@ export const useServices = () => {
   const { isLoading, data, isFetching } = useQuery<ApiDataWithCount>({
     // ¡Aquí está la clave de la paginación! El queryKey debe depender de 'page' y 'limit'
     // Cuando 'page' o 'limit' cambien, Vue Query invalidará la caché y refetcheará
-    queryKey: ['services', filterService], // Array de dependencias reactivas
+    queryKey: ['services', filterService, refetch], // Array de dependencias reactivas
     queryFn: ({ queryKey }) => {
       // Desestructuramos page y limit del queryKey
       const [, filterService] = queryKey;
@@ -114,6 +115,7 @@ export const useServices = () => {
     isFetching, // isFetching es útil para mostrar un spinner mientras se carga la siguiente página
     services,
     filterService,
+    refetch,
     setPage, // Función para cambiar la página
     setLimit, // Función para cambiar el límite
     totalPages, // Total de páginas calculadas
