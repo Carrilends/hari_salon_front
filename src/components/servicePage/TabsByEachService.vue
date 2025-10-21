@@ -8,10 +8,8 @@
       <div :class="['img-container flex flex-center', { hovered: isHovering }]">
         <img
           style="border-radius: 20px 20px 0px 0px; width: 100%; height: 100%"
-          :src="props.props.principalImg && 'src/assets/examples/tupper.jpg'"
+          :src="props.props.url || 'src/assets/examples/tupper.jpg'"
         />
-
-        <!-- CHIP EN ESQUINA SUPERIOR DERECHA -->
         <q-chip class="chip-overlay">
           <q-avatar
             color="green"
@@ -71,7 +69,7 @@ const props = defineProps<{
     id: string;
     name: string;
     precio: number;
-    principalImg: string;
+    url: string;
   };
   selected: boolean;
 }>();

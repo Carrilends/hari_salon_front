@@ -126,7 +126,6 @@
                 :key="file.url"
                 :name="index + 1"
                 :img-src="file.url"
-                :style="file.isPrincipal ? 'border: green solid 3px' : ''"
               >
                 <div class="absolute-top">
                   <div
@@ -258,8 +257,12 @@
 import { useQuasar } from 'quasar';
 import { ref } from 'vue';
 
+// import { Cloudinary } from '@cloudinary/url-gen';
+// import { Format } from '@cloudinary/url-gen/actions/delivery';
+
 import { useOptionsStore } from 'src/stores/options-store';
 import { adminServiceApi } from 'src/api/services-api';
+import { cloudinaryApi, cloudinaryUploadUrl } from 'src/api/cloudinary-api';
 
 const stepper = ref(null);
 
@@ -279,6 +282,22 @@ const step = ref(1);
 const files = ref([]);
 
 const servicesToShow = ref([]);
+
+// UPLOAD IMAGES TO CLOUDINARY
+const uploadImageToCloudinary = async (image, sign) => {
+  const fd = new FormData();
+  fd.append('file', image);
+  fd.append('api_key', sign.api_key);
+  fd.append('timestamp', sign.timestamp);
+  fd.append('signature', sign.signature);
+  fd.append('folder', sign.folder);
+  const res = await fetch(cloudinaryUploadUrl(sign.cloudName), {
+    method: 'POST',
+    body: fd,
+  });
+  if (!res.ok) throw new Error(`Cloudinary ${res.status}`);
+  return res.json();
+};
 
 const principalServices = ref([
   ...optionsStore.principalServices.map((s) => ({ ...s, selected: false })),
@@ -312,15 +331,10 @@ const removeImage = (file) => {
 };
 
 function onFilesSelected(val) {
-  files.value.forEach((file) => {
-    if (file.url) URL.revokeObjectURL(file.url);
-  });
+  files.value.forEach((file) => file.url && URL.revokeObjectURL(file.url));
   files.value = val.map((file) => {
     if (!file.url) file.url = URL.createObjectURL(file);
-    return {
-      ...file,
-      isPrincipal: false,
-    };
+    return file;
   });
 }
 
@@ -339,32 +353,26 @@ const internGenres = ref(
 );
 
 const formData = ref({
-  name: '',
+  name: 'Nombre del servicio',
   detail: {
-    description: '',
+    description: 'Nombre de prueba de servicio',
     specifications: {
       df: '',
     },
   },
-  price: null,
+  // price: null,
+  price: 10000,
   images: [],
   tags: [],
 });
 
-const prepareFormData = () => {
+const prepareFormData = async () => {
   const allGenres = internGenres.value
     .filter((g) => g.selected)
     .map((g) => g.id)
     .concat(selectedServicesIDs.value);
 
-  const amountOfImages = files.value.length;
-  const randomIndex = Math.floor(Math.random() * amountOfImages);
-  const imageRestructure = files.value.map((file, index) => ({
-    url: file.url,
-    isPrincipal: index === randomIndex,
-  }));
-
-  formData.value.images = imageRestructure;
+  formData.value.images = await prepareImages();
   formData.value.tags = allGenres;
   formData.value.price = Number(formData.value.price);
 };
@@ -400,34 +408,59 @@ const controlStepper = async () => {
         position: 'bottom',
       });
     } else {
-      prepareFormData();
-      console.log('Creacion exitosa', formData.value);
+      await prepareFormData();
       await createService();
-      // dialog.value = false;
+      dialog.value = false;
     }
   }
 };
 
-const createService = async () => {
-  adminServiceApi
-    .post('/service', formData.value)
-    .then((response) => {
-      console.log('Servicio creado:', response.data);
-      $q.notify({
-        type: 'positive',
-        message: 'Servicio creado exitosamente',
-        position: 'bottom',
-      });
-      dialog.value = false;
-    })
-    .catch((error) => {
-      console.error('Error al crear el servicio:', error);
-      $q.notify({
-        type: 'negative',
-        message: 'Error al crear el servicio',
-        position: 'bottom',
-      });
+const prepareImages = async () => {
+  const { data: sign } = await cloudinaryApi.post('/cloudinary/sign');
+  const imagesToUpload = [];
+  const promises = [];
+  files.value.forEach((img) =>
+    promises.push(uploadImageToCloudinary(img, sign))
+  );
+  const returners = await Promise.all(promises);
+
+  const amountOfImages = files.value.length;
+  const randomIndex = Math.floor(Math.random() * amountOfImages);
+  returners.forEach((result, index) => {
+    imagesToUpload.push({
+      url: result.secure_url,
+      publicId: result.public_id,
+      isPrincipal: index === randomIndex,
+      version: result.version,
     });
+  });
+  return imagesToUpload;
+};
+
+const createService = async () => {
+  try {
+    adminServiceApi
+      .post('/service', formData.value)
+      .then((response) => {
+        console.log('Servicio creado:', response.data);
+        $q.notify({
+          type: 'positive',
+          message: 'Servicio creado exitosamente',
+          position: 'bottom',
+        });
+        dialog.value = false;
+      })
+      .catch((error) => {
+        console.error('Error al crear el servicio:', error);
+        $q.notify({
+          type: 'negative',
+          message: 'Error al crear el servicio',
+          position: 'bottom',
+        });
+      });
+  } catch (error) {
+    console.error('Error al subir la imagen a Cloudinary:', error);
+  }
 };
 
 const close = () => {

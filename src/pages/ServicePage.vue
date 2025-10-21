@@ -67,8 +67,7 @@
               id: service.id,
               name: service.name,
               precio: service.price,
-              principalImg: service.images.filter((img) => img.isPrincipal)[0]
-                .url,
+              url: service.images[0].url,
             }"
             :selected="true"
           />
