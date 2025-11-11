@@ -21,7 +21,7 @@
         </q-chip>
 
         <q-btn
-          v-if="authStore.roles.includes('admin')"
+          v-if="authStore.isLoggedIn"
           @click="$emit('editService', props.props.id)"
           fab
           icon="edit"

@@ -1,3 +1,46 @@
+<script lang="ts" setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { useQuasar } from 'quasar';
+import { useAuth } from 'src/composables/auth';
+
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+}
+
+const $q = useQuasar();
+const router = useRouter();
+const { loginBody, login, isLoading } = useAuth();
+
+const username = ref('');
+const password = ref('');
+
+async function submitLogin() {
+  if (!username.value || !password.value) return;
+
+  loginBody.value = {
+    email: username.value,
+    password: password.value,
+  };
+
+  try {
+    await login(); // espera a que el store se llene correctamente
+    router.push({ path: '/services' });
+  } catch (err: unknown) {
+    $q.notify({
+      type: 'negative',
+      message:
+        (err as ApiError)?.response?.data?.message ||
+        'Credenciales inválidas o error de servidor',
+    });
+  }
+}
+</script>
+
 <template>
   <q-card
     class="q-pa-xl shadow-2 rounded-borders"
@@ -43,6 +86,7 @@
 
       <div class="row justify-center">
         <q-btn
+          :loading="isLoading"
           :disable="!username || !password"
           type="submit"
           label="Login"
@@ -53,36 +97,3 @@
     </q-form>
   </q-card>
 </template>
-
-<script lang="ts" setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-
-import { useAuth } from 'src/composables/auth';
-
-const { loginBody, refetch } = useAuth();
-const router = useRouter();
-
-const username = ref('');
-const password = ref('');
-
-function submitLogin() {
-  if (!username.value || !password.value) return;
-
-  loginBody.value = {
-    email: username.value,
-    password: password.value,
-  };
-
-  refetch();
-  router.push({
-    path: '/services',
-  });
-}
-</script>
-
-<style scoped>
-.rounded-borders {
-  border-radius: 16px;
-}
-</style>

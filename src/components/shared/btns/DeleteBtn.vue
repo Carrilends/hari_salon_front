@@ -1,6 +1,6 @@
 <template>
   <q-btn
-    v-if="authStore.roles.includes('admin')"
+    v-if="authStore.isLoggedIn"
     fab
     icon="delete"
     @click="emit('delete', props.element)"

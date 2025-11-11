@@ -19,7 +19,7 @@
         </div>
         <div class="col-2 flex flex-center">
           <q-btn
-            v-if="authStore.roles.includes('admin')"
+            v-if="authStore.isLoggedIn"
             @click="dialogCreation = true"
             color="indigo-5"
             icon="las la-plus"
