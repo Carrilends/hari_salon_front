@@ -70,6 +70,7 @@
                   :key="index"
                   :icon="genre.icon"
                   :color="genre.selected ? 'indigo-4' : 'indigo-2'"
+                  clickable
                 >
                   {{ genre.name }}
                 </q-chip>
@@ -107,7 +108,7 @@
         >
           <div class="q-pa-md">
             <div
-              v-if="files.length === 0"
+              v-if="!files || files.length === 0"
               class="flex flex-center"
               style="height: 300px; border: gray dashed 2px"
             >
@@ -144,17 +145,15 @@
             </q-carousel>
           </div>
           <div class="q-pa-md">
-            <!-- @update:model-value="onFilesSelected" -->
-            <!-- v-model="files" -->
             <q-file
               v-model="files"
               @update:model-value="onFilesSelected"
               accept="image/*"
               :display-value="
-                files.length + `/${maxFiles}` + ' archivos seleccionados'
+                (files?.length || 0) + `/${5}` + ' archivos seleccionados'
               "
-              :max-files="maxFiles"
-              :disable="files.length >= maxFiles"
+              :max-files="5"
+              :disable="files?.length >= 5"
               bg-color="light-blue-1"
               multiple
               outlined
@@ -255,74 +254,46 @@
 
 <script setup>
 import { useQuasar } from 'quasar';
-import { ref } from 'vue';
-
-// import { Cloudinary } from '@cloudinary/url-gen';
-// import { Format } from '@cloudinary/url-gen/actions/delivery';
-
-import { useOptionsStore } from 'src/stores/options-store';
 import { adminServiceApi } from 'src/api/services-api';
-import { cloudinaryApi, cloudinaryUploadUrl } from 'src/api/cloudinary-api';
+import { useServiceCreateEdit } from 'src/composables/services/useServiceCreateEdit';
+import { prepareImagesForUpload } from 'src/helpers/cloudinaryHelpers';
+// import { Image } from 'src/interfaces/service';
 
-const stepper = ref(null);
+const props = defineProps({
+  name: String,
+  detail: {
+    description: String,
+    specifications: {
+      df: String,
+    },
+  },
+  price: Number,
+  images: Array,
+  tags: Array,
+  isEditMode: Boolean,
+  id: String,
+});
 
+const {
+  formData,
+  stepper,
+  nameRef,
+  descriptionRef,
+  priceRef,
+  selectedServicesIDs,
+  slide,
+  step,
+  files,
+  servicesToShow,
+  principalServices,
+  internGenres,
+  manageServicesID,
+  clearServices,
+} = useServiceCreateEdit(props);
+
+// Problematic variables
 const dialog = defineModel({ default: false });
-const optionsStore = useOptionsStore();
-const maxFiles = 5;
 const $q = useQuasar();
-
-const nameRef = ref(null);
-const descriptionRef = ref(null);
-const priceRef = ref(null);
-
-const selectedServicesIDs = ref([]);
-
-const slide = ref(1);
-const step = ref(1);
-const files = ref([]);
-
-const servicesToShow = ref([]);
-
-// UPLOAD IMAGES TO CLOUDINARY
-const uploadImageToCloudinary = async (image, sign) => {
-  const fd = new FormData();
-  fd.append('file', image);
-  fd.append('api_key', sign.api_key);
-  fd.append('timestamp', sign.timestamp);
-  fd.append('signature', sign.signature);
-  fd.append('folder', sign.folder);
-  const res = await fetch(cloudinaryUploadUrl(sign.cloudName), {
-    method: 'POST',
-    body: fd,
-  });
-  if (!res.ok) throw new Error(`Cloudinary ${res.status}`);
-  return res.json();
-};
-
-const principalServices = ref([
-  ...optionsStore.principalServices.map((s) => ({ ...s, selected: false })),
-]);
-
-const restServices = ref([
-  ...optionsStore.restServices.map((s) => ({ ...s, selected: false })),
-]);
-
-const setServicesToShow = () => {
-  servicesToShow.value = restServices.value.filter(
-    (s) => selectedServicesIDs.value.includes(s.parent) || s.selected
-  );
-};
-
-const manageServicesID = (id, selected) => {
-  if (selected) {
-    selectedServicesIDs.value.push(id);
-  } else {
-    selectedServicesIDs.value = selectedServicesIDs.value.filter(
-      (s) => s !== id
-    );
-  }
-  setServicesToShow();
-};
 
 const removeImage = (file) => {
   files.value = files.value.filter((f) => f !== file);
@@ -330,41 +301,15 @@ const removeImage = (file) => {
   slide.value = 1;
 };
 
-function onFilesSelected(val) {
-  files.value.forEach((file) => file.url && URL.revokeObjectURL(file.url));
-  files.value = val.map((file) => {
-    if (!file.url) file.url = URL.createObjectURL(file);
-    return file;
+function onFilesSelected() {
+  files.value = files.value.map((f) => {
+    if (f instanceof File) {
+      const newImg = Object.assign(f, { url: URL.createObjectURL(f) });
+      return newImg;
+    }
+    return f;
   });
 }
-
-const clearServices = () => {
-  selectedServicesIDs.value = [];
-  principalServices.value.forEach((s) => (s.selected = false));
-  restServices.value.forEach((s) => (s.selected = false));
-  setServicesToShow();
-};
-
-const internGenres = ref(
-  optionsStore.genres.map((genre) => ({
-    ...genre,
-    selected: false,
-  }))
-);
-
-const formData = ref({
-  name: 'Nombre del servicio',
-  detail: {
-    description: 'Nombre de prueba de servicio',
-    specifications: {
-      df: '',
-    },
-  },
-  // price: null,
-  price: 10000,
-  images: [],
-  tags: [],
-});
 
 const prepareFormData = async () => {
   const allGenres = internGenres.value
@@ -372,7 +317,17 @@ const prepareFormData = async () => {
     .map((g) => g.id)
     .concat(selectedServicesIDs.value);
 
-  formData.value.images = await prepareImages();
+  const dividedImgs = [
+    files.value.filter((f) => f instanceof File), // New images
+    files.value.filter((f) => !(f instanceof File)), // Existing images
+  ];
+
+  const newImages =
+    dividedImgs[0].length > 0
+      ? await prepareImagesForUpload(dividedImgs[0])
+      : [];
+
+  formData.value.images = dividedImgs[1].concat(newImages);
   formData.value.tags = allGenres;
   formData.value.price = Number(formData.value.price);
 };
@@ -409,40 +364,22 @@ const controlStepper = async () => {
       });
     } else {
       await prepareFormData();
-      await createService();
+      if (props.isEditMode) {
+        await updateService();
+      } else {
+        await createService();
+      }
       dialog.value = false;
     }
   }
-};
-
-const prepareImages = async () => {
-  const { data: sign } = await cloudinaryApi.post('/cloudinary/sign');
-  const imagesToUpload = [];
-  const promises = [];
-  files.value.forEach((img) =>
-    promises.push(uploadImageToCloudinary(img, sign))
-  );
-  const returners = await Promise.all(promises);
-
-  const amountOfImages = files.value.length;
-  const randomIndex = Math.floor(Math.random() * amountOfImages);
-  returners.forEach((result, index) => {
-    imagesToUpload.push({
-      url: result.secure_url,
-      publicId: result.public_id,
-      isPrincipal: index === randomIndex,
-      version: result.version,
-    });
-  });
-  return imagesToUpload;
 };
 
 const createService = async () => {
   try {
     adminServiceApi
       .post('/service', formData.value)
-      .then((response) => {
-        console.log('Servicio creado:', response.data);
+      .then(() => {
+        // response (si se va a usar)
         $q.notify({
           type: 'positive',
           message: 'Servicio creado exitosamente',
@@ -450,8 +387,8 @@ const createService = async () => {
         });
         dialog.value = false;
       })
-      .catch((error) => {
-        console.error('Error al crear el servicio:', error);
+      .catch(() => {
+        // error
         $q.notify({
           type: 'negative',
           message: 'Error al crear el servicio',
@@ -459,7 +396,37 @@ const createService = async () => {
         });
       });
   } catch (error) {
-    console.error('Error al subir la imagen a Cloudinary:', error);
+    // Se puede manejar el error de otra forma
+    throw error;
+  }
+};
+
+const updateService = async () => {
+  // Lógica para actualizar el servicio (a implementar)
+  try {
+    console.log('Updating service with ID:', formData.value);
+    adminServiceApi
+      .patch(`/service/${props.id}`, formData.value)
+      .then(() => {
+        // response (si se va a usar)
+        $q.notify({
+          type: 'positive',
+          message: 'Servicio actualizado exitosamente',
+          position: 'bottom',
+        });
+        dialog.value = false;
+      })
+      .catch(() => {
+        // error
+        $q.notify({
+          type: 'negative',
+          message: 'Error al actualizar el servicio',
+          position: 'bottom',
+        });
+      });
+  } catch (error) {
+    // Se puede manejar el error de otra forma
+    throw error;
   }
 };
 
@@ -482,9 +449,6 @@ const close = () => {
       images: [],
       tags: [],
     };
-    files.value.forEach((file) => {
-      if (file.url) URL.revokeObjectURL(file.url);
-    });
     files.value = [];
     slide.value = 1;
     step.value = 1;

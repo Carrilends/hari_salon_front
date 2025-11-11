@@ -23,7 +23,7 @@
           v-for="(img, index) in props.service.images"
           :key="index"
           :name="index"
-          :img-src="img.url && 'src/assets/examples/tupper.jpg'"
+          :img-src="img.url || 'src/assets/examples/tupper.jpg'"
         />
       </q-carousel>
 

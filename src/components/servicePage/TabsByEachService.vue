@@ -22,6 +22,7 @@
 
         <q-btn
           v-if="authStore.roles.includes('admin')"
+          @click="$emit('editService', props.props.id)"
           fab
           icon="edit"
           class="btn-overlay-edit"
@@ -74,7 +75,7 @@ const props = defineProps<{
   selected: boolean;
 }>();
 
-const emit = defineEmits(['detailService', 'deleteService']);
+const emit = defineEmits(['detailService', 'deleteService', 'editService']);
 const deleteServiceFn = (id: string) => {
   $q.dialog({
     title: 'Eliminar servicio',

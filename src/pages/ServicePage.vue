@@ -61,13 +61,14 @@
             v-for="(service, index) in services"
             @detail-service="() => (serviceIdRef = service.id)"
             @delete-service="fetchServices"
+            @edit-service="() => (serviceIdEditRef = service.id)"
             :key="`${index}_${service.id}`"
             class="col-3"
             :props="{
-              id: service.id,
-              name: service.name,
-              precio: service.price,
-              url: service.images[0].url,
+              id: service?.id,
+              name: service?.name,
+              precio: service?.price,
+              url: service?.images[0]?.url,
             }"
             :selected="true"
           />
@@ -93,7 +94,10 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import { useService } from 'src/composables/services/useService';
+import {
+  useService,
+  useServiceForEdition,
+} from 'src/composables/services/useService';
 import { useServices } from 'src/composables/services/useServices';
 import TabsByEachService from 'src/components/servicePage/TabsByEachService.vue';
 import ServiceFilterDialog from 'src/components/dialogs/serviceFilterDialog.vue';
@@ -109,6 +113,7 @@ const authStore = useAuthStore();
 
 const { services, filterService, totalPages, refetch } = useServices();
 const { serviceIdRef } = useService();
+const { serviceIdEditRef } = useServiceForEdition();
 const dialogCreation = ref(false);
 
 const showFilterDialog = ref(false);

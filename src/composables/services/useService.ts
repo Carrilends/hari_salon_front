@@ -8,6 +8,7 @@ import Service from 'src/interfaces/service';
 import ServiceDialog from 'src/components/dialogs/serviceDialog.vue';
 import { ref } from 'vue';
 import { useBookStore } from 'src/stores/book-store';
+import ServiceCreateEdit from 'src/components/dialogs/serviceCreateEdit.vue';
 
 // 1. Modificamos getServices para aceptar page y limit
 export const getService = async (id: string): Promise<Service> => {
@@ -78,5 +79,55 @@ export const useService = (/* serviceIdRef: Ref<string> */) => {
     isLoading,
     isFetching,
     serviceIdRef,
+  };
+};
+
+export const useServiceForEdition = () => {
+  const q = useQuasar();
+  const serviceIdEditRef = ref<string>('');
+  const { isLoading, data, isFetching } = useQuery<Service>({
+    queryKey: ['service', serviceIdEditRef],
+    queryFn: ({ queryKey }) => {
+      const [, currentServiceId] = queryKey;
+      if (typeof currentServiceId === 'string' && currentServiceId) {
+        return getService(currentServiceId);
+      }
+      return Promise.resolve({} as Service);
+    },
+    staleTime: 1000 * 60 * 3,
+    placeholderData: (previousData) => previousData,
+  });
+
+  watch(data, (newValue) => {
+    if (newValue && newValue.id) {
+      q.dialog({
+        component: ServiceCreateEdit,
+        componentProps: {
+          name: newValue.name,
+          detail: {
+            description: newValue.detail.description,
+          },
+          price: Number(newValue.price),
+          images: newValue.images,
+          tags: newValue.tags,
+          isEditMode: true,
+          id: newValue.id,
+        },
+        persistent: true,
+      }).onOk((e) => {
+        if (e === 'cancel') {
+          serviceIdEditRef.value = ''; // Limpiamos el ID para cerrar el diálogo
+        } else {
+          serviceIdEditRef.value = '';
+        }
+      });
+      // Si no hay un servicio válido (por ejemplo, al limpiar el ID)
+    }
+  });
+
+  return {
+    isLoading,
+    isFetching,
+    serviceIdEditRef,
   };
 };

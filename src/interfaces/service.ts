@@ -1,4 +1,3 @@
-
 export default interface Service {
   id: string;
   name: string;
@@ -12,10 +11,12 @@ export default interface Service {
   detail: Detail;
 }
 
-interface Image {
+export interface Image {
   id: string;
   url: string;
   isPrincipal: boolean;
+  publicId: string;
+  version: string;
 }
 
 interface Detail {

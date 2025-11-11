@@ -53,16 +53,11 @@ export const useServices = () => {
   const logs = ref(0);
 
   const { isLoading, data, isFetching } = useQuery<ApiDataWithCount>({
-    // ¡Aquí está la clave de la paginación! El queryKey debe depender de 'page' y 'limit'
-    // Cuando 'page' o 'limit' cambien, Vue Query invalidará la caché y refetcheará
-    queryKey: ['services', filterService, refetch], // Array de dependencias reactivas
+    queryKey: ['services', filterService, refetch],
     queryFn: ({ queryKey }) => {
-      // Desestructuramos page y limit del queryKey
       const [, filterService] = queryKey;
       return getServices(filterService as fiilterService);
     },
-    // staleTime: 1000 * 60 * 2, // Puedes mantenerlo si es necesario
-    // Esto es útil para la paginación, los datos anteriores se mantienen mientras se carga la nueva página
     placeholderData: (previousData) => previousData,
   });
 
