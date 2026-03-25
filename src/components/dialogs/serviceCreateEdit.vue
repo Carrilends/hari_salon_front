@@ -7,7 +7,13 @@
     transition-hide="slide-down"
   >
     <div class="row flex flex-center" style="background: lightgray">
-      <q-stepper v-model="step" ref="stepper" color="primary" animated>
+      <q-stepper
+        v-model="step"
+        ref="stepper"
+        color="primary"
+        animated
+        style="width: 700px"
+      >
         <q-step
           :name="1"
           title="Información general"
@@ -173,61 +179,12 @@
           :done="step > 3"
         >
           <!-- LISTADO DE SERVICIOS -->
-          <div
-            class="col-12 q-my-md q-pa-sm"
-            style="background: #f2f2f2; border-radius: 8px"
-          >
-            <div class="row">
-              <div
-                class="col-11 flex flex-center"
-                style="font-size: medium; color: #5e5e62; font-weight: bold"
-              >
-                Tu servicio es:
-              </div>
-              <div v-if="selectedServicesIDs.length > 0" class="col-1">
-                <q-btn
-                  @click="clearServices"
-                  color="red"
-                  icon="close"
-                  size="sm"
-                  round
-                  flat
-                />
-              </div>
-            </div>
-          </div>
-          <div class="col-12 q-my-md q-pa-sm" style="background: #f2f2f2">
-            <template v-for="p in principalServices" :key="p.id">
-              <q-chip
-                @click="
-                  manageServicesID(p.id, !p.selected);
-                  p.selected = !p.selected;
-                "
-                :color="p.selected ? 'teal-14' : 'teal'"
-                :outline="!p.selected"
-                :class="p.selected ? 'text-white' : 'text-black'"
-                clickable
-                icon="star"
-              >
-                {{ p.name }}
-              </q-chip>
-            </template>
-            <template v-for="s in servicesToShow" :key="s.id">
-              <q-chip
-                @click="
-                  manageServicesID(s.id, !s.selected);
-                  s.selected = !s.selected;
-                "
-                :color="s.selected ? 'teal-14' : 'teal'"
-                :outline="!s.selected"
-                :class="s.selected ? 'text-white' : 'text-black'"
-                clickable
-                icon="star"
-              >
-                {{ s.name }}
-              </q-chip>
-            </template>
-          </div>
+          <services-box
+            ref="servicesBoxRef"
+            :initial-selected-ids="selectedServicesIDs"
+            :is-edit-mode="isEditMode"
+            @selectedServices="selectedServices"
+          />
         </q-step>
         <template v-slot:navigation>
           <q-stepper-navigation>
@@ -253,10 +210,15 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import { useQuasar } from 'quasar';
-import { adminServiceApi } from 'src/api/services-api';
 import { useServiceCreateEdit } from 'src/composables/services/useServiceCreateEdit';
 import { prepareImagesForUpload } from 'src/helpers/cloudinaryHelpers';
+import {
+  createServiceHelper,
+  updateServiceHelper,
+} from 'src/helpers/service.helpers';
+import ServicesBox from '../shared/ServicesBox.vue';
 // import { Image } from 'src/interfaces/service';
 
 const props = defineProps({
@@ -274,6 +236,8 @@ const props = defineProps({
   id: String,
 });
 
+const servicesBoxRef = ref(null);
+
 const {
   formData,
   stepper,
@@ -284,11 +248,7 @@ const {
   slide,
   step,
   files,
-  servicesToShow,
-  principalServices,
   internGenres,
-  manageServicesID,
-  clearServices,
 } = useServiceCreateEdit(props);
 
 // Problematic variables
@@ -310,6 +270,10 @@ function onFilesSelected() {
     return f;
   });
 }
+
+const selectedServices = (services) => {
+  selectedServicesIDs.value = services;
+};
 
 const prepareFormData = async () => {
   const allGenres = internGenres.value
@@ -375,59 +339,13 @@ const controlStepper = async () => {
 };
 
 const createService = async () => {
-  try {
-    adminServiceApi
-      .post('/service', formData.value)
-      .then(() => {
-        // response (si se va a usar)
-        $q.notify({
-          type: 'positive',
-          message: 'Servicio creado exitosamente',
-          position: 'bottom',
-        });
-        dialog.value = false;
-      })
-      .catch(() => {
-        // error
-        $q.notify({
-          type: 'negative',
-          message: 'Error al crear el servicio',
-          position: 'bottom',
-        });
-      });
-  } catch (error) {
-    // Se puede manejar el error de otra forma
-    throw error;
-  }
+  await createServiceHelper(formData.value);
+  dialog.value = false;
 };
 
 const updateService = async () => {
-  // Lógica para actualizar el servicio (a implementar)
-  try {
-    console.log('Updating service with ID:', formData.value);
-    adminServiceApi
-      .patch(`/service/${props.id}`, formData.value)
-      .then(() => {
-        // response (si se va a usar)
-        $q.notify({
-          type: 'positive',
-          message: 'Servicio actualizado exitosamente',
-          position: 'bottom',
-        });
-        dialog.value = false;
-      })
-      .catch(() => {
-        // error
-        $q.notify({
-          type: 'negative',
-          message: 'Error al actualizar el servicio',
-          position: 'bottom',
-        });
-      });
-  } catch (error) {
-    // Se puede manejar el error de otra forma
-    throw error;
-  }
+  await updateServiceHelper(formData.value, props.id);
+  dialog.value = false;
 };
 
 const close = () => {
@@ -453,7 +371,8 @@ const close = () => {
     slide.value = 1;
     step.value = 1;
     internGenres.value.forEach((g) => (g.selected = false));
-    clearServices();
+    selectedServicesIDs.value = [];
+    servicesBoxRef.value?.resetLocalState?.();
     dialog.value = false;
   });
 };

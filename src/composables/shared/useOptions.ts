@@ -6,9 +6,9 @@ import optionsApi from 'src/api/options-api';
 import { useOptionsStore } from 'src/stores/options-store';
 
 export const getOptions = async (): Promise<OptionsApiResponse> => {
-  const { data } = await  optionsApi.get<OptionsApiResponse>('/filters');
+  const { data } = await optionsApi.get<OptionsApiResponse>('/filters');
   return data;
-}
+};
 
 export const useOptions = () => {
   const optionsStore = useOptionsStore();
@@ -19,17 +19,16 @@ export const useOptions = () => {
     staleTime: Infinity,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
-    refetchOnReconnect: false
-  })
+    refetchOnReconnect: false,
+  });
 
   watch(data, (newValue) => {
     if (newValue) {
       // Aquí podrías hacer algo con los nuevos datos, como guardarlos en un store o en un estado local
       optionsStore.setGenres(newValue.genders);
-      optionsStore.setRestServices(newValue.childrens);
       optionsStore.setPrincipalServices(newValue.principalParents);
     }
-  })
+  });
 
-  return { isLoading }
-}
+  return { isLoading };
+};

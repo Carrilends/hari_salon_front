@@ -30,9 +30,6 @@ export const useOptionsStore = defineStore(
           icon: icons[genre.name],
         }));
       },
-      setRestServices(newRestServices: Tag[]) {
-        restServices.value = newRestServices;
-      },
       setPrincipalServices(newPrincipalServices: Tag[]) {
         principalServices.value = newPrincipalServices;
       },

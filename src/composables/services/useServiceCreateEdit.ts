@@ -44,16 +44,9 @@ export const useServiceCreateEdit = (props: ServiceFormData) => {
   const priceRef = ref(null);
   const selectedServicesIDs = ref<string[]>([]);
   const slide = ref(1);
-  const step = ref(1);
+  const step = ref(3);
   const files = ref<fileWithUrl[]>([]);
-  const servicesToShow = ref<typeof restServices.value>([]);
   // . . . . . services admin . . . . .
-  const principalServices = ref([
-    ...optionsStore.principalServices.map((s) => ({ ...s, selected: false })),
-  ]);
-  const restServices = ref([
-    ...optionsStore.restServices.map((s) => ({ ...s, selected: false })),
-  ]);
   const internGenres = ref(
     optionsStore.genres.map((genre) => ({
       ...genre,
@@ -85,52 +78,14 @@ export const useServiceCreateEdit = (props: ServiceFormData) => {
       };
     });
 
-    principalServices.value = principalServices.value.map((service) => {
-      return {
-        ...service,
-        selected: servicesIds?.includes(service.id),
-      };
-    });
-
-    restServices.value = restServices.value.map((service) => {
-      return {
-        ...service,
-        selected: servicesIds?.includes(service.id),
-      };
-    });
-
     selectedServicesIDs.value = servicesIds || [];
 
     files.value = props.images as unknown as fileWithUrl[];
   };
 
-  const setServicesToShow = () => {
-    servicesToShow.value = restServices.value.filter(
-      (s) => selectedServicesIDs.value.includes(s.parent || '') || s.selected
-    );
-  };
-
   if (props) {
     setPropsToFormData();
-    setServicesToShow();
   }
-
-  const manageServicesID = (id: string, selected: boolean) => {
-    if (selected) {
-      selectedServicesIDs.value.push(id);
-    } else {
-      selectedServicesIDs.value = selectedServicesIDs.value.filter(
-        (s) => s !== id
-      );
-    }
-    setServicesToShow();
-  };
-  const clearServices = () => {
-    selectedServicesIDs.value = [];
-    principalServices.value.forEach((s) => (s.selected = false));
-    restServices.value.forEach((s) => (s.selected = false));
-    setServicesToShow();
-  };
 
   return {
     formData,
@@ -144,14 +99,7 @@ export const useServiceCreateEdit = (props: ServiceFormData) => {
     slide,
     step,
     files,
-    servicesToShow,
 
-    principalServices,
-    // restServices,
     internGenres,
-
-    // setServicesToShow,
-    manageServicesID,
-    clearServices,
   };
 };
