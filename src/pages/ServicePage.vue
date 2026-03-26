@@ -61,7 +61,7 @@
             v-for="(service, index) in services"
             @detail-service="() => (serviceIdRef = service.id)"
             @delete-service="fetchServices"
-            @edit-service="() => (serviceIdEditRef = service.id)"
+            @edit-service="() => openEditService(service.id)"
             :key="`${index}_${service.id}`"
             class="col-3"
             :props="{
@@ -93,7 +93,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { nextTick, onMounted, ref } from 'vue';
 import {
   useService,
   useServiceForEdition,
@@ -115,6 +115,13 @@ const { services, filterService, totalPages, refetch } = useServices();
 const { serviceIdRef } = useService();
 const { serviceIdEditRef } = useServiceForEdition();
 const dialogCreation = ref(false);
+
+const openEditService = (id: string) => {
+  serviceIdEditRef.value = '';
+  void nextTick(() => {
+    serviceIdEditRef.value = id;
+  });
+};
 
 const showFilterDialog = ref(false);
 const externalAmountOfFilters = ref(0);

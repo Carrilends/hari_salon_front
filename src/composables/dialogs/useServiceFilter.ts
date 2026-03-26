@@ -1,4 +1,6 @@
 import { useFiltersStore } from 'src/stores/filters-store';
+import { useOptionsStore } from 'src/stores/options-store';
+import type { GenresI } from 'src/interfaces/tag';
 import { computed, ref, watch } from 'vue';
 
 export type FiltersEmits = {
@@ -16,14 +18,66 @@ export type FilterService = {
   };
 };
 
+export type FilterGenreChip = GenresI & { selected: boolean };
+
 export const useFilterService = (emit: FiltersEmits) => {
   const filtersStore = useFiltersStore();
+  const optionsStore = useOptionsStore();
 
   const includePriceRange = ref(false);
   const prices = ref({
     min: 5,
     max: 200,
   });
+
+  const buildFilterGenres = (): FilterGenreChip[] =>
+    optionsStore.genres.map((genre) => ({
+      ...genre,
+      selected: filtersStore.selectedGenres.some((sg) => sg.id === genre.id),
+    }));
+
+  const filterGenres = ref<FilterGenreChip[]>(buildFilterGenres());
+
+  const syncGenresFromStore = () => {
+    filterGenres.value = buildFilterGenres();
+  };
+
+  watch(
+    () => filtersStore.selectedGenres,
+    () => {
+      syncGenresFromStore();
+    },
+    { deep: true }
+  );
+
+  watch(
+    () => optionsStore.genres,
+    () => {
+      syncGenresFromStore();
+    },
+    { deep: true }
+  );
+
+  watch(
+    filterGenres,
+    () => {
+      const next = optionsStore.genres.filter((g) =>
+        filterGenres.value.some((fg) => fg.id === g.id && fg.selected)
+      );
+      const oldIds = filtersStore.selectedGenres
+        .map((g) => g.id)
+        .sort()
+        .join(',');
+      const newIds = next
+        .map((g) => g.id)
+        .sort()
+        .join(',');
+      if (oldIds !== newIds) {
+        filtersStore.selectedGenres = next;
+      }
+    },
+    { deep: true }
+  );
 
   // ---------------- Functions ----------------
 
@@ -47,10 +101,7 @@ export const useFilterService = (emit: FiltersEmits) => {
   };
 
   const clearServices = () => {
-    filtersStore.clearPrincipalServices();
-    filtersStore.clearRestServices();
     filtersStore.clearSelectedServices();
-    filtersStore.clearServicesToShow();
   };
 
   // ---------------- Computed ----------------
@@ -69,13 +120,10 @@ export const useFilterService = (emit: FiltersEmits) => {
   );
 
   return {
-    // Pricipales secciones
-    // administracion de secciones
     includePriceRange,
     prices,
-    // Computed
+    filterGenres,
     amountOfFilters,
-    // Funciones
     cleanFilters,
     clearServices,
     sendFilter,

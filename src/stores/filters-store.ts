@@ -1,22 +1,14 @@
 import { ref } from 'vue';
 import { defineStore } from 'pinia';
-import { GenresI, Tag } from 'src/interfaces/tag';
+import { GenresI } from 'src/interfaces/tag';
 import { useOptionsStore } from './options-store';
 
 export const useFiltersStore = defineStore('filters', () => {
   const optionsStore = useOptionsStore();
 
   const selectedGenres = ref<GenresI[]>([]);
-  const principalServices = ref<Tag[]>([
-    ...optionsStore.principalServices.map((s) => ({ ...s, selected: false })),
-  ]);
-  const restServices = ref<Tag[]>([
-    ...optionsStore.restServices.map((s) => ({ ...s, selected: false })),
-  ]);
-  const servicesToShow = ref<Tag[]>([]);
   const selectedServicesIDs = ref<string[]>([]);
 
-  // Setters
   const removeGenre = (id: string) => {
     selectedGenres.value = selectedGenres.value.filter(
       (g: GenresI) => g.id !== id
@@ -29,79 +21,23 @@ export const useFiltersStore = defineStore('filters', () => {
     );
   };
 
-  const setServices = (services: string[]) => {
-    selectedServicesIDs.value = services;
-    servicesToShow.value = restServices.value.filter(
-      (s) => services.includes(s.parent || '') || s.selected
-    );
+  const setSelectedServiceIds = (ids: string[]) => {
+    selectedServicesIDs.value = [...ids];
   };
 
-  const setServicesToShow = () => {
-    servicesToShow.value = restServices.value.filter(
-      (s) => selectedServicesIDs.value.includes(s.parent || '') || s.selected
-    );
-  };
-
-  const manageServicesID = (id: string, selected: boolean) => {
-    if (selected) {
-      selectedServicesIDs.value.push(id);
-    } else {
-      selectedServicesIDs.value = selectedServicesIDs.value.filter(
-        (s) => s !== id
-      );
-    }
-    setServicesToShow();
-  };
-
+  /** Restaura IDs desde navegación u orígenes externos (misma semántica que ServicesBox). */
   const setServicesExternal = (services: string[]) => {
-    selectedServicesIDs.value = services;
-    selectedServicesIDs.value.forEach((id) => {
-      changeSelectedState(id);
-    });
-    setServicesToShow();
-  };
-
-  const changeSelectedState = (id: string) => {
-    const pIndex = principalServices.value.findIndex((s) => s.id === id);
-    if (pIndex !== -1) {
-      principalServices.value[pIndex].selected =
-        !principalServices.value[pIndex].selected;
-    }
+    setSelectedServiceIds(services);
   };
 
   return {
-    // state
     selectedGenres,
-    principalServices,
     selectedServicesIDs,
-    servicesToShow,
-    restServices,
-    // getters
-    // Setters
     setGenres,
-    setServices,
-    setServicesToShow,
+    setSelectedServiceIds,
     setServicesExternal,
-    manageServicesID,
     removeGenre,
     clearGenders: () => (selectedGenres.value = []),
-    clearPrincipalServices: () => {
-      principalServices.value = principalServices.value.map((s) => ({
-        ...s,
-        selected: false,
-      }));
-    },
-    clearRestServices: () => {
-      restServices.value = restServices.value.map((s) => ({
-        ...s,
-        selected: false,
-      }));
-    },
     clearSelectedServices: () => (selectedServicesIDs.value = []),
-    clearServicesToShow: () => {
-      servicesToShow.value = [];
-    },
   };
 });
-
-// const genderOptions = optionsStore.genres;

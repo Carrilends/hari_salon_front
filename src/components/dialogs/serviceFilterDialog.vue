@@ -30,101 +30,35 @@
                 class="q-ml-sm"
               />
             </div>
-            <!-- GENEROS -->
+            <!-- GÉNEROS (mismo patrón que serviceCreateEdit) -->
             <div class="col-12 q-py-md" style="min-width: 250px">
-              <q-select
-                v-model="filtersStore.selectedGenres"
-                @clear="filtersStore.clearGenders"
-                :options="optionsStore.genres"
-                option-value="id"
-                option-label="name"
-                label="Genero(s)"
-                color="indigo-8"
-                multiple
-                filled
-                clearable
+              <div
+                class="q-pb-md"
+                style="text-align: center; font-size: medium; color: #5e5e62"
               >
-                <template v-slot:selected-item="scope">
-                  <q-chip
-                    @remove="() => filtersStore.removeGenre(scope.opt.id)"
-                    removable
-                  >
-                    <q-avatar
-                      outline
-                      square
-                      :icon="scope.opt.icon"
-                      color="indigo-9"
-                      text-color="white"
-                    />
-                    {{ scope.opt.name }}
-                  </q-chip>
-                </template>
-                <template v-slot:option="scope">
-                  <q-item v-bind="scope.itemProps">
-                    <q-item-section avatar>
-                      <q-icon :name="scope.opt.icon" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>{{ scope.opt.name }}</q-item-label>
-                    </q-item-section>
-                  </q-item>
-                </template>
-              </q-select>
-            </div>
-            <!-- SERVICIOS DERIVADOS -->
-            <div
-              class="col-12 q-my-md q-pa-sm"
-              style="background: #f2f2f2; border-radius: 8px"
-            >
-              <div class="row">
-                <div class="col-11 flex flex-center">Listado de servicios:</div>
-                <div
-                  v-if="filtersStore.selectedServicesIDs.length > 0"
-                  class="col-1"
+                Género(s):
+              </div>
+              <div class="row justify-center q-gutter-sm">
+                <q-chip
+                  v-for="genre in filterGenres"
+                  v-model:selected="genre.selected"
+                  :key="genre.id"
+                  :icon="genreIcon(genre)"
+                  :color="genre.selected ? 'indigo-4' : 'indigo-2'"
+                  clickable
                 >
-                  <q-btn
-                    @click="clearServices"
-                    color="red"
-                    icon="close"
-                    size="sm"
-                    round
-                    flat
-                  />
-                </div>
+                  {{ genre.name }}
+                </q-chip>
               </div>
             </div>
-            <div class="col-12 q-my-md q-pa-sm" style="background: #f2f2f2">
-              <template v-for="p in filtersStore.principalServices" :key="p.id">
-                <q-chip
-                  @click="
-                    filtersStore.manageServicesID(p.id, !p.selected);
-                    p.selected = !p.selected;
-                  "
-                  :color="p.selected ? 'teal-14' : 'teal'"
-                  :outline="!p.selected"
-                  :class="p.selected ? 'text-white' : 'text-black'"
-                  clickable
-                  icon="star"
-                >
-                  {{ p.name }}
-                </q-chip>
-              </template>
-              <template v-for="s in filtersStore.servicesToShow" :key="s.id">
-                <q-chip
-                  @click="
-                    filtersStore.manageServicesID(s.id, !s.selected);
-                    s.selected = !s.selected;
-                  "
-                  :color="s.selected ? 'teal-14' : 'teal'"
-                  :outline="!s.selected"
-                  :class="s.selected ? 'text-white' : 'text-black'"
-                  clickable
-                  icon="star"
-                >
-                  {{ s.name }}
-                </q-chip>
-              </template>
-            </div>
+            <!-- Servicios (ServicesBox: mismo árbol que crear/editar) -->
+            <services-box
+              v-if="dialog"
+              :initial-selected-ids="filtersStore.selectedServicesIDs"
+              is-edit-mode
+              section-title="Listado de servicios:"
+              @selected-services="filtersStore.setSelectedServiceIds"
+            />
           </div>
         </q-card-section>
         <q-separator inset />
@@ -197,11 +131,13 @@ import {
   useDialog,
   type DialogEmits,
 } from 'src/composables/dialogs/useDialogService';
-import { useOptionsStore } from 'src/stores/options-store';
 import { useFiltersStore } from 'src/stores/filters-store';
+import ServicesBox from 'src/components/shared/ServicesBox.vue';
+import type { FilterGenreChip } from 'src/composables/dialogs/useServiceFilter';
 
-const optionsStore = useOptionsStore();
 const filtersStore = useFiltersStore();
+
+const genreIcon = (g: FilterGenreChip) => g.icon ?? 'face';
 
 const props = defineProps<{ dialog: boolean }>();
 const emit = defineEmits<DialogEmits & FiltersEmits>();
@@ -209,9 +145,8 @@ const emit = defineEmits<DialogEmits & FiltersEmits>();
 const {
   includePriceRange,
   prices,
-  // Computed
+  filterGenres,
   amountOfFilters,
-  clearServices,
   cleanFilters,
   sendFilter,
 } = useFilterService(emit);

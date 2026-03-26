@@ -8,7 +8,7 @@
         class="col-11 flex flex-center"
         style="font-size: medium; color: #5e5e62; font-weight: bold"
       >
-        Tu servicio es:
+        {{ sectionTitle }}
       </div>
       <div v-if="Object.keys(selectedServicesIDs).length > 0" class="col-1">
         <q-btn @click="clear" color="red" icon="close" size="sm" round flat />
@@ -61,6 +61,11 @@ const props = defineProps({
   isEditMode: {
     type: Boolean,
     default: false,
+  },
+  /** Título de la cabecera (filtros vs crear/editar). */
+  sectionTitle: {
+    type: String,
+    default: 'Tu servicio es:',
   },
 });
 

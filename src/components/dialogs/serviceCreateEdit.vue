@@ -211,6 +211,7 @@
 
 <script setup>
 import { ref } from 'vue';
+import { useQueryClient } from '@tanstack/vue-query';
 import { useQuasar } from 'quasar';
 import { useServiceCreateEdit } from 'src/composables/services/useServiceCreateEdit';
 import { prepareImagesForUpload } from 'src/helpers/cloudinaryHelpers';
@@ -254,6 +255,7 @@ const {
 // Problematic variables
 const dialog = defineModel({ default: false });
 const $q = useQuasar();
+const queryClient = useQueryClient();
 
 const removeImage = (file) => {
   files.value = files.value.filter((f) => f !== file);
@@ -339,13 +341,16 @@ const controlStepper = async () => {
 };
 
 const createService = async () => {
-  await createServiceHelper(formData.value);
-  dialog.value = false;
+  await createServiceHelper(formData.value, $q);
+  await queryClient.invalidateQueries({ queryKey: ['services'] });
 };
 
 const updateService = async () => {
-  await updateServiceHelper(formData.value, props.id);
-  dialog.value = false;
+  await updateServiceHelper(formData.value, props.id, $q);
+  await queryClient.invalidateQueries({ queryKey: ['services'] });
+  if (props.id) {
+    await queryClient.invalidateQueries({ queryKey: ['service', props.id] });
+  }
 };
 
 const close = () => {

@@ -85,6 +85,9 @@ export const useService = (/* serviceIdRef: Ref<string> */) => {
 export const useServiceForEdition = () => {
   const q = useQuasar();
   const serviceIdEditRef = ref<string>('');
+  /** Solo abrir el modal cuando el usuario elige editar; no al refetch tras guardar (invalidate). */
+  const pendingOpenEditDialog = ref(false);
+
   const { isLoading, data, isFetching } = useQuery<Service>({
     queryKey: ['service', serviceIdEditRef],
     queryFn: ({ queryKey }) => {
@@ -98,31 +101,42 @@ export const useServiceForEdition = () => {
     placeholderData: (previousData) => previousData,
   });
 
-  watch(data, (newValue) => {
-    if (newValue && newValue.id) {
-      q.dialog({
-        component: ServiceCreateEdit,
-        componentProps: {
-          name: newValue.name,
-          detail: {
-            description: newValue.detail.description,
-          },
-          price: Number(newValue.price),
-          images: newValue.images,
-          tags: newValue.tags,
-          isEditMode: true,
-          id: newValue.id,
-        },
-        persistent: true,
-      }).onOk((e) => {
-        if (e === 'cancel') {
-          serviceIdEditRef.value = ''; // Limpiamos el ID para cerrar el diálogo
-        } else {
-          serviceIdEditRef.value = '';
-        }
-      });
-      // Si no hay un servicio válido (por ejemplo, al limpiar el ID)
+  watch(serviceIdEditRef, (newId, oldId) => {
+    if (newId && newId !== oldId) {
+      pendingOpenEditDialog.value = true;
     }
+    if (!newId) {
+      pendingOpenEditDialog.value = false;
+    }
+  });
+
+  watch(data, (newValue) => {
+    if (!newValue?.id) return;
+    if (!pendingOpenEditDialog.value) return;
+    if (newValue.id !== serviceIdEditRef.value) return;
+    pendingOpenEditDialog.value = false;
+
+    q.dialog({
+      component: ServiceCreateEdit,
+      componentProps: {
+        name: newValue.name,
+        detail: {
+          description: newValue.detail.description,
+        },
+        price: Number(newValue.price),
+        images: newValue.images,
+        tags: newValue.tags,
+        isEditMode: true,
+        id: newValue.id,
+      },
+      persistent: true,
+    }).onOk((e) => {
+      if (e === 'cancel') {
+        serviceIdEditRef.value = ''; // Limpiamos el ID para cerrar el diálogo
+      } else {
+        serviceIdEditRef.value = '';
+      }
+    });
   });
 
   return {

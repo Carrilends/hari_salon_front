@@ -3,34 +3,28 @@ import type { ServiceFormData } from 'src/composables/services/useServiceCreateE
 import { useQuasar } from 'quasar';
 import { Tag } from 'src/interfaces/tag';
 
+type QuasarInstance = ReturnType<typeof useQuasar>;
+
 /** ------------- CREATE SERVICE -------------
  * ------------------------------------------------------------------------
  * Helper to create a service
  * @param data - ServiceFormData
+ * @param q - Quasar instance from component setup (do not call useQuasar here after async)
  * @returns void
  * ------------------------------------------------------------------------
  * ------------------------------------------------------------------------
  */
-export const createServiceHelper = async (data: ServiceFormData) => {
-  const q = useQuasar();
+export const createServiceHelper = async (
+  data: ServiceFormData,
+  q: QuasarInstance
+) => {
   try {
-    adminServiceApi
-      .post('/service', data)
-      .then(() => {
-        q.notify({
-          type: 'positive',
-          message: 'Servicio creado exitosamente',
-          position: 'bottom',
-        });
-      })
-      .catch(() => {
-        // error
-        q.notify({
-          type: 'negative',
-          message: 'Error al crear el servicio',
-          position: 'bottom',
-        });
-      });
+    await adminServiceApi.post('/service', data);
+    q.notify({
+      type: 'positive',
+      message: 'Servicio creado exitosamente',
+      position: 'bottom',
+    });
   } catch (error) {
     q.notify({
       type: 'negative',
@@ -45,34 +39,23 @@ export const createServiceHelper = async (data: ServiceFormData) => {
  * ------------------------------------------------------------------------
  * Helper to update a service
  * @param data - ServiceFormData
+ * @param q - Quasar instance from component setup (do not call useQuasar here after async)
  * @returns void
  * ------------------------------------------------------------------------
  * ------------------------------------------------------------------------
  */
 export const updateServiceHelper = async (
   data: ServiceFormData,
-  id: string
+  id: string,
+  q: QuasarInstance
 ) => {
-  // Lógica para actualizar el servicio (a implementar)
-  const q = useQuasar();
   try {
-    adminServiceApi
-      .patch(`/service/${id}`, data)
-      .then(() => {
-        q.notify({
-          type: 'positive',
-          message: 'Servicio actualizado exitosamente',
-          position: 'bottom',
-        });
-      })
-      .catch(() => {
-        // error
-        q.notify({
-          type: 'negative',
-          message: 'Error al actualizar el servicio',
-          position: 'bottom',
-        });
-      });
+    await adminServiceApi.patch(`/service/${id}`, data);
+    q.notify({
+      type: 'positive',
+      message: 'Servicio actualizado exitosamente',
+      position: 'bottom',
+    });
   } catch (error) {
     q.notify({
       type: 'negative',

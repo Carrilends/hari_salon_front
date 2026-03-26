@@ -8,6 +8,8 @@ export interface Tag {
 
 export interface GenresI extends Tag {
   name: Genres;
+  /** Asignado en options-store al hidratar géneros. */
+  icon?: string;
 }
 
 export type Genres = 'Masculino' | 'Femenino' | 'Unisex' | 'Niños';

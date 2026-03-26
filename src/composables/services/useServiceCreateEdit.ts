@@ -44,7 +44,7 @@ export const useServiceCreateEdit = (props: ServiceFormData) => {
   const priceRef = ref(null);
   const selectedServicesIDs = ref<string[]>([]);
   const slide = ref(1);
-  const step = ref(3);
+  const step = ref(1);
   const files = ref<fileWithUrl[]>([]);
   // . . . . . services admin . . . . .
   const internGenres = ref(
