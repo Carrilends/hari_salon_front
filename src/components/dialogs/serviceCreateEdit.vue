@@ -219,6 +219,8 @@ import {
   createServiceHelper,
   updateServiceHelper,
 } from 'src/helpers/service.helpers';
+import { getService } from 'src/composables/services/useService';
+import { useBookStore } from 'src/stores/book-store';
 import ServicesBox from '../shared/ServicesBox.vue';
 // import { Image } from 'src/interfaces/service';
 
@@ -256,6 +258,7 @@ const {
 const dialog = defineModel({ default: false });
 const $q = useQuasar();
 const queryClient = useQueryClient();
+const bookStore = useBookStore();
 
 const removeImage = (file) => {
   files.value = files.value.filter((f) => f !== file);
@@ -350,6 +353,12 @@ const updateService = async () => {
   await queryClient.invalidateQueries({ queryKey: ['services'] });
   if (props.id) {
     await queryClient.invalidateQueries({ queryKey: ['service', props.id] });
+    try {
+      const fresh = await getService(props.id);
+      bookStore.syncBookingWithService(fresh);
+    } catch {
+      // La edición ya se guardó; si falla el GET, la reserva puede quedar desactualizada hasta otra sincronización.
+    }
   }
 };
 

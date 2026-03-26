@@ -51,16 +51,16 @@
               flat
             />
             <q-badge
-              v-if="bookingStore.totalBookings > 0"
+              v-if="bookingStore.totalBookingQuantity > 0"
               color="red"
               rounded
               floating
               class="filter-badge-count"
             >
               {{
-                bookingStore.totalBookings > 9
+                bookingStore.totalBookingQuantity > 9
                   ? '9+'
-                  : bookingStore.totalBookings
+                  : bookingStore.totalBookingQuantity
               }}
             </q-badge>
           </div>
@@ -78,14 +78,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onUpdated } from 'vue';
+import { ref, onUpdated, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import ourContact from 'src/components/dialogs/ourContact.vue';
 import whoWeAreDialog from 'src/components/dialogs/whoWeAreDialog.vue';
 import BookingDialog from 'src/components/dialogs/bookingDialog.vue';
-import { useBookStore } from 'src/stores/book-store';
+import { migrateLegacyBookings, useBookStore } from 'src/stores/book-store';
 
 const bookingStore = useBookStore();
+
+onMounted(() => {
+  const b = bookingStore.bookings;
+  if (!b.length) return;
+  const first = b[0];
+  if (first && typeof first === 'object' && 'quantity' in first) return;
+  bookingStore.$patch({
+    bookings: migrateLegacyBookings(b as unknown),
+  });
+});
 
 const router = useRouter();
 const whoWeAreDialogComponent = ref(false);

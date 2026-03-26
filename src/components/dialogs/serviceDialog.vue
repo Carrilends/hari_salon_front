@@ -23,8 +23,22 @@
           v-for="(img, index) in props.service.images"
           :key="index"
           :name="index"
-          :img-src="img.url"
-        />
+          class="carousel-slide q-pa-none"
+        >
+          <q-img
+            :src="img.url"
+            fit="cover"
+            class="carousel-detail-img"
+            spinner-color="primary"
+            spinner-size="42px"
+          >
+            <template #loading>
+              <div class="carousel-img-loading flex flex-center">
+                <q-spinner-dots color="primary" size="42px" />
+              </div>
+            </template>
+          </q-img>
+        </q-carousel-slide>
       </q-carousel>
 
       <q-card-section>
@@ -39,7 +53,7 @@
             icon="las la-dollar-sign"
             text-color="white"
           />
-          <span>{{ props.service.price }}.000 COP</span>
+          <span>{{ props.service.price }} COP</span>
         </q-chip>
         <div class="row flex-center">
           <div
@@ -130,7 +144,7 @@ if (props.service.detail.specifications.faceTypes) {
   });
 }
 
-const slide = ref(1);
+const slide = ref(0);
 const autoplay = ref(true);
 
 const thumbStyle: Partial<CSSStyleDeclaration> = {
@@ -152,6 +166,21 @@ defineOptions({
   height: 770px;
   max-width: 100%;
   min-width: 300px;
+}
+
+.carousel-slide {
+  overflow: hidden;
+}
+
+.carousel-detail-img {
+  width: 100%;
+  height: 365px;
+}
+
+.carousel-img-loading {
+  width: 100%;
+  height: 365px;
+  background: linear-gradient(135deg, #eceff1 0%, #f5f5f5 100%);
 }
 // Asegúrate de estilizar el div interno de scroll:
 ::v-deep(.custom-scrollbar .q-virtual-scroll__content) {

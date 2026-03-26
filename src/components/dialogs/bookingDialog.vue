@@ -19,7 +19,7 @@
               <div class="title-text">TUS RESERVAS</div>
               <!-- Badge con el número de reservas -->
               <div class="badge">
-                {{ bookStore.bookings.length }}
+                {{ bookStore.totalBookingQuantity }}
               </div>
             </div>
             <!-- SERVICIOS DERIVADOS -->
@@ -30,7 +30,7 @@
               <div class="row">
                 <div class="col-11 flex flex-center">
                   {{
-                    bookStore.bookings.length
+                    bookStore.totalBookingQuantity
                       ? 'Aquí están tus reservas'
                       : 'No tienes reservas aún'
                   }}
@@ -50,28 +50,37 @@
               >
                 <q-list class="q-pr-md">
                   <q-item
-                    v-for="card in bookStore.bookings"
+                    v-for="line in bookStore.bookings"
                     class="q-py-md cursor-default hoverable"
-                    :key="card.id"
+                    :key="line.service.id"
                     v-ripple="false"
                   >
-                    <!-- style="border: solid 1px #d1d9e6;" -->
                     <q-avatar
                       size="75px"
-                      class="q-mr-md"
+                      class="q-mr-md booking-avatar"
                       style="background: #e3e3e8"
                     >
-                      <img
-                        style="width: 80px"
-                        :src="
-                          card.images.filter((img) => img.isPrincipal)[0].url
-                        "
-                      />
+                      <q-img
+                        :src="principalImageUrl(line)"
+                        fit="cover"
+                        spinner-color="primary"
+                        spinner-size="28px"
+                        class="full-width full-height"
+                      >
+                        <template #loading>
+                          <div
+                            class="full-width full-height flex flex-center booking-avatar-loading"
+                          >
+                            <q-spinner-dots color="primary" size="28px" />
+                          </div>
+                        </template>
+                      </q-img>
                     </q-avatar>
 
                     <q-item-section>
                       <div class="col-12 q-pt-sm">
                         <q-item-label
+                          class="row items-center no-wrap"
                           style="
                             font-weight: bold;
                             font-size: 17px;
@@ -80,16 +89,30 @@
                             color: #333;
                           "
                         >
-                          {{ card.name }}
+                          <span class="ellipsis">{{ line.service.name }}</span>
+                          <q-badge
+                            color="primary"
+                            rounded
+                            class="q-ml-sm"
+                          >
+                            ×{{ line.quantity }}
+                          </q-badge>
                         </q-item-label>
                         <q-item-label style="font-size: 15px; color: #333">
-                          <q-chip>
+                          <q-chip dense>
                             <q-avatar
                               icon="attach_money"
                               color="green"
                               text-color="white"
                             />
-                            {{ card.price }}
+                            {{ lineSubtotal(line) }}
+                            <span
+                              v-if="line.quantity > 1"
+                              class="text-grey-7 q-ml-xs"
+                              style="font-size: 13px"
+                            >
+                              ({{ line.service.price }} × {{ line.quantity }})
+                            </span>
                           </q-chip>
                         </q-item-label>
                       </div>
@@ -98,14 +121,14 @@
                     <q-item-section side>
                       <div class="side-btns">
                         <q-btn
-                          @click="removeBooking(card.id)"
+                          @click="removeBooking(line.service.id)"
                           round
                           size="md"
                           color="red"
                           icon="delete"
                         />
                         <q-btn
-                          @click="goToDetail(card)"
+                          @click="goToDetail(line.service)"
                           round
                           size="md"
                           color="primary"
@@ -118,7 +141,7 @@
               </q-scroll-area>
               <q-btn
                 @click="manageVisualizationDialog(true)"
-                :disable="!bookStore.bookings.length"
+                :disable="!bookStore.totalBookingQuantity"
                 icon="event"
                 label="Elegir Fecha y Hora"
                 color="primary"
@@ -141,7 +164,7 @@
                       color="green"
                       text-color="white"
                     />
-                    {{ totalCost }}
+                    {{ bookStore.bookingsCost }}
                   </q-chip>
                 </div>
                 <!-- Recuadro de fecha y hora -->
@@ -167,7 +190,7 @@
         >
           <q-btn
             @click="sendBookingData"
-            :disable="!bookStore.bookings.length || !date || !time"
+            :disable="!bookStore.totalBookingQuantity || !date || !time"
             label="Reservar"
             color="blue"
           />
@@ -265,10 +288,12 @@ import {
   type DialogEmits,
 } from 'src/composables/dialogs/useDialogService';
 import { useBookStore } from 'src/stores/book-store';
+import type { BookingLine } from 'src/interfaces/booking';
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import ServiceDialog from './serviceDialog.vue';
 import Service from 'src/interfaces/service';
+import { getService } from 'src/composables/services/useService';
 
 const $q = useQuasar();
 const bookStore = useBookStore();
@@ -281,9 +306,17 @@ const date = ref('' /* '2025/01/01' */);
 const time = ref('');
 const tab = ref('date');
 
+const principalImageUrl = (line: BookingLine) => {
+  const img = line.service.images?.find((i) => i.isPrincipal);
+  return img?.url ?? '';
+};
+
+const lineSubtotal = (line: BookingLine) =>
+  Number(line.service.price || 0) * line.quantity;
+
 const sendBookingData = () => {
   // Validar que haya reservas
-  if (!bookStore.bookings.length) {
+  if (!bookStore.totalBookingQuantity) {
     $q.notify({
       type: 'warning',
       message: 'No hay servicios reservados',
@@ -324,12 +357,6 @@ watch(date, (newDate, oldDate) => {
   if (newDate !== oldDate) {
     tab.value = 'time';
   }
-});
-
-const totalCost = computed(() => {
-  return bookStore.bookings.reduce((acc, booking) => {
-    return acc + Number(booking.price || 0);
-  }, 0);
 });
 
 const formattedDateTime = computed(() => {
@@ -385,14 +412,16 @@ const formattedDateTime = computed(() => {
 
 const generateWhatsAppMessage = (): string => {
   const servicesList = bookStore.bookings
-    .map((booking) => {
-      const principalImage = booking.images.find((img) => img.isPrincipal);
+    .map((line) => {
+      const principalImage = line.service.images?.find((img) => img.isPrincipal);
       const imageUrl = principalImage?.url || '';
+      const qty =
+        line.quantity > 1 ? ` (×${line.quantity})` : '';
 
       if (imageUrl) {
-        return `• ${booking.name}: ${imageUrl}`;
+        return `• ${line.service.name}${qty}: ${imageUrl}`;
       }
-      return `• ${booking.name}`;
+      return `• ${line.service.name}${qty}`;
     })
     .join('\n');
 
@@ -401,7 +430,7 @@ const generateWhatsAppMessage = (): string => {
 *Servicios reservados:*
 ${servicesList}
 
-*Costo Total:* $${totalCost.value}
+*Costo Total:* $${bookStore.bookingsCost}
 
 *Fecha y Hora:* ${formattedDateTime.value}`;
 
@@ -426,16 +455,29 @@ const removeBooking = (id: string) => {
   });
 };
 
-const goToDetail = (card: Service) => {
-  $q.dialog({
-    component: ServiceDialog,
-    componentProps: {
-      service: card,
-      isFromBooking: true,
-    },
-  }).onOk((e) => {
-    console.log('Dialog OK:', e);
-  });
+const goToDetail = async (card: Service) => {
+  $q.loading.show({ message: 'Cargando servicio...' });
+  try {
+    const fresh = await getService(card.id);
+    bookStore.syncBookingWithService(fresh);
+    $q.dialog({
+      component: ServiceDialog,
+      componentProps: {
+        service: fresh,
+        isFromBooking: true,
+      },
+    }).onOk((e) => {
+      console.log('Dialog OK:', e);
+    });
+  } catch {
+    $q.notify({
+      type: 'negative',
+      message: 'No se pudo cargar el detalle del servicio',
+      position: 'top',
+    });
+  } finally {
+    $q.loading.hide();
+  }
 };
 
 const thumbStyle = {
@@ -526,6 +568,14 @@ const { dialog, hide } = useDialog(props, emit);
 .hoverable:hover .side-btns {
   opacity: 1;
   transform: translateX(0) scale(1);
+}
+
+.booking-avatar {
+  overflow: hidden;
+}
+
+.booking-avatar-loading {
+  background: #e3e3e8;
 }
 
 /* Estilos para el diálogo de fecha y hora */

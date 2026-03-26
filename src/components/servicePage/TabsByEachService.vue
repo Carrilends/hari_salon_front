@@ -6,10 +6,19 @@
   >
     <div class="card-content">
       <div :class="['img-container flex flex-center', { hovered: isHovering }]">
-        <img
-          style="border-radius: 20px 20px 0px 0px; width: 100%; height: 100%"
+        <q-img
           :src="props.props.url || 'src/assets/examples/tupper.jpg'"
-        />
+          fit="cover"
+          spinner-color="primary"
+          spinner-size="36px"
+          class="service-card-img"
+        >
+          <template #loading>
+            <div class="service-card-img-loading flex flex-center">
+              <q-spinner-dots color="primary" size="36px" />
+            </div>
+          </template>
+        </q-img>
         <q-chip class="chip-overlay">
           <q-avatar
             color="green"
@@ -140,11 +149,22 @@ defineOptions({
   overflow: hidden; // Muy importante para que la imagen no se salga
   cursor: pointer; // Cambia el cursor al pasar por encima
 }
-.img-container img {
+.service-card-img {
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  height: 100%;
   transition: transform 0.3s ease-in-out;
 }
-.img-container.hovered img {
-  transform: scale(1.05); // Efecto de zoom hacia adentro
+
+.service-card-img-loading {
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+  background: linear-gradient(135deg, #eceff1 0%, #f5f5f5 100%);
+}
+
+.img-container.hovered .service-card-img {
+  transform: scale(1.05);
 }
 
 .chip-overlay {
