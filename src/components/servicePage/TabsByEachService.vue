@@ -19,15 +19,9 @@
             </div>
           </template>
         </q-img>
-        <q-chip class="chip-overlay">
-          <q-avatar
-            color="green"
-            size="35px"
-            icon="las la-dollar-sign"
-            text-color="white"
-          />
-          {{ props.props.precio }} COP
-        </q-chip>
+        <div class="chip-overlay">
+          <PriceDisplayPill :amount="props.props.precio" dense />
+        </div>
 
         <q-btn
           v-if="authStore.isLoggedIn"
@@ -69,6 +63,7 @@ import { deleteService } from 'src/composables/services/useService';
 import { useAuthStore } from 'src/stores/auth-store';
 import { ref } from 'vue';
 import DeleteBtn from 'src/components/shared/btns/DeleteBtn.vue';
+import PriceDisplayPill from 'src/components/shared/PriceDisplayPill.vue';
 
 const authStore = useAuthStore();
 
@@ -171,8 +166,8 @@ defineOptions({
   position: absolute;
   top: 8px;
   right: 8px;
-  border-radius: 10px;
   z-index: 10;
+  max-width: calc(100% - 16px);
 }
 
 .btn-overlay-edit {

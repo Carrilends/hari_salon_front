@@ -27,8 +27,12 @@ async function submitLogin() {
     password: password.value,
   };
 
+  $q.loading.show({
+    message: 'Iniciando sesión...',
+    spinnerColor: 'primary',
+  });
   try {
-    await login(); // espera a que el store se llene correctamente
+    await login();
     router.push({ path: '/services' });
   } catch (err: unknown) {
     $q.notify({
@@ -37,6 +41,8 @@ async function submitLogin() {
         (err as ApiError)?.response?.data?.message ||
         'Credenciales inválidas o error de servidor',
     });
+  } finally {
+    $q.loading.hide();
   }
 }
 </script>
@@ -86,8 +92,7 @@ async function submitLogin() {
 
       <div class="row justify-center">
         <q-btn
-          :loading="isLoading"
-          :disable="!username || !password"
+          :disable="!username || !password || isLoading"
           type="submit"
           label="Login"
           color="primary"

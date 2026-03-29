@@ -90,36 +90,54 @@
                           "
                         >
                           <span class="ellipsis">{{ line.service.name }}</span>
-                          <q-badge
-                            color="primary"
-                            rounded
-                            class="q-ml-sm"
-                          >
+                          <q-badge color="primary" rounded class="q-ml-sm">
                             ×{{ line.quantity }}
                           </q-badge>
                         </q-item-label>
-                        <q-item-label style="font-size: 15px; color: #333">
-                          <q-chip dense>
-                            <q-avatar
-                              icon="attach_money"
-                              color="green"
-                              text-color="white"
-                            />
-                            {{ lineSubtotal(line) }}
-                            <span
-                              v-if="line.quantity > 1"
-                              class="text-grey-7 q-ml-xs"
-                              style="font-size: 13px"
-                            >
-                              ({{ line.service.price }} × {{ line.quantity }})
-                            </span>
-                          </q-chip>
+                        <q-item-label class="booking-line-price">
+                          <PriceDisplayPill
+                            :amount="lineSubtotal(line)"
+                            dense
+                          />
+                          <span
+                            v-if="line.quantity > 1"
+                            class="booking-price-detail text-grey-7 q-ml-sm"
+                          >
+                            ({{
+                              formatCopDisplay(line.service.price)
+                            }}
+                            × {{ line.quantity }})
+                          </span>
                         </q-item-label>
                       </div>
                     </q-item-section>
 
-                    <q-item-section side>
+                    <q-item-section side class="items-end">
                       <div class="side-btns">
+                        <div class="booking-quantity-controls">
+                          <q-btn
+                            @click="increaseBooking(line.service)"
+                            round
+                            flat
+                            dense
+                            size="sm"
+                            color="primary"
+                            icon="add"
+                          />
+                          <div class="booking-quantity-value">
+                            {{ line.quantity }}
+                          </div>
+                          <q-btn
+                            @click="decreaseBooking(line.service.id)"
+                            round
+                            flat
+                            dense
+                            size="sm"
+                            color="grey-8"
+                            icon="remove"
+                            :disable="line.quantity <= 1"
+                          />
+                        </div>
                         <q-btn
                           @click="removeBooking(line.service.id)"
                           round
@@ -158,14 +176,10 @@
                   "
                 >
                   Total de reservas:
-                  <q-chip size="16px">
-                    <q-avatar
-                      icon="attach_money"
-                      color="green"
-                      text-color="white"
-                    />
-                    {{ bookStore.bookingsCost }}
-                  </q-chip>
+                  <PriceDisplayPill
+                    class="q-ml-sm"
+                    :amount="bookStore.bookingsCost"
+                  />
                 </div>
                 <!-- Recuadro de fecha y hora -->
                 <div class="date-time-info-box q-mt-md">
@@ -294,6 +308,8 @@ import { useQuasar } from 'quasar';
 import ServiceDialog from './serviceDialog.vue';
 import Service from 'src/interfaces/service';
 import { getService } from 'src/composables/services/useService';
+import { formatCopDisplay } from 'src/helpers/price-display';
+import PriceDisplayPill from 'src/components/shared/PriceDisplayPill.vue';
 
 const $q = useQuasar();
 const bookStore = useBookStore();
@@ -313,6 +329,14 @@ const principalImageUrl = (line: BookingLine) => {
 
 const lineSubtotal = (line: BookingLine) =>
   Number(line.service.price || 0) * line.quantity;
+
+const increaseBooking = (service: Service) => {
+  bookStore.incrementBookingQuantity(service);
+};
+
+const decreaseBooking = (serviceId: string) => {
+  bookStore.decrementBookingQuantity(serviceId);
+};
 
 const sendBookingData = () => {
   // Validar que haya reservas
@@ -413,10 +437,11 @@ const formattedDateTime = computed(() => {
 const generateWhatsAppMessage = (): string => {
   const servicesList = bookStore.bookings
     .map((line) => {
-      const principalImage = line.service.images?.find((img) => img.isPrincipal);
+      const principalImage = line.service.images?.find(
+        (img) => img.isPrincipal
+      );
       const imageUrl = principalImage?.url || '';
-      const qty =
-        line.quantity > 1 ? ` (×${line.quantity})` : '';
+      const qty = line.quantity > 1 ? ` (×${line.quantity})` : '';
 
       if (imageUrl) {
         return `• ${line.service.name}${qty}: ${imageUrl}`;
@@ -430,7 +455,7 @@ const generateWhatsAppMessage = (): string => {
 *Servicios reservados:*
 ${servicesList}
 
-*Costo Total:* $${bookStore.bookingsCost}
+*Costo Total:* ${formatCopDisplay(bookStore.bookingsCost)} COP
 
 *Fecha y Hora:* ${formattedDateTime.value}`;
 
@@ -451,7 +476,15 @@ const removeBooking = (id: string) => {
     cancel: true,
     persistent: true,
   }).onOk(() => {
-    bookStore.removeBooking(id);
+    $q.loading.show({
+      message: 'Eliminando reserva...',
+      spinnerColor: 'primary',
+    });
+    try {
+      bookStore.removeBooking(id);
+    } finally {
+      $q.loading.hide();
+    }
   });
 };
 
@@ -570,6 +603,28 @@ const { dialog, hide } = useDialog(props, emit);
   transform: translateX(0) scale(1);
 }
 
+.booking-quantity-controls {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  min-width: 42px;
+  padding: 0.2rem 0.15rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(66, 66, 66, 0.12);
+}
+
+.booking-quantity-value {
+  min-width: 24px;
+  text-align: center;
+  font-weight: bold;
+  color: #333;
+  font-size: 14px;
+  line-height: 1;
+}
+
 .booking-avatar {
   overflow: hidden;
 }
@@ -675,5 +730,18 @@ const { dialog, hide } = useDialog(props, emit);
   font-weight: 500;
   font-family: Georgia, 'Times New Roman', Times, serif;
   line-height: 1.4;
+}
+
+.booking-line-price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 0;
+  font-size: 15px;
+  color: #333;
+}
+
+.booking-price-detail {
+  font-size: 13px;
 }
 </style>

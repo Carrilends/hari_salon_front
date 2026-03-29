@@ -2,111 +2,100 @@
   <q-dialog
     ref="dialogRef"
     :persistent="!props.isFromBooking"
-    transition-show="jump-right"
-    transition-hide="jump-left"
+    transition-show="scale"
+    transition-hide="scale"
   >
-    <q-card class="my-card">
-      <q-carousel
-        v-model="slide"
-        animated
-        navigation
-        infinite
-        :autoplay="autoplay"
-        arrows
-        transition-prev="slide-right"
-        transition-next="slide-left"
-        @mouseenter="autoplay = false"
-        @mouseleave="autoplay = true"
-        style="height: 365px"
-      >
-        <q-carousel-slide
-          v-for="(img, index) in props.service.images"
-          :key="index"
-          :name="index"
-          class="carousel-slide q-pa-none"
+    <q-card class="service-detail-card">
+      <div class="detail-media">
+        <q-carousel
+          v-model="slide"
+          class="detail-carousel"
+          animated
+          :navigation="carouselImages.length > 1"
+          :infinite="carouselImages.length > 1"
+          :autoplay="carouselImages.length > 1 ? autoplay : false"
+          :arrows="carouselImages.length > 1"
+          transition-prev="slide-right"
+          transition-next="slide-left"
+          control-color="grey-8"
+          control-type="regular"
+          @mouseenter="autoplay = false"
+          @mouseleave="autoplay = true"
         >
-          <q-img
-            :src="img.url"
-            fit="cover"
-            class="carousel-detail-img"
-            spinner-color="primary"
-            spinner-size="42px"
+          <q-carousel-slide
+            v-for="(img, index) in carouselImages"
+            :key="img.id ?? index"
+            :name="index"
+            class="detail-slide q-pa-none"
           >
-            <template #loading>
-              <div class="carousel-img-loading flex flex-center">
-                <q-spinner-dots color="primary" size="42px" />
-              </div>
-            </template>
-          </q-img>
-        </q-carousel-slide>
-      </q-carousel>
+            <q-img
+              :src="img.url"
+              fit="cover"
+              class="detail-img"
+              spinner-color="primary"
+              spinner-size="42px"
+              loading="eager"
+            >
+              <template #loading>
+                <div class="detail-img-loading flex flex-center">
+                  <q-spinner-dots color="primary" size="42px" />
+                </div>
+              </template>
+              <template #error>
+                <div class="detail-img-error flex flex-center text-grey-6">
+                  <q-icon name="broken_image" size="48px" />
+                </div>
+              </template>
+            </q-img>
+          </q-carousel-slide>
+        </q-carousel>
 
-      <q-card-section>
-        <q-chip
-          class="absolute"
-          style="top: 0; right: 12px; transform: translateY(-80%)"
-          size="16px"
-        >
-          <q-avatar
-            color="green"
-            size="40px"
-            icon="las la-dollar-sign"
-            text-color="white"
-          />
-          <span>{{ props.service.price }} COP</span>
-        </q-chip>
-        <div class="row flex-center">
-          <div
-            class="col-12 text-subtitle1 q-pb-sm"
-            style="
-              font-size: 25px;
-              font-family: Verdana, Geneva, Tahoma, sans-serif, serif;
-              font-weight: bold;
-            "
+        <div class="detail-price-wrap">
+          <PriceDisplayPill :amount="props.service.price" />
+        </div>
+      </div>
+
+      <q-card-section class="detail-body">
+        <h2 class="detail-title">{{ props.service.name }}</h2>
+
+        <div class="detail-desc">
+          <span class="detail-desc__label">Descripción</span>
+          <q-scroll-area
+            :thumb-style="thumbStyle"
+            :bar-style="{ borderRadius: '4px' }"
+            class="detail-desc__scroll"
           >
-            {{ props.service.name }}
-          </div>
-          <div
-            class="col-12 q-pa-xs"
-            style="background-color: #f0f0f0; border-radius: 7px"
-          >
-            <div
-              class="q-pt-xs q-pl-sm"
-              style="font-size: 15px; font-weight: bold"
-            >
-              Descripción:
-            </div>
-            <q-scroll-area
-              :thumb-style="thumbStyle"
-              class="q-pr-md q-pl-sm q-py-sm"
-              style="
-                height: 180px;
-                line-height: 1.4;
-                word-spacing: 0.1rem;
-                font-size: 16px;
-              "
-            >
-              {{ props.service.detail.description }}
-            </q-scroll-area>
-          </div>
+            <p class="detail-desc__text">
+              {{ props.service.detail?.description || 'Sin descripción.' }}
+            </p>
+          </q-scroll-area>
         </div>
       </q-card-section>
-      <q-card-section class="q-pt-none"> </q-card-section>
-      <q-separator />
-      <q-card-actions class="q-mt-md" v-if="!props.isFromBooking" align="right">
+
+      <q-separator class="detail-sep" />
+
+      <q-card-actions
+        v-if="!props.isFromBooking"
+        class="detail-actions"
+        align="stretch"
+      >
         <q-btn
-          @click="onDialogOK('cancel')"
-          push
-          color="red"
+          class="col"
+          flat
+          no-caps
+          color="grey-8"
           label="Cancelar"
+          @click="onDialogOK('cancel')"
         />
-        <!---->
         <q-btn
-          @click="onDialogOK(props.service)"
-          outline
-          color="green"
+          class="col detail-btn-book"
+          unelevated
+          no-caps
+          color="primary"
+          text-color="white"
           label="Reservar"
           icon="event"
+          @click="onDialogOK(props.service)"
         />
       </q-card-actions>
     </q-card>
@@ -114,9 +103,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useDialogPluginComponent } from 'quasar';
 import Service, { faceTypes } from 'src/interfaces/service';
+import PriceDisplayPill from 'src/components/shared/PriceDisplayPill.vue';
+
+const PLACEHOLDER_IMG = 'src/assets/examples/tupper.jpg';
 
 const props = defineProps<{
   service: Service;
@@ -135,7 +127,7 @@ const convertFaceType: { [key in faceTypes]: string[] } = {
   Long: ['Largo', 'exposure_zero'],
 };
 
-if (props.service.detail.specifications.faceTypes) {
+if (props.service.detail?.specifications?.faceTypes) {
   props.service.detail.specifications.faceTypes.forEach((faceType) => {
     heavyList.push({
       icon: convertFaceType[faceType][1],
@@ -144,14 +136,26 @@ if (props.service.detail.specifications.faceTypes) {
   });
 }
 
+const carouselImages = computed(() => {
+  const imgs = props.service.images;
+  if (imgs?.length) return imgs;
+  return [
+    {
+      id: 'placeholder',
+      url: PLACEHOLDER_IMG,
+      isPrincipal: true,
+    },
+  ];
+});
+
 const slide = ref(0);
 const autoplay = ref(true);
 
 const thumbStyle: Partial<CSSStyleDeclaration> = {
-  right: '4px',
-  borderRadius: '5px',
-  backgroundColor: '#027be3',
-  width: '5px',
+  right: '2px',
+  borderRadius: '4px',
+  backgroundColor: 'rgba(194, 24, 91, 0.45)',
+  width: '6px',
 };
 
 defineEmits([...useDialogPluginComponent.emits]);
@@ -161,56 +165,186 @@ defineOptions({
 </script>
 
 <style lang="scss" scoped>
-.my-card {
-  width: 550px;
-  height: 770px;
-  max-width: 100%;
-  min-width: 300px;
+.service-detail-card {
+  width: min(100%, 520px);
+  max-width: 96vw;
+  max-height: min(92vh, 820px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #fdfaf8;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.14);
 }
 
-.carousel-slide {
+.detail-media {
+  position: relative;
+  flex-shrink: 0;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  max-height: min(44vh, 320px);
+  background: linear-gradient(145deg, #eceff1 0%, #e8e0e4 100%);
+}
+
+.detail-carousel {
+  height: 100%;
+  width: 100%;
+}
+
+.detail-carousel :deep(.q-carousel__slides-container) {
+  height: 100%;
+}
+
+.detail-carousel :deep(.q-panel) {
+  height: 100%;
+}
+
+.detail-slide {
+  height: 100%;
   overflow: hidden;
 }
 
-.carousel-detail-img {
+.detail-img {
   width: 100%;
-  height: 365px;
+  height: 100%;
+  min-height: 100%;
 }
 
-.carousel-img-loading {
+.detail-img :deep(.q-img__container) {
+  padding-bottom: 0 !important;
+  height: 100% !important;
+  position: absolute !important;
+  inset: 0;
+}
+
+.detail-img :deep(img) {
+  object-fit: cover;
+  object-position: center;
+}
+
+.detail-img-loading,
+.detail-img-error {
   width: 100%;
-  height: 365px;
-  background: linear-gradient(135deg, #eceff1 0%, #f5f5f5 100%);
-}
-// Asegúrate de estilizar el div interno de scroll:
-::v-deep(.custom-scrollbar .q-virtual-scroll__content) {
-  display: flex;
+  height: 100%;
+  min-height: 120px;
+  background: linear-gradient(135deg, #eceff1 0%, #f5f0f3 100%);
 }
 
-::v-deep(.custom-scrollbar) {
-  max-height: 100px; // asegúrate de ajustar el alto
-  overflow-x: auto;
+.detail-price-wrap {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 2;
+}
 
-  // Scrollbar horizontal personalizada para navegadores modernos
-  &::-webkit-scrollbar {
-    height: 6px;
-  }
+.detail-body {
+  flex: 1;
+  min-height: 0;
+  padding: 1.25rem 1.35rem 1rem;
+}
 
-  &::-webkit-scrollbar-track {
-    background: #f0f0f0;
-    border-radius: 15px;
-  }
+.detail-title {
+  margin: 0 0 1rem;
+  font-size: 1.35rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+  color: #2c2c2c;
+}
 
-  &::-webkit-scrollbar-thumb {
-    background-color: #abd7fa;
-    border-radius: 5px;
-  }
+.detail-desc {
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid rgba(61, 61, 61, 0.08);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  padding: 0.75rem 0.85rem 0.65rem;
+}
 
-  &::-webkit-scrollbar-thumb:hover {
-    background-color: #6fb1e3;
-  }
+.detail-desc__label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8a8580;
+  margin-bottom: 0.5rem;
+  padding-left: 0.15rem;
+}
 
-  scrollbar-color: #d1c4d4 #f0f0f0;
-  scrollbar-width: thin;
+.detail-desc__scroll {
+  height: min(200px, 28vh);
+}
+
+.detail-desc__text {
+  margin: 0;
+  padding-right: 0.35rem;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: #4a4542;
+  white-space: pre-wrap;
+}
+
+.detail-sep {
+  background: rgba(61, 61, 61, 0.08);
+}
+
+.detail-actions {
+  padding: 0.85rem 1rem 1rem;
+  gap: 0.5rem;
+}
+
+.detail-btn-book {
+  border-radius: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  box-shadow: 0 4px 14px rgba(25, 118, 210, 0.35);
+}
+
+.detail-carousel :deep(.q-carousel__navigation-inner) {
+  padding: 4px 0;
+}
+
+/* El nodo .q-carousel__arrow es el wrapper ancho con top+bottom; no poner fondo ni radius ahí */
+.detail-carousel :deep(.q-carousel__prev-arrow),
+.detail-carousel :deep(.q-carousel__next-arrow) {
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
+  background: transparent !important;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.detail-carousel :deep(.q-carousel__prev-arrow--horizontal) {
+  left: 8px;
+}
+
+.detail-carousel :deep(.q-carousel__next-arrow--horizontal) {
+  right: 8px;
+}
+
+.detail-carousel :deep(.q-carousel__arrow .q-btn) {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  color: #3d3d3d !important;
+  background: rgba(255, 255, 255, 0.94) !important;
+  border-radius: 50%;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.14);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.detail-carousel :deep(.q-carousel__arrow .q-btn .q-icon) {
+  font-size: 22px;
+}
+
+.detail-carousel :deep(.q-carousel__navigation .q-btn) {
+  margin: 4px;
+}
+
+.detail-carousel :deep(.q-carousel__navigation-icon--inactive) {
+  opacity: 0.45;
 }
 </style>

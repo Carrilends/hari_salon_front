@@ -83,25 +83,15 @@
               </div>
               <div class="col-6">
                 <q-input
-                  v-model="formData.price"
+                  :model-value="priceDisplay"
                   ref="priceRef"
                   outlined
-                  type="number"
                   prefix="$"
                   label="Precio del servicio"
-                  :rules="[
-                    (val) => !!val || 'El precio es obligatorio',
-                    (val) =>
-                      (val && val >= 5000) ||
-                      'El precio debe ser mayor o igual a $5000 Cop',
-                  ]"
-                >
-                  <template v-slot:append>
-                    <q-avatar>
-                      <q-icon name="attach_money" size="sm" color="green" />
-                    </q-avatar>
-                  </template>
-                </q-input>
+                  inputmode="numeric"
+                  :rules="priceRules"
+                  @update:model-value="onPriceInput"
+                />
               </div>
             </div>
           </div>
@@ -192,7 +182,13 @@
             <q-btn
               @click="controlStepper"
               color="primary"
-              :label="step === 3 ? 'Crear servicio' : 'Continuar'"
+              :label="
+                step === 3
+                  ? isEditMode
+                    ? 'Editar servicio'
+                    : 'Crear servicio'
+                  : 'Continuar'
+              "
             />
             <q-btn
               v-if="step > 1"
@@ -210,7 +206,12 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
+import {
+  copNumericValue,
+  formatCopDisplay,
+  parseCopInputToNumber,
+} from 'src/helpers/price-display';
 import { useQueryClient } from '@tanstack/vue-query';
 import { useQuasar } from 'quasar';
 import { useServiceCreateEdit } from 'src/composables/services/useServiceCreateEdit';
@@ -253,6 +254,38 @@ const {
   files,
   internGenres,
 } = useServiceCreateEdit(props);
+
+const priceDisplay = ref('');
+
+const priceRules = [
+  (val) =>
+    copNumericValue(val) !== null || 'El precio es obligatorio',
+  (val) => {
+    const n = copNumericValue(val);
+    return (
+      (n !== null && n >= 5000) ||
+      'El precio debe ser mayor o igual a 5.000 COP'
+    );
+  },
+];
+
+function onPriceInput(val) {
+  const n = parseCopInputToNumber(val);
+  formData.value.price = n;
+  priceDisplay.value = n === null ? '' : formatCopDisplay(n);
+}
+
+watch(
+  () => formData.value.price,
+  (p) => {
+    if (p === null || p === undefined || p === '') {
+      priceDisplay.value = '';
+    } else {
+      priceDisplay.value = formatCopDisplay(Number(p));
+    }
+  },
+  { immediate: true }
+);
 
 // Problematic variables
 const dialog = defineModel({ default: false });
@@ -298,7 +331,9 @@ const prepareFormData = async () => {
 
   formData.value.images = dividedImgs[1].concat(newImages);
   formData.value.tags = allGenres;
-  formData.value.price = Number(formData.value.price);
+  if (formData.value.price != null) {
+    formData.value.price = Number(formData.value.price);
+  }
 };
 
 const controlStepper = async () => {
@@ -332,13 +367,23 @@ const controlStepper = async () => {
         position: 'bottom',
       });
     } else {
-      await prepareFormData();
-      if (props.isEditMode) {
-        await updateService();
-      } else {
-        await createService();
+      $q.loading.show({
+        message: props.isEditMode
+          ? 'Guardando servicio...'
+          : 'Creando servicio...',
+        spinnerColor: 'primary',
+      });
+      try {
+        await prepareFormData();
+        if (props.isEditMode) {
+          await updateService();
+        } else {
+          await createService();
+        }
+        dialog.value = false;
+      } finally {
+        $q.loading.hide();
       }
-      dialog.value = false;
     }
   }
 };

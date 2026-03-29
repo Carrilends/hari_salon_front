@@ -44,24 +44,55 @@ export const useBookStore = defineStore(
     const bookings = ref<BookingLine[]>([]);
     const showDialog = ref(false);
 
-    const addBooking = (booking: Service) => {
-      const idx = bookings.value.findIndex((l) => l.service.id === booking.id);
-      if (idx !== -1) {
-        const line = bookings.value[idx];
-        if (!line) return;
-        bookings.value[idx] = {
-          service: booking,
-          quantity: line.quantity + 1,
-        };
-      } else {
-        bookings.value.push({ service: booking, quantity: 1 });
+    const updateBookingQuantity = (
+      serviceId: string,
+      quantity: number,
+      service?: Service
+    ) => {
+      const idx = bookings.value.findIndex((line) => line.service.id === serviceId);
+      if (idx === -1) return;
+
+      if (quantity <= 0) {
+        removeBooking(serviceId);
+        return;
       }
+
+      const currentLine = bookings.value[idx];
+      if (!currentLine) return;
+
+      bookings.value[idx] = {
+        service: service ?? currentLine.service,
+        quantity,
+      };
+    };
+
+    const addBooking = (booking: Service) => {
+      const idx = bookings.value.findIndex((line) => line.service.id === booking.id);
+      if (idx === -1) {
+        bookings.value.push({ service: booking, quantity: 1 });
+        return;
+      }
+
+      const currentLine = bookings.value[idx];
+      if (!currentLine) return;
+
+      updateBookingQuantity(booking.id, currentLine.quantity + 1, booking);
     };
 
     const removeBooking = (serviceId: string) => {
       bookings.value = bookings.value.filter(
         (line) => line.service.id !== serviceId
       );
+    };
+
+    const incrementBookingQuantity = (service: Service) => {
+      addBooking(service);
+    };
+
+    const decrementBookingQuantity = (serviceId: string) => {
+      const line = bookings.value.find((bookingLine) => bookingLine.service.id === serviceId);
+      if (!line || line.quantity <= 1) return;
+      updateBookingQuantity(serviceId, line.quantity - 1);
     };
 
     const syncBookingWithService = (service: Service) => {
@@ -92,6 +123,9 @@ export const useBookStore = defineStore(
       showDialog,
       addBooking,
       removeBooking,
+      updateBookingQuantity,
+      incrementBookingQuantity,
+      decrementBookingQuantity,
       syncBookingWithService,
       showDialogFn,
     };

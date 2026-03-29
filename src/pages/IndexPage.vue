@@ -49,8 +49,9 @@
       </q-list>
     </div>
   </div>
-  <!-- botón flotante con QPageSticky -->
+  <!-- botón flotante con QPageSticky (solo visitantes sin sesión) -->
   <q-page-sticky
+    v-if="!authStore.isLoggedIn"
     position="bottom-right"
     :offset="[18, 18]"
     style="z-index: 1000"
@@ -76,10 +77,12 @@
 import i18n from 'src/i18n';
 import { useRouter } from 'vue-router';
 import { useOptions } from 'src/composables/shared/useOptions';
+import { useAuthStore } from 'src/stores/auth-store';
 
 // const { isLoading } = useOptions()
 useOptions();
 
+const authStore = useAuthStore();
 const router = useRouter();
 function goToService(card: (typeof menuCards)[0]) {
   router.push({

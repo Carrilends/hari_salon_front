@@ -40,7 +40,7 @@
             </div>
           </div>
         </div>
-        <div class="col-3 flex flex-center">
+        <div class="col-3 row items-center justify-center q-gutter-x-sm no-wrap">
           <div class="filter-badge-wrapper">
             <q-btn
               @click="bookingStore.showDialogFn()"
@@ -64,6 +64,16 @@
               }}
             </q-badge>
           </div>
+          <q-btn
+            v-if="authStore.isLoggedIn"
+            class="color-bar"
+            icon="logout"
+            label="Salir"
+            rounded
+            flat
+            aria-label="Cerrar sesión"
+            @click="onLogout"
+          />
         </div>
       </div>
     </q-header>
@@ -84,8 +94,10 @@ import ourContact from 'src/components/dialogs/ourContact.vue';
 import whoWeAreDialog from 'src/components/dialogs/whoWeAreDialog.vue';
 import BookingDialog from 'src/components/dialogs/bookingDialog.vue';
 import { migrateLegacyBookings, useBookStore } from 'src/stores/book-store';
+import { useAuthStore } from 'src/stores/auth-store';
 
 const bookingStore = useBookStore();
+const authStore = useAuthStore();
 
 onMounted(() => {
   const b = bookingStore.bookings;
@@ -98,6 +110,12 @@ onMounted(() => {
 });
 
 const router = useRouter();
+
+function onLogout() {
+  authStore.logout();
+  router.push({ path: '/' });
+}
+
 const whoWeAreDialogComponent = ref(false);
 const ourContactDialog = ref(false);
 
