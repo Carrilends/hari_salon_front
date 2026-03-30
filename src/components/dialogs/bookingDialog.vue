@@ -1,10 +1,27 @@
 <template>
   <div class="q-gutter-sm">
-    <q-dialog v-model="dialog" position="right" full-height>
-      <q-card class="column full-height" style="width: 500px">
-        <q-card-section class="col q-pa-none" style="overflow-y: auto">
-          <div class="col-row items-center q-pa-md">
-            <div class="col-12 q-my-md badge-container row items-center">
+    <q-dialog
+      v-model="dialog"
+      :position="maximized ? 'standard' : 'right'"
+      :full-height="!maximized"
+      :maximized="maximized"
+      :transition-show="maximized ? 'slide-up' : 'slide-left'"
+      :transition-hide="maximized ? 'slide-down' : 'slide-right'"
+    >
+      <q-card
+        class="column full-height booking-dialog-card"
+        :class="{ 'booking-dialog-card--maximized': maximized }"
+      >
+        <q-card-section
+          class="col q-pa-none booking-dialog__body"
+          :class="{ 'booking-dialog__body--maximized': maximized }"
+          style="overflow-y: auto"
+        >
+          <div
+            class="row booking-dialog__inner"
+            :class="maximized ? 'q-pt-md q-pb-md q-px-sm' : 'q-pa-md'"
+          >
+            <div class="col-12 q-my-md badge-container row items-center no-wrap">
               <!-- Botón a la izquierda -->
               <q-btn
                 icon="arrow_back"
@@ -16,7 +33,12 @@
               />
 
               <!-- Título -->
-              <div class="title-text">TUS RESERVAS</div>
+              <div
+                class="title-text"
+                :class="{ 'title-text--maximized': maximized }"
+              >
+                TUS RESERVAS
+              </div>
               <!-- Badge con el número de reservas -->
               <div class="badge">
                 {{ bookStore.totalBookingQuantity }}
@@ -24,31 +46,29 @@
             </div>
             <!-- SERVICIOS DERIVADOS -->
             <div
-              class="col-12 q-my-md q-pa-sm"
+              class="col-12 q-my-md q-pa-sm booking-dialog__hint"
               style="background: #f2f2f2; border-radius: 8px"
             >
-              <div class="row">
-                <div class="col-11 flex flex-center">
-                  {{
-                    bookStore.totalBookingQuantity
-                      ? 'Aquí están tus reservas'
-                      : 'No tienes reservas aún'
-                  }}
-                </div>
+              <div class="text-body2 text-dark">
+                {{
+                  bookStore.totalBookingQuantity
+                    ? 'Aquí están tus reservas'
+                    : 'No tienes reservas aún'
+                }}
               </div>
             </div>
-            <div class="col-12 q-my-md q-pa-sm" style="">
+            <div
+              class="col-12 q-my-md q-pa-sm booking-dialog__main-col"
+              :class="{ 'booking-dialog__main-col--maximized': maximized }"
+            >
               <q-scroll-area
                 :thumb-style="thumbStyle"
                 :bar-style="barStyle"
-                class="q-py-sm"
-                style="
-                  height: 400px;
-                  background-color: #f2f2f2;
-                  border-radius: 8px;
-                "
+                class="q-py-sm booking-dialog__list-scroll"
+                :class="{ 'booking-dialog__list-scroll--maximized': maximized }"
+                :style="bookingListScrollStyle"
               >
-                <q-list class="q-pr-md">
+                <q-list :class="maximized ? 'q-px-xs' : 'q-pr-md'">
                   <q-item
                     v-for="line in bookStore.bookings"
                     class="q-py-md cursor-default hoverable"
@@ -166,8 +186,9 @@
                 class="full-width q-mt-sm"
                 style="margin-bottom: 12px"
               />
-              <q-card-section>
+              <q-card-section class="q-pa-none" :class="maximized ? 'q-pt-sm' : 'q-pt-md'">
                 <div
+                  class="text-left"
                   style="
                     font-weight: bold;
                     font-size: 17px;
@@ -197,9 +218,14 @@
             </div>
           </div>
         </q-card-section>
-        <q-separator inset />
+        <q-separator :inset="!maximized" />
         <q-card-section
-          class="flex justify-center items-center"
+          class="booking-dialog__footer"
+          :class="
+            maximized
+              ? 'row items-center q-px-sm'
+              : 'flex justify-center items-center'
+          "
           style="min-height: 120px"
         >
           <q-btn
@@ -207,12 +233,21 @@
             :disable="!bookStore.totalBookingQuantity || !date || !time"
             label="Reservar"
             color="blue"
+            :class="{ 'full-width': maximized }"
           />
         </q-card-section>
       </q-card>
     </q-dialog>
-    <q-dialog v-model="dateCard">
-      <q-card class="date-time-card">
+    <q-dialog
+      v-model="dateCard"
+      :maximized="maximized"
+      :transition-show="maximized ? 'slide-up' : 'scale'"
+      :transition-hide="maximized ? 'slide-down' : 'scale'"
+    >
+      <q-card
+        class="date-time-card"
+        :class="{ 'date-time-card--maximized': maximized }"
+      >
         <!-- Header con título y botón de cerrar -->
         <q-card-section
           class="date-time-header row items-center justify-between q-pa-md"
@@ -301,9 +336,10 @@ import {
   useDialog,
   type DialogEmits,
 } from 'src/composables/dialogs/useDialogService';
+import { useDialogMaximizedBelow } from 'src/composables/dialogs/useDialogMaximizedBelow';
 import { useBookStore } from 'src/stores/book-store';
 import type { BookingLine } from 'src/interfaces/booking';
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, type CSSProperties } from 'vue';
 import { useQuasar } from 'quasar';
 import ServiceDialog from './serviceDialog.vue';
 import Service from 'src/interfaces/service';
@@ -530,9 +566,75 @@ const barStyle = {
 };
 
 const { dialog, hide } = useDialog(props, emit);
+const { maximized } = useDialogMaximizedBelow();
+
+const bookingListScrollStyle = computed((): CSSProperties => {
+  const base: CSSProperties = {
+    backgroundColor: '#f2f2f2',
+    borderRadius: '8px',
+  };
+  if (maximized.value) {
+    return {
+      ...base,
+      height: 'auto',
+      flex: '1 1 auto',
+      minHeight: '140px',
+    };
+  }
+  return {
+    ...base,
+    height: '400px',
+  };
+});
 </script>
 
 <style lang="scss" scoped>
+.booking-dialog-card {
+  width: 500px;
+}
+
+.booking-dialog-card--maximized {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100%;
+  border-radius: 0;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+
+  .booking-dialog__body--maximized {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .booking-dialog__inner {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .booking-dialog__main-col--maximized {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .booking-dialog__list-scroll--maximized {
+    max-height: none !important;
+  }
+
+  .booking-dialog__footer {
+    flex-shrink: 0;
+  }
+}
+
 .title {
   padding: 6px 0;
   font-size: 22px;
@@ -556,8 +658,15 @@ const { dialog, hide } = useDialog(props, emit);
   background: linear-gradient(90deg, #f8bbd0 0%, #bdc9d7 90%);
   padding: 10px 16px;
   border-radius: 10px;
-  flex-grow: 1;
+  flex: 1 1 auto;
+  min-width: 0;
   text-align: center;
+}
+
+.title-text--maximized {
+  text-align: left;
+  padding-left: 12px;
+  padding-right: 36px;
 }
 
 .badge {
@@ -705,6 +814,34 @@ const { dialog, hide } = useDialog(props, emit);
   font-weight: 500;
   text-transform: none;
   border-radius: 6px;
+}
+
+.date-time-card--maximized {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0 !important;
+  min-height: 100%;
+  border-radius: 0;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+
+  .date-time-header {
+    border-radius: 0;
+    flex-shrink: 0;
+  }
+
+  .date-time-panels {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .date-time-footer {
+    border-radius: 0;
+    flex-shrink: 0;
+  }
 }
 
 /* Estilos para el recuadro de fecha y hora */

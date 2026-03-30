@@ -1,10 +1,27 @@
 <template>
   <div class="q-pa-md q-gutter-sm">
-    <q-dialog v-model="dialog" position="right" full-height>
-      <q-card class="column full-height" style="width: 500px">
-        <q-card-section class="col q-pa-none" style="overflow-y: auto">
-          <div class="col-row items-center q-pa-md">
-            <div class="col-12 q-my-md badge-container row items-center">
+    <q-dialog
+      v-model="dialog"
+      :position="maximized ? 'standard' : 'right'"
+      :full-height="!maximized"
+      :maximized="maximized"
+      :transition-show="maximized ? 'slide-up' : 'slide-left'"
+      :transition-hide="maximized ? 'slide-down' : 'slide-right'"
+    >
+      <q-card
+        class="column full-height filter-dialog-card"
+        :class="{ 'filter-dialog-card--maximized': maximized }"
+      >
+        <q-card-section
+          class="col q-pa-none filter-dialog-card__body"
+          :class="{ 'filter-dialog-card__body--maximized': maximized }"
+          style="overflow-y: auto"
+        >
+          <div
+            class="row filter-dialog__inner"
+            :class="maximized ? 'q-pt-md q-pb-md q-px-sm' : 'q-pa-md'"
+          >
+            <div class="col-12 q-my-md badge-container row items-center no-wrap">
               <!-- Botón a la izquierda -->
               <q-btn
                 icon="arrow_back"
@@ -16,7 +33,10 @@
               />
 
               <!-- Título -->
-              <div class="title-text">
+              <div
+                class="title-text"
+                :class="{ 'title-text--maximized': maximized }"
+              >
                 Busqueda de servicios
                 <div v-if="amountOfFilters > 0" class="badge">
                   {{ amountOfFilters }}
@@ -31,14 +51,21 @@
               />
             </div>
             <!-- GÉNEROS (mismo patrón que serviceCreateEdit) -->
-            <div class="col-12 q-py-md" style="min-width: 250px">
+            <div
+              class="col-12 q-py-md filter-dialog__genres"
+              :style="{ minWidth: maximized ? '0' : '250px' }"
+            >
               <div
-                class="q-pb-md"
-                style="text-align: center; font-size: medium; color: #5e5e62"
+                class="q-pb-md text-grey-7"
+                style="font-size: medium"
+                :class="maximized ? 'text-left' : 'text-center'"
               >
                 Género(s):
               </div>
-              <div class="row justify-center q-gutter-sm">
+              <div
+                class="row q-gutter-sm"
+                :class="maximized ? 'justify-start' : 'justify-center'"
+              >
                 <q-chip
                   v-for="genre in filterGenres"
                   v-model:selected="genre.selected"
@@ -61,9 +88,15 @@
             />
           </div>
         </q-card-section>
-        <q-separator inset />
-        <q-card-section class="row items-center">
-          <div class="col-12 q-px-md q-py-md">
+        <q-separator :inset="!maximized" />
+        <q-card-section
+          class="row items-center"
+          :class="maximized ? 'q-px-sm' : ''"
+        >
+          <div
+            class="col-12 q-py-md"
+            :class="maximized ? 'q-px-sm' : 'q-px-md'"
+          >
             <q-item
               tag="label"
               v-ripple
@@ -106,7 +139,12 @@
           </div>
         </q-card-section>
         <q-card-section
-          class="flex justify-center items-center"
+          class="filter-dialog-card__footer"
+          :class="
+            maximized
+              ? 'row items-center q-px-sm'
+              : 'flex justify-center items-center'
+          "
           style="min-height: 120px"
         >
           <q-btn
@@ -114,6 +152,7 @@
             color="blue"
             @click="sendFilter"
             :disabled="!amountOfFilters"
+            :class="{ 'full-width': maximized }"
           />
         </q-card-section>
       </q-card>
@@ -131,6 +170,7 @@ import {
   useDialog,
   type DialogEmits,
 } from 'src/composables/dialogs/useDialogService';
+import { useDialogMaximizedBelow } from 'src/composables/dialogs/useDialogMaximizedBelow';
 import { useFiltersStore } from 'src/stores/filters-store';
 import ServicesBox from 'src/components/shared/ServicesBox.vue';
 import type { FilterGenreChip } from 'src/composables/dialogs/useServiceFilter';
@@ -152,9 +192,33 @@ const {
 } = useFilterService(emit);
 
 const { dialog, hide } = useDialog(props, emit);
+const { maximized } = useDialogMaximizedBelow();
 </script>
 
 <style lang="scss" scoped>
+.filter-dialog-card {
+  width: 500px;
+}
+
+.filter-dialog-card--maximized {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100%;
+  border-radius: 0;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+
+  .filter-dialog-card__body--maximized {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .filter-dialog-card__footer {
+    flex-shrink: 0;
+  }
+}
+
 .title {
   padding: 6px 0;
   font-size: 22px;
@@ -178,8 +242,15 @@ const { dialog, hide } = useDialog(props, emit);
   background: linear-gradient(90deg, #f8bbd0 0%, #bdc9d7 90%);
   padding: 10px 16px;
   border-radius: 10px;
-  flex-grow: 1;
+  flex: 1 1 auto;
+  min-width: 0;
   text-align: center;
+}
+
+.title-text--maximized {
+  text-align: left;
+  padding-left: 12px;
+  padding-right: 36px;
 }
 
 .badge {
