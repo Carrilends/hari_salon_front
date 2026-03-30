@@ -54,7 +54,7 @@
       <q-list
         v-else
         bordered
-        class="index-page__list"
+        class="index-page__list index-page__list--desktop"
         style="border-radius: 10px"
       >
         <q-item
@@ -249,8 +249,14 @@ defineOptions({
 
 <style scoped lang="scss">
 .index-page {
-  background: #f5f5f5;
   box-sizing: border-box;
+  /* Deja ver el fondo del layout sin taparlo por completo */
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(245, 245, 245, 0.45) 45%,
+    rgba(250, 248, 250, 0.55) 100%
+  );
 }
 
 .index-page__inner {
@@ -279,6 +285,8 @@ defineOptions({
   font-size: 30px;
   font-family: 'Times New Roman', Times, serif;
   font-weight: bold;
+  color: #1a1a1a;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.85), 0 1px 2px rgba(255, 255, 255, 0.9);
 }
 
 .index-page__title--compact {
@@ -287,6 +295,7 @@ defineOptions({
   padding-bottom: 10px;
   font-size: 1.35rem;
   line-height: 1.25;
+  text-shadow: 0 0 16px rgba(255, 255, 255, 0.9), 0 1px 2px rgba(255, 255, 255, 0.95);
 }
 
 .index-page__scroll {
@@ -310,7 +319,15 @@ defineOptions({
   padding-bottom: 8px;
 }
 
+.index-page__list--desktop {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+}
+
 .index-page__item--compact {
   margin-bottom: 4px;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(4px);
+  border-radius: 10px;
 }
 </style>
