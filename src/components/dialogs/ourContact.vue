@@ -1,10 +1,16 @@
 <template>
   <q-dialog
     v-model="dialog"
-    transition-show="scale"
-    transition-hide="scale"
+    :maximized="maximized"
+    :transition-show="maximized ? 'slide-up' : 'scale'"
+    :transition-hide="maximized ? 'slide-down' : 'scale'"
   >
-    <q-card class="contact-dialog relative-position" flat bordered>
+    <q-card
+      class="contact-dialog relative-position"
+      :class="{ 'contact-dialog--maximized': maximized }"
+      flat
+      bordered
+    >
       <q-btn
         v-close-popup
         class="contact-dialog__close"
@@ -79,11 +85,13 @@ import {
   DialogEmits,
   useDialog,
 } from 'src/composables/dialogs/useDialogService';
+import { useDialogMaximizedBelow } from 'src/composables/dialogs/useDialogMaximizedBelow';
 
 const props = defineProps<{ dialog: boolean }>();
 const emit = defineEmits<DialogEmits>();
 
 const { dialog } = useDialog(props, emit);
+const { maximized } = useDialogMaximizedBelow();
 
 defineOptions({
   name: 'ourContact',
@@ -218,5 +226,29 @@ defineOptions({
 
 .whatsapp-btn {
   box-shadow: 0 2px 10px rgba(37, 211, 102, 0.35);
+}
+
+.contact-dialog--maximized {
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  min-height: 100%;
+  max-height: none;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  box-shadow: none;
+  overflow: hidden;
+
+  .contact-dialog__schedule {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .contact-dialog__footer {
+    flex-shrink: 0;
+  }
 }
 </style>

@@ -1,10 +1,16 @@
 <template>
   <q-dialog
     v-model="dialog"
-    transition-show="scale"
-    transition-hide="scale"
+    :maximized="maximized"
+    :transition-show="maximized ? 'slide-up' : 'scale'"
+    :transition-hide="maximized ? 'slide-down' : 'scale'"
   >
-    <q-card class="about-dialog relative-position" flat bordered>
+    <q-card
+      class="about-dialog relative-position"
+      :class="{ 'about-dialog--maximized': maximized }"
+      flat
+      bordered
+    >
       <q-btn
         v-close-popup
         class="about-dialog__close"
@@ -51,11 +57,13 @@ import {
   DialogEmits,
   useDialog,
 } from 'src/composables/dialogs/useDialogService';
+import { useDialogMaximizedBelow } from 'src/composables/dialogs/useDialogMaximizedBelow';
 
 const props = defineProps<{ dialog: boolean }>();
 const emit = defineEmits<DialogEmits>();
 
 const { dialog } = useDialog(props, emit);
+const { maximized } = useDialogMaximizedBelow();
 
 defineOptions({
   name: 'WhoWeAreDialog',
@@ -146,5 +154,30 @@ defineOptions({
   font-size: 0.9375rem;
   line-height: 1.65;
   color: #5c5652;
+}
+
+.about-dialog--maximized {
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  min-height: 100%;
+  max-height: none;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  box-shadow: none;
+  overflow: hidden;
+
+  .about-hero {
+    border-radius: 0;
+    flex-shrink: 0;
+  }
+
+  .about-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 </style>
