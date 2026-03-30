@@ -58,7 +58,7 @@
       </div>
     </q-header>
 
-    <q-page-container class="row flex-center" style="height: 100vh">
+    <q-page-container class="full-width" style="height: 100vh; min-height: 0">
       <router-view />
     </q-page-container>
     <whoWeAreDialog v-model:dialog="whoWeAreDialogComponent" />
