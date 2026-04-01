@@ -15,13 +15,17 @@
         <q-card-section
           class="col q-pa-none filter-dialog-card__body"
           :class="{ 'filter-dialog-card__body--maximized': maximized }"
-          style="overflow-y: auto"
         >
           <div
             class="row filter-dialog__inner"
-            :class="maximized ? 'q-pt-md q-pb-md q-px-sm' : 'q-pa-md'"
+            :class="[
+              maximized ? 'q-pt-md q-pb-md q-px-sm' : 'q-pa-md',
+              { 'filter-dialog__inner--maximized': maximized },
+            ]"
           >
-            <div class="col-12 q-my-md badge-container row items-center no-wrap">
+            <div
+              class="col-12 q-my-md badge-container row items-center no-wrap flex-shrink-0"
+            >
               <!-- Botón a la izquierda -->
               <q-btn
                 icon="arrow_back"
@@ -52,7 +56,7 @@
             </div>
             <!-- GÉNEROS (mismo patrón que serviceCreateEdit) -->
             <div
-              class="col-12 q-py-md filter-dialog__genres"
+              class="col-12 q-py-md filter-dialog__genres flex-shrink-0"
               :style="{ minWidth: maximized ? '0' : '250px' }"
             >
               <div
@@ -83,6 +87,7 @@
               v-if="dialog"
               :initial-selected-ids="filtersStore.selectedServicesIDs"
               is-edit-mode
+              :contained-scroll="maximized"
               section-title="Listado de servicios:"
               @selected-services="filtersStore.setSelectedServiceIds"
             />
@@ -200,6 +205,10 @@ const { maximized } = useDialogMaximizedBelow();
   width: 500px;
 }
 
+.filter-dialog-card__body {
+  overflow-y: auto;
+}
+
 .filter-dialog-card--maximized {
   width: 100%;
   max-width: 100%;
@@ -212,11 +221,20 @@ const { maximized } = useDialogMaximizedBelow();
   .filter-dialog-card__body--maximized {
     flex: 1 1 auto;
     min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
   .filter-dialog-card__footer {
     flex-shrink: 0;
   }
+}
+
+.filter-dialog__inner--maximized.row {
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
 }
 
 .title {

@@ -1,17 +1,32 @@
 <template>
-  <!-- component -->
-  <div class="row" style="background: gainsboro; height: 100vh; margin: 0">
-    <!-- Left: Image -->
-    <div class="col-6 flex flex-center" style="height: 100vh">
+  <div class="row auth-layout q-ma-none" style="background: gainsboro; min-height: 100vh">
+    <div class="gt-md col-md-6 flex flex-center auth-layout__hero">
       <img
         src="src/assets/people/rainbow_hair.jpg"
-        alt="Placeholder Image"
-        style="height: 100%; width: 100%; object-fit: cover"
+        alt=""
+        class="auth-layout__hero-img"
       />
     </div>
-    <!-- Right: Login Form -->
-    <div class="col-6 flex flex-center">
+    <div class="col-12 col-md-6 flex flex-center auth-layout__form">
       <router-view />
     </div>
   </div>
 </template>
+
+<style scoped>
+.auth-layout__hero {
+  min-height: 100vh;
+}
+
+.auth-layout__hero-img {
+  height: 100%;
+  width: 100%;
+  min-height: 100vh;
+  object-fit: cover;
+}
+
+.auth-layout__form {
+  min-height: 100vh;
+  align-self: stretch;
+}
+</style>

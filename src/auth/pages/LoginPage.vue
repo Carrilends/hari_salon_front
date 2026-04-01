@@ -48,57 +48,83 @@ async function submitLogin() {
 </script>
 
 <template>
-  <q-card
-    class="q-pa-xl shadow-2 rounded-borders"
-    style="width: 370px; max-width: 90vw"
-  >
-    <q-card-section class="text-center">
-      <div class="text-h5 text-weight-bold q-mb-sm">Bienvenido</div>
-      <div class="text-caption text-grey-7">
-        Por favor, inicie sesión en su cuenta
-      </div>
-    </q-card-section>
+  <div class="login-page column flex-center">
+    <q-card class="login-page__card q-pa-xl shadow-2 rounded-borders full-width">
+      <q-card-section class="text-center">
+        <div class="text-h5 text-weight-bold q-mb-sm">Bienvenido</div>
+        <div class="text-caption text-grey-7">
+          Por favor, inicie sesión en su cuenta
+        </div>
+      </q-card-section>
 
-    <q-form @submit="submitLogin" class="q-gutter-md">
-      <q-input
-        v-model="username"
-        filled
-        label="Email"
-        color="black"
-        outlined
-        type="email"
-        :rules="[
-          (val) => !!val || 'Requerido',
-          (val) =>
-            /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) ||
-            'Debe ser un correo válido',
-        ]"
-      />
-
-      <q-input
-        v-model="password"
-        filled
-        label="Password"
-        type="password"
-        color="black"
-        outlined
-        :rules="[
-          (val) => !!val || 'Requerido',
-          (val) => val.length >= 8 || 'Debe tener al menos 8 caracteres',
-          (val) => /[A-Z]/.test(val) || 'Debe tener al menos una mayúscula',
-          (val) => /[0-9]/.test(val) || 'Debe tener al menos un número',
-        ]"
-      />
-
-      <div class="row justify-center">
-        <q-btn
-          :disable="!username || !password || isLoading"
-          type="submit"
-          label="Login"
-          color="primary"
-          class="q-mt-md"
+      <q-form @submit="submitLogin" class="q-gutter-md">
+        <q-input
+          v-model="username"
+          filled
+          label="Email"
+          color="black"
+          outlined
+          type="email"
+          :rules="[
+            (val) => !!val || 'Requerido',
+            (val) =>
+              /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) ||
+              'Debe ser un correo válido',
+          ]"
         />
-      </div>
-    </q-form>
-  </q-card>
+
+        <q-input
+          v-model="password"
+          filled
+          label="Password"
+          type="password"
+          color="black"
+          outlined
+          :rules="[
+            (val) => !!val || 'Requerido',
+            (val) => val.length >= 8 || 'Debe tener al menos 8 caracteres',
+            (val) => /[A-Z]/.test(val) || 'Debe tener al menos una mayúscula',
+            (val) => /[0-9]/.test(val) || 'Debe tener al menos un número',
+          ]"
+        />
+
+        <div class="row justify-center">
+          <q-btn
+            :disable="!username || !password || isLoading"
+            type="submit"
+            label="Login"
+            color="primary"
+            class="q-mt-md"
+          />
+        </div>
+      </q-form>
+    </q-card>
+  </div>
 </template>
+
+<style scoped>
+.login-page {
+  width: 100%;
+  min-height: 100vh;
+  padding: 16px;
+  box-sizing: border-box;
+  background-color: #e8e8e8;
+}
+
+@media (max-width: 1023px) {
+  .login-page {
+    background-image: linear-gradient(
+        rgba(255, 255, 255, 0.88),
+        rgba(255, 255, 255, 0.92)
+      ),
+      url('src/assets/people/rainbow_hair.jpg');
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+  }
+}
+
+.login-page__card {
+  max-width: 400px;
+}
+</style>

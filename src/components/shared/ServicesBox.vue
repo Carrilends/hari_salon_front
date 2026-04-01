@@ -1,9 +1,12 @@
 <template>
   <div
-    class="col-12 q-my-md q-pa-sm"
-    style="background: #f2f2f2; border-radius: 8px"
+    class="services-box col-12"
+    :class="{ 'services-box--contained column': containedScroll }"
   >
-    <div class="row">
+    <div
+      class="services-box__title row q-my-md q-pa-sm"
+      style="background: #f2f2f2; border-radius: 8px"
+    >
       <div
         class="col-11 flex flex-center"
         style="font-size: medium; color: #5e5e62; font-weight: bold"
@@ -14,36 +17,76 @@
         <q-btn @click="clear" color="red" icon="close" size="sm" round flat />
       </div>
     </div>
-  </div>
-  <div class="col-12 q-my-md q-pa-sm" style="background: #f2f2f2">
-    <q-option-group
-      :model-value="principalId"
-      :options="principalOptions"
-      color="primary"
-      inline
-      rounded
-      @update:model-value="onPrincipalChange"
-    />
-    <q-separator class="q-mb-sm q-mt-xs" />
-
-    <template v-for="(row, level) in levelRows" :key="'lvl-' + level">
-      <div v-if="row.length > 0" class="col-12">
-        <q-separator v-if="level > 0" class="q-my-sm" />
-        <template v-for="tag in row" :key="tag.id">
-          <q-chip
-            @click="toggleAtLevel(level, tag, !tag.selected)"
-            :color="tag.selected ? 'teal-14' : 'teal'"
-            :disable="level === 0 && hasRootSelection && !tag.selected"
-            :outline="!tag.selected"
-            :class="tag.selected ? 'text-white' : 'text-black'"
-            clickable
-            icon="star"
-          >
-            {{ tag.name }}
-          </q-chip>
+    <div
+      class="services-box__panel q-my-md q-pa-sm"
+      style="background: #f2f2f2"
+      :class="{ 'services-box__panel--contained column': containedScroll }"
+    >
+      <q-scroll-area
+        v-if="containedScroll"
+        class="services-box__scroll-area"
+        visible
+        :thumb-style="{ borderRadius: '4px' }"
+        :bar-style="{ borderRadius: '4px' }"
+      >
+        <q-option-group
+          :model-value="principalId"
+          :options="principalOptions"
+          color="primary"
+          inline
+          rounded
+          @update:model-value="onPrincipalChange"
+        />
+        <q-separator class="q-mb-sm q-mt-xs" />
+        <template v-for="(row, level) in levelRows" :key="'lvl-' + level">
+          <div v-if="row.length > 0" class="col-12">
+            <q-separator v-if="level > 0" class="q-my-sm" />
+            <template v-for="tag in row" :key="tag.id">
+              <q-chip
+                @click="toggleAtLevel(level, tag, !tag.selected)"
+                :color="tag.selected ? 'teal-14' : 'teal'"
+                :disable="level === 0 && hasRootSelection && !tag.selected"
+                :outline="!tag.selected"
+                :class="tag.selected ? 'text-white' : 'text-black'"
+                clickable
+                icon="star"
+              >
+                {{ tag.name }}
+              </q-chip>
+            </template>
+          </div>
         </template>
-      </div>
-    </template>
+      </q-scroll-area>
+      <template v-else>
+        <q-option-group
+          :model-value="principalId"
+          :options="principalOptions"
+          color="primary"
+          inline
+          rounded
+          @update:model-value="onPrincipalChange"
+        />
+        <q-separator class="q-mb-sm q-mt-xs" />
+        <template v-for="(row, level) in levelRows" :key="'lvl-' + level">
+          <div v-if="row.length > 0" class="col-12">
+            <q-separator v-if="level > 0" class="q-my-sm" />
+            <template v-for="tag in row" :key="tag.id">
+              <q-chip
+                @click="toggleAtLevel(level, tag, !tag.selected)"
+                :color="tag.selected ? 'teal-14' : 'teal'"
+                :disable="level === 0 && hasRootSelection && !tag.selected"
+                :outline="!tag.selected"
+                :class="tag.selected ? 'text-white' : 'text-black'"
+                clickable
+                icon="star"
+              >
+                {{ tag.name }}
+              </q-chip>
+            </template>
+          </div>
+        </template>
+      </template>
+    </div>
   </div>
 </template>
 
@@ -66,6 +109,14 @@ const props = defineProps({
   sectionTitle: {
     type: String,
     default: 'Tu servicio es:',
+  },
+  /**
+   * Móvil / diálogo maximizado: el panel de categorías y chips hace scroll interno
+   * sin empujar el resto del layout.
+   */
+  containedScroll: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -104,3 +155,24 @@ watch(
 
 defineExpose({ clear, hydrateFromIds, resetLocalState });
 </script>
+
+<style lang="scss" scoped>
+.services-box--contained {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.services-box__title {
+  flex-shrink: 0;
+}
+
+.services-box__panel--contained {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.services-box__scroll-area {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+</style>
