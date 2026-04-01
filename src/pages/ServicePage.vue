@@ -109,13 +109,8 @@
       </div>
     </div>
     <div class="col-12 box-style service-body-box">
-      <q-scroll-area
-        class="service-scroll-area q-py-lg"
-        style="height: 680px"
-        :thumb-style="thumbStyle"
-      >
+      <div v-if="isListLayout" class="service-body-mobile q-py-lg">
         <q-list
-          v-if="isListLayout"
           bordered
           separator
           class="service-list-mobile rounded-borders q-mx-sm"
@@ -181,7 +176,14 @@
             </q-item-section>
           </q-item>
         </q-list>
-        <div v-else class="service-cards-grid q-px-md">
+      </div>
+      <q-scroll-area
+        v-else
+        class="service-scroll-area q-py-lg"
+        :style="{ height: `${desktopScrollBodyPx}px` }"
+        :thumb-style="thumbStyle"
+      >
+        <div class="service-cards-grid q-px-md">
           <div
             v-for="(service, index) in services"
             :key="`${index}_${service.id}`"
@@ -269,6 +271,21 @@ const $q = useQuasar();
 const windowWidth = ref(
   typeof window !== 'undefined' ? window.innerWidth : BREAKPOINT_WIDE + 1
 );
+const windowHeight = ref(
+  typeof window !== 'undefined' ? window.innerHeight : 800
+);
+
+/** Altura del q-scroll-area solo en vista de cards: encaja en el viewport sin dejar un “hueco” scrolleable vacío. */
+const SCROLL_BODY_MAX = 680;
+const SCROLL_BODY_MIN = 280;
+const SCROLL_BODY_VIEWPORT_RESERVE = 260;
+
+const desktopScrollBodyPx = computed(() => {
+  const h = windowHeight.value - SCROLL_BODY_VIEWPORT_RESERVE;
+  return Math.round(
+    Math.max(SCROLL_BODY_MIN, Math.min(SCROLL_BODY_MAX, h))
+  );
+});
 const compactSearchOverlayOpen = ref(false);
 const compactSearchInputRef = ref<{ focus: () => void } | null>(null);
 
@@ -293,8 +310,9 @@ const openServiceDetail = (id: string) => {
   serviceIdRef.value = id;
 };
 
-const syncWindowWidth = () => {
+const syncViewport = () => {
   windowWidth.value = window.innerWidth;
+  windowHeight.value = window.innerHeight;
 };
 
 watch(
@@ -368,8 +386,8 @@ const thumbStyle = {
 };
 
 onMounted(() => {
-  syncWindowWidth();
-  window.addEventListener('resize', syncWindowWidth);
+  syncViewport();
+  window.addEventListener('resize', syncViewport);
   if (service) {
     showFilterDialog.value = true;
     filtersStore.setGenres(service.filterFormat?.genres || []);
@@ -378,7 +396,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  window.removeEventListener('resize', syncWindowWidth);
+  window.removeEventListener('resize', syncViewport);
 });
 
 defineOptions({
@@ -486,6 +504,10 @@ defineOptions({
 
 .service-body-box {
   min-width: 0;
+}
+
+.service-body-mobile {
+  min-height: 0;
 }
 
 .service-scroll-area {

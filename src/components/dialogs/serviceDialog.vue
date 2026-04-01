@@ -2,10 +2,14 @@
   <q-dialog
     ref="dialogRef"
     :persistent="!props.isFromBooking"
-    transition-show="scale"
-    transition-hide="scale"
+    :maximized="maximized"
+    :transition-show="maximized ? 'slide-up' : 'scale'"
+    :transition-hide="maximized ? 'slide-down' : 'scale'"
   >
-    <q-card class="service-detail-card">
+    <q-card
+      class="service-detail-card"
+      :class="{ 'service-detail-card--maximized': maximized }"
+    >
       <div class="detail-media">
         <q-carousel
           v-model="slide"
@@ -64,6 +68,7 @@
             :thumb-style="thumbStyle"
             :bar-style="{ borderRadius: '4px' }"
             class="detail-desc__scroll"
+            :class="{ 'detail-desc__scroll--maximized': maximized }"
           >
             <p class="detail-desc__text">
               {{ props.service.detail?.description || 'Sin descripción.' }}
@@ -105,6 +110,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useDialogPluginComponent } from 'quasar';
+import { useDialogMaximizedBelow } from 'src/composables/dialogs/useDialogMaximizedBelow';
 import Service, { faceTypes } from 'src/interfaces/service';
 import PriceDisplayPill from 'src/components/shared/PriceDisplayPill.vue';
 
@@ -116,6 +122,7 @@ const props = defineProps<{
 }>();
 
 const { dialogRef, onDialogOK } = useDialogPluginComponent();
+const { maximized } = useDialogMaximizedBelow(500);
 const heavyList: { class: string; icon: string }[] = [];
 
 const convertFaceType: { [key in faceTypes]: string[] } = {
@@ -346,5 +353,49 @@ defineOptions({
 
 .detail-carousel :deep(.q-carousel__navigation-icon--inactive) {
   opacity: 0.45;
+}
+
+.service-detail-card--maximized {
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  min-height: 100%;
+  max-height: none;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  box-shadow: none;
+  overflow: hidden;
+
+  .detail-media {
+    max-height: min(36vh, 260px);
+    flex-shrink: 0;
+  }
+
+  .detail-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .detail-desc {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .detail-sep,
+  .detail-actions {
+    flex-shrink: 0;
+  }
+}
+
+.detail-desc__scroll--maximized {
+  flex: 1 1 0;
+  min-height: 80px;
 }
 </style>
