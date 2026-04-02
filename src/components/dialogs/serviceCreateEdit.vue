@@ -1,18 +1,26 @@
 <template>
   <q-dialog
     v-model="dialog"
+    class="service-create-edit-dialog"
     persistent
-    maximized
+    :maximized="isCompactLayout"
+    :backdrop-filter="desktopBackdropFilter"
     transition-show="slide-up"
     transition-hide="slide-down"
   >
-    <div class="row flex flex-center" style="background: lightgray">
+    <div
+      class="flex flex-center service-create-edit-dialog__shell"
+      :class="dialogShellClass"
+    >
       <q-stepper
         v-model="step"
         ref="stepper"
+        class="service-create-edit-stepper bg-white"
         color="primary"
         animated
-        style="width: 700px"
+        :contracted="isCompactLayout"
+        :class="{ 'service-create-edit-stepper--fill': isCompactLayout }"
+        :style="stepperContainerStyle"
       >
         <q-step
           :name="1"
@@ -206,7 +214,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import {
   copNumericValue,
   formatCopDisplay,
@@ -291,6 +299,24 @@ watch(
 const dialog = defineModel({ default: false });
 const $q = useQuasar();
 const queryClient = useQueryClient();
+
+/** ≤700px: diálogo maximizado, stepper `contracted` (solo iconos en cabecera). Ver https://quasar.dev/vue-components/stepper#example--contracted */
+const isCompactLayout = computed(() => $q.screen.width <= 700);
+
+const dialogShellClass = computed(() =>
+  isCompactLayout.value ? ['fit', 'bg-grey-3'] : ['row', 'bg-white']
+);
+
+/** Desenfoque del velo detrás del modal en desktop (móvil va maximizado). */
+const desktopBackdropFilter = computed(() =>
+  isCompactLayout.value ? undefined : 'blur(10px)'
+);
+
+const stepperContainerStyle = computed(() =>
+  isCompactLayout.value
+    ? { width: '100%', maxWidth: '100%' }
+    : { width: 'min(920px, calc(100vw - 48px))', maxWidth: '100%' }
+);
 const bookStore = useBookStore();
 
 const removeImage = (file) => {
@@ -443,5 +469,37 @@ const close = () => {
   padding: 12px;
   color: white;
   background-color: rgba(0, 0, 0, 0.3);
+}
+
+.service-create-edit-stepper--fill {
+  flex: 1 1 auto;
+  min-height: 0;
+  align-self: stretch;
+}
+
+/* Desktop: panel interior opaco (el wrapper de Quasar es transparente por defecto). */
+.service-create-edit-dialog :deep(.q-dialog__inner--minimized > div) {
+  background-color: #fff;
+}
+
+/* Cabecera del stepper: una sola fila; fondo blanco; recorta líneas conectoras (100vw) que filtraban el fondo. */
+.service-create-edit-stepper :deep(.q-stepper__header.row) {
+  flex-wrap: nowrap !important;
+  background-color: #fff;
+  overflow: hidden;
+}
+
+.service-create-edit-stepper :deep(.q-stepper__tab) {
+  min-width: 0;
+  flex: 1 1 0;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.service-create-edit-stepper :deep(.q-stepper__title) {
+  font-size: 0.8rem;
+  line-height: 1.25;
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 </style>
