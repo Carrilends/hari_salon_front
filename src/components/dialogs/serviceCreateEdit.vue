@@ -266,8 +266,7 @@ const {
 const priceDisplay = ref('');
 
 const priceRules = [
-  (val) =>
-    copNumericValue(val) !== null || 'El precio es obligatorio',
+  (val) => copNumericValue(val) !== null || 'El precio es obligatorio',
   (val) => {
     const n = copNumericValue(val);
     return (

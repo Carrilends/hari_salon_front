@@ -346,6 +346,10 @@ import Service from 'src/interfaces/service';
 import { getService } from 'src/composables/services/useService';
 import { formatCopDisplay } from 'src/helpers/price-display';
 import PriceDisplayPill from 'src/components/shared/PriceDisplayPill.vue';
+import {
+  buildWhatsAppUrl,
+  generateBookingWhatsAppMessage,
+} from 'src/helpers/whatsappBooking';
 
 const $q = useQuasar();
 const bookStore = useBookStore();
@@ -396,7 +400,11 @@ const sendBookingData = () => {
   }
 
   // Generar mensaje y abrir WhatsApp
-  const message = generateWhatsAppMessage();
+  const message = generateBookingWhatsAppMessage({
+    bookings: bookStore.bookings,
+    bookingsCost: bookStore.bookingsCost,
+    formattedDateTime: formattedDateTime.value,
+  });
   openWhatsApp(message);
 
   // Mantener console.log para debugging
@@ -470,38 +478,9 @@ const formattedDateTime = computed(() => {
   }
 });
 
-const generateWhatsAppMessage = (): string => {
-  const servicesList = bookStore.bookings
-    .map((line) => {
-      const principalImage = line.service.images?.find(
-        (img) => img.isPrincipal
-      );
-      const imageUrl = principalImage?.url || '';
-      const qty = line.quantity > 1 ? ` (×${line.quantity})` : '';
-
-      if (imageUrl) {
-        return `• ${line.service.name}${qty}: ${imageUrl}`;
-      }
-      return `• ${line.service.name}${qty}`;
-    })
-    .join('\n');
-
-  const message = `*Reserva - Hari Salon*
-
-*Servicios reservados:*
-${servicesList}
-
-*Costo Total:* ${formatCopDisplay(bookStore.bookingsCost)} COP
-
-*Fecha y Hora:* ${formattedDateTime.value}`;
-
-  return message;
-};
-
 const openWhatsApp = (message: string) => {
   const phoneNumber = '573208977471';
-  const encodedMessage = encodeURIComponent(message);
-  const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+  const whatsappUrl = buildWhatsAppUrl(phoneNumber, message);
   window.open(whatsappUrl, '_blank');
 };
 
