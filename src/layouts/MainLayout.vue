@@ -68,8 +68,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onUpdated, onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import ourContact from 'src/components/dialogs/ourContact.vue';
 import whoWeAreDialog from 'src/components/dialogs/whoWeAreDialog.vue';
 import BookingDialog from 'src/components/dialogs/bookingDialog.vue';
@@ -81,6 +81,7 @@ const authStore = useAuthStore();
 
 const BREAKPOINT_LABELS_PX = 1171;
 
+const route = useRoute();
 const router = useRouter();
 
 function onLogout() {
@@ -94,7 +95,7 @@ const ourContactDialog = ref(false);
 const showButtonLabels = ref(
   typeof window !== 'undefined'
     ? window.matchMedia(`(min-width: ${BREAKPOINT_LABELS_PX}px)`).matches
-    : true,
+    : true
 );
 
 onMounted(() => {
@@ -139,17 +140,19 @@ const buttons = ref([
   },
 ]);
 
-onUpdated(() => {
-  if (router.currentRoute.value.path === '/') {
+function syncServicesNavButton() {
+  if (route.path === '/') {
     buttons.value[0].icon = 'las la-cut';
     buttons.value[0].label = 'Servicios';
     buttons.value[0].method = () => router.push('/services');
-  } else if (router.currentRoute.value.path === '/services') {
+  } else if (route.path === '/services') {
     buttons.value[0].icon = 'home';
     buttons.value[0].label = 'Inicio';
     buttons.value[0].method = () => router.push('/');
   }
-});
+}
+
+watch(() => route.path, syncServicesNavButton, { immediate: true });
 
 defineOptions({
   name: 'MainLayout',
@@ -174,9 +177,8 @@ defineOptions({
   font-size: 1.25rem;
   font-weight: 700;
   color: white;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   flex-shrink: 0;
   line-height: 1.2;
   text-align: left;

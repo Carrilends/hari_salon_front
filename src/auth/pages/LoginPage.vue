@@ -49,7 +49,9 @@ async function submitLogin() {
 
 <template>
   <div class="login-page column flex-center">
-    <q-card class="login-page__card q-pa-xl shadow-2 rounded-borders full-width">
+    <q-card
+      class="login-page__card q-pa-xl shadow-2 rounded-borders full-width"
+    >
       <q-card-section class="text-center">
         <div class="text-h5 text-weight-bold q-mb-sm">Bienvenido</div>
         <div class="text-caption text-grey-7">
@@ -98,6 +100,15 @@ async function submitLogin() {
           />
         </div>
       </q-form>
+      <q-card-section class="text-center q-pt-md">
+        <q-btn
+          flat
+          no-caps
+          color="grey-8"
+          label="Ir al inicio"
+          :to="{ path: '/' }"
+        />
+      </q-card-section>
     </q-card>
   </div>
 </template>
