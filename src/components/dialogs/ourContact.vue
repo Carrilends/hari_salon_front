@@ -37,14 +37,20 @@
           <div class="schedule-layout__content">
             <div class="schedule-title">Horarios de atención</div>
             <div class="schedule-block">
-              <div class="schedule-block__label">Lunes a viernes</div>
-              <div class="schedule-block__hours">8:00 a. m. – 9:00 p. m.</div>
+              <div class="schedule-block__label">
+                {{ BUSINESS_SCHEDULE_COPY.weekdayLabel }}
+              </div>
+              <div class="schedule-block__hours">
+                {{ BUSINESS_SCHEDULE_COPY.weekdayRange }}
+              </div>
             </div>
             <div class="schedule-block">
               <div class="schedule-block__label">
-                Sábado, domingo y festivos
+                {{ BUSINESS_SCHEDULE_COPY.weekendLabel }}
               </div>
-              <div class="schedule-block__hours">9:00 a. m. – 7:00 p. m.</div>
+              <div class="schedule-block__hours">
+                {{ BUSINESS_SCHEDULE_COPY.weekendRange }}
+              </div>
             </div>
           </div>
         </div>
@@ -86,6 +92,7 @@ import {
   useDialog,
 } from 'src/composables/dialogs/useDialogService';
 import { useDialogMaximizedBelow } from 'src/composables/dialogs/useDialogMaximizedBelow';
+import { BUSINESS_SCHEDULE_COPY } from 'src/helpers/businessHours';
 
 const props = defineProps<{ dialog: boolean }>();
 const emit = defineEmits<DialogEmits>();

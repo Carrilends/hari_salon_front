@@ -291,17 +291,25 @@
                 first-day-of-week="1"
                 color="primary"
                 class="date-picker"
+                :options="isQDateSelectable"
               />
             </div>
           </q-tab-panel>
 
           <q-tab-panel name="time" class="q-pa-lg">
+            <p class="booking-schedule-hint text-body2 text-grey-8 q-mb-md">
+              {{ scheduleHint }}
+            </p>
             <div class="time-picker-container">
               <q-time
                 v-model="time"
                 mask="YYYY-MM-DD HH:mm"
                 color="primary"
                 class="time-picker"
+                format24h
+                :default-date="date || undefined"
+                :options="bookingTimeOptions"
+                :disable="!date"
               />
             </div>
           </q-tab-panel>
@@ -350,6 +358,12 @@ import {
   buildWhatsAppUrl,
   generateBookingWhatsAppMessage,
 } from 'src/helpers/whatsappBooking';
+import {
+  BUSINESS_SCHEDULE_COPY,
+  createBookingTimeOptionsFn,
+  isBookingDateTimeWithinHours,
+  isQDateSelectable,
+} from 'src/helpers/businessHours';
 
 const $q = useQuasar();
 const bookStore = useBookStore();
@@ -361,6 +375,10 @@ const dateCard = ref(false);
 const date = ref('' /* '2025/01/01' */);
 const time = ref('');
 const tab = ref('date');
+
+const scheduleHint = `${BUSINESS_SCHEDULE_COPY.weekdayLabel}: ${BUSINESS_SCHEDULE_COPY.weekdayRange}. ${BUSINESS_SCHEDULE_COPY.weekendLabel}: ${BUSINESS_SCHEDULE_COPY.weekendRange}.`;
+
+const bookingTimeOptions = createBookingTimeOptionsFn(() => date.value);
 
 const principalImageUrl = (line: BookingLine) => {
   const img = line.service.images?.find((i) => i.isPrincipal);
@@ -399,6 +417,16 @@ const sendBookingData = () => {
     return;
   }
 
+  if (!isBookingDateTimeWithinHours(date.value, time.value)) {
+    $q.notify({
+      type: 'warning',
+      message:
+        'La hora elegida está fuera del horario de atención. Elige otra hora.',
+      position: 'top',
+    });
+    return;
+  }
+
   // Generar mensaje y abrir WhatsApp
   const message = generateBookingWhatsAppMessage({
     bookings: bookStore.bookings,
@@ -416,14 +444,29 @@ const manageVisualizationDialog = (val: boolean) => {
 };
 
 const confirmDateTime = () => {
-  if (date.value && time.value) {
-    dateCard.value = false;
+  if (!date.value || !time.value) return;
+  if (!isBookingDateTimeWithinHours(date.value, time.value)) {
+    $q.notify({
+      type: 'warning',
+      message:
+        'La hora no está dentro del horario de atención para esa fecha.',
+      position: 'top',
+    });
+    return;
   }
+  dateCard.value = false;
 };
 
 watch(date, (newDate, oldDate) => {
   if (newDate !== oldDate) {
     tab.value = 'time';
+    if (
+      newDate &&
+      time.value &&
+      !isBookingDateTimeWithinHours(newDate, time.value)
+    ) {
+      time.value = '';
+    }
   }
 });
 
