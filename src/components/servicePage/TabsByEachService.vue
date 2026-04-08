@@ -23,6 +23,13 @@
           <PriceDisplayPill :amount="props.props.precio" dense />
         </div>
 
+        <ServicePromoButton
+          :have-promotion="props.props.havePromotion"
+          :porcentage-discount="Number(props.props.porcentageDiscount ?? 0)"
+          placement="overlay"
+          @promo-click="emit('promoService', props.props.id)"
+        />
+
         <q-btn
           v-if="authStore.isLoggedIn"
           @click="$emit('editService', props.props.id)"
@@ -64,6 +71,7 @@ import { useAuthStore } from 'src/stores/auth-store';
 import { ref } from 'vue';
 import DeleteBtn from 'src/components/shared/btns/DeleteBtn.vue';
 import PriceDisplayPill from 'src/components/shared/PriceDisplayPill.vue';
+import ServicePromoButton from 'src/components/servicePage/ServicePromoButton.vue';
 
 const authStore = useAuthStore();
 
@@ -75,11 +83,13 @@ const props = defineProps<{
     name: string;
     precio: number;
     url: string;
+    havePromotion?: boolean;
+    porcentageDiscount?: number;
   };
   selected: boolean;
 }>();
 
-const emit = defineEmits(['detailService', 'deleteService', 'editService']);
+const emit = defineEmits(['detailService', 'deleteService', 'editService', 'promoService']);
 const deleteServiceFn = (id: string) => {
   $q.dialog({
     title: 'Eliminar servicio',

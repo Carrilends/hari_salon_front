@@ -135,7 +135,15 @@
                 {{ service.name }}
               </q-item-label>
               <q-item-label caption class="q-mt-xs service-list-price">
-                <PriceDisplayPill :amount="service.price" dense />
+                <div class="row items-center no-wrap">
+                  <PriceDisplayPill :amount="service.price" dense />
+                  <ServicePromoButton
+                    :have-promotion="service.havePromotion"
+                    :porcentage-discount="Number(service.porcentageDiscount ?? 0)"
+                    placement="inline"
+                    @promo-click="handlePromotionAction(service)"
+                  />
+                </div>
               </q-item-label>
             </q-item-section>
             <q-item-section side top class="service-list-side">
@@ -193,11 +201,14 @@
               @detail-service="() => (serviceIdRef = service.id)"
               @delete-service="fetchServices"
               @edit-service="() => openEditService(service.id)"
+              @promo-service="() => handlePromotionAction(service)"
               :props="{
                 id: service.id,
                 name: service.name,
                 precio: service.price,
                 url: service.images[0]?.url,
+                havePromotion: service.havePromotion,
+                porcentageDiscount: service.porcentageDiscount,
               }"
               :selected="true"
             />
@@ -228,10 +239,12 @@ import { useQuasar } from 'quasar';
 import { useServices } from 'src/composables/services/useServices';
 import {
   deleteService,
+  getService,
   useService,
   useServiceForEdition,
 } from 'src/composables/services/useService';
 import TabsByEachService from 'src/components/servicePage/TabsByEachService.vue';
+import ServicePromoButton from 'src/components/servicePage/ServicePromoButton.vue';
 import PriceDisplayPill from 'src/components/shared/PriceDisplayPill.vue';
 import type Service from 'src/interfaces/service';
 import ServiceFilterDialog from 'src/components/dialogs/serviceFilterDialog.vue';
@@ -241,9 +254,13 @@ import serviceCreateEdit from 'src/components/dialogs/serviceCreateEdit.vue';
 
 import { MenuCard } from './IndexPage.vue';
 import { useAuthStore } from 'src/stores/auth-store';
+import { useBookStore } from 'src/stores/book-store';
+import { adminServiceApi } from 'src/api/services-api';
+import { serviceIsOnPromotion } from 'src/helpers/service-promotion';
 
 const filtersStore = useFiltersStore();
 const authStore = useAuthStore();
+const bookStore = useBookStore();
 
 const { services, filterService, totalPages, refetch } = useServices();
 const { serviceIdRef } = useService();
@@ -375,6 +392,126 @@ const confirmDeleteService = (id: string) => {
     }
     fetchServices('delete_service');
   });
+};
+
+type ServiceTagInput = string | { id?: string };
+
+const normalizeServiceTags = (service: Service): string[] =>
+  ((service.tags as unknown as ServiceTagInput[]) || [])
+    .map((tag) => (typeof tag === 'string' ? tag : tag?.id || ''))
+    .filter((id) => Boolean(id));
+
+const buildPromotionPayload = (
+  service: Service,
+  havePromotion: boolean,
+  porcentageDiscount: number
+) => ({
+  name: service.name,
+  detail: {
+    id: service.detail?.id,
+    description: service.detail?.description,
+    specifications: service.detail?.specifications,
+  },
+  price: Number(service.price || 0),
+  images: service.images || [],
+  tags: normalizeServiceTags(service),
+  havePromotion,
+  porcentageDiscount,
+});
+
+const applyPromotionToService = async (
+  service: Service,
+  havePromotion: boolean,
+  porcentageDiscount: number
+) => {
+  $q.loading.show({
+    message: havePromotion ? 'Aplicando promoción...' : 'Quitando promoción...',
+    spinnerColor: 'negative',
+  });
+  try {
+    const payload = buildPromotionPayload(service, havePromotion, porcentageDiscount);
+    await adminServiceApi.patch(`/service/${service.id}`, payload);
+    const fresh = await getService(service.id);
+    bookStore.syncBookingWithService(fresh);
+    fetchServices('promotion_update');
+    $q.notify({
+      type: 'positive',
+      message: havePromotion
+        ? `Promoción ${porcentageDiscount}% aplicada`
+        : 'Promoción retirada',
+      position: 'top',
+    });
+  } catch {
+    $q.notify({
+      type: 'negative',
+      message: 'No se pudo actualizar la promoción del servicio',
+      position: 'top',
+    });
+  } finally {
+    $q.loading.hide();
+  }
+};
+
+const askPromotionPercentage = (service: Service) => {
+  const defaultValue = Math.min(
+    100,
+    Math.max(1, Math.round(Number(service.porcentageDiscount || 10)))
+  );
+  $q.dialog({
+    title: 'Activar promoción',
+    message: 'Ingresa el porcentaje de descuento (1-100)',
+    prompt: {
+      model: String(defaultValue),
+      type: 'number',
+      isValid: (val) => {
+        const pct = Number(val);
+        return Number.isFinite(pct) && pct >= 1 && pct <= 100;
+      },
+    },
+    ok: {
+      label: 'Aplicar',
+      color: 'negative',
+      unelevated: true,
+    },
+    cancel: true,
+    persistent: true,
+  }).onOk((value) => {
+    const pct = Math.round(Number(value));
+    if (!Number.isFinite(pct) || pct < 1 || pct > 100) {
+      $q.notify({
+        type: 'warning',
+        message: 'Ingresa un porcentaje válido entre 1 y 100',
+        position: 'top',
+      });
+      return;
+    }
+    void applyPromotionToService(service, true, pct);
+  });
+};
+
+const askPromotionRemoval = (service: Service) => {
+  $q.dialog({
+    title: 'Quitar promoción',
+    message: '¿Deseas quitar la promoción de este servicio?',
+    ok: {
+      label: 'Quitar',
+      color: 'negative',
+      unelevated: true,
+    },
+    cancel: true,
+    persistent: true,
+  }).onOk(() => {
+    void applyPromotionToService(service, false, 0);
+  });
+};
+
+const handlePromotionAction = (service: Service) => {
+  if (!(authStore.isLoggedIn && authStore.isAdmin)) return;
+  if (serviceIsOnPromotion(service)) {
+    askPromotionRemoval(service);
+    return;
+  }
+  askPromotionPercentage(service);
 };
 
 const thumbStyle = {

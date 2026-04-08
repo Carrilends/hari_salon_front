@@ -1,5 +1,10 @@
 import type { BookingLine } from 'src/interfaces/booking';
 import { formatCopDisplay } from 'src/helpers/price-display';
+import {
+  effectiveServiceUnitPrice,
+  promotionPercentDisplay,
+  serviceIsOnPromotion,
+} from 'src/helpers/service-promotion';
 
 export function buildWhatsAppUrl(phoneNumber: string, message: string): string {
   const encodedMessage = encodeURIComponent(message);
@@ -18,9 +23,15 @@ export function generateBookingWhatsAppMessage(params: {
       const principalImage = line.service.images?.find((img) => img.isPrincipal);
       const imageUrl = principalImage?.url || '';
       const qty = line.quantity > 1 ? ` (×${line.quantity})` : '';
+      const hasPromo = serviceIsOnPromotion(line.service);
+      const promoInfo = hasPromo
+        ? ` [PROMO -${promotionPercentDisplay(line.service)}% | ${formatCopDisplay(
+            effectiveServiceUnitPrice(line.service)
+          )} c/u]`
+        : '';
 
-      if (imageUrl) return `• ${line.service.name}${qty}: ${imageUrl}`;
-      return `• ${line.service.name}${qty}`;
+      if (imageUrl) return `• ${line.service.name}${qty}${promoInfo}: ${imageUrl}`;
+      return `• ${line.service.name}${qty}${promoInfo}`;
     })
     .join('\n');
 

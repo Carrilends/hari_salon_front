@@ -115,19 +115,36 @@
                           </q-badge>
                         </q-item-label>
                         <q-item-label class="booking-line-price">
-                          <PriceDisplayPill
-                            :amount="lineSubtotal(line)"
-                            dense
-                          />
-                          <span
-                            v-if="line.quantity > 1"
-                            class="booking-price-detail text-grey-7 q-ml-sm"
-                          >
-                            ({{
-                              formatCopDisplay(line.service.price)
-                            }}
-                            × {{ line.quantity }})
-                          </span>
+                          <div class="row items-center flex-wrap">
+                            <template v-if="serviceIsOnPromotion(line.service)">
+                              <span
+                                class="booking-price-original text-grey-6 q-mr-sm"
+                              >
+                                <PriceDisplayPill
+                                  :amount="
+                                    Number(line.service.price || 0) *
+                                    line.quantity
+                                  "
+                                  dense
+                                />
+                              </span>
+                            </template>
+                            <PriceDisplayPill
+                              :amount="lineSubtotal(line)"
+                              dense
+                            />
+                            <span
+                              v-if="line.quantity > 1"
+                              class="booking-price-detail text-grey-7 q-ml-sm"
+                            >
+                              ({{
+                                formatCopDisplay(
+                                  effectiveServiceUnitPrice(line.service)
+                                )
+                              }}
+                              × {{ line.quantity }})
+                            </span>
+                          </div>
                         </q-item-label>
                       </div>
                     </q-item-section>
@@ -171,7 +188,17 @@
                           size="md"
                           color="primary"
                           icon="chevron_right"
-                        />
+                          class="booking-detail-btn"
+                        >
+                          <q-badge
+                            v-if="serviceIsOnPromotion(line.service)"
+                            floating
+                            rounded
+                            color="deep-orange-9"
+                            class="booking-detail-btn__promo-badge"
+                            :label="`-${promotionPercentDisplay(line.service)}%`"
+                          />
+                        </q-btn>
                       </div>
                     </q-item-section>
                   </q-item>
@@ -353,6 +380,11 @@ import ServiceDialog from './serviceDialog.vue';
 import Service from 'src/interfaces/service';
 import { getService } from 'src/composables/services/useService';
 import { formatCopDisplay } from 'src/helpers/price-display';
+import {
+  effectiveServiceUnitPrice,
+  promotionPercentDisplay,
+  serviceIsOnPromotion,
+} from 'src/helpers/service-promotion';
 import PriceDisplayPill from 'src/components/shared/PriceDisplayPill.vue';
 import {
   buildWhatsAppUrl,
@@ -386,7 +418,7 @@ const principalImageUrl = (line: BookingLine) => {
 };
 
 const lineSubtotal = (line: BookingLine) =>
-  Number(line.service.price || 0) * line.quantity;
+  effectiveServiceUnitPrice(line.service) * line.quantity;
 
 const increaseBooking = (service: Service) => {
   bookStore.incrementBookingQuantity(service);
@@ -898,6 +930,22 @@ const bookingListScrollStyle = computed((): CSSProperties => {
   gap: 4px 0;
   font-size: 15px;
   color: #333;
+}
+
+.booking-price-original :deep(.cop-price-pill) {
+  text-decoration: line-through;
+  opacity: 0.85;
+}
+
+.booking-detail-btn {
+  position: relative;
+}
+
+.booking-detail-btn__promo-badge {
+  font-size: 10px;
+  font-weight: bold;
+  min-width: 2rem;
+  padding: 3px 6px;
 }
 
 .booking-price-detail {

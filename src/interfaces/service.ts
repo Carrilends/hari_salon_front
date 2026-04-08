@@ -5,6 +5,10 @@ export default interface Service {
   type: string;
   price: number;
   isSpecial: boolean;
+  /** Promoción activada por administración */
+  havePromotion?: boolean;
+  /** Descuento 0–100 (columna API `porcentageDiscount`) */
+  porcentageDiscount?: number;
   slug: string;
   tags: string[];
   images: Image[];

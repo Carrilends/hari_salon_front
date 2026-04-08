@@ -3,6 +3,7 @@ import { defineStore } from 'pinia';
 
 import type { BookingLine } from 'src/interfaces/booking';
 import type Service from 'src/interfaces/service';
+import { effectiveServiceUnitPrice } from 'src/helpers/service-promotion';
 
 function isBookingLineArray(raw: unknown[]): raw is BookingLine[] {
   if (raw.length === 0) return true;
@@ -109,7 +110,7 @@ export const useBookStore = defineStore(
     const bookingsCost = computed(() =>
       bookings.value.reduce(
         (sum, line) =>
-          sum + Number(line.service.price || 0) * line.quantity,
+          sum + effectiveServiceUnitPrice(line.service) * line.quantity,
         0
       )
     );
