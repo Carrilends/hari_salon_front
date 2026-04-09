@@ -75,7 +75,7 @@
               :class="{ 'service-heading-actions--compact': isCompactSearch }"
             >
               <q-btn
-                v-if="authStore.isLoggedIn"
+                v-if="authStore.isAdmin"
                 @click="dialogCreation = true"
                 color="indigo-5"
                 icon="las la-plus"
@@ -149,7 +149,7 @@
             <q-item-section side top class="service-list-side">
               <div class="service-list-actions column q-gutter-xs">
                 <q-btn
-                  v-if="authStore.isLoggedIn"
+                  v-if="authStore.isAdmin"
                   flat
                   dense
                   no-caps
@@ -170,7 +170,7 @@
                   @click.stop="openServiceDetail(service.id)"
                 />
                 <q-btn
-                  v-if="authStore.isLoggedIn"
+                  v-if="authStore.isAdmin"
                   flat
                   dense
                   no-caps
@@ -268,6 +268,7 @@ const { serviceIdEditRef } = useServiceForEdition();
 const dialogCreation = ref(false);
 
 const openEditService = (id: string) => {
+  if (!authStore.isAdmin) return;
   serviceIdEditRef.value = '';
   void nextTick(() => {
     serviceIdEditRef.value = id;
@@ -371,6 +372,7 @@ const fetchServices = (e: FilterService | string) => {
 };
 
 const confirmDeleteService = (id: string) => {
+  if (!authStore.isAdmin) return;
   $q.dialog({
     title: 'Eliminar servicio',
     message: '¿Está seguro de que desea eliminar este servicio?',

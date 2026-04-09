@@ -14,3 +14,23 @@ export interface AuthResponse {
   isActive: boolean;
   token: string;
 }
+
+export interface CreateReviewBody {
+  name: string;
+  description: string;
+  score: number;
+}
+
+export interface CreateReviewResponse extends CreateReviewBody {
+  id: string;
+  createdAt: string;
+  userId: string;
+}
+
+export interface ReviewItem {
+  id: string;
+  name: string;
+  description: string;
+  score: number;
+  createdAt: string;
+}

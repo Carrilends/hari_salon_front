@@ -31,7 +31,7 @@
         />
 
         <q-btn
-          v-if="authStore.isLoggedIn"
+          v-if="authStore.isAdmin"
           @click="$emit('editService', props.props.id)"
           fab
           icon="edit"
@@ -40,6 +40,7 @@
         />
         <!-- BOTÓN DE ELIMINACIÓN -->
         <DeleteBtn
+          v-if="authStore.isAdmin"
           @delete="deleteServiceFn"
           :element="props.props.id"
           :class="{ visible: isHovering }"
@@ -91,6 +92,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['detailService', 'deleteService', 'editService', 'promoService']);
 const deleteServiceFn = (id: string) => {
+  if (!authStore.isAdmin) return;
   $q.dialog({
     title: 'Eliminar servicio',
     message: '¿Está seguro de que desea eliminar este servicio?',

@@ -11,5 +11,10 @@ export const authRoutes: RouteRecordRaw = {
       name: 'login',
       component: () => import('src/auth/pages/LoginPage.vue'),
     },
+    {
+      path: 'register',
+      name: 'register',
+      component: () => import('src/auth/pages/RegisterPage.vue'),
+    },
   ],
 };

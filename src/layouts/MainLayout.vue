@@ -46,6 +46,17 @@
           <q-btn
             v-if="authStore.isLoggedIn"
             class="color-bar"
+            icon="manage_accounts"
+            :label="showButtonLabels ? 'Mi cuenta' : undefined"
+            aria-label="Mi cuenta"
+            rounded
+            flat
+            :dense="!showButtonLabels"
+            @click="router.push('/mi-cuenta')"
+          />
+          <q-btn
+            v-if="authStore.isLoggedIn"
+            class="color-bar"
             icon="logout"
             :label="showButtonLabels ? 'Salir' : undefined"
             aria-label="Cerrar sesión"
@@ -61,6 +72,65 @@
     <q-page-container class="full-width" style="height: 100vh; min-height: 0">
       <router-view />
     </q-page-container>
+
+    <q-btn
+      v-if="showReviewButton"
+      class="review-fab"
+      color="positive"
+      icon="chat"
+      round
+      size="lg"
+      aria-label="Agregar reseña"
+      @click="onReviewClick"
+    />
+
+    <q-dialog v-model="reviewDialog">
+      <q-card class="review-dialog q-pa-sm">
+        <q-card-section class="q-pb-none">
+          <div class="text-h6">Tu reseña</div>
+          <div class="text-caption text-grey-7">
+            Cuéntanos tu experiencia y deja una puntuación
+          </div>
+        </q-card-section>
+
+        <q-card-section class="q-gutter-md">
+          <q-input
+            v-model="reviewForm.name"
+            outlined
+            label="Nombre"
+            :rules="[
+              (val) => !!val || 'Requerido',
+              (val) => val.trim().length >= 2 || 'Mínimo 2 caracteres',
+            ]"
+          />
+          <q-input
+            v-model="reviewForm.description"
+            outlined
+            type="textarea"
+            autogrow
+            label="Descripción"
+            :rules="[
+              (val) => !!val || 'Requerido',
+              (val) => val.trim().length >= 5 || 'Mínimo 5 caracteres',
+            ]"
+          />
+          <q-select
+            v-model="reviewForm.score"
+            outlined
+            label="Puntaje"
+            :options="scoreOptions"
+            emit-value
+            map-options
+          />
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="Cancelar" v-close-popup />
+          <q-btn color="positive" label="Enviar reseña" :loading="isSendingReview" @click="submitReview" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
     <whoWeAreDialog v-model:dialog="whoWeAreDialogComponent" />
     <ourContact v-model:dialog="ourContactDialog" />
     <BookingDialog v-model:dialog="bookingStore.showDialog" />
@@ -68,21 +138,90 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { computed, reactive, ref, watch, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useQuasar } from 'quasar';
 import ourContact from 'src/components/dialogs/ourContact.vue';
 import whoWeAreDialog from 'src/components/dialogs/whoWeAreDialog.vue';
 import BookingDialog from 'src/components/dialogs/bookingDialog.vue';
 import { migrateLegacyBookings, useBookStore } from 'src/stores/book-store';
 import { useAuthStore } from 'src/stores/auth-store';
+import { adminServiceApi } from 'src/api/services-api';
+import type { CreateReviewBody, CreateReviewResponse } from 'src/api/apiTypes';
 
 const bookingStore = useBookStore();
 const authStore = useAuthStore();
+const $q = useQuasar();
 
 const BREAKPOINT_LABELS_PX = 1171;
 
 const route = useRoute();
 const router = useRouter();
+
+const reviewDialog = ref(false);
+const isSendingReview = ref(false);
+const scoreOptions = [1, 2, 3, 4, 5].map((score) => ({ label: `${score}`, value: score }));
+
+const reviewForm = reactive<CreateReviewBody>({
+  name: '',
+  description: '',
+  score: 5,
+});
+
+const showReviewButton = computed(() => {
+  if (!authStore.isLoggedIn) return true;
+  if (authStore.isAdmin) return false;
+  return authStore.roles.length === 0 || authStore.roles.every((role) => role === 'user');
+});
+
+function resetReviewForm() {
+  reviewForm.name = authStore.fullname || '';
+  reviewForm.description = '';
+  reviewForm.score = 5;
+}
+
+function onReviewClick() {
+  if (!authStore.isLoggedIn) {
+    router.push({
+      name: 'login',
+      query: {
+        redirect: route.fullPath || '/services',
+      },
+    });
+    return;
+  }
+
+  resetReviewForm();
+  reviewDialog.value = true;
+}
+
+async function submitReview() {
+  if (!authStore.isLoggedIn || isSendingReview.value) return;
+  if (!reviewForm.name.trim() || !reviewForm.description.trim()) return;
+
+  isSendingReview.value = true;
+  try {
+    await adminServiceApi.post<CreateReviewResponse>('/reviews', {
+      name: reviewForm.name.trim(),
+      description: reviewForm.description.trim(),
+      score: reviewForm.score,
+    });
+
+    reviewDialog.value = false;
+    $q.notify({
+      type: 'positive',
+      message: 'Reseña enviada correctamente',
+    });
+    resetReviewForm();
+  } catch {
+    $q.notify({
+      type: 'negative',
+      message: 'No se pudo enviar la reseña',
+    });
+  } finally {
+    isSendingReview.value = false;
+  }
+}
 
 function onLogout() {
   authStore.logout();
@@ -124,6 +263,12 @@ const buttons = ref([
     label: 'Servicios',
     class: 'color-bar',
     method: () => router.push('/services'),
+  },
+  {
+    icon: 'rate_review',
+    label: 'Testimonios',
+    class: 'color-bar',
+    method: () => router.push('/testimonios'),
   },
   {
     icon: 'schedule',
@@ -252,5 +397,18 @@ defineOptions({
   line-height: 1;
   z-index: 10;
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+}
+
+.review-fab {
+  position: fixed;
+  left: 18px;
+  bottom: 18px;
+  z-index: 2500;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+.review-dialog {
+  width: min(92vw, 460px);
+  border-radius: 14px;
 }
 </style>

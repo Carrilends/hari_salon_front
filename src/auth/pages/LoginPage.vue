@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useAuth } from 'src/composables/auth';
 
@@ -14,6 +14,7 @@ interface ApiError {
 
 const $q = useQuasar();
 const router = useRouter();
+const route = useRoute();
 const { loginBody, login, isLoading } = useAuth();
 
 const username = ref('');
@@ -33,7 +34,8 @@ async function submitLogin() {
   });
   try {
     await login();
-    router.push({ path: '/services' });
+    const redirectTo = typeof route.query.redirect === 'string' ? route.query.redirect : '/services';
+    router.push({ path: redirectTo });
   } catch (err: unknown) {
     $q.notify({
       type: 'negative',
@@ -101,6 +103,15 @@ async function submitLogin() {
         </div>
       </q-form>
       <q-card-section class="text-center q-pt-md">
+        <q-btn
+          flat
+          no-caps
+          color="primary"
+          label="¿No tienes cuenta? Regístrate"
+          :to="{ name: 'register' }"
+        />
+      </q-card-section>
+      <q-card-section class="text-center q-pt-none">
         <q-btn
           flat
           no-caps
