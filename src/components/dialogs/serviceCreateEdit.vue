@@ -103,6 +103,24 @@
               </div>
             </div>
           </div>
+          <!-- TIEMPO APROXIMADO -->
+          <div class="col-12 q-py-sm q-mt-sm">
+            <q-select
+              v-model="formData.duration"
+              ref="durationRef"
+              :options="durationOptions"
+              emit-value
+              map-options
+              filled
+              label="Tiempo aproximado"
+              color="black"
+              :rules="[(val) => !!val || 'El tiempo aproximado es obligatorio']"
+            >
+              <template v-slot:prepend>
+                <q-icon name="schedule" color="grey-7" />
+              </template>
+            </q-select>
+          </div>
         </q-step>
         <q-step
           :name="2"
@@ -242,6 +260,7 @@ const props = defineProps({
     },
   },
   price: Number,
+  duration: Number,
   images: Array,
   tags: Array,
   isEditMode: Boolean,
@@ -256,6 +275,7 @@ const {
   nameRef,
   descriptionRef,
   priceRef,
+  durationRef,
   selectedServicesIDs,
   slide,
   step,
@@ -264,6 +284,19 @@ const {
 } = useServiceCreateEdit(props);
 
 const priceDisplay = ref('');
+
+const durationOptions = [
+  { label: '15 min', value: 15 },
+  { label: '30 min', value: 30 },
+  { label: '45 min', value: 45 },
+  { label: '1 hora', value: 60 },
+  { label: '1h 15min', value: 75 },
+  { label: '1h 30min', value: 90 },
+  { label: '2 horas', value: 120 },
+  { label: '2h 30min', value: 150 },
+  { label: '3 horas', value: 180 },
+  { label: '4 horas', value: 240 },
+];
 
 const priceRules = [
   (val) => copNumericValue(val) !== null || 'El precio es obligatorio',
@@ -359,6 +392,9 @@ const prepareFormData = async () => {
   if (formData.value.price != null) {
     formData.value.price = Number(formData.value.price);
   }
+  if (formData.value.duration != null) {
+    formData.value.duration = Number(formData.value.duration);
+  }
 };
 
 const controlStepper = async () => {
@@ -366,6 +402,7 @@ const controlStepper = async () => {
     const isNameValid = nameRef.value.validate();
     const isDescriptionValid = descriptionRef.value.validate();
     const isPriceValid = priceRef.value.validate();
+    const isDurationValid = durationRef.value.validate();
     const genres = internGenres.value.filter((g) => g.selected).length;
     if (genres === 0) {
       $q.notify({
@@ -374,7 +411,7 @@ const controlStepper = async () => {
         position: 'bottom',
       });
     }
-    if (isNameValid && isDescriptionValid && isPriceValid && genres > 0)
+    if (isNameValid && isDescriptionValid && isPriceValid && isDurationValid && genres > 0)
       stepper.value.next();
   } else if (step.value === 2) {
     if (files.value.length === 0) {
@@ -448,6 +485,7 @@ const close = () => {
         },
       },
       price: null,
+      duration: null,
       images: [],
       tags: [],
     };

@@ -229,6 +229,14 @@
                     :amount="bookStore.bookingsCost"
                   />
                 </div>
+                <div
+                  v-if="bookStore.bookingsDuration > 0"
+                  class="booking-duration-summary q-mt-sm"
+                >
+                  <q-icon name="schedule" size="18px" color="blue-grey-6" class="q-mr-xs" />
+                  <span class="booking-duration-label">Tiempo aprox.:</span>
+                  <span class="booking-duration-value">{{ formattedDuration }}</span>
+                </div>
                 <!-- Recuadro de fecha y hora -->
                 <div class="date-time-info-box q-mt-md">
                   <div class="row items-center q-gutter-sm">
@@ -420,6 +428,16 @@ const principalImageUrl = (line: BookingLine) => {
 const lineSubtotal = (line: BookingLine) =>
   effectiveServiceUnitPrice(line.service) * line.quantity;
 
+const formattedDuration = computed(() => {
+  const total = bookStore.bookingsDuration;
+  if (total <= 0) return '';
+  const hours = Math.floor(total / 60);
+  const mins = total % 60;
+  if (hours === 0) return `${mins} min`;
+  if (mins === 0) return hours === 1 ? '1 hora' : `${hours} horas`;
+  return `${hours}h ${mins}min`;
+});
+
 const increaseBooking = (service: Service) => {
   bookStore.incrementBookingQuantity(service);
 };
@@ -463,6 +481,7 @@ const sendBookingData = () => {
   const message = generateBookingWhatsAppMessage({
     bookings: bookStore.bookings,
     bookingsCost: bookStore.bookingsCost,
+    bookingsDuration: bookStore.bookingsDuration,
     formattedDateTime: formattedDateTime.value,
   });
   openWhatsApp(message);
@@ -950,5 +969,23 @@ const bookingListScrollStyle = computed((): CSSProperties => {
 
 .booking-price-detail {
   font-size: 13px;
+}
+
+.booking-duration-summary {
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  color: #546e7a;
+  font-family: Georgia, 'Times New Roman', Times, serif;
+}
+
+.booking-duration-label {
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.booking-duration-value {
+  font-weight: bold;
+  color: #37474f;
 }
 </style>

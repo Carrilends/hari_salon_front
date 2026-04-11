@@ -19,6 +19,7 @@ describe('service.helpers', () => {
     name: 'Service',
     detail: { description: 'Desc', specifications: { df: '' } },
     price: 10_000,
+    duration: 30,
     images: [],
     tags: [],
   };

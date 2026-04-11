@@ -12,6 +12,7 @@ export type ServiceFormData = {
     };
   };
   price: number | null;
+  duration: number | null;
   images: Image[];
   tags: { id: string; name: string }[];
 };
@@ -32,6 +33,7 @@ export const useServiceCreateEdit = (props: ServiceFormData) => {
       },
     },
     price: null,
+    duration: null,
     images: [],
     tags: [],
   });
@@ -42,6 +44,7 @@ export const useServiceCreateEdit = (props: ServiceFormData) => {
   const nameRef = ref(null);
   const descriptionRef = ref(null);
   const priceRef = ref(null);
+  const durationRef = ref(null);
   const selectedServicesIDs = ref<string[]>([]);
   const slide = ref(1);
   const step = ref(1);
@@ -59,6 +62,7 @@ export const useServiceCreateEdit = (props: ServiceFormData) => {
     formData.value.name = props.name;
     formData.value.detail.description = props.detail?.description;
     formData.value.price = props.price;
+    formData.value.duration = props.duration ?? null;
 
     const idsServices = props.tags?.map((tag) => tag.id);
 
@@ -95,6 +99,7 @@ export const useServiceCreateEdit = (props: ServiceFormData) => {
     nameRef,
     descriptionRef,
     priceRef,
+    durationRef,
     selectedServicesIDs,
     slide,
     step,

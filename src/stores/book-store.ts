@@ -115,12 +115,20 @@ export const useBookStore = defineStore(
       )
     );
 
+    const bookingsDuration = computed(() =>
+      bookings.value.reduce(
+        (sum, line) => sum + (line.service.duration || 0) * line.quantity,
+        0
+      )
+    );
+
     const showDialogFn = () => (showDialog.value = !showDialog.value);
 
     return {
       bookings,
       totalBookingQuantity,
       bookingsCost,
+      bookingsDuration,
       showDialog,
       addBooking,
       removeBooking,

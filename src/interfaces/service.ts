@@ -9,6 +9,7 @@ export default interface Service {
   havePromotion?: boolean;
   /** Descuento 0–100 (columna API `porcentageDiscount`) */
   porcentageDiscount?: number;
+  duration: number;
   slug: string;
   tags: string[];
   images: Image[];

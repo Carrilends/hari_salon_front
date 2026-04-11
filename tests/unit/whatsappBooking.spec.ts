@@ -13,6 +13,7 @@ function makeService(overrides?: Partial<Service>): Service {
     type: overrides?.type ?? 'service',
     price: overrides?.price ?? 10_000,
     isSpecial: overrides?.isSpecial ?? false,
+    duration: overrides?.duration ?? 30,
     slug: overrides?.slug ?? 'corte',
     tags: overrides?.tags ?? [],
     images: overrides?.images ?? [],
