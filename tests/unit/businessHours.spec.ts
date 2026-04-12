@@ -1,4 +1,5 @@
 import {
+  bookingSelectionToUtcIso,
   createBookingTimeOptionsFn,
   getBookingTimeBounds,
   isBookingDateTimeWithinHours,
@@ -86,5 +87,57 @@ describe('businessHours', () => {
 
   test('isQDateSelectable rejects invalid string', () => {
     expect(isQDateSelectable('bad')).toBe(false);
+  });
+
+  test('getBookingTimeBounds: subtracts service duration from ceiling', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 3, 1, 12, 0, 0));
+    const b = getBookingTimeBounds('2026/04/07', 180);
+    expect(b.startTotalMin).toBe(8 * 60);
+    expect(b.endTotalMin).toBe(21 * 60 + 59 - 180);
+    jest.useRealTimers();
+  });
+
+  test('getBookingTimeBounds: duration longer than day produces empty range', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 3, 1, 12, 0, 0));
+    const b = getBookingTimeBounds('2026/04/07', 9999);
+    expect(b.endTotalMin).toBeLessThan(b.startTotalMin);
+    jest.useRealTimers();
+  });
+
+  test('createBookingTimeOptionsFn respects service duration', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 3, 1, 12, 0, 0));
+    const getDate = () => '2026/04/07';
+    const fn = createBookingTimeOptionsFn(getDate, () => 180);
+    expect(fn(18, 0, null)).toBe(true);
+    expect(fn(18, 59, null)).toBe(true);
+    expect(fn(19, 0, null)).toBe(false);
+    expect(fn(21, 0, null)).toBe(false);
+    jest.useRealTimers();
+  });
+
+  test('isBookingDateTimeWithinHours with duration rejects late start', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 3, 1, 12, 0, 0));
+    expect(
+      isBookingDateTimeWithinHours('2026/04/07', '2026-04-07 18:00', 180)
+    ).toBe(true);
+    expect(
+      isBookingDateTimeWithinHours('2026/04/07', '2026-04-07 19:00', 180)
+    ).toBe(false);
+    jest.useRealTimers();
+  });
+
+  test('bookingSelectionToUtcIso combines q-date and q-time model', () => {
+    const iso = bookingSelectionToUtcIso('2026/04/07', '2026-04-07 14:30');
+    expect(iso).not.toBeNull();
+    const d = new Date(iso!);
+    expect(d.getFullYear()).toBe(2026);
+    expect(d.getMonth()).toBe(3);
+    expect(d.getDate()).toBe(7);
+    expect(d.getHours()).toBe(14);
+    expect(d.getMinutes()).toBe(30);
   });
 });

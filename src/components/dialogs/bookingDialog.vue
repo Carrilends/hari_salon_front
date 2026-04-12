@@ -320,13 +320,18 @@
         <!-- Paneles de fecha y hora -->
         <q-tab-panels v-model="tab" animated class="date-time-panels">
           <q-tab-panel name="date" class="q-pa-lg">
-            <div class="date-picker-container">
+            <div class="date-picker-container relative-position">
+              <q-inner-loading :showing="occupancyLoading" color="primary" />
               <q-date
                 v-model="date"
                 first-day-of-week="1"
                 color="primary"
                 class="date-picker"
-                :options="isQDateSelectable"
+                :default-year-month="defaultCalendarYearMonth"
+                :options="bookingQDateOptions"
+                :events="bookingQDateEvents"
+                :event-color="bookingQDateEventColor"
+                @navigation="onCalendarNavigation"
               />
             </div>
           </q-tab-panel>
@@ -342,6 +347,7 @@
                 color="primary"
                 class="time-picker"
                 format24h
+                now-btn
                 :default-date="date || undefined"
                 :options="bookingTimeOptions"
                 :disable="!date"
@@ -399,11 +405,23 @@ import {
   generateBookingWhatsAppMessage,
 } from 'src/helpers/whatsappBooking';
 import {
+  bookingSelectionToUtcIso,
   BUSINESS_SCHEDULE_COPY,
   createBookingTimeOptionsFn,
   isBookingDateTimeWithinHours,
   isQDateSelectable,
 } from 'src/helpers/businessHours';
+import {
+  fetchReservationOccupancy,
+  reservationsApi,
+} from 'src/api/reservations-api';
+import type { OccupancyByDateEntry } from 'src/helpers/booking-occupancy';
+import {
+  hasSlotForCart,
+  occupancyEventColor,
+  occupancyRatio,
+  ymdRangeForCalendarMonth,
+} from 'src/helpers/booking-occupancy';
 
 const $q = useQuasar();
 const bookStore = useBookStore();
@@ -416,9 +434,117 @@ const date = ref('' /* '2025/01/01' */);
 const time = ref('');
 const tab = ref('date');
 
+const occupancyByDate = ref<Record<string, OccupancyByDateEntry>>({});
+const occupancyLoading = ref(false);
+const occupancyFetchFailed = ref(false);
+const calendarYear = ref(new Date().getFullYear());
+const calendarMonth = ref(new Date().getMonth() + 1);
+
+const defaultCalendarYearMonth = computed(
+  () =>
+    `${calendarYear.value}/${String(calendarMonth.value).padStart(2, '0')}`,
+);
+
+async function loadOccupancyForMonth(year: number, month: number) {
+  occupancyLoading.value = true;
+  occupancyFetchFailed.value = false;
+  try {
+    const { from, to } = ymdRangeForCalendarMonth(year, month);
+    const data = await fetchReservationOccupancy(from, to);
+    occupancyByDate.value = { ...data.byDate };
+  } catch {
+    occupancyFetchFailed.value = true;
+    occupancyByDate.value = {};
+    $q.notify({
+      type: 'warning',
+      message: 'No se pudo cargar la ocupación del calendario.',
+      position: 'top',
+    });
+  } finally {
+    occupancyLoading.value = false;
+  }
+}
+
+function onCalendarNavigation(ctx: { year: number; month: number }) {
+  calendarYear.value = ctx.year;
+  calendarMonth.value = ctx.month;
+  void loadOccupancyForMonth(ctx.year, ctx.month);
+}
+
+function bookingQDateOptions(dateStr: string): boolean {
+  if (!dateStr || !isQDateSelectable(dateStr)) return false;
+  if (occupancyFetchFailed.value) return true;
+  if (occupancyLoading.value) return true;
+  const o = occupancyByDate.value[dateStr];
+  if (!o) return true;
+  return hasSlotForCart(
+    o.usedMinutes,
+    o.capacityMinutes,
+    bookStore.bookingsDuration,
+  );
+}
+
+function bookingQDateEvents(dateStr: string): boolean {
+  if (!dateStr || !isQDateSelectable(dateStr)) return false;
+  if (occupancyLoading.value || occupancyFetchFailed.value) return false;
+  return dateStr in occupancyByDate.value;
+}
+
+function bookingQDateEventColor(dateStr: string): string {
+  if (!dateStr || occupancyFetchFailed.value || occupancyLoading.value)
+    return 'grey-5';
+  const o = occupancyByDate.value[dateStr];
+  if (!o || o.capacityMinutes <= 0) return 'grey-7';
+  const r = occupancyRatio(o.usedMinutes, o.capacityMinutes);
+  return occupancyEventColor(r);
+}
+
+watch(dateCard, (open) => {
+  if (!open) return;
+  const now = new Date();
+  calendarYear.value = now.getFullYear();
+  calendarMonth.value = now.getMonth() + 1;
+  void loadOccupancyForMonth(calendarYear.value, calendarMonth.value);
+});
+
+watch(
+  () => bookStore.bookingsDuration,
+  () => {
+    if (!date.value) return;
+    if (bookingQDateOptions(date.value)) return;
+    date.value = '';
+    time.value = '';
+  },
+);
+
 const scheduleHint = `${BUSINESS_SCHEDULE_COPY.weekdayLabel}: ${BUSINESS_SCHEDULE_COPY.weekdayRange}. ${BUSINESS_SCHEDULE_COPY.weekendLabel}: ${BUSINESS_SCHEDULE_COPY.weekendRange}.`;
 
-const bookingTimeOptions = createBookingTimeOptionsFn(() => date.value);
+const bookingTimeOptions = createBookingTimeOptionsFn(
+  () => date.value,
+  () => bookStore.bookingsDuration,
+);
+
+/** q-date `YYYY/MM/DD` → prefijo `YYYY-MM-DD` del modelo de QTime (máscara con fecha). */
+function qDateToTimeModelDatePrefix(qDateStr: string): string {
+  const m = /^(\d{4})\/(\d{2})\/(\d{2})$/.exec(qDateStr.trim());
+  if (!m) return '';
+  return `${m[1]}-${m[2]}-${m[3]}`;
+}
+
+/**
+ * El botón "Ahora" de QTime rellena la fecha del modelo con el día actual; aquí
+ * alineamos ese prefijo con la fecha elegida en el calendario (la hora sigue siendo "ahora").
+ */
+watch([time, date], () => {
+  const d = date.value;
+  const t = time.value;
+  if (!d || !t) return;
+  const expectedPrefix = qDateToTimeModelDatePrefix(d);
+  if (!expectedPrefix) return;
+  const match = /^(\d{4}-\d{2}-\d{2})\s+(\d{1,2}:\d{2})$/.exec(t.trim());
+  if (!match || match[1] === expectedPrefix) return;
+  time.value = `${expectedPrefix} ${match[2]}`;
+});
 
 const principalImageUrl = (line: BookingLine) => {
   const img = line.service.images?.find((i) => i.isPrincipal);
@@ -446,8 +572,7 @@ const decreaseBooking = (serviceId: string) => {
   bookStore.decrementBookingQuantity(serviceId);
 };
 
-const sendBookingData = () => {
-  // Validar que haya reservas
+const sendBookingData = async () => {
   if (!bookStore.totalBookingQuantity) {
     $q.notify({
       type: 'warning',
@@ -457,7 +582,6 @@ const sendBookingData = () => {
     return;
   }
 
-  // Validar que haya fecha y hora seleccionada
   if (!date.value || !time.value) {
     $q.notify({
       type: 'warning',
@@ -467,17 +591,59 @@ const sendBookingData = () => {
     return;
   }
 
-  if (!isBookingDateTimeWithinHours(date.value, time.value)) {
+  if (
+    !isBookingDateTimeWithinHours(
+      date.value,
+      time.value,
+      bookStore.bookingsDuration,
+    )
+  ) {
     $q.notify({
       type: 'warning',
       message:
-        'La hora elegida está fuera del horario de atención. Elige otra hora.',
+        'La hora elegida no deja tiempo suficiente antes del cierre. Elige otra hora.',
       position: 'top',
     });
     return;
   }
 
-  // Generar mensaje y abrir WhatsApp
+  const scheduledAt = bookingSelectionToUtcIso(date.value, time.value);
+  if (!scheduledAt) {
+    $q.notify({
+      type: 'negative',
+      message: 'Fecha u hora no válida.',
+      position: 'top',
+    });
+    return;
+  }
+
+  const totalDurationMinutes = bookStore.bookingsDuration;
+  if (totalDurationMinutes < 1) {
+    $q.notify({
+      type: 'warning',
+      message: 'La duración total de los servicios no es válida.',
+      position: 'top',
+    });
+    return;
+  }
+
+  $q.loading.show({ message: 'Registrando reserva...' });
+  try {
+    await reservationsApi.post('/reservations', {
+      scheduledAt,
+      totalDurationMinutes,
+    });
+  } catch {
+    $q.notify({
+      type: 'negative',
+      message: 'No se pudo registrar la reserva. Intenta de nuevo.',
+      position: 'top',
+    });
+    return;
+  } finally {
+    $q.loading.hide();
+  }
+
   const message = generateBookingWhatsAppMessage({
     bookings: bookStore.bookings,
     bookingsCost: bookStore.bookingsCost,
@@ -485,9 +651,6 @@ const sendBookingData = () => {
     formattedDateTime: formattedDateTime.value,
   });
   openWhatsApp(message);
-
-  // Mantener console.log para debugging
-  console.log('Enviando datos de reserva:', bookStore.bookings);
 };
 
 const manageVisualizationDialog = (val: boolean) => {
@@ -496,11 +659,17 @@ const manageVisualizationDialog = (val: boolean) => {
 
 const confirmDateTime = () => {
   if (!date.value || !time.value) return;
-  if (!isBookingDateTimeWithinHours(date.value, time.value)) {
+  if (
+    !isBookingDateTimeWithinHours(
+      date.value,
+      time.value,
+      bookStore.bookingsDuration,
+    )
+  ) {
     $q.notify({
       type: 'warning',
       message:
-        'La hora no está dentro del horario de atención para esa fecha.',
+        'La hora seleccionada no deja tiempo suficiente antes del cierre.',
       position: 'top',
     });
     return;
@@ -514,7 +683,7 @@ watch(date, (newDate, oldDate) => {
     if (
       newDate &&
       time.value &&
-      !isBookingDateTimeWithinHours(newDate, time.value)
+      !isBookingDateTimeWithinHours(newDate, time.value, bookStore.bookingsDuration)
     ) {
       time.value = '';
     }

@@ -18,7 +18,8 @@ const WEEKEND_OPEN_MIN = 9 * 60;
 const WEEKEND_CLOSE_MIN = 19 * 60 + 59;
 
 /** q-date / defaultDate: YYYY/MM/DD */
-export function parseQDateToLocalDate(dateStr: string): Date | null {
+export function parseQDateToLocalDate(dateStr: string | null | undefined): Date | null {
+  if (!dateStr) return null;
   const m = /^(\d{4})\/(\d{2})\/(\d{2})$/.exec(dateStr.trim());
   if (!m) return null;
   const y = Number(m[1]);
@@ -69,8 +70,14 @@ export function getBusinessDayBounds(dateStr: string): {
 /**
  * Rango efectivo para elegir hora: respeta horario de apertura y, si el día
  * es hoy, no permite minutos ya pasados.
+ *
+ * `serviceDurationMinutes` (default 0) retrocede el techo para que la
+ * reserva termine antes del cierre: `endTotalMin = closeMin - duration`.
  */
-export function getBookingTimeBounds(dateStr: string): {
+export function getBookingTimeBounds(
+  dateStr: string,
+  serviceDurationMinutes = 0,
+): {
   startTotalMin: number;
   endTotalMin: number;
 } {
@@ -80,7 +87,8 @@ export function getBookingTimeBounds(dateStr: string): {
     const n = new Date();
     startTotalMin = Math.max(openMin, n.getHours() * 60 + n.getMinutes());
   }
-  return { startTotalMin, endTotalMin: closeMin };
+  const endTotalMin = closeMin - Math.max(0, serviceDurationMinutes);
+  return { startTotalMin, endTotalMin };
 }
 
 export function hourHasSelectableMinute(
@@ -98,16 +106,22 @@ export function hourHasSelectableMinute(
  * - Solo hora: minute y second son null.
  * - Minuto: hour fijado, minute candidato, second null.
  */
-export function createBookingTimeOptionsFn(getSelectedDate: () => string) {
+export function createBookingTimeOptionsFn(
+  getSelectedDate: () => string,
+  getServiceDuration: () => number = () => 0,
+) {
   return (
     hour: number | null,
     minute: number | null,
     second: number | null
   ): boolean => {
     const dateStr = getSelectedDate();
-    if (dateStr === '' || hour === null) return false;
+    if (!dateStr || hour === null) return false;
 
-    const { startTotalMin, endTotalMin } = getBookingTimeBounds(dateStr);
+    const { startTotalMin, endTotalMin } = getBookingTimeBounds(
+      dateStr,
+      getServiceDuration(),
+    );
     if (startTotalMin > endTotalMin) return false;
 
     if (minute === null && second === null) {
@@ -158,7 +172,8 @@ export function parseTimeHHmm(timePart: string): { h: number; m: number } | null
  */
 export function isBookingDateTimeWithinHours(
   qDateStr: string,
-  timeModel: string
+  timeModel: string,
+  serviceDurationMinutes = 0,
 ): boolean {
   if (!qDateStr || !timeModel) return false;
   const parts = timeModel.trim().split(/\s+/);
@@ -166,8 +181,29 @@ export function isBookingDateTimeWithinHours(
   const parsed = parseTimeHHmm(timePart);
   if (!parsed) return false;
   const total = parsed.h * 60 + parsed.m;
-  const { startTotalMin, endTotalMin } = getBookingTimeBounds(qDateStr);
+  const { startTotalMin, endTotalMin } = getBookingTimeBounds(
+    qDateStr,
+    serviceDurationMinutes,
+  );
   return startTotalMin <= endTotalMin &&
     total >= startTotalMin &&
     total <= endTotalMin;
+}
+
+/**
+ * Combina q-date (`YYYY/MM/DD`) y el modelo de q-time (último segmento `HH:mm`)
+ * en ISO 8601 (UTC) para enviar al API.
+ */
+export function bookingSelectionToUtcIso(
+  qDateStr: string,
+  timeModel: string
+): string | null {
+  const d = parseQDateToLocalDate(qDateStr);
+  if (!d) return null;
+  const parts = timeModel.trim().split(/\s+/);
+  const timePart = parts.length >= 2 ? parts[parts.length - 1] : parts[0];
+  const parsed = parseTimeHHmm(timePart);
+  if (!parsed) return null;
+  d.setHours(parsed.h, parsed.m, 0, 0);
+  return d.toISOString();
 }
