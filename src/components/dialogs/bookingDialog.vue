@@ -44,23 +44,46 @@
                 {{ bookStore.totalBookingQuantity }}
               </div>
             </div>
-            <!-- SERVICIOS DERIVADOS -->
-            <div
-              class="col-12 q-my-md q-pa-sm booking-dialog__hint"
-              style="background: #f2f2f2; border-radius: 8px"
-            >
-              <div class="text-body2 text-dark">
-                {{
-                  bookStore.totalBookingQuantity
-                    ? 'Aquí están tus reservas'
-                    : 'No tienes reservas aún'
-                }}
-              </div>
+            <!-- Tabs: Reservas actuales / Administración -->
+            <div class="col-12 q-my-md booking-main-tabs">
+              <q-tabs
+                v-model="mainTab"
+                dense
+                class="booking-tabs"
+                align="justify"
+                narrow-indicator
+                active-color="primary"
+                indicator-color="primary"
+              >
+                <q-tab name="current" label="Reservas actuales" icon="local_mall" />
+                <q-tab
+                  v-if="authStore.isAdmin"
+                  name="admin"
+                  label="Administración de reservas"
+                  icon="admin_panel_settings"
+                />
+              </q-tabs>
+              <q-separator />
             </div>
+
+            <!-- Panel: Reservas actuales (carrito) -->
             <div
+              v-show="mainTab === 'current'"
               class="col-12 q-my-md q-pa-sm booking-dialog__main-col"
               :class="{ 'booking-dialog__main-col--maximized': maximized }"
             >
+              <div
+                class="q-pa-sm q-mb-sm booking-dialog__hint"
+                style="background: #f2f2f2; border-radius: 8px"
+              >
+                <div class="text-body2 text-dark">
+                  {{
+                    bookStore.totalBookingQuantity
+                      ? 'Aquí están tus reservas'
+                      : 'No tienes reservas aún'
+                  }}
+                </div>
+              </div>
               <q-scroll-area
                 :thumb-style="thumbStyle"
                 :bar-style="barStyle"
@@ -248,8 +271,101 @@
                       </div>
                     </div>
                   </div>
+                  <div
+                    v-if="selectedStylist"
+                    class="row items-center q-gutter-sm q-mt-sm"
+                  >
+                    <q-icon name="content_cut" size="20px" color="primary" />
+                    <div class="col">
+                      <div class="date-time-label">Estilista</div>
+                      <div class="date-time-value">
+                        {{ selectedStylist.label }}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </q-card-section>
+            </div>
+
+            <!-- Panel: Administración de reservas (solo admin) -->
+            <div
+              v-if="authStore.isAdmin"
+              v-show="mainTab === 'admin'"
+              class="col-12 q-my-md q-pa-sm booking-dialog__main-col"
+              :class="{ 'booking-dialog__main-col--maximized': maximized }"
+            >
+              <div class="q-pa-sm q-mb-sm" style="background: #f2f2f2; border-radius: 8px">
+                <div class="text-body2 text-dark">
+                  Gestiona las reservas registradas en el sistema
+                </div>
+              </div>
+
+              <div v-if="adminReservationsLoading" class="flex flex-center q-py-xl">
+                <q-spinner-dots color="primary" size="40px" />
+              </div>
+
+              <div v-else-if="!adminReservations.length" class="text-center q-py-xl text-grey-6">
+                <q-icon name="event_busy" size="48px" class="q-mb-sm" />
+                <div class="text-body1">No hay reservas registradas</div>
+              </div>
+
+              <q-scroll-area
+                v-else
+                :thumb-style="thumbStyle"
+                :bar-style="barStyle"
+                class="q-py-sm booking-dialog__list-scroll"
+                :class="{ 'booking-dialog__list-scroll--maximized': maximized }"
+                :style="bookingListScrollStyle"
+              >
+                <q-list :class="maximized ? 'q-px-xs' : 'q-pr-md'">
+                  <q-item
+                    v-for="res in adminReservations"
+                    :key="res.id"
+                    class="q-py-md cursor-default hoverable"
+                    v-ripple="false"
+                  >
+                    <q-item-section avatar>
+                      <q-avatar
+                        size="48px"
+                        color="primary"
+                        text-color="white"
+                        icon="event"
+                      />
+                    </q-item-section>
+
+                    <q-item-section>
+                      <q-item-label
+                        style="
+                          font-weight: bold;
+                          font-size: 15px;
+                          font-family: Georgia, 'Times New Roman', Times, serif;
+                          color: #333;
+                        "
+                      >
+                        {{ formatReservationDate(res.scheduledAt) }}
+                      </q-item-label>
+                      <q-item-label caption>
+                        <q-icon name="content_cut" size="14px" class="q-mr-xs" />
+                        {{ res.worker?.name ?? 'Sin asignar' }}
+                      </q-item-label>
+                      <q-item-label caption>
+                        <q-icon name="schedule" size="14px" class="q-mr-xs" />
+                        {{ res.totalDurationMinutes }} min
+                      </q-item-label>
+                    </q-item-section>
+
+                    <q-item-section side>
+                      <q-btn
+                        @click="deleteReservationFn(res.id)"
+                        round
+                        size="md"
+                        color="red"
+                        icon="delete"
+                      />
+                    </q-item-section>
+                  </q-item>
+                </q-list>
+              </q-scroll-area>
             </div>
           </div>
         </q-card-section>
@@ -265,7 +381,7 @@
         >
           <q-btn
             @click="sendBookingData"
-            :disable="!bookStore.totalBookingQuantity || !date || !time"
+            :disable="!bookStore.totalBookingQuantity || !date || !selectedStylist || !time"
             label="Reservar"
             color="blue"
             :class="{ 'full-width': maximized }"
@@ -340,6 +456,90 @@
             <p class="booking-schedule-hint text-body2 text-grey-8 q-mb-md">
               {{ scheduleHint }}
             </p>
+
+            <div class="stylist-selector q-mb-lg">
+              <q-select
+                v-model="selectedStylist"
+                :options="stylistOptions"
+                :loading="workerAvailabilityLoading"
+                :disable="!date"
+                option-label="label"
+                option-value="value"
+                option-disable="disable"
+                label="Elige tu estilista"
+                outlined
+                dense
+                :behavior="$q.platform.is.ios ? 'dialog' : 'menu'"
+                popup-content-class="stylist-select-popup"
+              >
+                <template #prepend>
+                  <q-icon name="content_cut" color="primary" />
+                </template>
+
+                <template #option="{ opt, itemProps }">
+                  <q-item
+                    v-bind="itemProps"
+                    :class="{ 'stylist-option--disabled': opt.disable }"
+                  >
+                    <q-item-section avatar>
+                      <q-icon
+                        :name="opt.value === null ? 'shuffle' : 'person'"
+                        :color="
+                          opt.disable
+                            ? 'grey-4'
+                            : opt.value === null
+                              ? 'blue-grey-6'
+                              : 'primary'
+                        "
+                        size="sm"
+                      />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label
+                        :class="
+                          opt.disable
+                            ? 'text-grey-5'
+                            : 'text-dark text-weight-medium'
+                        "
+                      >
+                        {{ opt.label }}
+                      </q-item-label>
+                      <q-item-label
+                        v-if="opt.disable"
+                        caption
+                        class="text-grey-5"
+                      >
+                        Sin disponibilidad suficiente
+                      </q-item-label>
+                    </q-item-section>
+                    <q-item-section side>
+                      <q-badge
+                        :color="
+                          opt.disable
+                            ? 'grey-4'
+                            : stylistAvailabilityColor(
+                                opt.availableMinutes,
+                                opt.capacityMinutes,
+                              )
+                        "
+                        :text-color="opt.disable ? 'grey-7' : 'white'"
+                        :label="formatAvailableTime(opt.availableMinutes)"
+                        rounded
+                      />
+                    </q-item-section>
+                  </q-item>
+                </template>
+
+                <template #no-option>
+                  <q-item>
+                    <q-item-section class="text-grey-6 text-center">
+                      Selecciona una fecha primero
+                    </q-item-section>
+                  </q-item>
+                </template>
+              </q-select>
+            </div>
+
             <div class="time-picker-container">
               <q-time
                 v-model="time"
@@ -350,7 +550,7 @@
                 now-btn
                 :default-date="date || undefined"
                 :options="bookingTimeOptions"
-                :disable="!date"
+                :disable="!date || !selectedStylist"
               />
             </div>
           </q-tab-panel>
@@ -372,7 +572,7 @@
             label="Confirmar"
             color="primary"
             @click="confirmDateTime"
-            :disable="!date || !time"
+            :disable="!date || !selectedStylist || !time"
           />
         </q-card-section>
       </q-card>
@@ -407,14 +607,23 @@ import {
 import {
   bookingSelectionToUtcIso,
   BUSINESS_SCHEDULE_COPY,
-  createBookingTimeOptionsFn,
+  getBookingTimeBounds,
+  hourHasSelectableMinute,
   isBookingDateTimeWithinHours,
   isQDateSelectable,
 } from 'src/helpers/businessHours';
 import {
   fetchReservationOccupancy,
+  fetchAllReservations,
+  deleteReservation,
   reservationsApi,
 } from 'src/api/reservations-api';
+import { useAuthStore } from 'src/stores/auth-store';
+import type { ReservationDto } from 'src/interfaces/booking';
+import {
+  fetchWorkerAvailability,
+  type WorkerAvailabilityEntry,
+} from 'src/api/workers-api';
 import type { OccupancyByDateEntry } from 'src/helpers/booking-occupancy';
 import {
   hasSlotForCart,
@@ -425,14 +634,31 @@ import {
 
 const $q = useQuasar();
 const bookStore = useBookStore();
+const authStore = useAuthStore();
 
 const props = defineProps<{ dialog: boolean }>();
 const emit = defineEmits<DialogEmits & FiltersEmits>();
+
+const mainTab = ref('current');
+const adminReservations = ref<ReservationDto[]>([]);
+const adminReservationsLoading = ref(false);
 
 const dateCard = ref(false);
 const date = ref('' /* '2025/01/01' */);
 const time = ref('');
 const tab = ref('date');
+
+type StylistOption = {
+  label: string;
+  value: string | null;
+  availableMinutes: number;
+  capacityMinutes: number;
+  disable: boolean;
+};
+
+const selectedStylist = ref<StylistOption | null>(null);
+const workerAvailability = ref<WorkerAvailabilityEntry[]>([]);
+const workerAvailabilityLoading = ref(false);
 
 const occupancyByDate = ref<Record<string, OccupancyByDateEntry>>({});
 const occupancyLoading = ref(false);
@@ -507,22 +733,157 @@ watch(dateCard, (open) => {
   void loadOccupancyForMonth(calendarYear.value, calendarMonth.value);
 });
 
+const stylistOptions = computed<StylistOption[]>(() => {
+  const cartDuration = bookStore.bookingsDuration;
+  const workers = workerAvailability.value;
+
+  const workerOpts: StylistOption[] = workers.map((w) => ({
+    label: w.name,
+    value: w.id,
+    availableMinutes: w.availableMinutes,
+    capacityMinutes: w.capacityMinutes,
+    disable: w.availableMinutes < cartDuration,
+  }));
+
+  const anyAvailable = workerOpts.some((o) => !o.disable);
+  const maxAvailable = workers.reduce(
+    (max, w) => Math.max(max, w.availableMinutes),
+    0,
+  );
+  const maxCapacity = workers.reduce(
+    (max, w) => Math.max(max, w.capacityMinutes),
+    0,
+  );
+
+  return [
+    {
+      label: 'Sin preferencia',
+      value: null,
+      availableMinutes: maxAvailable,
+      capacityMinutes: maxCapacity,
+      disable: !anyAvailable,
+    },
+    ...workerOpts,
+  ];
+});
+
+async function loadWorkerAvailability(qDateStr: string) {
+  const dateYmd = qDateStr.replace(/\//g, '-');
+  workerAvailabilityLoading.value = true;
+  try {
+    const { workers } = await fetchWorkerAvailability(dateYmd);
+    workerAvailability.value = workers;
+  } catch {
+    workerAvailability.value = [];
+    $q.notify({
+      type: 'warning',
+      message: 'No se pudo cargar la disponibilidad de estilistas.',
+      position: 'top',
+    });
+  } finally {
+    workerAvailabilityLoading.value = false;
+  }
+}
+
+function stylistAvailabilityColor(
+  availableMin: number,
+  capacityMin: number,
+): string {
+  if (capacityMin <= 0) return 'negative';
+  const freeRatio = availableMin / capacityMin;
+  if (freeRatio >= 2 / 3) return 'positive';
+  if (freeRatio >= 1 / 3) return 'warning';
+  return 'negative';
+}
+
+function formatAvailableTime(minutes: number): string {
+  if (minutes <= 0) return '0h';
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (hours === 0) return `${mins}min`;
+  if (mins === 0) return `${hours}h`;
+  return `${hours}h ${mins}m`;
+}
+
 watch(
   () => bookStore.bookingsDuration,
   () => {
+    if (
+      selectedStylist.value &&
+      selectedStylist.value.value !== null
+    ) {
+      const match = workerAvailability.value.find(
+        (w) => w.id === selectedStylist.value?.value,
+      );
+      if (match && match.availableMinutes < bookStore.bookingsDuration) {
+        selectedStylist.value = null;
+        time.value = '';
+      }
+    }
     if (!date.value) return;
     if (bookingQDateOptions(date.value)) return;
     date.value = '';
     time.value = '';
+    selectedStylist.value = null;
   },
 );
 
 const scheduleHint = `${BUSINESS_SCHEDULE_COPY.weekdayLabel}: ${BUSINESS_SCHEDULE_COPY.weekdayRange}. ${BUSINESS_SCHEDULE_COPY.weekendLabel}: ${BUSINESS_SCHEDULE_COPY.weekendRange}.`;
 
-const bookingTimeOptions = createBookingTimeOptionsFn(
-  () => date.value,
-  () => bookStore.bookingsDuration,
-);
+function isMinuteBlockedByReservations(
+  candidateMin: number,
+  cartDuration: number,
+): boolean {
+  const stylist = selectedStylist.value;
+  if (!stylist || stylist.value === null) return false;
+  const worker = workerAvailability.value.find(
+    (w) => w.id === stylist.value,
+  );
+  if (!worker?.reservations?.length) return false;
+  const bookingEnd = candidateMin + cartDuration;
+  return worker.reservations.some(
+    (r) => candidateMin < r.endMin && r.startMin < bookingEnd,
+  );
+}
+
+const bookingTimeOptions = (
+  hour: number | null,
+  minute: number | null,
+  second: number | null,
+): boolean => {
+  const dateStr = date.value;
+  if (!dateStr || hour === null) return false;
+
+  const cartDuration = bookStore.bookingsDuration;
+  const { startTotalMin, endTotalMin } = getBookingTimeBounds(
+    dateStr,
+    cartDuration,
+  );
+  if (startTotalMin > endTotalMin) return false;
+
+  if (minute === null && second === null) {
+    if (!hourHasSelectableMinute(hour, startTotalMin, endTotalMin))
+      return false;
+
+    if (selectedStylist.value && selectedStylist.value.value !== null) {
+      const hStart = Math.max(hour * 60, startTotalMin);
+      const hEnd = Math.min(hour * 60 + 59, endTotalMin);
+      for (let t = hStart; t <= hEnd; t++) {
+        if (!isMinuteBlockedByReservations(t, cartDuration)) return true;
+      }
+      return false;
+    }
+    return true;
+  }
+
+  if (second === null && minute !== null) {
+    const total = hour * 60 + minute;
+    if (total < startTotalMin || total > endTotalMin) return false;
+    return !isMinuteBlockedByReservations(total, cartDuration);
+  }
+
+  return true;
+};
 
 /** q-date `YYYY/MM/DD` → prefijo `YYYY-MM-DD` del modelo de QTime (máscara con fecha). */
 function qDateToTimeModelDatePrefix(qDateStr: string): string {
@@ -632,6 +993,9 @@ const sendBookingData = async () => {
     await reservationsApi.post('/reservations', {
       scheduledAt,
       totalDurationMinutes,
+      ...(selectedStylist.value?.value
+        ? { workerId: selectedStylist.value.value }
+        : {}),
     });
   } catch {
     $q.notify({
@@ -649,8 +1013,10 @@ const sendBookingData = async () => {
     bookingsCost: bookStore.bookingsCost,
     bookingsDuration: bookStore.bookingsDuration,
     formattedDateTime: formattedDateTime.value,
+    stylistName: selectedStylist.value?.label ?? undefined,
   });
   openWhatsApp(message);
+  bookStore.clearBookings();
 };
 
 const manageVisualizationDialog = (val: boolean) => {
@@ -680,12 +1046,12 @@ const confirmDateTime = () => {
 watch(date, (newDate, oldDate) => {
   if (newDate !== oldDate) {
     tab.value = 'time';
-    if (
-      newDate &&
-      time.value &&
-      !isBookingDateTimeWithinHours(newDate, time.value, bookStore.bookingsDuration)
-    ) {
-      time.value = '';
+    selectedStylist.value = null;
+    time.value = '';
+    if (newDate) {
+      void loadWorkerAvailability(newDate);
+    } else {
+      workerAvailability.value = [];
     }
   }
 });
@@ -746,6 +1112,75 @@ const openWhatsApp = (message: string) => {
   const whatsappUrl = buildWhatsAppUrl(phoneNumber, message);
   window.open(whatsappUrl, '_blank');
 };
+
+async function loadAdminReservations() {
+  adminReservationsLoading.value = true;
+  try {
+    adminReservations.value = await fetchAllReservations();
+  } catch {
+    adminReservations.value = [];
+    $q.notify({
+      type: 'negative',
+      message: 'No se pudieron cargar las reservas.',
+      position: 'top',
+    });
+  } finally {
+    adminReservationsLoading.value = false;
+  }
+}
+
+watch(mainTab, (val) => {
+  if (val === 'admin') void loadAdminReservations();
+});
+
+function formatReservationDate(isoStr: string): string {
+  try {
+    const d = new Date(isoStr);
+    const monthNames = [
+      'Enero', 'Feb', 'Marzo', 'Abril', 'Mayo', 'Jun',
+      'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
+    ];
+    const day = d.getDate();
+    const month = monthNames[d.getMonth()];
+    const year = d.getFullYear();
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${day} de ${month} de ${year} a las ${hours}:${minutes}`;
+  } catch {
+    return isoStr;
+  }
+}
+
+function deleteReservationFn(id: string) {
+  $q.dialog({
+    title: 'Eliminar reserva',
+    message: '¿Está seguro de que desea eliminar esta reserva del sistema?',
+    cancel: true,
+    persistent: true,
+  }).onOk(async () => {
+    $q.loading.show({
+      message: 'Eliminando reserva...',
+      spinnerColor: 'primary',
+    });
+    try {
+      await deleteReservation(id);
+      $q.notify({
+        type: 'positive',
+        message: 'Reserva eliminada correctamente.',
+        position: 'top',
+      });
+      await loadAdminReservations();
+    } catch {
+      $q.notify({
+        type: 'negative',
+        message: 'No se pudo eliminar la reserva.',
+        position: 'top',
+      });
+    } finally {
+      $q.loading.hide();
+    }
+  });
+}
 
 const removeBooking = (id: string) => {
   $q.dialog({
@@ -1156,5 +1591,32 @@ const bookingListScrollStyle = computed((): CSSProperties => {
 .booking-duration-value {
   font-weight: bold;
   color: #37474f;
+}
+
+.stylist-selector {
+  :deep(.q-field__control) {
+    border-radius: 8px;
+  }
+
+  :deep(.q-field__label) {
+    font-weight: 500;
+  }
+}
+
+.stylist-option--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.booking-tabs {
+  background-color: #f5f5f5;
+  border-radius: 8px 8px 0 0;
+  padding: 4px 0;
+}
+
+.booking-tabs .q-tab {
+  font-weight: 500;
+  text-transform: none;
+  font-size: 13px;
 }
 </style>

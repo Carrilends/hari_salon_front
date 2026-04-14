@@ -86,6 +86,10 @@ export const useBookStore = defineStore(
       );
     };
 
+    const clearBookings = () => {
+      bookings.value = [];
+    };
+
     const incrementBookingQuantity = (service: Service) => {
       addBooking(service);
     };
@@ -137,6 +141,7 @@ export const useBookStore = defineStore(
       decrementBookingQuantity,
       syncBookingWithService,
       showDialogFn,
+      clearBookings,
     };
   },
   { persist: true }

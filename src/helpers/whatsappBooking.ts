@@ -26,6 +26,7 @@ export function generateBookingWhatsAppMessage(params: {
   /** Minutos totales estimados; si se omite se trata como 0. */
   bookingsDuration?: number;
   formattedDateTime: string;
+  stylistName?: string;
 }): string {
   const { bookings, bookingsCost, formattedDateTime } = params;
   const bookingsDuration = params.bookingsDuration ?? 0;
@@ -51,12 +52,16 @@ export function generateBookingWhatsAppMessage(params: {
     ? `\n*Tiempo Aprox.:* ${formatDuration(bookingsDuration)}\n`
     : '';
 
+  const stylistLine = params.stylistName
+    ? `\n*Estilista:* ${params.stylistName}`
+    : '';
+
   return `*Reserva - Hari Salon*
 
 *Servicios reservados:*
 ${servicesList}
 
-*Costo Total:* ${formatCopDisplay(bookingsCost)} COP${durationLine}
+*Costo Total:* ${formatCopDisplay(bookingsCost)} COP${durationLine}${stylistLine}
 *Fecha y Hora:* ${formattedDateTime}`;
 }
 
