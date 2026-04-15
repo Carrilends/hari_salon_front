@@ -33,9 +33,45 @@
         />
         <div class="about-hero__fade" />
         <div class="about-address">
-          Carrera 3 #1-18, Sopó, Cundinamarca
+          {{ SALON_ADDRESS }}
         </div>
       </div>
+
+      <q-separator class="about-dialog__sep" />
+
+      <q-card-section class="about-map">
+        <div class="about-map__frame-wrap">
+          <iframe
+            class="about-map__frame"
+            :src="MAPS_EMBED_URL"
+            title="Ubicación de Peluquería Pecas"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            allowfullscreen
+          />
+        </div>
+        <div class="about-map__meta">
+          <a
+            class="about-map__attribution"
+            href="https://www.openstreetmap.org/copyright"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            © OpenStreetMap contributors
+          </a>
+          <q-btn
+            class="about-map__action"
+            color="primary"
+            label="Abrir en mapa"
+            icon="place"
+            no-caps
+            outline
+            :href="MAPS_EXTERNAL_URL"
+            target="_blank"
+            rel="noopener noreferrer"
+          />
+        </div>
+      </q-card-section>
 
       <q-separator class="about-dialog__sep" />
 
@@ -58,6 +94,11 @@ import {
   useDialog,
 } from 'src/composables/dialogs/useDialogService';
 import { useDialogMaximizedBelow } from 'src/composables/dialogs/useDialogMaximizedBelow';
+import {
+  MAPS_EMBED_URL,
+  MAPS_EXTERNAL_URL,
+  SALON_ADDRESS,
+} from 'src/constants/salon-location';
 
 const props = defineProps<{ dialog: boolean }>();
 const emit = defineEmits<DialogEmits>();
@@ -136,6 +177,43 @@ defineOptions({
   background: rgba(61, 61, 61, 0.08);
 }
 
+.about-map {
+  padding: 1rem 1.5rem 1.1rem;
+}
+
+.about-map__frame-wrap {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(61, 61, 61, 0.12);
+  background: #fff;
+}
+
+.about-map__frame {
+  width: 100%;
+  min-height: 210px;
+  height: 210px;
+  border: 0;
+  display: block;
+}
+
+.about-map__meta {
+  margin-top: 0.625rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.about-map__attribution {
+  font-size: 0.75rem;
+  color: #7a736d;
+  text-decoration: none;
+}
+
+.about-map__attribution:hover {
+  text-decoration: underline;
+}
+
 .about-body {
   padding: 1.35rem 1.5rem 1.6rem;
 }
@@ -178,6 +256,26 @@ defineOptions({
     min-height: 0;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 600px) {
+  .about-map {
+    padding: 0.9rem 1rem 1rem;
+  }
+
+  .about-map__frame {
+    min-height: 180px;
+    height: 180px;
+  }
+
+  .about-map__meta {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .about-map__action {
+    width: 100%;
   }
 }
 </style>
