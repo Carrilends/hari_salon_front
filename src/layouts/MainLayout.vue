@@ -7,16 +7,14 @@
         </div>
         <div class="main-header__actions">
           <q-btn
-            v-for="button in buttons"
-            :key="button.label"
-            :class="button.class"
-            :icon="button.icon"
-            :label="showButtonLabels ? button.label : undefined"
-            :aria-label="button.label"
+            :class="serviceHomeButton.class"
+            :icon="serviceHomeButton.icon"
+            :label="showButtonLabels ? serviceHomeButton.label : undefined"
+            :aria-label="serviceHomeButton.label"
             rounded
             flat
             :dense="!showButtonLabels"
-            @click="button.method"
+            @click="serviceHomeButton.method"
           />
           <div class="filter-badge-wrapper">
             <q-btn
@@ -28,7 +26,8 @@
               flat
               :dense="!showButtonLabels"
               @click="bookingStore.showDialogFn()"
-            />
+            >
+            </q-btn>
             <q-badge
               v-if="bookingStore.totalBookingQuantity > 0"
               color="red"
@@ -44,27 +43,41 @@
             </q-badge>
           </div>
           <q-btn
-            v-if="authStore.isLoggedIn"
             class="color-bar"
-            icon="manage_accounts"
-            :label="showButtonLabels ? 'Mi cuenta' : undefined"
-            aria-label="Mi cuenta"
+            icon="expand_more"
+            :label="showButtonLabels ? 'Más' : undefined"
+            aria-label="Más opciones"
             rounded
             flat
             :dense="!showButtonLabels"
-            @click="router.push('/mi-cuenta')"
-          />
-          <q-btn
-            v-if="authStore.isLoggedIn"
-            class="color-bar"
-            icon="logout"
-            :label="showButtonLabels ? 'Salir' : undefined"
-            aria-label="Cerrar sesión"
-            rounded
-            flat
-            :dense="!showButtonLabels"
-            @click="onLogout"
-          />
+          >
+            <q-menu
+              class="more-menu"
+              auto-close
+              anchor="bottom right"
+              self="top right"
+              transition-show="jump-down"
+              transition-hide="jump-up"
+            >
+              <q-list class="more-menu__list" separator>
+                <q-item
+                  v-for="item in moreMenuItems"
+                  :key="item.label"
+                  clickable
+                  v-close-popup
+                  class="more-menu__item"
+                  @click="item.method"
+                >
+                  <q-item-section avatar>
+                    <q-icon :name="item.icon" class="more-menu__icon" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>{{ item.label }}</q-item-label>
+                  </q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </q-btn>
         </div>
       </div>
     </q-header>
@@ -149,6 +162,20 @@ import { useAuthStore } from 'src/stores/auth-store';
 import { adminServiceApi } from 'src/api/services-api';
 import type { CreateReviewBody, CreateReviewResponse } from 'src/api/apiTypes';
 
+type HeaderActionButton = {
+  icon: string;
+  label: string;
+  class: string;
+  method: () => void;
+};
+
+type HeaderMenuItem = {
+  label: string;
+  icon: string;
+  method: () => void;
+  visible?: () => boolean;
+};
+
 const bookingStore = useBookStore();
 const authStore = useAuthStore();
 const $q = useQuasar();
@@ -228,6 +255,22 @@ function onLogout() {
   router.push({ path: '/' });
 }
 
+function onLogin() {
+  router.push({
+    name: 'login',
+    query: {
+      redirect: route.fullPath || '/services',
+    },
+  });
+}
+
+function notifyPlaceholder(feature: string) {
+  $q.notify({
+    type: 'info',
+    message: `${feature} estará disponible próximamente`,
+  });
+}
+
 const whoWeAreDialogComponent = ref(false);
 const ourContactDialog = ref(false);
 
@@ -257,43 +300,72 @@ onMounted(() => {
   onUnmounted(() => mq.removeEventListener('change', syncLabels));
 });
 
-const buttons = ref([
-  {
-    icon: 'las la-cut',
-    label: 'Servicios',
-    class: 'color-bar',
-    method: () => router.push('/services'),
-  },
-  {
-    icon: 'rate_review',
-    label: 'Testimonios',
-    class: 'color-bar',
-    method: () => router.push('/testimonios'),
-  },
-  {
-    icon: 'schedule',
-    label: 'Horarios',
-    class: 'color-bar',
-    method: () => (ourContactDialog.value = !ourContactDialog.value),
-  },
-  {
-    icon: 'las la-user-tie',
-    label: '¿Quiénes somos?',
-    class: 'color-bar',
-    method: () =>
-      (whoWeAreDialogComponent.value = !whoWeAreDialogComponent.value),
-  },
-]);
+const serviceHomeButton = ref<HeaderActionButton>({
+  icon: 'las la-cut',
+  label: 'Servicios',
+  class: 'color-bar',
+  method: () => router.push('/services'),
+});
+
+const moreMenuItems = computed<HeaderMenuItem[]>(() =>
+  [
+    {
+      icon: 'manage_accounts',
+      label: 'Mi cuenta',
+      visible: () => authStore.isLoggedIn,
+      method: () => router.push('/mi-cuenta'),
+    },
+    {
+      icon: 'rate_review',
+      label: 'Testimonios',
+      method: () => router.push('/testimonios'),
+    },
+    {
+      icon: 'groups',
+      label: '¿Quiénes somos?',
+      method: () =>
+        (whoWeAreDialogComponent.value = !whoWeAreDialogComponent.value),
+    },
+    {
+      icon: 'schedule',
+      label: 'Horarios',
+      method: () => (ourContactDialog.value = !ourContactDialog.value),
+    },
+    {
+      icon: 'supervisor_account',
+      label: 'Mis empleados',
+      visible: () => authStore.isAdmin,
+      method: () => notifyPlaceholder('Mis empleados'),
+    },
+    {
+      icon: 'help_outline',
+      label: 'Preguntas frecuentes',
+      method: () => notifyPlaceholder('Preguntas frecuentes'),
+    },
+    {
+      icon: 'login',
+      label: 'Iniciar sesión',
+      visible: () => !authStore.isLoggedIn,
+      method: onLogin,
+    },
+    {
+      icon: 'logout',
+      label: 'Cerrar sesión',
+      visible: () => authStore.isLoggedIn,
+      method: onLogout,
+    },
+  ].filter((item) => (item.visible ? item.visible() : true))
+);
 
 function syncServicesNavButton() {
   if (route.path === '/') {
-    buttons.value[0].icon = 'las la-cut';
-    buttons.value[0].label = 'Servicios';
-    buttons.value[0].method = () => router.push('/services');
+    serviceHomeButton.value.icon = 'las la-cut';
+    serviceHomeButton.value.label = 'Servicios';
+    serviceHomeButton.value.method = () => router.push('/services');
   } else if (route.path === '/services') {
-    buttons.value[0].icon = 'home';
-    buttons.value[0].label = 'Inicio';
-    buttons.value[0].method = () => router.push('/');
+    serviceHomeButton.value.icon = 'home';
+    serviceHomeButton.value.label = 'Inicio';
+    serviceHomeButton.value.method = () => router.push('/');
   }
 }
 
@@ -374,6 +446,32 @@ defineOptions({
 .color-bar {
   background: linear-gradient(100deg, #f8bbd0 0%, #bdc9d7 90%);
   color: black;
+}
+
+.more-menu {
+  border-radius: 14px;
+  overflow: hidden;
+  backdrop-filter: blur(4px);
+}
+
+.more-menu__list {
+  min-width: 230px;
+  padding: 6px;
+  background: linear-gradient(180deg, #fff9fc 0%, #f3f7fb 100%);
+}
+
+.more-menu__item {
+  border-radius: 10px;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.more-menu__item:hover {
+  background: rgba(248, 187, 208, 0.35);
+  transform: translateX(2px);
+}
+
+.more-menu__icon {
+  color: #5a4f77;
 }
 
 .background-image {
