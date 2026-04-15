@@ -340,7 +340,7 @@ const moreMenuItems = computed<HeaderMenuItem[]>(() =>
     {
       icon: 'help_outline',
       label: 'Preguntas frecuentes',
-      method: () => notifyPlaceholder('Preguntas frecuentes'),
+      method: () => router.push('/preguntas-frecuentes'),
     },
     {
       icon: 'login',

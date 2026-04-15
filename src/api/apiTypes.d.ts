@@ -34,3 +34,20 @@ export interface ReviewItem {
   score: number;
   createdAt: string;
 }
+
+export interface FaqItem {
+  id: string;
+  question: string;
+  answer: string;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateFaqBody {
+  question: string;
+  answer: string;
+  sortOrder?: number;
+}
+
+export interface UpdateFaqBody extends Partial<CreateFaqBody> {}

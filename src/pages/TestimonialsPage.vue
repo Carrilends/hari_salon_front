@@ -23,66 +23,75 @@
         </div>
       </div>
 
-      <div v-if="isLoading" class="testimonials-grid">
-        <q-card v-for="index in 6" :key="index" class="testimonial-card">
-          <q-card-section>
-            <div class="row items-center q-col-gutter-sm">
-              <div class="col-auto">
-                <q-skeleton type="QAvatar" size="42px" />
-              </div>
-              <div class="col">
-                <q-skeleton type="text" width="60%" />
-                <q-skeleton type="text" width="35%" />
-              </div>
-            </div>
-            <q-skeleton type="text" class="q-mt-md" />
-            <q-skeleton type="text" />
-            <q-skeleton type="text" width="70%" />
-          </q-card-section>
-        </q-card>
-      </div>
-
-      <div v-else-if="!reviews.length" class="empty-state">
-        <q-icon name="chat_bubble_outline" size="48px" color="grey-6" />
-        <div class="text-subtitle1 text-weight-medium q-mt-sm">
-          Aún no hay testimonios
-        </div>
-        <div class="text-caption text-grey-7">
-          Sé la primera persona en compartir su experiencia.
-        </div>
-      </div>
-
-      <div v-else class="testimonials-grid">
-        <q-card v-for="review in reviews" :key="review.id" class="testimonial-card">
-          <q-card-section>
-            <div class="row items-center justify-between">
-              <div class="row items-center q-col-gutter-sm no-wrap">
-                <div class="col-auto">
-                  <q-avatar color="primary" text-color="white">
-                    {{ getInitial(review.name) }}
-                  </q-avatar>
-                </div>
-                <div class="col">
-                  <div class="text-weight-medium ellipsis">{{ review.name }}</div>
-                  <div class="text-caption text-grey-7">
-                    {{ formatDate(review.createdAt) }}
+      <q-scroll-area
+        class="testimonials-scroll-area"
+        :thumb-style="scrollThumbStyle"
+        :bar-style="scrollBarStyle"
+        visible
+      >
+        <div class="testimonials-scroll-content">
+          <div v-if="isLoading" class="testimonials-grid">
+            <q-card v-for="index in 6" :key="index" class="testimonial-card">
+              <q-card-section>
+                <div class="row items-center q-col-gutter-sm">
+                  <div class="col-auto">
+                    <q-skeleton type="QAvatar" size="42px" />
+                  </div>
+                  <div class="col">
+                    <q-skeleton type="text" width="60%" />
+                    <q-skeleton type="text" width="35%" />
                   </div>
                 </div>
-              </div>
-              <q-rating
-                :model-value="review.score"
-                max="5"
-                size="18px"
-                color="amber-6"
-                readonly
-              />
+                <q-skeleton type="text" class="q-mt-md" />
+                <q-skeleton type="text" />
+                <q-skeleton type="text" width="70%" />
+              </q-card-section>
+            </q-card>
+          </div>
+
+          <div v-else-if="!reviews.length" class="empty-state">
+            <q-icon name="chat_bubble_outline" size="48px" color="grey-6" />
+            <div class="text-subtitle1 text-weight-medium q-mt-sm">
+              Aún no hay testimonios
             </div>
-            <p class="testimonial-text q-mt-md q-mb-none">
-              {{ review.description }}
-            </p>
-          </q-card-section>
-        </q-card>
-      </div>
+            <div class="text-caption text-grey-7">
+              Sé la primera persona en compartir su experiencia.
+            </div>
+          </div>
+
+          <div v-else class="testimonials-grid">
+            <q-card v-for="review in reviews" :key="review.id" class="testimonial-card">
+              <q-card-section>
+                <div class="row items-center justify-between">
+                  <div class="row items-center q-col-gutter-sm no-wrap">
+                    <div class="col-auto">
+                      <q-avatar color="primary" text-color="white">
+                        {{ getInitial(review.name) }}
+                      </q-avatar>
+                    </div>
+                    <div class="col">
+                      <div class="text-weight-medium ellipsis">{{ review.name }}</div>
+                      <div class="text-caption text-grey-7">
+                        {{ formatDate(review.createdAt) }}
+                      </div>
+                    </div>
+                  </div>
+                  <q-rating
+                    :model-value="review.score"
+                    max="5"
+                    size="18px"
+                    color="amber-6"
+                    readonly
+                  />
+                </div>
+                <p class="testimonial-text q-mt-md q-mb-none">
+                  {{ review.description }}
+                </p>
+              </q-card-section>
+            </q-card>
+          </div>
+        </div>
+      </q-scroll-area>
     </section>
   </q-page>
 </template>
@@ -91,6 +100,22 @@
 import { useReviews } from 'src/composables/reviews/useReviews';
 
 const { reviews, averageScore, isLoading } = useReviews();
+
+const scrollThumbStyle = {
+  right: '2px',
+  borderRadius: '8px',
+  backgroundColor: 'rgba(80, 80, 80, 0.22)',
+  width: '6px',
+  opacity: '0.9',
+};
+
+const scrollBarStyle = {
+  right: '2px',
+  borderRadius: '8px',
+  backgroundColor: 'rgba(0, 0, 0, 0.08)',
+  width: '6px',
+  opacity: '0.25',
+};
 
 const getInitial = (name: string) => (name?.trim()?.charAt(0) || '?').toUpperCase();
 
@@ -139,6 +164,14 @@ defineOptions({
   text-align: right;
 }
 
+.testimonials-scroll-area {
+  height: clamp(320px, calc(100vh - 290px), 760px);
+}
+
+.testimonials-scroll-content {
+  padding-right: 8px;
+}
+
 .testimonials-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -179,6 +212,10 @@ defineOptions({
 
   .testimonials-summary {
     text-align: left;
+  }
+
+  .testimonials-scroll-area {
+    height: clamp(280px, calc(100vh - 300px), 680px);
   }
 }
 </style>
