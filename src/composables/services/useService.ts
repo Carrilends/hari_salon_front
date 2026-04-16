@@ -124,6 +124,8 @@ export const useServiceForEdition = () => {
           description: newValue.detail.description,
         },
         price: Number(newValue.price),
+        duration:
+          newValue.duration != null ? Number(newValue.duration) : undefined,
         images: newValue.images,
         tags: newValue.tags,
         isEditMode: true,
