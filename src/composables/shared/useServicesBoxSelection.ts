@@ -29,9 +29,12 @@ function applySelectedFlags(
 /**
  * Árbol de servicios: un principal → niveles de hijos cargados bajo demanda.
  * Un solo chip seleccionable por fila (nivel 0); niveles inferiores siguen la lógica previa del componente.
+ *
+ * `getPrincipalServices` debe leer del store u origen reactivo para que los principales
+ * estén disponibles cuando `/filters` termine después del primer montaje.
  */
 export function useServicesBoxSelection(
-  principalServices: Tag[],
+  getPrincipalServices: () => Tag[],
   emit: ServicesBoxEmit
 ) {
   const principalId = ref('');
@@ -41,10 +44,12 @@ export function useServicesBoxSelection(
 
   let skipPrincipalSync = false;
 
-  const principalOptions = principalServices.map((s) => ({
-    label: s.name,
-    value: s.id,
-  }));
+  const principalOptions = computed(() =>
+    getPrincipalServices().map((s) => ({
+      label: s.name,
+      value: s.id,
+    }))
+  );
 
   const hasRootSelection = computed(() =>
     (levelRows.value[0] ?? []).some((s) => s.selected)
@@ -119,6 +124,7 @@ export function useServicesBoxSelection(
   }
 
   async function hydrateFromIds(ids: string[]) {
+    const principalServices = getPrincipalServices();
     const idSet = new Set(ids);
     const principal = principalServices.find((p) => idSet.has(p.id));
     if (!principal) {

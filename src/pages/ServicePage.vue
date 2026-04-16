@@ -234,7 +234,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch,
+} from 'vue';
 import { useQuasar } from 'quasar';
 import { useServices } from 'src/composables/services/useServices';
 import {
@@ -257,6 +264,11 @@ import { useAuthStore } from 'src/stores/auth-store';
 import { useBookStore } from 'src/stores/book-store';
 import { adminServiceApi } from 'src/api/services-api';
 import { serviceIsOnPromotion } from 'src/helpers/service-promotion';
+import { useOptions } from 'src/composables/shared/useOptions';
+import { useOptionsStore } from 'src/stores/options-store';
+
+useOptions();
+const optionsStore = useOptionsStore();
 
 const filtersStore = useFiltersStore();
 const authStore = useAuthStore();
@@ -356,7 +368,36 @@ watch(isCompactSearch, (compact) => {
   }
 });
 
-const service: MenuCard = history.state?.service;
+type HistoryStateWithService = { service?: MenuCard };
+const indexShortcutCard =
+  typeof history !== 'undefined'
+    ? (history.state as HistoryStateWithService | null | undefined)?.service
+    : undefined;
+
+/** Solo se consume una vez al llegar desde el índice con `router.push({ state })`. */
+const indexShortcutPending = ref(!!indexShortcutCard);
+
+function applyShortcutFromIndex(card: MenuCard) {
+  const genreIds = card.filterFormat?.genres ?? [];
+  const serviceIds = card.filterFormat?.services ?? [];
+  filtersStore.setGenres(genreIds);
+  filtersStore.setServicesExternal(serviceIds);
+  filterService.value.selectedGenres = genreIds;
+  filterService.value.selectedServicesIDs = serviceIds;
+  filterService.value.includePriceRange = false;
+  filterService.value.page = 1;
+  showFilterDialog.value = true;
+}
+
+watch(
+  () => optionsStore.principalServices.length > 0,
+  (ready) => {
+    if (!indexShortcutCard || !indexShortcutPending.value || !ready) return;
+    indexShortcutPending.value = false;
+    applyShortcutFromIndex(indexShortcutCard);
+  },
+  { immediate: true }
+);
 
 const fetchServices = (e: FilterService | string) => {
   if (typeof e === 'string') {
@@ -527,11 +568,6 @@ const thumbStyle = {
 onMounted(() => {
   syncViewport();
   window.addEventListener('resize', syncViewport);
-  if (service) {
-    showFilterDialog.value = true;
-    filtersStore.setGenres(service.filterFormat?.genres || []);
-    filtersStore.setServicesExternal(service.filterFormat?.services || []);
-  }
 });
 
 onUnmounted(() => {

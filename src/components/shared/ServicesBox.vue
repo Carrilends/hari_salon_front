@@ -123,7 +123,6 @@ const props = defineProps({
 const emit = defineEmits(['selectedServices']);
 
 const optionsStore = useOptionsStore();
-const principalServices = [...optionsStore.principalServices];
 
 const {
   principalId,
@@ -136,13 +135,24 @@ const {
   hydrateFromIds,
   resetLocalState,
   clear,
-} = useServicesBoxSelection(principalServices, emit);
+} = useServicesBoxSelection(() => [...optionsStore.principalServices], emit);
 
 onMounted(async () => {
   if (props.isEditMode && props.initialSelectedIds?.length > 0) {
     await hydrateFromIds(props.initialSelectedIds);
   }
 });
+
+/** Si `/filters` llega después del primer montaje, los principales estaban vacíos y hydrate falló. */
+watch(
+  () => optionsStore.principalServices.length,
+  async (len, prevLen) => {
+    if (!props.isEditMode || !props.initialSelectedIds?.length) return;
+    if (len === 0) return;
+    if (prevLen !== 0) return;
+    await hydrateFromIds(props.initialSelectedIds);
+  }
+);
 
 watch(
   () => props.initialSelectedIds,
