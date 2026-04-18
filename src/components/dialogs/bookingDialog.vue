@@ -736,8 +736,9 @@ watch(dateCard, (open) => {
 const stylistOptions = computed<StylistOption[]>(() => {
   const cartDuration = bookStore.bookingsDuration;
   const workers = workerAvailability.value;
+  const assignableWorkers = workers.filter((w) => !w.isDefault);
 
-  const workerOpts: StylistOption[] = workers.map((w) => ({
+  const workerOpts: StylistOption[] = assignableWorkers.map((w) => ({
     label: w.name,
     value: w.id,
     availableMinutes: w.availableMinutes,

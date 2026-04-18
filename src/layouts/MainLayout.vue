@@ -264,13 +264,6 @@ function onLogin() {
   });
 }
 
-function notifyPlaceholder(feature: string) {
-  $q.notify({
-    type: 'info',
-    message: `${feature} estará disponible próximamente`,
-  });
-}
-
 const whoWeAreDialogComponent = ref(false);
 const ourContactDialog = ref(false);
 
@@ -335,7 +328,7 @@ const moreMenuItems = computed<HeaderMenuItem[]>(() =>
       icon: 'supervisor_account',
       label: 'Mis empleados',
       visible: () => authStore.isAdmin,
-      method: () => notifyPlaceholder('Mis empleados'),
+      method: () => router.push('/mis-empleados'),
     },
     {
       icon: 'help_outline',
