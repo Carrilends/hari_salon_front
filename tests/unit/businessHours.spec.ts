@@ -1,6 +1,7 @@
 import {
   bookingSelectionToUtcIso,
   createBookingTimeOptionsFn,
+  getSalonNowParts,
   getBookingTimeBounds,
   isBookingDateTimeWithinHours,
   isQDateSelectable,
@@ -45,7 +46,7 @@ describe('businessHours', () => {
 
   test('getBookingTimeBounds: today raises floor to current minute', () => {
     jest.useFakeTimers();
-    jest.setSystemTime(new Date(2026, 4, 15, 14, 30, 0));
+    jest.setSystemTime(new Date('2026-05-15T19:30:00.000Z')); // 14:30 Bogota
     const b = getBookingTimeBounds('2026/05/15');
     expect(b.startTotalMin).toBe(14 * 60 + 30);
     jest.useRealTimers();
@@ -133,11 +134,30 @@ describe('businessHours', () => {
   test('bookingSelectionToUtcIso combines q-date and q-time model', () => {
     const iso = bookingSelectionToUtcIso('2026/04/07', '2026-04-07 14:30');
     expect(iso).not.toBeNull();
-    const d = new Date(iso!);
-    expect(d.getFullYear()).toBe(2026);
-    expect(d.getMonth()).toBe(3);
-    expect(d.getDate()).toBe(7);
-    expect(d.getHours()).toBe(14);
-    expect(d.getMinutes()).toBe(30);
+    expect(iso).toBe('2026-04-07T19:30:00.000Z');
+  });
+
+  test('getSalonNowParts uses salon timezone over client timezone', () => {
+    jest.useFakeTimers();
+    // 2026-04-19 01:10Z => 2026-04-18 20:10 en America/Bogota
+    jest.setSystemTime(new Date('2026-04-19T01:10:00.000Z'));
+    const now = getSalonNowParts();
+    expect(now.qDate).toBe('2026/04/18');
+    expect(now.minOfDay).toBe(20 * 60 + 10);
+    jest.useRealTimers();
+  });
+
+  test('isQDateSelectable compares against salon day, not browser local day', () => {
+    jest.useFakeTimers();
+    // A esta hora UTC ya puede ser 19 en otras TZ, pero en Bogota aun es 18.
+    jest.setSystemTime(new Date('2026-04-19T01:10:00.000Z'));
+    expect(isQDateSelectable('2026/04/18')).toBe(true);
+    expect(isQDateSelectable('2026/04/17')).toBe(false);
+    jest.useRealTimers();
+  });
+
+  test('bookingSelectionToUtcIso maps salon local time to utc iso', () => {
+    const iso = bookingSelectionToUtcIso('2026/04/18', '2026-04-18 18:30');
+    expect(iso).toBe('2026-04-18T23:30:00.000Z');
   });
 });

@@ -10,6 +10,7 @@ export type WorkerAvailabilityEntry = {
   id: string;
   name: string;
   isDefault: boolean;
+  assignable: boolean;
   usedMinutes: number;
   capacityMinutes: number;
   availableMinutes: number;
@@ -18,6 +19,17 @@ export type WorkerAvailabilityEntry = {
 
 export type WorkerAvailabilityResponse = {
   workers: WorkerAvailabilityEntry[];
+  dayBounds: {
+    openMin: number;
+    closeMin: number;
+    effectiveStartMin: number;
+    isToday: boolean;
+  };
+  salonNow: {
+    ymd: string;
+    minOfDay: number;
+    tz: string;
+  };
 };
 
 export type WorkerItem = {

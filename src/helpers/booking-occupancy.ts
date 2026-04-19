@@ -10,6 +10,10 @@ export type OccupancyByDateEntry = {
 export type ReservationOccupancyResponse = {
   parallelStylists: number;
   salonTimeZone: string;
+  salonNow: {
+    ymd: string;
+    minOfDay: number;
+  };
   byDate: Record<string, OccupancyByDateEntry>;
 };
 

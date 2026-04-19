@@ -588,8 +588,16 @@ import {
 import { useDialogMaximizedBelow } from 'src/composables/dialogs/useDialogMaximizedBelow';
 import { useBookStore } from 'src/stores/book-store';
 import type { BookingLine } from 'src/interfaces/booking';
-import { computed, ref, watch, type CSSProperties } from 'vue';
+import {
+  computed,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch,
+  type CSSProperties,
+} from 'vue';
 import { useQuasar } from 'quasar';
+import { useQueryClient } from '@tanstack/vue-query';
 import ServiceDialog from './serviceDialog.vue';
 import Service from 'src/interfaces/service';
 import { getService } from 'src/composables/services/useService';
@@ -607,13 +615,13 @@ import {
 import {
   bookingSelectionToUtcIso,
   BUSINESS_SCHEDULE_COPY,
+  getSalonNowParts,
   getBookingTimeBounds,
   hourHasSelectableMinute,
   isBookingDateTimeWithinHours,
   isQDateSelectable,
 } from 'src/helpers/businessHours';
 import {
-  fetchReservationOccupancy,
   fetchAllReservations,
   deleteReservation,
   reservationsApi,
@@ -621,7 +629,6 @@ import {
 import { useAuthStore } from 'src/stores/auth-store';
 import type { ReservationDto } from 'src/interfaces/booking';
 import {
-  fetchWorkerAvailability,
   type WorkerAvailabilityEntry,
 } from 'src/api/workers-api';
 import type { OccupancyByDateEntry } from 'src/helpers/booking-occupancy';
@@ -629,8 +636,9 @@ import {
   hasSlotForCart,
   occupancyEventColor,
   occupancyRatio,
-  ymdRangeForCalendarMonth,
 } from 'src/helpers/booking-occupancy';
+import { useWorkerAvailability } from 'src/composables/booking/useWorkerAvailability';
+import { useReservationOccupancy } from 'src/composables/booking/useReservationOccupancy';
 
 const $q = useQuasar();
 const bookStore = useBookStore();
@@ -638,6 +646,8 @@ const authStore = useAuthStore();
 
 const props = defineProps<{ dialog: boolean }>();
 const emit = defineEmits<DialogEmits & FiltersEmits>();
+const { dialog, hide } = useDialog(props, emit);
+const { maximized } = useDialogMaximizedBelow();
 
 const mainTab = ref('current');
 const adminReservations = ref<ReservationDto[]>([]);
@@ -657,48 +667,63 @@ type StylistOption = {
 };
 
 const selectedStylist = ref<StylistOption | null>(null);
-const workerAvailability = ref<WorkerAvailabilityEntry[]>([]);
-const workerAvailabilityLoading = ref(false);
-
-const occupancyByDate = ref<Record<string, OccupancyByDateEntry>>({});
-const occupancyLoading = ref(false);
-const occupancyFetchFailed = ref(false);
 const calendarYear = ref(new Date().getFullYear());
 const calendarMonth = ref(new Date().getMonth() + 1);
+const queryClient = useQueryClient();
 
 const defaultCalendarYearMonth = computed(
   () =>
     `${calendarYear.value}/${String(calendarMonth.value).padStart(2, '0')}`,
 );
 
-async function loadOccupancyForMonth(year: number, month: number) {
-  occupancyLoading.value = true;
-  occupancyFetchFailed.value = false;
-  try {
-    const { from, to } = ymdRangeForCalendarMonth(year, month);
-    const data = await fetchReservationOccupancy(from, to);
-    occupancyByDate.value = { ...data.byDate };
-  } catch {
-    occupancyFetchFailed.value = true;
-    occupancyByDate.value = {};
-    $q.notify({
-      type: 'warning',
-      message: 'No se pudo cargar la ocupación del calendario.',
-      position: 'top',
-    });
-  } finally {
-    occupancyLoading.value = false;
+const occupancyQuery = useReservationOccupancy(
+  calendarYear,
+  calendarMonth,
+  dateCard,
+);
+const workerAvailabilityQuery = useWorkerAvailability(date, dateCard);
+const occupancyByDate = computed<Record<string, OccupancyByDateEntry>>(
+  () => occupancyQuery.data.value?.byDate ?? {},
+);
+const occupancyLoading = computed(
+  () => occupancyQuery.isLoading.value || occupancyQuery.isFetching.value,
+);
+const occupancyFetchFailed = computed(() => occupancyQuery.isError.value);
+const workerAvailability = computed<WorkerAvailabilityEntry[]>(
+  () => workerAvailabilityQuery.data.value?.workers ?? [],
+);
+const workerAvailabilityLoading = computed(
+  () =>
+    workerAvailabilityQuery.isLoading.value ||
+    workerAvailabilityQuery.isFetching.value,
+);
+
+const salonNowForBooking = computed(() => {
+  const availabilityNow = workerAvailabilityQuery.data.value?.salonNow;
+  if (availabilityNow) {
+    return {
+      qDate: availabilityNow.ymd.replace(/-/g, '/'),
+      minOfDay: availabilityNow.minOfDay,
+    };
   }
-}
+  const occupancyNow = occupancyQuery.data.value?.salonNow;
+  if (occupancyNow) {
+    return {
+      qDate: occupancyNow.ymd.replace(/-/g, '/'),
+      minOfDay: occupancyNow.minOfDay,
+    };
+  }
+  return getSalonNowParts();
+});
 
 function onCalendarNavigation(ctx: { year: number; month: number }) {
   calendarYear.value = ctx.year;
   calendarMonth.value = ctx.month;
-  void loadOccupancyForMonth(ctx.year, ctx.month);
 }
 
 function bookingQDateOptions(dateStr: string): boolean {
-  if (!dateStr || !isQDateSelectable(dateStr)) return false;
+  if (!dateStr || !isQDateSelectable(dateStr, salonNowForBooking.value.qDate))
+    return false;
   if (occupancyFetchFailed.value) return true;
   if (occupancyLoading.value) return true;
   const o = occupancyByDate.value[dateStr];
@@ -711,7 +736,8 @@ function bookingQDateOptions(dateStr: string): boolean {
 }
 
 function bookingQDateEvents(dateStr: string): boolean {
-  if (!dateStr || !isQDateSelectable(dateStr)) return false;
+  if (!dateStr || !isQDateSelectable(dateStr, salonNowForBooking.value.qDate))
+    return false;
   if (occupancyLoading.value || occupancyFetchFailed.value) return false;
   return dateStr in occupancyByDate.value;
 }
@@ -730,13 +756,40 @@ watch(dateCard, (open) => {
   const now = new Date();
   calendarYear.value = now.getFullYear();
   calendarMonth.value = now.getMonth() + 1;
-  void loadOccupancyForMonth(calendarYear.value, calendarMonth.value);
+  void occupancyQuery.refetch();
+  if (date.value) {
+    void workerAvailabilityQuery.refetch();
+  }
 });
+
+watch(
+  () => occupancyQuery.isError.value,
+  (hasError) => {
+    if (!hasError) return;
+    $q.notify({
+      type: 'warning',
+      message: 'No se pudo cargar la ocupación del calendario.',
+      position: 'top',
+    });
+  },
+);
+
+watch(
+  () => workerAvailabilityQuery.isError.value,
+  (hasError) => {
+    if (!hasError) return;
+    $q.notify({
+      type: 'warning',
+      message: 'No se pudo cargar la disponibilidad de estilistas.',
+      position: 'top',
+    });
+  },
+);
 
 const stylistOptions = computed<StylistOption[]>(() => {
   const cartDuration = bookStore.bookingsDuration;
   const workers = workerAvailability.value;
-  const assignableWorkers = workers.filter((w) => !w.isDefault);
+  const assignableWorkers = workers.filter((w) => w.assignable);
 
   const workerOpts: StylistOption[] = assignableWorkers.map((w) => ({
     label: w.name,
@@ -747,11 +800,11 @@ const stylistOptions = computed<StylistOption[]>(() => {
   }));
 
   const anyAvailable = workerOpts.some((o) => !o.disable);
-  const maxAvailable = workers.reduce(
+  const maxAvailable = assignableWorkers.reduce(
     (max, w) => Math.max(max, w.availableMinutes),
     0,
   );
-  const maxCapacity = workers.reduce(
+  const maxCapacity = assignableWorkers.reduce(
     (max, w) => Math.max(max, w.capacityMinutes),
     0,
   );
@@ -767,24 +820,6 @@ const stylistOptions = computed<StylistOption[]>(() => {
     ...workerOpts,
   ];
 });
-
-async function loadWorkerAvailability(qDateStr: string) {
-  const dateYmd = qDateStr.replace(/\//g, '-');
-  workerAvailabilityLoading.value = true;
-  try {
-    const { workers } = await fetchWorkerAvailability(dateYmd);
-    workerAvailability.value = workers;
-  } catch {
-    workerAvailability.value = [];
-    $q.notify({
-      type: 'warning',
-      message: 'No se pudo cargar la disponibilidad de estilistas.',
-      position: 'top',
-    });
-  } finally {
-    workerAvailabilityLoading.value = false;
-  }
-}
 
 function stylistAvailabilityColor(
   availableMin: number,
@@ -859,6 +894,7 @@ const bookingTimeOptions = (
   const { startTotalMin, endTotalMin } = getBookingTimeBounds(
     dateStr,
     cartDuration,
+    salonNowForBooking.value,
   );
   if (startTotalMin > endTotalMin) return false;
 
@@ -958,6 +994,7 @@ const sendBookingData = async () => {
       date.value,
       time.value,
       bookStore.bookingsDuration,
+      salonNowForBooking.value,
     )
   ) {
     $q.notify({
@@ -989,6 +1026,23 @@ const sendBookingData = async () => {
     return;
   }
 
+  await occupancyQuery.refetch();
+  if (date.value) {
+    await workerAvailabilityQuery.refetch();
+  }
+  const selectedWorker = selectedStylist.value?.value
+    ? workerAvailability.value.find((w) => w.id === selectedStylist.value?.value)
+    : undefined;
+  if (selectedWorker && selectedWorker.availableMinutes < totalDurationMinutes) {
+    $q.notify({
+      type: 'warning',
+      message:
+        'La disponibilidad cambió recientemente y ya no hay tiempo suficiente para ese estilista.',
+      position: 'top',
+    });
+    return;
+  }
+
   $q.loading.show({ message: 'Registrando reserva...' });
   try {
     await reservationsApi.post('/reservations', {
@@ -1007,6 +1061,12 @@ const sendBookingData = async () => {
     return;
   } finally {
     $q.loading.hide();
+    await queryClient.invalidateQueries({
+      queryKey: ['worker-availability'],
+    });
+    await queryClient.invalidateQueries({
+      queryKey: ['reservation-occupancy'],
+    });
   }
 
   const message = generateBookingWhatsAppMessage({
@@ -1031,6 +1091,7 @@ const confirmDateTime = () => {
       date.value,
       time.value,
       bookStore.bookingsDuration,
+      salonNowForBooking.value,
     )
   ) {
     $q.notify({
@@ -1050,11 +1111,52 @@ watch(date, (newDate, oldDate) => {
     selectedStylist.value = null;
     time.value = '';
     if (newDate) {
-      void loadWorkerAvailability(newDate);
-    } else {
-      workerAvailability.value = [];
+      void workerAvailabilityQuery.refetch();
     }
   }
+});
+
+watch(selectedStylist, () => {
+  if (!dateCard.value || !date.value) return;
+  void queryClient.invalidateQueries({
+    queryKey: ['worker-availability'],
+  });
+  void workerAvailabilityQuery.refetch();
+});
+
+watch(dialog, (open) => {
+  if (!open) return;
+  if (dateCard.value) {
+    void occupancyQuery.refetch();
+    if (date.value) {
+      void workerAvailabilityQuery.refetch();
+    }
+  }
+});
+
+const refreshRealtimeBookingData = () => {
+  if (!dialog.value || !dateCard.value) return;
+  void occupancyQuery.refetch();
+  if (date.value) {
+    void workerAvailabilityQuery.refetch();
+  }
+};
+
+const onWindowFocus = () => refreshRealtimeBookingData();
+const onVisibilityChange = () => {
+  if (document.visibilityState === 'visible') {
+    refreshRealtimeBookingData();
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('focus', onWindowFocus);
+  document.addEventListener('visibilitychange', onVisibilityChange);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('focus', onWindowFocus);
+  document.removeEventListener('visibilitychange', onVisibilityChange);
 });
 
 const formattedDateTime = computed(() => {
@@ -1242,9 +1344,6 @@ const barStyle = {
   width: '9px',
   opacity: '0.2',
 };
-
-const { dialog, hide } = useDialog(props, emit);
-const { maximized } = useDialogMaximizedBelow();
 
 const bookingListScrollStyle = computed((): CSSProperties => {
   const base: CSSProperties = {
