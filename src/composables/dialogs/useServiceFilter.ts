@@ -12,6 +12,7 @@ export type FilterService = {
   selectedGenres: string[];
   selectedServicesIDs: string[];
   includePriceRange: boolean;
+  includePromotionsOnly: boolean;
   prices: {
     min: number;
     max: number;
@@ -25,6 +26,7 @@ export const useFilterService = (emit: FiltersEmits) => {
   const optionsStore = useOptionsStore();
 
   const includePriceRange = ref(false);
+  const includePromotionsOnly = ref(false);
   const prices = ref({
     min: 5,
     max: 200,
@@ -79,11 +81,24 @@ export const useFilterService = (emit: FiltersEmits) => {
     { deep: true }
   );
 
+  watch(includePriceRange, (enabled) => {
+    if (enabled) {
+      includePromotionsOnly.value = false;
+    }
+  });
+
+  watch(includePromotionsOnly, (enabled) => {
+    if (enabled) {
+      includePriceRange.value = false;
+    }
+  });
+
   // ---------------- Functions ----------------
 
   const cleanFilters = () => {
     filtersStore.clearGenders();
     includePriceRange.value = false;
+    includePromotionsOnly.value = false;
     clearServices();
     sendFilter();
   };
@@ -93,6 +108,7 @@ export const useFilterService = (emit: FiltersEmits) => {
       selectedGenres: filtersStore.selectedGenres.map((s) => s.id),
       selectedServicesIDs: filtersStore.selectedServicesIDs.map((s) => s),
       includePriceRange: includePriceRange.value,
+      includePromotionsOnly: includePromotionsOnly.value,
       prices: {
         min: prices.value.min,
         max: prices.value.max,
@@ -109,7 +125,8 @@ export const useFilterService = (emit: FiltersEmits) => {
     const genres = filtersStore.selectedGenres.length;
     const services = filtersStore.selectedServicesIDs.length;
     const havePrice = includePriceRange.value;
-    return genres + services + (havePrice ? 1 : 0);
+    const havePromotionsOnly = includePromotionsOnly.value;
+    return genres + services + (havePrice ? 1 : 0) + (havePromotionsOnly ? 1 : 0);
   });
 
   watch(
@@ -121,6 +138,7 @@ export const useFilterService = (emit: FiltersEmits) => {
 
   return {
     includePriceRange,
+    includePromotionsOnly,
     prices,
     filterGenres,
     amountOfFilters,

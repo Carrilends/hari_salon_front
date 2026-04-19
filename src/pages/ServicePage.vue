@@ -385,6 +385,7 @@ function applyShortcutFromIndex(card: MenuCard) {
   filterService.value.selectedGenres = genreIds;
   filterService.value.selectedServicesIDs = serviceIds;
   filterService.value.includePriceRange = false;
+  filterService.value.includePromotionsOnly = false;
   filterService.value.page = 1;
   showFilterDialog.value = true;
 }
@@ -407,6 +408,7 @@ const fetchServices = (e: FilterService | string) => {
     filterService.value.selectedGenres = e.selectedGenres;
     filterService.value.selectedServicesIDs = e.selectedServicesIDs;
     filterService.value.includePriceRange = e.includePriceRange;
+    filterService.value.includePromotionsOnly = e.includePromotionsOnly;
     filterService.value.prices.min = e.prices.min;
     filterService.value.prices.max = e.prices.max;
   }

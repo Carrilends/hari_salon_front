@@ -102,21 +102,68 @@
             class="col-12 q-py-md"
             :class="maximized ? 'q-px-sm' : 'q-px-md'"
           >
-            <q-item
-              tag="label"
-              v-ripple
-              style="border-radius: 8px"
-              :style="{
-                backgroundColor: includePriceRange ? '#ccebd1' : '#e3dae6',
-              }"
+            <div v-if="!maximized" class="row items-center q-gutter-sm">
+              <q-btn
+                no-caps
+                icon="payments"
+                :color="includePriceRange ? 'green-7' : 'blue-grey-3'"
+                :text-color="includePriceRange ? 'white' : 'blue-grey-9'"
+                :outline="!includePriceRange"
+                :disable="includePromotionsOnly"
+                @click="includePriceRange = !includePriceRange"
+              >
+                Incluir rango de precios
+              </q-btn>
+              <q-btn
+                no-caps
+                icon="percent"
+                :color="includePromotionsOnly ? 'deep-orange-6' : 'blue-grey-3'"
+                :text-color="includePromotionsOnly ? 'white' : 'blue-grey-9'"
+                :outline="!includePromotionsOnly"
+                :disable="includePriceRange"
+                @click="includePromotionsOnly = !includePromotionsOnly"
+              >
+                Promos
+              </q-btn>
+            </div>
+            <div
+              v-else
+              class="row items-center justify-between filter-dialog__mobile-actions"
             >
-              <q-checkbox v-model="includePriceRange" color="green" />
-              <q-item-section>
-                <q-item-label class="q-pl-md" style="font-size: 16px">
-                  Incluir rango de precios:
-                </q-item-label>
-              </q-item-section>
-            </q-item>
+              <q-item
+                tag="label"
+                v-ripple
+                class="filter-dialog__mobile-price-toggle"
+                :class="{
+                  'filter-dialog__mobile-price-toggle--active': includePriceRange,
+                  'filter-dialog__mobile-price-toggle--disabled':
+                    includePromotionsOnly,
+                }"
+              >
+                <q-checkbox
+                  v-model="includePriceRange"
+                  color="green"
+                  :disable="includePromotionsOnly"
+                />
+                <q-item-section>
+                  <q-item-label class="q-pl-sm" style="font-size: 16px">
+                    Incluir rango de precios
+                  </q-item-label>
+                </q-item-section>
+              </q-item>
+              <q-btn
+                round
+                unelevated
+                icon="percent"
+                size="16px"
+                class="filter-dialog__promo-round-btn"
+                :class="{
+                  'filter-dialog__promo-round-btn--active': includePromotionsOnly,
+                }"
+                :disable="includePriceRange"
+                @click="includePromotionsOnly = !includePromotionsOnly"
+              />
+            </div>
             <div
               v-if="includePriceRange"
               class="q-pt-md q-pb-sm"
@@ -189,6 +236,7 @@ const emit = defineEmits<DialogEmits & FiltersEmits>();
 
 const {
   includePriceRange,
+  includePromotionsOnly,
   prices,
   filterGenres,
   amountOfFilters,
@@ -289,5 +337,48 @@ const { maximized } = useDialogMaximizedBelow();
   justify-content: center;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
   z-index: 10;
+}
+
+.filter-dialog__mobile-actions {
+  gap: 12px;
+}
+
+.filter-dialog__mobile-price-toggle {
+  flex: 1 1 auto;
+  border-radius: 12px;
+  background-color: #e3dae6;
+  transition: background-color 0.2s ease;
+}
+
+.filter-dialog__mobile-price-toggle--active {
+  background-color: #ccebd1;
+}
+
+.filter-dialog__mobile-price-toggle--disabled {
+  opacity: 0.6;
+}
+
+.filter-dialog__promo-round-btn {
+  width: 46px;
+  height: 46px;
+  color: #4f5d75;
+  background: #e3dae6;
+  border: 1px solid #c6bdd5;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.filter-dialog__promo-round-btn--active {
+  color: #ffffff;
+  background: linear-gradient(145deg, #ff7043, #ef5350);
+  border-color: #ef5350;
+  box-shadow: 0 8px 16px rgba(239, 83, 80, 0.3);
+}
+
+.filter-dialog__promo-round-btn:not(:disabled):hover {
+  transform: translateY(-1px);
 }
 </style>

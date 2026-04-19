@@ -11,6 +11,7 @@ type fiilterService = {
   selectedGenres: string[];
   selectedServicesIDs: string[];
   includePriceRange: boolean;
+  includePromotionsOnly: boolean;
   prices: {
     min: number;
     max: number;
@@ -41,6 +42,7 @@ export const useServices = () => {
     selectedGenres: [],
     selectedServicesIDs: [],
     includePriceRange: false,
+    includePromotionsOnly: false,
     prices: {
       min: 5,
       max: 200,
