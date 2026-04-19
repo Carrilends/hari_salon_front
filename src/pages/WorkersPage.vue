@@ -160,6 +160,14 @@ import { useQuasar } from 'quasar';
 import { useWorkers } from 'src/composables/workers/useWorkers';
 import { useAuthStore } from 'src/stores/auth-store';
 import type { WorkerItem } from 'src/api/workers-api';
+import { useSeo } from 'src/composables/seo/useSeo';
+
+useSeo({
+  title: 'Mis empleados | Peluquería Pecas',
+  description: 'Gestión interna del equipo de Peluquería Pecas.',
+  path: '/mis-empleados',
+  noindex: true,
+});
 
 interface ApiError {
   response?: {

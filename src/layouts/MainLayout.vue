@@ -1,11 +1,16 @@
 <template>
   <q-layout class="shadow-2 background-image" view="hHh lpR fFf">
-    <q-header style="background: #424242">
+    <q-header style="background: #424242" role="banner">
       <div class="main-header">
-        <div class="main-header__brand" @click="router.push('/')">
+        <a
+          class="main-header__brand"
+          href="/"
+          aria-label="Ir al inicio de Peluquería Pecas"
+          @click.prevent="router.push('/')"
+        >
           💈 Peluqueria pecas 💈
-        </div>
-        <div class="main-header__actions">
+        </a>
+        <nav class="main-header__actions" aria-label="Navegación principal">
           <q-btn
             :class="serviceHomeButton.class"
             :icon="serviceHomeButton.icon"
@@ -78,11 +83,15 @@
               </q-list>
             </q-menu>
           </q-btn>
-        </div>
+        </nav>
       </div>
     </q-header>
 
-    <q-page-container class="full-width" style="height: 100vh; min-height: 0">
+    <q-page-container
+      class="full-width"
+      role="main"
+      style="height: 100vh; min-height: 0"
+    >
       <router-view />
     </q-page-container>
 
@@ -387,11 +396,18 @@ defineOptions({
   font-size: 1.25rem;
   font-weight: 700;
   color: white;
+  text-decoration: none;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   flex-shrink: 0;
   line-height: 1.2;
   text-align: left;
+}
+
+.main-header__brand:hover,
+.main-header__brand:focus {
+  color: white;
+  text-decoration: none;
 }
 
 .main-header__actions {

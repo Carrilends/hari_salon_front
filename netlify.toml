@@ -1,0 +1,22 @@
+[build]
+  command = "yarn build:ssg"
+  publish = "dist/ssg"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# El _redirects en public/ tambien se respeta. Esto es solo redundancia explicita.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/sitemap.xml"
+  [headers.values]
+    Content-Type = "application/xml"

@@ -1,0 +1,3 @@
+# Netlify SPA fallback. Las rutas prerenderizadas por SSG ya tienen su propio
+# index.html, asi que solo se aplica a paths sin HTML estatico (ej: /mi-cuenta).
+/*    /index.html   200

@@ -23,6 +23,14 @@
 </template>
 
 <script setup lang="ts">
+import { useSeo } from 'src/composables/seo/useSeo';
+
+useSeo({
+  title: 'Página no encontrada | Peluquería Pecas',
+  description: 'La página que buscás no existe. Volvé al inicio para seguir navegando.',
+  noindex: true,
+});
+
 defineOptions({
   name: 'ErrorNotFound'
 });

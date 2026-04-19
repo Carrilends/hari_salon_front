@@ -1,0 +1,9 @@
+{
+  "ssg": {
+    "prompts": {
+      "scripts": true,
+      "wrappers": true,
+      "beastcss": true
+    }
+  }
+}

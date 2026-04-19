@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /mi-cuenta
+Disallow: /mis-empleados
+Disallow: /login
+Disallow: /register
+
+Sitemap: https://TU_DOMINIO/sitemap.xml

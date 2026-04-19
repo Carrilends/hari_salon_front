@@ -133,6 +133,14 @@ import { useQuasar } from 'quasar';
 import { adminServiceApi } from 'src/api/services-api';
 import { useAuthStore } from 'src/stores/auth-store';
 import type { AuthResponse } from 'src/api/apiTypes';
+import { useSeo } from 'src/composables/seo/useSeo';
+
+useSeo({
+  title: 'Mi cuenta | Peluquería Pecas',
+  description: 'Gestión de cuenta personal en Peluquería Pecas.',
+  path: '/mi-cuenta',
+  noindex: true,
+});
 
 interface ApiError {
   response?: {

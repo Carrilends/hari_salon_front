@@ -165,10 +165,27 @@ import { useQuasar } from 'quasar';
 import { useFaqs } from 'src/composables/faqs/useFaqs';
 import { useAuthStore } from 'src/stores/auth-store';
 import type { CreateFaqBody, FaqItem } from 'src/api/apiTypes';
+import { useSeo } from 'src/composables/seo/useSeo';
+import { faqPageSchema } from 'src/composables/seo/structuredData';
 
 const authStore = useAuthStore();
 const $q = useQuasar();
 const { faqs, isLoading, createFaqMutation, updateFaqMutation, removeFaqMutation } = useFaqs();
+
+useSeo({
+  title: 'Preguntas frecuentes | Peluquería Pecas',
+  description:
+    'Resolvemos las dudas más comunes sobre reservas, servicios, pagos y atención en Peluquería Pecas.',
+  path: '/preguntas-frecuentes',
+  jsonLd: computed(() =>
+    faqPageSchema(
+      (faqs.value || []).map((faq) => ({
+        question: faq.question,
+        answer: faq.answer,
+      })),
+    ),
+  ),
+});
 
 const scrollThumbStyle = {
   right: '2px',

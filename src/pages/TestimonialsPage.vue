@@ -97,9 +97,29 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useReviews } from 'src/composables/reviews/useReviews';
+import { useSeo } from 'src/composables/seo/useSeo';
+import { reviewsSchema } from 'src/composables/seo/structuredData';
 
 const { reviews, averageScore, isLoading } = useReviews();
+
+useSeo({
+  title: 'Testimonios | Peluquería Pecas',
+  description:
+    'Lo que dicen nuestros clientes sobre la experiencia en Peluquería Pecas: reseñas, calificaciones y opiniones reales.',
+  path: '/testimonios',
+  jsonLd: computed(() =>
+    reviewsSchema(
+      (reviews.value || []).map((review) => ({
+        author: review.name,
+        body: review.description,
+        rating: Number(review.score) || undefined,
+        date: review.createdAt,
+      })),
+    ),
+  ),
+});
 
 const scrollThumbStyle = {
   right: '2px',

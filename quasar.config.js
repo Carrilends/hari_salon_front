@@ -20,7 +20,7 @@ module.exports = configure(function (/* ctx */) {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli-vite/boot-files
-    boot: ['i18n', 'main', 'svg-icons', 'auth-expiry'],
+    boot: ['i18n', 'main', 'svg-icons', 'auth-expiry', 'head'],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#css
     css: ['app.scss'],
@@ -46,7 +46,7 @@ module.exports = configure(function (/* ctx */) {
         node: 'node20',
       },
 
-      vueRouterMode: 'hash', // available values: 'hash', 'history'
+      vueRouterMode: 'history', // available values: 'hash', 'history'
       // vueRouterBase,
       // vueDevtools,
       // vueOptionsAPI: false,
@@ -138,6 +138,23 @@ module.exports = configure(function (/* ctx */) {
     //   electronMain: 'src-electron/electron-main',
     //   electronPreload: 'src-electron/electron-preload'
     // },
+
+    // SSG (Static Site Generation) via quasar-app-extension-ssg.
+    // Comando: `quasar ssg generate` (output en dist/ssg).
+    // Las rutas listadas en `routes` se prerenderizan a HTML real con sus meta tags.
+    // El resto se sirve como SPA (404.html actua como fallback).
+    ssg: {
+      includeStaticRoutes: true,
+      crawler: true,
+      routes: [
+        '/',
+        '/services',
+        '/testimonios',
+        '/preguntas-frecuentes',
+      ],
+      exclude: [/^\/mi-cuenta/, /^\/mis-empleados/, /^\/login/, /^\/register/],
+      inlineCriticalCss: true,
+    },
 
     // https://v2.quasar.dev/quasar-cli-vite/developing-ssr/configuring-ssr
     ssr: {

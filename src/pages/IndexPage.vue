@@ -8,12 +8,15 @@
       class="index-page__inner"
       :class="{ 'index-page__inner--compact': isCompact }"
     >
-      <div
+      <h1
         class="index-page__title"
         :class="{ 'index-page__title--compact': isCompact }"
       >
-        Algunos servicios:
-      </div>
+        Peluquería Pecas — Cortes, color, barbería y estética
+      </h1>
+      <p class="index-page__lede">
+        Reservá online tus servicios de peluquería con profesionales y promociones exclusivas.
+      </p>
 
       <q-scroll-area
         v-if="isCompact"
@@ -36,6 +39,9 @@
               <img
                 :style="{ width: compactAvatarSize, height: compactAvatarSize }"
                 :src="card.imgPath"
+                :alt="card.title"
+                loading="lazy"
+                decoding="async"
               />
             </q-avatar>
 
@@ -65,7 +71,13 @@
           v-ripple
         >
           <q-avatar size="80px" class="q-mr-md" style="background: #e3e3e8">
-            <img style="width: 80px" :src="card.imgPath" />
+            <img
+              style="width: 80px"
+              :src="card.imgPath"
+              :alt="card.title"
+              loading="lazy"
+              decoding="async"
+            />
           </q-avatar>
 
           <q-item-section>
@@ -121,8 +133,18 @@ import i18n from 'src/i18n';
 import { useRouter, type HistoryState } from 'vue-router';
 import { useOptions } from 'src/composables/shared/useOptions';
 import { useAuthStore } from 'src/stores/auth-store';
+import { useSeo } from 'src/composables/seo/useSeo';
+import { hairSalonSchema } from 'src/composables/seo/structuredData';
 
 useOptions();
+
+useSeo({
+  title: 'Peluquería Pecas | Cortes, color, barbería y estética',
+  description:
+    'Reservá cortes de cabello, coloración, barbería, maquillaje y manicura en Peluquería Pecas. Profesionales, promociones y atención personalizada.',
+  path: '/',
+  jsonLd: hairSalonSchema(),
+});
 
 /** Viewport width strictly below this uses compact layout (scroll area, full-width shell). */
 const COMPACT_BREAKPOINT_PX = 700;
@@ -296,6 +318,13 @@ defineOptions({
   font-size: 1.35rem;
   line-height: 1.25;
   text-shadow: 0 0 16px rgba(255, 255, 255, 0.9), 0 1px 2px rgba(255, 255, 255, 0.95);
+}
+
+.index-page__lede {
+  margin: 0 0 16px;
+  font-size: 1rem;
+  color: #2a2a2a;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.85);
 }
 
 .index-page__scroll {

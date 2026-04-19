@@ -125,8 +125,13 @@
               <q-avatar rounded size="52px" class="service-list-avatar">
                 <img
                   :src="serviceImageUrl(service)"
-                  :alt="service.name"
+                  :srcset="serviceImageSrcset(service)"
+                  sizes="52px"
+                  :alt="`Imagen del servicio ${service.name}`"
                   loading="lazy"
+                  decoding="async"
+                  width="52"
+                  height="52"
                 />
               </q-avatar>
             </q-item-section>
@@ -266,6 +271,12 @@ import { adminServiceApi } from 'src/api/services-api';
 import { serviceIsOnPromotion } from 'src/helpers/service-promotion';
 import { useOptions } from 'src/composables/shared/useOptions';
 import { useOptionsStore } from 'src/stores/options-store';
+import { useSeo } from 'src/composables/seo/useSeo';
+import { servicesSchema } from 'src/composables/seo/structuredData';
+import {
+  buildCloudinarySrcset,
+  optimizeCloudinaryUrl,
+} from 'src/helpers/cloudinaryHelpers';
 
 useOptions();
 const optionsStore = useOptionsStore();
@@ -275,6 +286,22 @@ const authStore = useAuthStore();
 const bookStore = useBookStore();
 
 const { services, filterService, totalPages, refetch } = useServices();
+
+useSeo({
+  title: 'Servicios | Peluquería Pecas',
+  description:
+    'Descubrí todos nuestros servicios de peluquería: cortes de cabello, coloración, alisados, barbería, maquillaje, uñas y más. Reservá online en pocos pasos.',
+  path: '/services',
+  jsonLd: computed(() =>
+    servicesSchema(
+      (services.value || []).slice(0, 20).map((service) => ({
+        name: service.name,
+        description: service.detail?.description,
+        price: service.price,
+      })),
+    ),
+  ),
+});
 const { serviceIdRef } = useService();
 const { serviceIdEditRef } = useServiceForEdition();
 const dialogCreation = ref(false);
@@ -334,7 +361,10 @@ const isListLayout = computed(
 );
 
 const serviceImageUrl = (service: Service) =>
-  service.images?.[0]?.url || DEFAULT_SERVICE_IMAGE;
+  optimizeCloudinaryUrl(service.images?.[0]?.url, 120) || DEFAULT_SERVICE_IMAGE;
+
+const serviceImageSrcset = (service: Service) =>
+  buildCloudinarySrcset(service.images?.[0]?.url, [60, 120, 240]);
 
 const openServiceDetail = (id: string) => {
   serviceIdRef.value = id;
