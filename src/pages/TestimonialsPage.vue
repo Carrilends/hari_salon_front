@@ -105,9 +105,9 @@ import { reviewsSchema } from 'src/composables/seo/structuredData';
 const { reviews, averageScore, isLoading } = useReviews();
 
 useSeo({
-  title: 'Testimonios | Peluquería Pecas',
+  title: 'Testimonios | Peluquería Marlene',
   description:
-    'Lo que dicen nuestros clientes sobre la experiencia en Peluquería Pecas: reseñas, calificaciones y opiniones reales.',
+    'Lo que dicen nuestros clientes sobre la experiencia en Peluquería Marlene: reseñas, calificaciones y opiniones reales.',
   path: '/testimonios',
   jsonLd: computed(() =>
     reviewsSchema(

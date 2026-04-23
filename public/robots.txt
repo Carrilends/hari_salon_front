@@ -5,4 +5,4 @@ Disallow: /mis-empleados
 Disallow: /login
 Disallow: /register
 
-Sitemap: https://TU_DOMINIO/sitemap.xml
+Sitemap: https://peluqueria-marlene-pecas.netlify.app/sitemap.xml

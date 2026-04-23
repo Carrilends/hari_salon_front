@@ -5,10 +5,10 @@
         <a
           class="main-header__brand"
           href="/"
-          aria-label="Ir al inicio de Peluquería Pecas"
+          aria-label="Ir al inicio de Peluquería Marlene"
           @click.prevent="router.push('/')"
         >
-          💈 Peluqueria pecas 💈
+          💈 Peluquería Marlene 💈
         </a>
         <nav class="main-header__actions" aria-label="Navegación principal">
           <q-btn

@@ -11,19 +11,11 @@ export const BUSINESS_SCHEDULE_COPY = {
   weekendRange: '9:00 a. m. – 7:00 p. m.',
 } as const;
 
-function resolveSalonTz(): string {
-  try {
-    const tz = Function(
-      'try { return import.meta.env?.VITE_SALON_TZ; } catch { return undefined; }'
-    )() as string | undefined;
-    if (tz) return tz;
-  } catch {
-    // Ignored: when import.meta is unavailable (e.g. Jest CJS runtime).
-  }
-  return 'America/Bogota';
-}
-
-const SALON_TZ = resolveSalonTz();
+// Zona horaria fija del salón (Sopó, Cundinamarca). Antes se intentaba leer
+// `import.meta.env.VITE_SALON_TZ` con un truco de `Function()` para evadir
+// Jest, pero esa cadena hacía que `rollup-plugin-dynamic-import-variables` se
+// rompiera en el build SSG. Para esta tesis basta con hardcodear la zona.
+const SALON_TZ = 'America/Bogota';
 
 const WEEKDAY_OPEN_MIN = 8 * 60;
 const WEEKDAY_CLOSE_MIN = 21 * 60 + 59;

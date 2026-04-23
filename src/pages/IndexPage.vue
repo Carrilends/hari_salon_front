@@ -12,10 +12,10 @@
         class="index-page__title"
         :class="{ 'index-page__title--compact': isCompact }"
       >
-        Peluquería Pecas — Cortes, color, barbería y estética
+        Peluquería Marlene — Cortes, color, barbería y estética
       </h1>
       <p class="index-page__lede">
-        Reservá online tus servicios de peluquería con profesionales y promociones exclusivas.
+        Reserva online tus servicios de peluquería con profesionales y promociones exclusivas.
       </p>
 
       <q-scroll-area
@@ -139,9 +139,9 @@ import { hairSalonSchema } from 'src/composables/seo/structuredData';
 useOptions();
 
 useSeo({
-  title: 'Peluquería Pecas | Cortes, color, barbería y estética',
+  title: 'Peluquería Marlene | Cortes, color, barbería y estética',
   description:
-    'Reservá cortes de cabello, coloración, barbería, maquillaje y manicura en Peluquería Pecas. Profesionales, promociones y atención personalizada.',
+    'Reserva cortes de cabello, coloración, barbería, maquillaje y manicura en Peluquería Marlene. Profesionales, promociones y atención personalizada.',
   path: '/',
   jsonLd: hairSalonSchema(),
 });

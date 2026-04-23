@@ -163,8 +163,8 @@ import type { WorkerItem } from 'src/api/workers-api';
 import { useSeo } from 'src/composables/seo/useSeo';
 
 useSeo({
-  title: 'Mis empleados | Peluquería Pecas',
-  description: 'Gestión interna del equipo de Peluquería Pecas.',
+  title: 'Mis empleados | Peluquería Marlene',
+  description: 'Gestión interna del equipo de Peluquería Marlene.',
   path: '/mis-empleados',
   noindex: true,
 });

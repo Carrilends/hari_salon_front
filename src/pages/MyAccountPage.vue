@@ -136,8 +136,8 @@ import type { AuthResponse } from 'src/api/apiTypes';
 import { useSeo } from 'src/composables/seo/useSeo';
 
 useSeo({
-  title: 'Mi cuenta | Peluquería Pecas',
-  description: 'Gestión de cuenta personal en Peluquería Pecas.',
+  title: 'Mi cuenta | Peluquería Marlene',
+  description: 'Gestión de cuenta personal en Peluquería Marlene.',
   path: '/mi-cuenta',
   noindex: true,
 });

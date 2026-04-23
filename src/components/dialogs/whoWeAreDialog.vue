@@ -44,7 +44,7 @@
           <iframe
             class="about-map__frame"
             :src="MAPS_EMBED_URL"
-            title="Ubicación de Peluquería Pecas"
+            title="Ubicación de Peluquería Marlene"
             loading="lazy"
             referrerpolicy="no-referrer-when-downgrade"
             allowfullscreen
@@ -78,7 +78,7 @@
       <q-card-section class="about-body">
         <h2 class="about-title">¿Quiénes somos?</h2>
         <p class="about-text">
-          Peluquería Pecas es un lugar donde te sentirás como en casa, con un
+          Peluquería Marlene es un lugar donde te sentirás como en casa, con un
           ambiente agradable y un personal amable y profesional. Llevamos más
           de 20 años en el sector de la belleza y la estética, ofreciendo
           servicios de calidad a precios accesibles.

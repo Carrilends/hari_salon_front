@@ -26,8 +26,8 @@
 import { useSeo } from 'src/composables/seo/useSeo';
 
 useSeo({
-  title: 'Página no encontrada | Peluquería Pecas',
-  description: 'La página que buscás no existe. Volvé al inicio para seguir navegando.',
+  title: 'Página no encontrada | Peluquería Marlene',
+  description: 'La página que buscas no existe. Vuelve al inicio para seguir navegando.',
   noindex: true,
 });
 

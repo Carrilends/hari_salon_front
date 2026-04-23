@@ -173,9 +173,9 @@ const $q = useQuasar();
 const { faqs, isLoading, createFaqMutation, updateFaqMutation, removeFaqMutation } = useFaqs();
 
 useSeo({
-  title: 'Preguntas frecuentes | Peluquería Pecas',
+  title: 'Preguntas frecuentes | Peluquería Marlene',
   description:
-    'Resolvemos las dudas más comunes sobre reservas, servicios, pagos y atención en Peluquería Pecas.',
+    'Resolvemos las dudas más comunes sobre reservas, servicios, pagos y atención en Peluquería Marlene.',
   path: '/preguntas-frecuentes',
   jsonLd: computed(() =>
     faqPageSchema(

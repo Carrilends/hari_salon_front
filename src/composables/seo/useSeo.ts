@@ -21,7 +21,7 @@ export interface SeoOptions {
 }
 
 const SITE_URL = (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/$/, '') || '';
-const SITE_NAME = 'Peluquería Pecas';
+const SITE_NAME = 'Peluquería Marlene';
 const DEFAULT_OG_IMAGE = '/icons/favicon-128x128.png';
 
 function absoluteUrl(value: string | undefined): string | undefined {

@@ -61,7 +61,7 @@
       <q-card-section class="contact-dialog__footer">
         <div class="footer-title">Contáctanos</div>
         <p class="footer-tagline">
-          Peluquería Pecas está a tu servicio
+          Peluquería Marlene está a tu servicio
         </p>
         <div class="contact-row">
           <a class="contact-phone" href="tel:+573208977471">

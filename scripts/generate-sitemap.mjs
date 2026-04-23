@@ -4,7 +4,7 @@
  * Mantenelo sincronizado con src/router/routes.ts.
  *
  * Variables de entorno:
- *   SITE_URL  -> dominio absoluto (ej: https://peluqueriapecas.com)
+ *   SITE_URL  -> dominio absoluto (ej: https://peluqueria-marlene-pecas.netlify.app)
  *
  * Uso: node scripts/generate-sitemap.mjs
  */
@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const SITE_URL = (process.env.SITE_URL || process.env.VITE_SITE_URL || 'https://TU_DOMINIO')
+const SITE_URL = (process.env.SITE_URL || process.env.VITE_SITE_URL || 'https://peluqueria-marlene-pecas.netlify.app')
   .replace(/\/$/, '');
 
 const PUBLIC_ROUTES = [
@@ -45,8 +45,8 @@ writeFileSync(outPath, xml, 'utf8');
 
 console.log(`[sitemap] generado en ${outPath} con dominio ${SITE_URL}`);
 
-if (SITE_URL.includes('TU_DOMINIO')) {
+if (!process.env.SITE_URL && !process.env.VITE_SITE_URL) {
   console.warn(
-    '[sitemap] WARN: definí SITE_URL o VITE_SITE_URL antes del build para que el sitemap apunte a tu dominio real.',
+    '[sitemap] WARN: ni SITE_URL ni VITE_SITE_URL están definidas; se usó el dominio por defecto. Definilas antes del build para que el sitemap apunte al dominio final.',
   );
 }

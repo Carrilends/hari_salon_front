@@ -288,9 +288,9 @@ const bookStore = useBookStore();
 const { services, filterService, totalPages, refetch } = useServices();
 
 useSeo({
-  title: 'Servicios | Peluquería Pecas',
+  title: 'Servicios | Peluquería Marlene',
   description:
-    'Descubrí todos nuestros servicios de peluquería: cortes de cabello, coloración, alisados, barbería, maquillaje, uñas y más. Reservá online en pocos pasos.',
+    'Descubre todos nuestros servicios de peluquería: cortes de cabello, coloración, alisados, barbería, maquillaje, uñas y más. Reserva online en pocos pasos.',
   path: '/services',
   jsonLd: computed(() =>
     servicesSchema(

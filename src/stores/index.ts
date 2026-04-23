@@ -25,7 +25,12 @@ declare module 'pinia' {
 
 export default store((/* { ssrContext } */) => {
   const pinia = createPinia();
-  pinia.use(piniaPluginPersistedstate);
+
+  // El plugin de persistencia toca `localStorage`/`window`, que no existen en
+  // SSR/SSG. Lo registramos solo en el cliente para que el pre-render no falle.
+  if (typeof window !== 'undefined') {
+    pinia.use(piniaPluginPersistedstate);
+  }
 
   // You can add Pinia plugins here
   // pinia.use(SomePiniaPlugin)

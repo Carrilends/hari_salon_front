@@ -5,13 +5,13 @@
  */
 
 const SITE_URL = (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/$/, '') || '';
-const BUSINESS_NAME = 'Peluquería Pecas';
-const BUSINESS_PHONE = '+54 0000000000';
-const BUSINESS_STREET = 'Av. Siempre Viva 123';
-const BUSINESS_LOCALITY = 'Ciudad';
-const BUSINESS_REGION = 'Provincia';
-const BUSINESS_COUNTRY = 'AR';
-const BUSINESS_POSTAL = '0000';
+const BUSINESS_NAME = 'Peluquería Marlene';
+const BUSINESS_PHONE = '+57 320 897 7471';
+const BUSINESS_STREET = 'Carrera 3 #1-18';
+const BUSINESS_LOCALITY = 'Sopó';
+const BUSINESS_REGION = 'Cundinamarca';
+const BUSINESS_COUNTRY = 'CO';
+const BUSINESS_POSTAL = '251001';
 
 function url(path: string): string {
   if (!SITE_URL) return path;
@@ -40,14 +40,14 @@ export function hairSalonSchema(): Record<string, unknown> {
       {
         '@type': 'OpeningHoursSpecification',
         dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
-        opens: '09:00',
-        closes: '19:00',
+        opens: '08:00',
+        closes: '21:00',
       },
       {
         '@type': 'OpeningHoursSpecification',
-        dayOfWeek: 'Saturday',
+        dayOfWeek: ['Saturday', 'Sunday'],
         opens: '09:00',
-        closes: '14:00',
+        closes: '19:00',
       },
     ],
   };
@@ -81,7 +81,7 @@ export function servicesSchema(items: ServiceItem[]): Record<string, unknown> {
               offers: {
                 '@type': 'Offer',
                 price: item.price,
-                priceCurrency: item.currency || 'ARS',
+                priceCurrency: item.currency || 'COP',
               },
             }
           : {}),
