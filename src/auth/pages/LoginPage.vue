@@ -114,6 +114,16 @@ async function submitLogin() {
       <q-card-section class="text-center q-pt-none">
         <q-btn
           flat
+          dense
+          no-caps
+          color="primary"
+          label="Política de Tratamiento de Datos Personales"
+          :to="{ name: 'privacy-policy' }"
+        />
+      </q-card-section>
+      <q-card-section class="text-center q-pt-none">
+        <q-btn
+          flat
           no-caps
           color="grey-8"
           label="Ir al inicio"

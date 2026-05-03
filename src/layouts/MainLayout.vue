@@ -345,6 +345,11 @@ const moreMenuItems = computed<HeaderMenuItem[]>(() =>
       method: () => router.push('/preguntas-frecuentes'),
     },
     {
+      icon: 'privacy_tip',
+      label: 'Política de datos',
+      method: () => router.push({ name: 'privacy-policy' }),
+    },
+    {
       icon: 'login',
       label: 'Iniciar sesión',
       visible: () => !authStore.isLoggedIn,

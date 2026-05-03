@@ -10,6 +10,11 @@ const routes: RouteRecordRaw[] = [
       { path: '/services', component: () => import('pages/ServicePage.vue') },
       { path: '/testimonios', component: () => import('pages/TestimonialsPage.vue') },
       { path: '/preguntas-frecuentes', component: () => import('pages/FaqPage.vue') },
+      {
+        path: '/politica-tratamiento-datos',
+        name: 'privacy-policy',
+        component: () => import('pages/PrivacyPolicyPage.vue'),
+      },
       { path: '/mis-empleados', component: () => import('pages/WorkersPage.vue') },
       { path: '/mi-cuenta', component: () => import('pages/MyAccountPage.vue') },
       { path: '/plans', component: () => import('pages/IndexPage.vue') },

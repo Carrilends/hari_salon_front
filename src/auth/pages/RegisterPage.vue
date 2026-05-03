@@ -22,6 +22,7 @@ const fullName = ref('');
 const email = ref('');
 const password = ref('');
 const confirmPassword = ref('');
+const dataPolicyAccepted = ref(false);
 const isSubmitting = ref(false);
 
 const canSubmit = computed(
@@ -30,7 +31,8 @@ const canSubmit = computed(
     !!email.value.trim() &&
     !!password.value &&
     !!confirmPassword.value &&
-    password.value === confirmPassword.value
+    password.value === confirmPassword.value &&
+    dataPolicyAccepted.value
 );
 
 async function submitRegister() {
@@ -131,6 +133,26 @@ async function submitRegister() {
           ]"
         />
 
+        <div class="register-page__consent">
+          <q-checkbox
+            v-model="dataPolicyAccepted"
+            color="primary"
+            :aria-label="'Aceptar la Política de Tratamiento de Datos Personales'"
+          />
+          <span class="register-page__consent-text">
+            He leído y acepto la
+            <router-link
+              :to="{ name: 'privacy-policy' }"
+              class="register-page__consent-link"
+              @click.stop
+            >
+              Política de Tratamiento de Datos Personales
+            </router-link>
+            de Peluquería Marlene, conforme a la Ley 1581 de 2012 y el Decreto
+            1377 de 2013.
+          </span>
+        </div>
+
         <div class="row justify-center q-pt-sm">
           <q-btn
             type="submit"
@@ -172,5 +194,29 @@ async function submitRegister() {
 
 .register-page__card {
   max-width: 440px;
+}
+
+.register-page__consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 2px 0;
+}
+
+.register-page__consent-text {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #333;
+}
+
+.register-page__consent-link {
+  color: #1976d2;
+  text-decoration: underline;
+}
+
+.register-page__consent-link:hover,
+.register-page__consent-link:focus {
+  text-decoration: underline;
+  color: #0d47a1;
 }
 </style>

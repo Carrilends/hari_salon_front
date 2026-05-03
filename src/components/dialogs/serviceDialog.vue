@@ -57,6 +57,17 @@
         <div class="detail-price-wrap">
           <PriceDisplayPill :amount="props.service.price" />
         </div>
+        <div v-if="formattedDuration" class="detail-duration-wrap">
+          <q-chip
+            dense
+            icon="schedule"
+            color="blue-grey-1"
+            text-color="blue-grey-8"
+            class="detail-duration-chip"
+          >
+            {{ formattedDuration }}
+          </q-chip>
+        </div>
       </div>
 
       <q-card-section class="detail-body">
@@ -158,6 +169,16 @@ const carouselImages = computed(() => {
 const slide = ref(0);
 const autoplay = ref(true);
 
+const formattedDuration = computed(() => {
+  const total = Number(props.service.duration || 0);
+  if (!Number.isFinite(total) || total <= 0) return '';
+  const hours = Math.floor(total / 60);
+  const mins = total % 60;
+  if (hours === 0) return `${mins} min`;
+  if (mins === 0) return hours === 1 ? '1 hora' : `${hours} horas`;
+  return `${hours}h ${mins}min`;
+});
+
 const thumbStyle: Partial<CSSStyleDeclaration> = {
   right: '2px',
   borderRadius: '4px',
@@ -242,6 +263,19 @@ defineOptions({
   bottom: 12px;
   right: 12px;
   z-index: 2;
+}
+
+.detail-duration-wrap {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  z-index: 2;
+}
+
+.detail-duration-chip {
+  font-weight: 600;
+  background: rgba(236, 239, 241, 0.94);
+  backdrop-filter: saturate(120%) blur(1px);
 }
 
 .detail-body {

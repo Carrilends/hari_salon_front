@@ -151,6 +151,7 @@ module.exports = configure(function (/* ctx */) {
         '/services',
         '/testimonios',
         '/preguntas-frecuentes',
+        '/politica-tratamiento-datos',
       ],
       exclude: [/^\/mi-cuenta/, /^\/mis-empleados/, /^\/login/, /^\/register/],
       inlineCriticalCss: true,
