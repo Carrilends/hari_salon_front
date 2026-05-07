@@ -5,6 +5,15 @@ import { useQuasar } from 'quasar';
 import { servicesApi } from 'src/api/services-api';
 import { useAuthStore } from 'src/stores/auth-store';
 import type { AuthResponse } from 'src/api/apiTypes';
+import {
+  hasNumber,
+  hasUppercase,
+  isEmail,
+  isRequired,
+  matches,
+  minLength,
+  minTrimmedLength,
+} from 'src/helpers/validators';
 
 interface RegisterApiError {
   response?: {
@@ -86,10 +95,7 @@ async function submitRegister() {
           outlined
           color="black"
           label="Nombre completo"
-          :rules="[
-            (val) => !!val || 'Requerido',
-            (val) => val.trim().length >= 3 || 'Debe tener al menos 3 caracteres',
-          ]"
+          :rules="[isRequired, minTrimmedLength(3)]"
         />
 
         <q-input
@@ -99,10 +105,7 @@ async function submitRegister() {
           color="black"
           type="email"
           label="Email"
-          :rules="[
-            (val) => !!val || 'Requerido',
-            (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) || 'Correo inválido',
-          ]"
+          :rules="[isRequired, isEmail('Correo inválido')]"
         />
 
         <q-input
@@ -112,12 +115,7 @@ async function submitRegister() {
           color="black"
           type="password"
           label="Password"
-          :rules="[
-            (val) => !!val || 'Requerido',
-            (val) => val.length >= 8 || 'Debe tener al menos 8 caracteres',
-            (val) => /[A-Z]/.test(val) || 'Debe tener al menos una mayúscula',
-            (val) => /[0-9]/.test(val) || 'Debe tener al menos un número',
-          ]"
+          :rules="[isRequired, minLength(8), hasUppercase(), hasNumber()]"
         />
 
         <q-input
@@ -127,10 +125,7 @@ async function submitRegister() {
           color="black"
           type="password"
           label="Confirmación de password"
-          :rules="[
-            (val) => !!val || 'Requerido',
-            (val) => val === password || 'Las contraseñas no coinciden',
-          ]"
+          :rules="[isRequired, matches(() => password)]"
         />
 
         <div class="register-page__consent">

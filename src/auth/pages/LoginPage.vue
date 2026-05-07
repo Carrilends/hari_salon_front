@@ -3,6 +3,13 @@ import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useAuth } from 'src/composables/auth';
+import {
+  hasNumber,
+  hasUppercase,
+  isEmail,
+  isRequired,
+  minLength,
+} from 'src/helpers/validators';
 
 interface ApiError {
   response?: {
@@ -69,12 +76,7 @@ async function submitLogin() {
           color="black"
           outlined
           type="email"
-          :rules="[
-            (val) => !!val || 'Requerido',
-            (val) =>
-              /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) ||
-              'Debe ser un correo válido',
-          ]"
+          :rules="[isRequired, isEmail()]"
         />
 
         <q-input
@@ -84,12 +86,7 @@ async function submitLogin() {
           type="password"
           color="black"
           outlined
-          :rules="[
-            (val) => !!val || 'Requerido',
-            (val) => val.length >= 8 || 'Debe tener al menos 8 caracteres',
-            (val) => /[A-Z]/.test(val) || 'Debe tener al menos una mayúscula',
-            (val) => /[0-9]/.test(val) || 'Debe tener al menos un número',
-          ]"
+          :rules="[isRequired, minLength(8), hasUppercase(), hasNumber()]"
         />
 
         <div class="row justify-center">

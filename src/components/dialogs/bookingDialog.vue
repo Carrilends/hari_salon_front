@@ -381,7 +381,7 @@
         >
           <q-btn
             @click="sendBookingData"
-            :disable="!bookStore.totalBookingQuantity || !date || !selectedStylist || !time"
+            :disable="!bookStore.totalBookingQuantity || reservationPayloadIsComplete({ date, stylist: selectedStylist, time }) !== true"
             label="Reservar"
             color="blue"
             :class="{ 'full-width': maximized }"
@@ -632,6 +632,7 @@ import {
   type WorkerAvailabilityEntry,
 } from 'src/api/workers-api';
 import type { OccupancyByDateEntry } from 'src/helpers/booking-occupancy';
+import { reservationPayloadIsComplete } from 'src/helpers/validators';
 import {
   hasSlotForCart,
   occupancyEventColor,
