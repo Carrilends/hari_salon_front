@@ -412,16 +412,29 @@ function applyShortcutFromIndex(card: MenuCard) {
   const serviceIds = card.filterFormat?.services ?? [];
   filtersStore.setGenres(genreIds);
   filtersStore.setServicesExternal(serviceIds);
-  filterService.value.selectedGenres = genreIds;
+  if (genreIds.length > 0 && filtersStore.selectedGenres.length === 0) {
+    console.warn(
+      '[ServicePage] Atajo del inicio con IDs de género no encontrados en optionsStore.genres:',
+      genreIds
+    );
+  }
+  filterService.value.selectedGenres = filtersStore.selectedGenres.map(
+    (g) => g.id
+  );
   filterService.value.selectedServicesIDs = serviceIds;
   filterService.value.includePriceRange = false;
   filterService.value.includePromotionsOnly = false;
   filterService.value.page = 1;
+  externalAmountOfFilters.value =
+    filtersStore.selectedGenres.length +
+    filtersStore.selectedServicesIDs.length;
   showFilterDialog.value = true;
 }
 
 watch(
-  () => optionsStore.principalServices.length > 0,
+  () =>
+    optionsStore.principalServices.length > 0 &&
+    optionsStore.genres.length > 0,
   (ready) => {
     if (!indexShortcutCard || !indexShortcutPending.value || !ready) return;
     indexShortcutPending.value = false;

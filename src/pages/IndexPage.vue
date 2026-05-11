@@ -219,8 +219,8 @@ const menuCards: MenuCard[] = [
     description:
       'Redefine tu estilo con cortes modernos, clásicos y servicios de barbería profesional. Afeitado con navaja, arreglo de barba y cuidados especiales para el caballero actual.',
     filterFormat: {
-      genres: ['559786d2-b1c1-4fb4-8b9c-8aa8f6eff063'],
-      services: ['8f22821a-8e2b-435f-87b8-c63a1b83c711'],
+      genres: ['47b511ec-2288-4a83-aa51-947d81ecc29b'],
+      services: ['83c6a558-805c-4156-94f6-fa7ea55c7d84'],
     },
   },
   {
@@ -229,8 +229,8 @@ const menuCards: MenuCard[] = [
     description:
       'Transforma tu look con cortes a la medida, alisados permanentes o temporales y tratamientos que cuidan tu cabello mientras realzan tu belleza natural.',
     filterFormat: {
-      genres: ['41d1765c-108a-4ae4-aec2-c4316981026b'],
-      services: ['8f22821a-8e2b-435f-87b8-c63a1b83c711'],
+      genres: ['9d53d0d4-225d-4e2d-b8c1-636e8252986f'],
+      services: ['fb2460ea-0400-44d5-a0dc-13275cf33462'],
     },
   },
   {
@@ -239,7 +239,7 @@ const menuCards: MenuCard[] = [
     description:
       'Desde maquillaje social hasta técnicas profesionales para eventos, novias o sesiones fotográficas. También ofrecemos limpieza facial, perfilado de cejas y más.',
     filterFormat: {
-      services: ['5908787e-de56-4e6d-a840-c65d02781587'],
+      services: ['d4ffbd0d-b9e0-4d8d-bb5f-054b37e61c9f'],
     },
   },
   {
@@ -248,7 +248,7 @@ const menuCards: MenuCard[] = [
     description:
       'Luce manos y pies impecables con nuestros servicios de cuidado y embellecimiento. Uñas acrílicas, semipermanentes, arte en uñas y tratamientos nutritivos.',
     filterFormat: {
-      services: ['2c94799c-9a73-4a7a-b9a3-26e154b4f7a8'],
+      services: ['517d44ba-ff4c-4077-b99a-1ca8021fa21a'],
     },
   },
 ];

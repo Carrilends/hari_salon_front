@@ -2,6 +2,7 @@
 module.exports = {
   testEnvironment: 'jsdom',
   testMatch: ['<rootDir>/tests/**/*.spec.(ts|js)'],
+  testPathIgnorePatterns: ['/node_modules/', '<rootDir>/tests/browser-compat/'],
   moduleFileExtensions: ['ts', 'js', 'json', 'vue'],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   transform: {
