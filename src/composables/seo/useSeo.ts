@@ -1,5 +1,6 @@
 import { computed, unref, type MaybeRef } from 'vue';
 import { useHead } from '@vueuse/head';
+import { SALON_NAME } from 'src/constants/salon-location';
 
 export interface SeoOptions {
   title: MaybeRef<string>;
@@ -21,7 +22,6 @@ export interface SeoOptions {
 }
 
 const SITE_URL = (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/$/, '') || '';
-const SITE_NAME = 'Peluquería Marlene';
 const DEFAULT_OG_IMAGE = '/icons/favicon-128x128.png';
 
 function absoluteUrl(value: string | undefined): string | undefined {
@@ -53,7 +53,7 @@ export function useSeo(options: SeoOptions) {
     meta: computed(() => {
       const items: Array<Record<string, string>> = [
         { name: 'description', content: description.value },
-        { property: 'og:site_name', content: SITE_NAME },
+        { property: 'og:site_name', content: SALON_NAME },
         { property: 'og:title', content: title.value },
         { property: 'og:description', content: description.value },
         { property: 'og:type', content: ogType.value },

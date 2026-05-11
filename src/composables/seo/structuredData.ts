@@ -4,14 +4,17 @@
  * https://search.google.com/test/rich-results
  */
 
+import {
+  SALON_COUNTRY,
+  SALON_LOCALITY,
+  SALON_NAME,
+  SALON_PHONE,
+  SALON_POSTAL,
+  SALON_REGION,
+  SALON_STREET,
+} from 'src/constants/salon-location';
+
 const SITE_URL = (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/$/, '') || '';
-const BUSINESS_NAME = 'Peluquería Marlene';
-const BUSINESS_PHONE = '+57 320 897 7471';
-const BUSINESS_STREET = 'Carrera 3 #1-18';
-const BUSINESS_LOCALITY = 'Sopó';
-const BUSINESS_REGION = 'Cundinamarca';
-const BUSINESS_COUNTRY = 'CO';
-const BUSINESS_POSTAL = '251001';
 
 function url(path: string): string {
   if (!SITE_URL) return path;
@@ -23,18 +26,18 @@ export function hairSalonSchema(): Record<string, unknown> {
     '@context': 'https://schema.org',
     '@type': 'HairSalon',
     '@id': url('/#business'),
-    name: BUSINESS_NAME,
+    name: SALON_NAME,
     url: SITE_URL || undefined,
     image: url('/icons/favicon-128x128.png'),
-    telephone: BUSINESS_PHONE,
+    telephone: SALON_PHONE,
     priceRange: '$$',
     address: {
       '@type': 'PostalAddress',
-      streetAddress: BUSINESS_STREET,
-      addressLocality: BUSINESS_LOCALITY,
-      addressRegion: BUSINESS_REGION,
-      postalCode: BUSINESS_POSTAL,
-      addressCountry: BUSINESS_COUNTRY,
+      streetAddress: SALON_STREET,
+      addressLocality: SALON_LOCALITY,
+      addressRegion: SALON_REGION,
+      postalCode: SALON_POSTAL,
+      addressCountry: SALON_COUNTRY,
     },
     openingHoursSpecification: [
       {
@@ -74,7 +77,7 @@ export function servicesSchema(items: ServiceItem[]): Record<string, unknown> {
         provider: {
           '@type': 'HairSalon',
           '@id': url('/#business'),
-          name: BUSINESS_NAME,
+          name: SALON_NAME,
         },
         ...(item.price !== undefined
           ? {
@@ -134,7 +137,7 @@ export function reviewsSchema(items: ReviewItem[]): Record<string, unknown> {
     '@context': 'https://schema.org',
     '@type': 'HairSalon',
     '@id': url('/#business'),
-    name: BUSINESS_NAME,
+    name: SALON_NAME,
     ...(aggregate ? { aggregateRating: aggregate } : {}),
     review: items.map((item) => ({
       '@type': 'Review',

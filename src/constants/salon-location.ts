@@ -1,4 +1,12 @@
-export const SALON_ADDRESS = 'Carrera 3 #1-18, Sopó, Cundinamarca';
+export const SALON_NAME = 'Peluquería Marlene';
+export const SALON_PHONE = '+57 320 897 7471';
+export const SALON_STREET = 'Carrera 3 #1-18';
+export const SALON_LOCALITY = 'Sopó';
+export const SALON_REGION = 'Cundinamarca';
+export const SALON_COUNTRY = 'CO';
+export const SALON_POSTAL = '251001';
+
+export const SALON_ADDRESS = `${SALON_STREET}, ${SALON_LOCALITY}, ${SALON_REGION}`;
 
 // Coordenadas de referencia para la zona centro de Sopó (dirección del salón).
 export const SALON_LAT = 4.893144;
