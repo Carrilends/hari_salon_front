@@ -2,6 +2,7 @@
   <q-dialog
     v-model="dialog"
     :maximized="maximized"
+    :backdrop-filter="backdropFilter"
     :transition-show="maximized ? 'slide-up' : 'scale'"
     :transition-hide="maximized ? 'slide-down' : 'scale'"
   >
@@ -87,6 +88,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import {
   DialogEmits,
   useDialog,
@@ -99,6 +101,11 @@ const emit = defineEmits<DialogEmits>();
 
 const { dialog } = useDialog(props, emit);
 const { maximized } = useDialogMaximizedBelow();
+
+/** Desenfoque del velo detrás del modal; en móvil va maximizado, sin blur. */
+const backdropFilter = computed(() =>
+  maximized.value ? undefined : 'blur(10px)',
+);
 
 defineOptions({
   name: 'ourContact',

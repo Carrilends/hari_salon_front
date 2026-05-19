@@ -6,9 +6,10 @@
   >
     <div class="card-content">
       <div :class="['img-container flex flex-center', { hovered: isHovering }]">
+        <div class="service-card-img-bg" :style="cardBgStyle" />
         <q-img
           :src="props.props.url || 'src/assets/examples/tupper.jpg'"
-          fit="cover"
+          fit="contain"
           spinner-color="primary"
           spinner-size="36px"
           class="service-card-img"
@@ -57,7 +58,7 @@
         />
       </div>
 
-      <div class="q-pa-sm color-bar col-12">
+      <div class="q-pa-sm color-bar col-12" :title="props.props.name">
         {{ props.props.name }}
       </div>
     </div>
@@ -69,7 +70,7 @@
 import { useQuasar } from 'quasar';
 import { deleteService } from 'src/composables/services/useService';
 import { useAuthStore } from 'src/stores/auth-store';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import DeleteBtn from 'src/components/shared/btns/DeleteBtn.vue';
 import PriceDisplayPill from 'src/components/shared/PriceDisplayPill.vue';
 import ServicePromoButton from 'src/components/servicePage/ServicePromoButton.vue';
@@ -89,6 +90,16 @@ const props = defineProps<{
   };
   selected: boolean;
 }>();
+
+const FALLBACK_IMG = 'src/assets/examples/tupper.jpg';
+
+/** Escapa la URL para usarla con seguridad dentro de `url("...")` de CSS. */
+const cssUrl = (raw: string) =>
+  `url("${raw.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}")`;
+
+const cardBgStyle = computed(() => ({
+  backgroundImage: cssUrl(props.props.url || FALLBACK_IMG),
+}));
 
 const emit = defineEmits(['detailService', 'deleteService', 'editService', 'promoService']);
 const deleteServiceFn = (id: string) => {
@@ -156,7 +167,28 @@ defineOptions({
   overflow: hidden; // Muy importante para que la imagen no se salga
   cursor: pointer; // Cambia el cursor al pasar por encima
 }
+.service-card-img-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(20px);
+  transform: scale(1.12);
+}
+
+.service-card-img-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.12);
+}
+
 .service-card-img {
+  position: relative;
+  z-index: 1;
+  background: transparent;
   border-radius: 20px 20px 0 0;
   width: 100%;
   height: 100%;
@@ -262,5 +294,8 @@ defineOptions({
   font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
   font-weight: bold;
   letter-spacing: 0.05em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>

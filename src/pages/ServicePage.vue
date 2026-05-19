@@ -109,7 +109,12 @@
       </div>
     </div>
     <div class="col-12 box-style service-body-box">
-      <div v-if="isListLayout" class="service-body-mobile q-py-lg">
+      <q-scroll-area
+        v-if="isListLayout"
+        class="service-body-mobile q-py-lg"
+        :style="{ height: `${desktopScrollBodyPx}px` }"
+        :thumb-style="thumbStyle"
+      >
         <q-list
           bordered
           separator
@@ -189,7 +194,7 @@
             </q-item-section>
           </q-item>
         </q-list>
-      </div>
+      </q-scroll-area>
       <q-scroll-area
         v-else
         class="service-scroll-area q-py-lg"
@@ -226,6 +231,11 @@
         v-model="filterService.page"
         color="blue"
         :max="totalPages"
+        :max-pages="10"
+        boundary-numbers
+        ellipses
+        size="sm"
+        gutter="2px"
         direction-links
       />
     </div>
@@ -727,6 +737,7 @@ defineOptions({
 }
 
 .service-body-mobile {
+  width: 100%;
   min-height: 0;
 }
 

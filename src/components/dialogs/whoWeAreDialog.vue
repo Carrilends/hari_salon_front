@@ -2,6 +2,7 @@
   <q-dialog
     v-model="dialog"
     :maximized="maximized"
+    :backdrop-filter="backdropFilter"
     :transition-show="maximized ? 'slide-up' : 'scale'"
     :transition-hide="maximized ? 'slide-down' : 'scale'"
   >
@@ -37,58 +38,61 @@
         </div>
       </div>
 
-      <q-separator class="about-dialog__sep" />
+      <div class="about-scroll">
+        <q-separator class="about-dialog__sep" />
 
-      <q-card-section class="about-map">
-        <div class="about-map__frame-wrap">
-          <iframe
-            class="about-map__frame"
-            :src="MAPS_EMBED_URL"
-            title="Ubicación de Peluquería Marlene"
-            loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade"
-            allowfullscreen
-          />
-        </div>
-        <div class="about-map__meta">
-          <a
-            class="about-map__attribution"
-            href="https://www.openstreetmap.org/copyright"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            © OpenStreetMap contributors
-          </a>
-          <q-btn
-            class="about-map__action"
-            color="primary"
-            label="Abrir en mapa"
-            icon="place"
-            no-caps
-            outline
-            :href="MAPS_EXTERNAL_URL"
-            target="_blank"
-            rel="noopener noreferrer"
-          />
-        </div>
-      </q-card-section>
+        <q-card-section class="about-map">
+          <div class="about-map__frame-wrap">
+            <iframe
+              class="about-map__frame"
+              :src="MAPS_EMBED_URL"
+              title="Ubicación de Peluquería Marlene"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+              allowfullscreen
+            />
+          </div>
+          <div class="about-map__meta">
+            <a
+              class="about-map__attribution"
+              href="https://www.openstreetmap.org/copyright"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              © OpenStreetMap contributors
+            </a>
+            <q-btn
+              class="about-map__action"
+              color="primary"
+              label="Abrir en mapa"
+              icon="place"
+              no-caps
+              outline
+              :href="MAPS_EXTERNAL_URL"
+              target="_blank"
+              rel="noopener noreferrer"
+            />
+          </div>
+        </q-card-section>
 
-      <q-separator class="about-dialog__sep" />
+        <q-separator class="about-dialog__sep" />
 
-      <q-card-section class="about-body">
-        <h2 class="about-title">¿Quiénes somos?</h2>
-        <p class="about-text">
-          Peluquería Marlene es un lugar donde te sentirás como en casa, con un
-          ambiente agradable y un personal amable y profesional. Llevamos más
-          de 20 años en el sector de la belleza y la estética, ofreciendo
-          servicios de calidad a precios accesibles.
-        </p>
-      </q-card-section>
+        <q-card-section class="about-body">
+          <h2 class="about-title">¿Quiénes somos?</h2>
+          <p class="about-text">
+            Peluquería Marlene es un lugar donde te sentirás como en casa, con
+            un ambiente agradable y un personal amable y profesional. Llevamos
+            más de 20 años en el sector de la belleza y la estética, ofreciendo
+            servicios de calidad a precios accesibles.
+          </p>
+        </q-card-section>
+      </div>
     </q-card>
   </q-dialog>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import {
   DialogEmits,
   useDialog,
@@ -106,6 +110,11 @@ const emit = defineEmits<DialogEmits>();
 const { dialog } = useDialog(props, emit);
 const { maximized } = useDialogMaximizedBelow();
 
+/** Desenfoque del velo detrás del modal; en móvil va maximizado, sin blur. */
+const backdropFilter = computed(() =>
+  maximized.value ? undefined : 'blur(10px)',
+);
+
 defineOptions({
   name: 'WhoWeAreDialog',
 });
@@ -115,11 +124,20 @@ defineOptions({
 .about-dialog {
   width: min(100%, 560px);
   max-height: min(92vh, 720px);
-  overflow: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   border-radius: 20px;
   background: #fdfaf8;
   border-color: rgba(61, 61, 61, 0.08);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+.about-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .about-dialog__close {
@@ -136,6 +154,7 @@ defineOptions({
   line-height: 0;
   overflow: hidden;
   border-radius: 20px 20px 0 0;
+  flex-shrink: 0;
 }
 
 .about-hero__img {
@@ -248,14 +267,6 @@ defineOptions({
 
   .about-hero {
     border-radius: 0;
-    flex-shrink: 0;
-  }
-
-  .about-body {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
   }
 }
 

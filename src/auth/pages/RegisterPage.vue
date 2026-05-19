@@ -174,11 +174,13 @@ async function submitRegister() {
   background-color: #e8e8e8;
 }
 
+/* Pantalla pequeña: el registro se centra y la imagen pasa a ser el fondo
+   completo, con una capa tenue para que el formulario siga legible. */
 @media (max-width: 1023px) {
   .register-page {
     background-image: linear-gradient(
-        rgba(255, 255, 255, 0.88),
-        rgba(255, 255, 255, 0.92)
+        rgba(255, 255, 255, 0.62),
+        rgba(255, 255, 255, 0.68)
       ),
       url('src/assets/people/rainbow_hair.jpg');
     background-position: center;

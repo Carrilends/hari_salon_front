@@ -32,9 +32,10 @@
             :name="index"
             class="detail-slide q-pa-none"
           >
+            <div class="detail-slide-bg" :style="slideBgStyle(img.url)" />
             <q-img
               :src="img.url"
-              fit="cover"
+              fit="contain"
               class="detail-img"
               spinner-color="primary"
               spinner-size="42px"
@@ -166,6 +167,14 @@ const carouselImages = computed(() => {
   ];
 });
 
+/** Escapa la URL para usarla con seguridad dentro de `url("...")` de CSS. */
+const cssUrl = (raw: string) =>
+  `url("${raw.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}")`;
+
+const slideBgStyle = (url: string) => ({
+  backgroundImage: cssUrl(url || PLACEHOLDER_IMG),
+});
+
 const slide = ref(0);
 const autoplay = ref(true);
 
@@ -228,11 +237,32 @@ defineOptions({
 }
 
 .detail-slide {
+  position: relative;
   height: 100%;
   overflow: hidden;
 }
 
+.detail-slide-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(22px);
+  transform: scale(1.12);
+}
+
+.detail-slide-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.12);
+}
+
 .detail-img {
+  position: relative;
+  z-index: 1;
   width: 100%;
   height: 100%;
   min-height: 100%;
@@ -246,7 +276,7 @@ defineOptions({
 }
 
 .detail-img :deep(img) {
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
 }
 

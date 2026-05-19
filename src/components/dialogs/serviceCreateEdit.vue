@@ -167,7 +167,56 @@
             </q-carousel>
           </div>
           <div class="q-pa-md">
+            <!-- Mobile: dos botones lado a lado (cámara nativa + galería). -->
+            <div v-if="isCompactLayout" class="row q-col-gutter-sm">
+              <div class="col-6">
+                <q-btn
+                  outline
+                  color="primary"
+                  icon="photo_camera"
+                  label="Tomar foto"
+                  class="full-width"
+                  :disable="(files?.length || 0) >= 5"
+                  @click="cameraInputRef?.click()"
+                />
+                <input
+                  ref="cameraInputRef"
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  hidden
+                  @change="onCameraCapture"
+                />
+              </div>
+              <div class="col-6">
+                <q-btn
+                  outline
+                  color="primary"
+                  icon="photo_library"
+                  label="Seleccionar"
+                  class="full-width"
+                  :disable="(files?.length || 0) >= 5"
+                  @click="galleryInputRef?.click()"
+                />
+                <input
+                  ref="galleryInputRef"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  hidden
+                  @change="onGalleryPick"
+                />
+              </div>
+              <div
+                class="col-12 text-caption text-grey-7 q-mt-xs text-center"
+              >
+                {{ (files?.length || 0) }}/5 archivos seleccionados
+              </div>
+            </div>
+
+            <!-- Desktop: q-file original. -->
             <q-file
+              v-else
               v-model="files"
               @update:model-value="onFilesSelected"
               accept="image/*"
@@ -365,6 +414,33 @@ function onFilesSelected() {
     }
     return f;
   });
+}
+
+// Inputs nativos usados solo en mobile para abrir cámara/galería como fuentes
+// separadas. Comparten el mismo array `files` y el tope de 5.
+const cameraInputRef = ref(null);
+const galleryInputRef = ref(null);
+
+function appendFiles(newFiles) {
+  const remaining = 5 - (files.value?.length || 0);
+  if (remaining <= 0) return;
+  const accepted = newFiles.slice(0, remaining).map((f) =>
+    Object.assign(f, { url: URL.createObjectURL(f) })
+  );
+  files.value = [...(files.value || []), ...accepted];
+}
+
+function onCameraCapture(e) {
+  const input = e.target;
+  if (input.files?.length) appendFiles(Array.from(input.files));
+  // Permite volver a capturar la misma foto: sin reset, `change` no se dispara dos veces.
+  input.value = '';
+}
+
+function onGalleryPick(e) {
+  const input = e.target;
+  if (input.files?.length) appendFiles(Array.from(input.files));
+  input.value = '';
 }
 
 const selectedServices = (services) => {
