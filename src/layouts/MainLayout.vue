@@ -489,7 +489,7 @@ defineOptions({
 }
 
 .background-image {
-  background-image: url('src/assets/people/rainbow_hair.jpg');
+  background-image: url('/people/rainbow_hair.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

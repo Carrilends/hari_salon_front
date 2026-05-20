@@ -214,7 +214,7 @@ export interface MenuCard {
 
 const menuCards: MenuCard[] = [
   {
-    imgPath: 'src/assets/people/man_hairdress.jpg',
+    imgPath: '/people/man_hairdress.jpg',
     title: i18n['en-US'].indexPage.man_cut,
     description:
       'Redefine tu estilo con cortes modernos, clásicos y servicios de barbería profesional. Afeitado con navaja, arreglo de barba y cuidados especiales para el caballero actual.',
@@ -224,7 +224,7 @@ const menuCards: MenuCard[] = [
     },
   },
   {
-    imgPath: 'src/assets/people/women-hair-cut.jpg',
+    imgPath: '/people/women-hair-cut.jpg',
     title: i18n['en-US'].indexPage.woman_cut,
     description:
       'Transforma tu look con cortes a la medida, alisados permanentes o temporales y tratamientos que cuidan tu cabello mientras realzan tu belleza natural.',
@@ -234,7 +234,7 @@ const menuCards: MenuCard[] = [
     },
   },
   {
-    imgPath: 'src/assets/people/make-up-face-design.jpg',
+    imgPath: '/people/make-up-face-design.jpg',
     title: i18n['en-US'].indexPage.face_design,
     description:
       'Desde maquillaje social hasta técnicas profesionales para eventos, novias o sesiones fotográficas. También ofrecemos limpieza facial, perfilado de cejas y más.',
@@ -243,7 +243,7 @@ const menuCards: MenuCard[] = [
     },
   },
   {
-    imgPath: 'src/assets/people/nails-design.jpg',
+    imgPath: '/people/nails-design.jpg',
     title: i18n['en-US'].indexPage.nail_design,
     description:
       'Luce manos y pies impecables con nuestros servicios de cuidado y embellecimiento. Uñas acrílicas, semipermanentes, arte en uñas y tratamientos nutritivos.',

@@ -148,7 +148,7 @@ async function submitLogin() {
         rgba(255, 255, 255, 0.62),
         rgba(255, 255, 255, 0.68)
       ),
-      url('src/assets/people/rainbow_hair.jpg');
+      url('/people/rainbow_hair.jpg');
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
