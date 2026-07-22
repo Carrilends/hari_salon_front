@@ -6,6 +6,12 @@
  * Variables de entorno:
  *   SITE_URL  -> dominio absoluto (ej: https://peluqueria-marlene-pecas.netlify.app)
  *
+ * OJO: este script corre en Node puro, fuera de Vite, asi que NO lee el archivo
+ * .env. Si no exportas SITE_URL (o VITE_SITE_URL) en el entorno, se usa el valor
+ * por defecto de abajo. En Netlify basta con definir la variable en el panel.
+ * El sufijo "pecas" del dominio es el nombre del sitio en Netlify y se mantiene
+ * de forma deliberada; no es un resto del branding anterior.
+ *
  * Uso: node scripts/generate-sitemap.mjs
  */
 
