@@ -66,6 +66,9 @@ async function submitRegister() {
       fullName: fullName.value.trim(),
       email: email.value.trim(),
       password: password.value,
+      // Obligatorio en el backend: deja constancia auditable de la aceptación
+      // de la Política de Tratamiento de Datos Personales (Ley 1581 de 2012).
+      dataPolicyAccepted: dataPolicyAccepted.value,
     });
 
     authStore.setSession(data.token, {
