@@ -3,23 +3,23 @@
     <section class="workers-wrap">
       <div class="workers-header">
         <div>
-          <h1 class="text-h4 text-weight-bold q-my-none">Mis empleados</h1>
+          <h1 class="text-h4 text-weight-bold q-my-none">Mis estilistas</h1>
           <p class="text-grey-7 q-mt-sm q-mb-none">
             Gestiona el equipo que atiende a tus clientes.
           </p>
         </div>
         <div class="workers-header__actions">
           <div class="text-caption text-grey-7">
-            {{ workers.length }} empleado{{ workers.length === 1 ? '' : 's' }}
+            {{ workers.length }} estilista{{ workers.length === 1 ? '' : 's' }}
           </div>
           <q-btn
             v-if="authStore.isAdmin"
             color="indigo-5"
             icon="add"
-            :label="isCompactAction ? undefined : 'Agregar empleado'"
+            :label="isCompactAction ? undefined : 'Agregar estilista'"
             :round="isCompactAction"
             :rounded="!isCompactAction"
-            aria-label="Agregar empleado"
+            aria-label="Agregar estilista"
             @click="openCreateDialog"
           />
         </div>
@@ -53,7 +53,7 @@
           <div v-else-if="!workers.length" class="empty-state">
             <q-icon name="groups" size="48px" color="grey-6" />
             <div class="text-subtitle1 text-weight-medium q-mt-sm">
-              Aún no tienes empleados registrados
+              Aún no tienes estilistas registrados
             </div>
             <div class="text-caption text-grey-7">
               Agrega el primero para comenzar a organizar el equipo.
@@ -82,7 +82,7 @@
                         >
                           Predeterminado
                         </q-chip>
-                        <span v-else class="text-caption text-grey-7">Empleado activo</span>
+                        <span v-else class="text-caption text-grey-7">Estilista activo</span>
                       </div>
                     </div>
                   </div>
@@ -94,7 +94,7 @@
                       dense
                       icon="edit"
                       color="primary"
-                      aria-label="Editar empleado"
+                      aria-label="Editar estilista"
                       @click="openEditDialog(worker)"
                     />
                     <q-btn
@@ -104,7 +104,7 @@
                       icon="delete"
                       color="negative"
                       :disable="worker.isDefault"
-                      aria-label="Eliminar empleado"
+                      aria-label="Eliminar estilista"
                       @click="confirmDelete(worker)"
                     />
                   </div>
@@ -120,10 +120,10 @@
       <q-card class="worker-dialog q-pa-sm">
         <q-card-section class="q-pb-none">
           <div class="text-h6">
-            {{ isEditMode ? 'Editar empleado' : 'Agregar empleado' }}
+            {{ isEditMode ? 'Editar estilista' : 'Agregar estilista' }}
           </div>
           <div class="text-caption text-grey-7">
-            Escribe el nombre para {{ isEditMode ? 'actualizar' : 'crear' }} el empleado.
+            Escribe el nombre para {{ isEditMode ? 'actualizar' : 'crear' }} el estilista.
           </div>
         </q-card-section>
 
@@ -143,7 +143,7 @@
           <q-btn flat label="Cancelar" v-close-popup />
           <q-btn
             color="positive"
-            :label="isEditMode ? 'Guardar cambios' : 'Crear empleado'"
+            :label="isEditMode ? 'Guardar cambios' : 'Crear estilista'"
             :loading="isSubmitting"
             @click="submitWorker"
           />
@@ -163,7 +163,7 @@ import type { WorkerItem } from 'src/api/workers-api';
 import { useSeo } from 'src/composables/seo/useSeo';
 
 useSeo({
-  title: 'Mis empleados | Peluquería Marlene',
+  title: 'Mis estilistas | Peluquería Marlene',
   description: 'Gestión interna del equipo de Peluquería Marlene.',
   path: '/mis-empleados',
   noindex: true,
@@ -263,13 +263,13 @@ const submitWorker = async () => {
       });
       $q.notify({
         type: 'positive',
-        message: 'Empleado actualizado',
+        message: 'Estilista actualizado',
       });
     } else {
       await createWorkerMutation.mutateAsync(payload);
       $q.notify({
         type: 'positive',
-        message: 'Empleado creado',
+        message: 'Estilista creado',
       });
     }
 
@@ -278,7 +278,7 @@ const submitWorker = async () => {
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: getErrorMessage(err, 'No se pudo guardar el empleado'),
+      message: getErrorMessage(err, 'No se pudo guardar el estilista'),
     });
   }
 };
@@ -287,7 +287,7 @@ const confirmDelete = (worker: WorkerItem) => {
   if (!authStore.isAdmin || worker.isDefault || removeWorkerMutation.isPending.value) return;
 
   $q.dialog({
-    title: 'Eliminar empleado',
+    title: 'Eliminar estilista',
     message: `¿Deseas eliminar a "${worker.name}"?`,
     cancel: true,
     persistent: true,
@@ -296,12 +296,12 @@ const confirmDelete = (worker: WorkerItem) => {
       await removeWorkerMutation.mutateAsync(worker.id);
       $q.notify({
         type: 'positive',
-        message: 'Empleado eliminado',
+        message: 'Estilista eliminado',
       });
     } catch (err) {
       $q.notify({
         type: 'negative',
-        message: getErrorMessage(err, 'No se pudo eliminar el empleado'),
+        message: getErrorMessage(err, 'No se pudo eliminar el estilista'),
       });
     }
   });

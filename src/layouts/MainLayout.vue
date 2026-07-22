@@ -335,7 +335,7 @@ const moreMenuItems = computed<HeaderMenuItem[]>(() =>
     },
     {
       icon: 'supervisor_account',
-      label: 'Mis empleados',
+      label: 'Mis estilistas',
       visible: () => authStore.isAdmin,
       method: () => router.push('/mis-empleados'),
     },
