@@ -10,7 +10,10 @@ Vue 3 + Quasar 2 (Vite) with the **SSG** extension (`quasar-app-extension-ssg`).
 
 ## Commands
 
+**Node 20 is required** — `package.json` declares `engines.node: ^20 || ^18 || ^16` and yarn 1 enforces it, so a newer Node (21+) fails every script with *"The engine node is incompatible"*. A `.nvmrc` pins the version: run `nvm use` before anything else.
+
 ```bash
+nvm use                    # reads .nvmrc → Node 20
 yarn dev                   # quasar dev — opens browser on :9000
 yarn build                 # generate-sitemap.mjs + quasar build (SPA)
 yarn build:ssg             # generate-sitemap.mjs + quasar ssg generate (output: dist/ssg)
