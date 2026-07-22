@@ -13,8 +13,7 @@ import {
   SALON_REGION,
   SALON_STREET,
 } from 'src/constants/salon-location';
-
-const SITE_URL = (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/$/, '') || '';
+import { SITE_URL } from './site-url';
 
 function url(path: string): string {
   if (!SITE_URL) return path;

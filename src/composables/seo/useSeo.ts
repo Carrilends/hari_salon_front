@@ -1,6 +1,7 @@
 import { computed, unref, type MaybeRef } from 'vue';
 import { useHead } from '@vueuse/head';
 import { SALON_NAME } from 'src/constants/salon-location';
+import { SITE_URL } from './site-url';
 
 export interface SeoOptions {
   title: MaybeRef<string>;
@@ -21,7 +22,6 @@ export interface SeoOptions {
   jsonLd?: MaybeRef<Record<string, unknown> | Record<string, unknown>[] | undefined>;
 }
 
-const SITE_URL = (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/$/, '') || '';
 const DEFAULT_OG_IMAGE = '/icons/favicon-128x128.png';
 
 function absoluteUrl(value: string | undefined): string | undefined {

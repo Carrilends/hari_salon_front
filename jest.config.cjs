@@ -16,6 +16,9 @@ module.exports = {
     '^.+\\.(js|jsx)$': 'babel-jest',
   },
   moduleNameMapper: {
+    // Debe ir ANTES del alias genérico `^src/(.*)$`: el módulo real lee
+    // `import.meta.env`, que ts-jest no puede compilar a CommonJS.
+    '^(?:src/composables/seo|\\.)/site-url$': '<rootDir>/tests/siteUrlMock.ts',
     '^src/(.*)$': '<rootDir>/src/$1',
     '\\.(css|scss|sass)$': '<rootDir>/tests/styleMock.js',
   },
