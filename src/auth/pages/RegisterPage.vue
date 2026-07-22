@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { servicesApi } from 'src/api/services-api';
 import { useAuthStore } from 'src/stores/auth-store';
+import { useSeo } from 'src/composables/seo/useSeo';
 import type { AuthResponse } from 'src/api/apiTypes';
 import {
   hasNumber,
@@ -32,6 +33,13 @@ const email = ref('');
 const password = ref('');
 const confirmPassword = ref('');
 const dataPolicyAccepted = ref(false);
+
+// Página privada: se sirve como SPA (excluida del SSG) y no debe indexarse.
+useSeo({
+  title: 'Crear cuenta | Peluquería Marlene',
+  description: 'Crea tu cuenta para gestionar tus reservas en la Peluquería Marlene.',
+  noindex: true,
+});
 const isSubmitting = ref(false);
 
 const canSubmit = computed(

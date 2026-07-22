@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
   <head>
-    <title><%= productName %></title>
-
+    <!--
+      El <title> y la <meta name="description"> los publica el plugin Meta de
+      Quasar a traves de src/composables/seo/useSeo.ts, por pagina. No los
+      declares aqui: quedarian duplicados en el HTML generado por SSG y con el
+      texto generico del andamiaje en lugar del de la Peluqueria Marlene.
+    -->
     <meta charset="utf-8">
-    <meta name="description" content="<%= productDescription %>">
     <meta name="format-detection" content="telephone=no">
     <meta name="msapplication-tap-highlight" content="no">
     <meta name="theme-color" content="#424242">

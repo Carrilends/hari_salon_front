@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useAuth } from 'src/composables/auth';
+import { useSeo } from 'src/composables/seo/useSeo';
 import {
   hasNumber,
   hasUppercase,
@@ -23,6 +24,13 @@ const $q = useQuasar();
 const router = useRouter();
 const route = useRoute();
 const { loginBody, login, isLoading } = useAuth();
+
+// Página privada: se sirve como SPA (excluida del SSG) y no debe indexarse.
+useSeo({
+  title: 'Iniciar sesión | Peluquería Marlene',
+  description: 'Accede a tu cuenta de la Peluquería Marlene.',
+  noindex: true,
+});
 
 const username = ref('');
 const password = ref('');

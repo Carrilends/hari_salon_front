@@ -1,7 +1,7 @@
 import { computed, unref, type MaybeRef } from 'vue';
-import { useHead } from '@vueuse/head';
-import { SALON_NAME } from 'src/constants/salon-location';
+import { useMeta } from 'quasar';
 import { SITE_URL } from './site-url';
+import { buildSeoMeta } from './seoMeta';
 
 export interface SeoOptions {
   title: MaybeRef<string>;
@@ -31,67 +31,28 @@ function absoluteUrl(value: string | undefined): string | undefined {
   return `${SITE_URL}${value.startsWith('/') ? '' : '/'}${value}`;
 }
 
+/**
+ * Publica título, descripción, Open Graph, canonical y JSON-LD de la página.
+ *
+ * Usa el plugin `Meta` de Quasar (activado en `quasar.config.js`) en lugar de un
+ * gestor de `<head>` externo: es el único mecanismo que el generador SSG inyecta
+ * en el HTML prerenderizado, que es lo que leen los rastreadores. La
+ * construcción del objeto vive en `seoMeta.ts` y está cubierta por pruebas.
+ */
 export function useSeo(options: SeoOptions) {
-  const title = computed(() => unref(options.title));
-  const description = computed(() => unref(options.description));
-  const path = computed(() => unref(options.path));
-  const image = computed(() => unref(options.image) || DEFAULT_OG_IMAGE);
-  const ogType = computed(() => unref(options.ogType) || 'website');
-  const noindex = computed(() => Boolean(unref(options.noindex)));
-  const jsonLd = computed(() => unref(options.jsonLd));
+  const meta = computed(() => {
+    const path = unref(options.path);
 
-  const canonical = computed(() => {
-    const p = path.value;
-    if (!p || !SITE_URL) return undefined;
-    return `${SITE_URL}${p.startsWith('/') ? '' : '/'}${p}`;
+    return buildSeoMeta({
+      title: unref(options.title),
+      description: unref(options.description),
+      canonical: path && SITE_URL ? absoluteUrl(path) : undefined,
+      ogImage: absoluteUrl(unref(options.image) || DEFAULT_OG_IMAGE),
+      ogType: unref(options.ogType) || 'website',
+      noindex: Boolean(unref(options.noindex)),
+      jsonLd: unref(options.jsonLd),
+    });
   });
 
-  const ogImage = computed(() => absoluteUrl(image.value));
-
-  useHead({
-    title,
-    meta: computed(() => {
-      const items: Array<Record<string, string>> = [
-        { name: 'description', content: description.value },
-        { property: 'og:site_name', content: SALON_NAME },
-        { property: 'og:title', content: title.value },
-        { property: 'og:description', content: description.value },
-        { property: 'og:type', content: ogType.value },
-        { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:title', content: title.value },
-        { name: 'twitter:description', content: description.value },
-      ];
-
-      if (canonical.value) {
-        items.push({ property: 'og:url', content: canonical.value });
-      }
-      if (ogImage.value) {
-        items.push({ property: 'og:image', content: ogImage.value });
-        items.push({ name: 'twitter:image', content: ogImage.value });
-      }
-      if (noindex.value) {
-        items.push({ name: 'robots', content: 'noindex, nofollow' });
-      } else {
-        items.push({ name: 'robots', content: 'index, follow' });
-      }
-
-      return items;
-    }),
-    link: computed(() => {
-      const links: Array<Record<string, string>> = [];
-      if (canonical.value) {
-        links.push({ rel: 'canonical', href: canonical.value });
-      }
-      return links;
-    }),
-    script: computed(() => {
-      const data = jsonLd.value;
-      if (!data) return [];
-      const payload = Array.isArray(data) ? data : [data];
-      return payload.map((entry) => ({
-        type: 'application/ld+json',
-        children: JSON.stringify(entry),
-      }));
-    }),
-  });
+  useMeta(() => meta.value);
 }
