@@ -1,4 +1,5 @@
-import { cloudinaryApi, cloudinaryUploadUrl } from 'src/api/cloudinary-api';
+import { cloudinaryUploadUrl } from 'src/api/cloudinary-api';
+import { adminServiceApi } from 'src/api/services-api';
 import { fileWithUrl } from 'src/composables/services/useServiceCreateEdit';
 
 /**
@@ -57,7 +58,9 @@ interface ImageUploadResult {
   version: string;
 }
 export const prepareImagesForUpload = async (files: fileWithUrl[]) => {
-  const { data: sign } = await cloudinaryApi.post('/cloudinary/sign');
+  // El endpoint /cloudinary/sign exige rol admin: se llama por el cliente
+  // autenticado (adminServiceApi añade el Bearer del store), no por el público.
+  const { data: sign } = await adminServiceApi.post('/cloudinary/sign');
   const imagesToUpload: ImageUploadResult[] = [];
   const promises: Promise<{
     secure_url: string;

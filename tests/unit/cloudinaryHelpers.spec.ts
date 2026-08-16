@@ -2,8 +2,15 @@ import { prepareImagesForUpload } from 'src/helpers/cloudinaryHelpers';
 
 jest.mock('src/api/cloudinary-api', () => {
   return {
-    cloudinaryApi: { post: jest.fn() },
     cloudinaryUploadUrl: (cloudName: string) => `https://cloudinary.test/${cloudName}`,
+  };
+});
+
+// La firma se pide por el cliente autenticado (adminServiceApi), no por el
+// público: el endpoint /cloudinary/sign exige rol admin (M6).
+jest.mock('src/api/services-api', () => {
+  return {
+    adminServiceApi: { post: jest.fn() },
   };
 });
 
@@ -12,9 +19,9 @@ describe('cloudinaryHelpers', () => {
     jest.clearAllMocks();
   });
 
-  test('prepareImagesForUpload signs once and marks one principal image', async () => {
-    const { cloudinaryApi } = require('src/api/cloudinary-api');
-    cloudinaryApi.post.mockResolvedValueOnce({
+  test('prepareImagesForUpload firma una vez por el cliente autenticado y marca una imagen principal', async () => {
+    const { adminServiceApi } = require('src/api/services-api');
+    adminServiceApi.post.mockResolvedValueOnce({
       data: {
         signature: 'sig',
         timestamp: '1',
@@ -46,7 +53,7 @@ describe('cloudinaryHelpers', () => {
 
     const res = await prepareImagesForUpload([f1, f2]);
 
-    expect(cloudinaryApi.post).toHaveBeenCalledWith('/cloudinary/sign');
+    expect(adminServiceApi.post).toHaveBeenCalledWith('/cloudinary/sign');
     expect(res).toHaveLength(2);
     const isPrincipal = (x: unknown): x is { isPrincipal: boolean } =>
       typeof x === 'object' && x !== null && 'isPrincipal' in x;
