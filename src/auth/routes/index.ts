@@ -16,5 +16,20 @@ export const authRoutes: RouteRecordRaw = {
       name: 'register',
       component: () => import('src/auth/pages/RegisterPage.vue'),
     },
+    {
+      path: 'olvide-contrasena',
+      name: 'forgot-password',
+      component: () => import('src/auth/pages/ForgotPasswordPage.vue'),
+    },
+    {
+      path: 'restablecer',
+      name: 'reset-password',
+      component: () => import('src/auth/pages/ResetPasswordPage.vue'),
+    },
+    {
+      path: 'verificar-correo',
+      name: 'verify-email',
+      component: () => import('src/auth/pages/VerifyEmailPage.vue'),
+    },
   ],
 };

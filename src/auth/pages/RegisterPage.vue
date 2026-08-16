@@ -2,10 +2,9 @@
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
-import { servicesApi } from 'src/api/services-api';
+import { authApi } from 'src/api/auth-api';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useSeo } from 'src/composables/seo/useSeo';
-import type { AuthResponse } from 'src/api/apiTypes';
 import {
   hasNumber,
   hasUppercase,
@@ -62,7 +61,7 @@ async function submitRegister() {
   });
 
   try {
-    const { data } = await servicesApi.post<AuthResponse>('/auth/register', {
+    const data = await authApi.register({
       fullName: fullName.value.trim(),
       email: email.value.trim(),
       password: password.value,
@@ -75,6 +74,7 @@ async function submitRegister() {
       fullName: data.fullName,
       email: data.email,
       roles: data.roles ?? ['user'],
+      emailVerified: data.emailVerified,
     });
 
     await router.push({ path: '/services' });

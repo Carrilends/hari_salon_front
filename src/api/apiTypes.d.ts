@@ -12,6 +12,7 @@ export interface AuthResponse {
   fullName: string;
   roles: string[];
   isActive: boolean;
+  emailVerified: boolean;
   token: string;
 }
 

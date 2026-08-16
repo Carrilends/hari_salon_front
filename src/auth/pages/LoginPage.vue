@@ -107,7 +107,17 @@ async function submitLogin() {
           />
         </div>
       </q-form>
-      <q-card-section class="text-center q-pt-md">
+      <q-card-section class="text-center q-pt-md q-pb-none">
+        <q-btn
+          flat
+          dense
+          no-caps
+          color="primary"
+          label="¿Olvidaste tu contraseña?"
+          :to="{ name: 'forgot-password' }"
+        />
+      </q-card-section>
+      <q-card-section class="text-center q-pt-sm">
         <q-btn
           flat
           no-caps

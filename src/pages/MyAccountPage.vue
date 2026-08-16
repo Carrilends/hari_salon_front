@@ -8,6 +8,28 @@
         </div>
       </div>
 
+      <q-banner
+        v-if="!authStore.emailVerified"
+        rounded
+        class="bg-orange-1 text-orange-9 q-mb-md account-verify-banner"
+      >
+        <template #avatar>
+          <q-icon name="mark_email_unread" color="orange-9" />
+        </template>
+        Tu correo aún no está verificado. Revisa tu bandeja de entrada o solicita
+        un nuevo enlace.
+        <template #action>
+          <q-btn
+            flat
+            no-caps
+            color="orange-9"
+            label="Reenviar correo de confirmación"
+            :loading="isResendingVerification"
+            @click="resendVerification"
+          />
+        </template>
+      </q-banner>
+
       <q-card class="account-card">
         <q-tabs
           v-model="activeTab"
@@ -130,7 +152,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
-import { adminServiceApi } from 'src/api/services-api';
+import { authApi } from 'src/api/auth-api';
 import { useAuthStore } from 'src/stores/auth-store';
 import type { AuthResponse } from 'src/api/apiTypes';
 import { useSeo } from 'src/composables/seo/useSeo';
@@ -218,14 +240,35 @@ onMounted(() => {
   }
 });
 
+const isResendingVerification = ref(false);
+
 function syncSession(data: AuthResponse) {
   authStore.setSession(data.token, {
     fullName: data.fullName,
     email: data.email,
     roles: data.roles,
+    emailVerified: data.emailVerified,
   });
   fullName.value = data.fullName;
   newEmail.value = data.email;
+}
+
+async function resendVerification() {
+  if (isResendingVerification.value) return;
+  isResendingVerification.value = true;
+  try {
+    await authApi.resendVerification(authStore.email);
+  } catch {
+    // respuesta neutra igualmente
+  } finally {
+    isResendingVerification.value = false;
+    // Mensaje neutro: no confirmar el estado real de la cuenta.
+    $q.notify({
+      type: 'positive',
+      message:
+        'Si tu cuenta no está verificada, te enviamos un nuevo enlace de confirmación.',
+    });
+  }
 }
 
 function getErrorMessage(err: unknown, fallback: string) {
@@ -238,7 +281,7 @@ async function submitName() {
   if (!canSaveName.value || isSavingName.value) return;
   isSavingName.value = true;
   try {
-    const { data } = await adminServiceApi.patch<AuthResponse>('/auth/me/profile', {
+    const data = await authApi.updateProfile({
       fullName: fullName.value.trim(),
     });
     syncSession(data);
@@ -257,13 +300,17 @@ async function submitEmail() {
   if (!canSaveEmail.value || isSavingEmail.value) return;
   isSavingEmail.value = true;
   try {
-    const { data } = await adminServiceApi.patch<AuthResponse>('/auth/me/email', {
+    const data = await authApi.updateEmail({
       newEmail: newEmail.value.trim(),
       currentPassword: currentPasswordForEmail.value,
     });
     syncSession(data);
     currentPasswordForEmail.value = '';
-    $q.notify({ type: 'positive', message: 'Correo actualizado correctamente' });
+    $q.notify({
+      type: 'positive',
+      message:
+        'Correo actualizado. Te enviamos un enlace para confirmar la nueva dirección.',
+    });
   } catch (err) {
     $q.notify({
       type: 'negative',
@@ -278,13 +325,10 @@ async function submitPassword() {
   if (!canSavePassword.value || isSavingPassword.value) return;
   isSavingPassword.value = true;
   try {
-    const { data } = await adminServiceApi.patch<AuthResponse>(
-      '/auth/me/password',
-      {
-        currentPassword: currentPassword.value,
-        newPassword: newPassword.value,
-      },
-    );
+    const data = await authApi.updatePassword({
+      currentPassword: currentPassword.value,
+      newPassword: newPassword.value,
+    });
     syncSession(data);
     currentPassword.value = '';
     newPassword.value = '';

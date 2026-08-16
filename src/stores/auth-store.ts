@@ -23,6 +23,9 @@ export const useAuthStore = defineStore(
     const email = ref('');
     const roles = ref<string[]>([]);
     const expiresAt = ref(0);
+    // Por defecto true: las sesiones persistidas antes de la Fase 3a no traen
+    // este campo, y asumir `true` evita mostrarles un aviso que nunca pidieron.
+    const emailVerified = ref(true);
 
     const isExpired = computed(
       () => !!expiresAt.value && Date.now() >= expiresAt.value
@@ -34,13 +37,20 @@ export const useAuthStore = defineStore(
 
     function setSession(
       newToken: string,
-      profile: { fullName: string; email: string; roles: string[] },
+      profile: {
+        fullName: string;
+        email: string;
+        roles: string[];
+        emailVerified?: boolean;
+      },
       expMs?: number
     ) {
       token.value = newToken;
       fullname.value = profile.fullName;
       email.value = profile.email;
       roles.value = profile.roles ?? [];
+      // undefined solo en respuestas antiguas: asumir verificado (ver arriba).
+      emailVerified.value = profile.emailVerified ?? true;
       // si el back no manda exp, se decodifica del JWT
       const decoded = expMs && expMs > 0 ? expMs : decodeJwtExpMs(newToken);
       expiresAt.value = decoded || 0;
@@ -52,6 +62,7 @@ export const useAuthStore = defineStore(
       email.value = '';
       roles.value = [];
       expiresAt.value = 0;
+      emailVerified.value = true;
     }
 
     function sweepIfExpired() {
@@ -64,6 +75,7 @@ export const useAuthStore = defineStore(
       email,
       roles,
       expiresAt,
+      emailVerified,
       isExpired,
       isLoggedIn,
       isAdmin,

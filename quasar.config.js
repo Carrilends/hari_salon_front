@@ -153,7 +153,10 @@ module.exports = configure(function (/* ctx */) {
         '/preguntas-frecuentes',
         '/politica-tratamiento-datos',
       ],
-      exclude: [/^\/mi-cuenta/, /^\/mis-empleados/, /^\/login/, /^\/register/],
+      // /^\/auth/ cubre login, register y las tres rutas nuevas de la Fase 3a
+      // (olvide-contrasena, restablecer, verificar-correo). Los patrones previos
+      // /login y /register no casaban con las rutas reales /auth/login|register.
+      exclude: [/^\/mi-cuenta/, /^\/mis-empleados/, /^\/auth/],
       inlineCriticalCss: true,
     },
 

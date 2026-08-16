@@ -47,6 +47,48 @@ describe('auth-store', () => {
     expect(store.expiresAt).toBe(123_456);
   });
 
+  test('setSession stores emailVerified from the response', () => {
+    const store = useAuthStore();
+    const jwt = makeJwtWithExp(Math.floor((Date.now() + 60_000) / 1000));
+
+    store.setSession(jwt, {
+      fullName: 'User',
+      email: 'u@example.com',
+      roles: ['user'],
+      emailVerified: false,
+    });
+
+    expect(store.emailVerified).toBe(false);
+  });
+
+  test('setSession assumes verified when emailVerified is omitted (old sessions)', () => {
+    const store = useAuthStore();
+    const jwt = makeJwtWithExp(Math.floor((Date.now() + 60_000) / 1000));
+
+    store.setSession(jwt, {
+      fullName: 'User',
+      email: 'u@example.com',
+      roles: ['user'],
+    });
+
+    expect(store.emailVerified).toBe(true);
+  });
+
+  test('logout resets emailVerified to true', () => {
+    const store = useAuthStore();
+    const jwt = makeJwtWithExp(Math.floor((Date.now() + 60_000) / 1000));
+
+    store.setSession(jwt, {
+      fullName: 'User',
+      email: 'u@example.com',
+      roles: ['user'],
+      emailVerified: false,
+    });
+    store.logout();
+
+    expect(store.emailVerified).toBe(true);
+  });
+
   test('sweepIfExpired logs out when expired', () => {
     const store = useAuthStore();
     const expSeconds = 1; // 1970-01-01T00:00:01Z
