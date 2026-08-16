@@ -1,4 +1,5 @@
 import {
+  hasLowercase,
   hasNumber,
   hasUppercase,
   isEmail,
@@ -27,6 +28,11 @@ describe('auth validators (NF05 — frontend)', () => {
     expect(hasUppercase()('Abcdef12!')).toBe(true);
     expect(hasNumber()('Abcdefgh!')).toBe('Debe tener al menos un número');
     expect(hasNumber()('Abcdefg1!')).toBe(true);
+  });
+
+  it('Caso 3b: hasLowercase rechaza passwords sin minúscula', () => {
+    expect(hasLowercase()('ABCDEF12')).toBe('Debe tener al menos una minúscula');
+    expect(hasLowercase()('Abcdef12')).toBe(true);
   });
 
   it('Caso 4: matches() compara contra el valor actual del password', () => {

@@ -6,6 +6,7 @@ import { authApi } from 'src/api/auth-api';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useSeo } from 'src/composables/seo/useSeo';
 import {
+  hasLowercase,
   hasNumber,
   hasUppercase,
   isEmail,
@@ -126,7 +127,13 @@ async function submitRegister() {
           color="black"
           type="password"
           label="Password"
-          :rules="[isRequired, minLength(8), hasUppercase(), hasNumber()]"
+          :rules="[
+            isRequired,
+            minLength(8),
+            hasUppercase(),
+            hasLowercase(),
+            hasNumber(),
+          ]"
         />
 
         <q-input

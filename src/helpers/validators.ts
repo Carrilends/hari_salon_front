@@ -30,6 +30,11 @@ export const hasUppercase =
   (val) =>
     /[A-Z]/.test(val ?? '') || message;
 
+export const hasLowercase =
+  (message = 'Debe tener al menos una minúscula'): Rule<string> =>
+  (val) =>
+    /[a-z]/.test(val ?? '') || message;
+
 export const hasNumber =
   (message = 'Debe tener al menos un número'): Rule<string> =>
   (val) =>

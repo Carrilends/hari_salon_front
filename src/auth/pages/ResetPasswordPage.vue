@@ -5,6 +5,7 @@ import { useQuasar } from 'quasar';
 import { useResetPassword } from 'src/composables/auth/useResetPassword';
 import { useSeo } from 'src/composables/seo/useSeo';
 import {
+  hasLowercase,
   hasNumber,
   hasUppercase,
   isRequired,
@@ -100,7 +101,13 @@ async function onSubmit() {
             color="black"
             type="password"
             label="Nueva contraseña"
-            :rules="[isRequired, minLength(8), hasUppercase(), hasNumber()]"
+            :rules="[
+              isRequired,
+              minLength(8),
+              hasUppercase(),
+              hasLowercase(),
+              hasNumber(),
+            ]"
           />
           <q-input
             v-model="confirmPassword"

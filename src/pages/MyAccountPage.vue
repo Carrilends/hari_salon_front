@@ -207,6 +207,7 @@ const passwordBaseRules = [
 const newPasswordRules = [
   ...passwordBaseRules,
   (val: string) => /[A-Z]/.test(val) || 'Debe tener al menos una mayúscula',
+  (val: string) => /[a-z]/.test(val) || 'Debe tener al menos una minúscula',
   (val: string) => /[0-9]/.test(val) || 'Debe tener al menos un número',
 ];
 
