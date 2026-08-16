@@ -44,7 +44,7 @@ describe('branding del salón (regresión Pecas → Marlene / AR → CO / ARS �
     const hours = schema.openingHoursSpecification as Array<Record<string, unknown>>;
 
     expect(hours).toEqual([
-      expect.objectContaining({ opens: '08:00', closes: '21:00' }),
+      expect.objectContaining({ opens: '08:00', closes: '20:00' }),
       expect.objectContaining({ opens: '09:00', closes: '19:00' }),
     ]);
   });

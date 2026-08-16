@@ -6,7 +6,7 @@
 
 export const BUSINESS_SCHEDULE_COPY = {
   weekdayLabel: 'Lunes a viernes',
-  weekdayRange: '8:00 a. m. – 9:00 p. m.',
+  weekdayRange: '8:00 a. m. – 8:00 p. m.',
   weekendLabel: 'Sábado, domingo y festivos',
   weekendRange: '9:00 a. m. – 7:00 p. m.',
 } as const;
@@ -17,11 +17,14 @@ export const BUSINESS_SCHEDULE_COPY = {
 // rompiera en el build SSG. Para esta tesis basta con hardcodear la zona.
 const SALON_TZ = 'America/Bogota';
 
+// `*_CLOSE_MIN` es la hora de cierre (minutos desde medianoche): el último
+// instante en que una reserva puede terminar. Debe coincidir con el backend
+// `hair_salon_back/src/reservations/salon-schedule.ts`.
 const WEEKDAY_OPEN_MIN = 8 * 60;
-const WEEKDAY_CLOSE_MIN = 21 * 60 + 59;
+const WEEKDAY_CLOSE_MIN = 20 * 60;
 
 const WEEKEND_OPEN_MIN = 9 * 60;
-const WEEKEND_CLOSE_MIN = 19 * 60 + 59;
+const WEEKEND_CLOSE_MIN = 19 * 60;
 
 export type SalonNowParts = {
   ymd: string;

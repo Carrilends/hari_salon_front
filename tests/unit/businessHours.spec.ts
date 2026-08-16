@@ -26,21 +26,21 @@ describe('businessHours', () => {
     expect(isWeekendQDate('2026/04/07')).toBe(false);
   });
 
-  test('getBookingTimeBounds: weekday uses 8:00–21:59 span', () => {
+  test('getBookingTimeBounds: weekday uses 8:00–20:00 span', () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date(2026, 3, 1, 12, 0, 0));
     const b = getBookingTimeBounds('2026/04/07');
     expect(b.startTotalMin).toBe(8 * 60);
-    expect(b.endTotalMin).toBe(21 * 60 + 59);
+    expect(b.endTotalMin).toBe(20 * 60);
     jest.useRealTimers();
   });
 
-  test('getBookingTimeBounds: weekend uses 9:00–19:59 span', () => {
+  test('getBookingTimeBounds: weekend uses 9:00–19:00 span', () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date(2026, 3, 1, 12, 0, 0));
     const b = getBookingTimeBounds('2026/04/11');
     expect(b.startTotalMin).toBe(9 * 60);
-    expect(b.endTotalMin).toBe(19 * 60 + 59);
+    expect(b.endTotalMin).toBe(19 * 60);
     jest.useRealTimers();
   });
 
@@ -68,9 +68,9 @@ describe('businessHours', () => {
     jest.setSystemTime(new Date(2026, 3, 1, 12, 0, 0));
     const getDate = () => '2026/04/07';
     const fn = createBookingTimeOptionsFn(getDate);
-    expect(fn(21, 0, null)).toBe(true);
-    expect(fn(21, 59, null)).toBe(true);
-    expect(fn(21, 60, null)).toBe(false);
+    expect(fn(19, 59, null)).toBe(true);
+    expect(fn(20, 0, null)).toBe(true);
+    expect(fn(20, 1, null)).toBe(false);
     jest.useRealTimers();
   });
 
@@ -95,7 +95,7 @@ describe('businessHours', () => {
     jest.setSystemTime(new Date(2026, 3, 1, 12, 0, 0));
     const b = getBookingTimeBounds('2026/04/07', 180);
     expect(b.startTotalMin).toBe(8 * 60);
-    expect(b.endTotalMin).toBe(21 * 60 + 59 - 180);
+    expect(b.endTotalMin).toBe(20 * 60 - 180);
     jest.useRealTimers();
   });
 
@@ -112,10 +112,11 @@ describe('businessHours', () => {
     jest.setSystemTime(new Date(2026, 3, 1, 12, 0, 0));
     const getDate = () => '2026/04/07';
     const fn = createBookingTimeOptionsFn(getDate, () => 180);
-    expect(fn(18, 0, null)).toBe(true);
-    expect(fn(18, 59, null)).toBe(true);
-    expect(fn(19, 0, null)).toBe(false);
-    expect(fn(21, 0, null)).toBe(false);
+    // Cierre 20:00; un servicio de 180 min debe empezar a más tardar a las 17:00.
+    expect(fn(16, 59, null)).toBe(true);
+    expect(fn(17, 0, null)).toBe(true);
+    expect(fn(17, 1, null)).toBe(false);
+    expect(fn(18, 0, null)).toBe(false);
     jest.useRealTimers();
   });
 
@@ -123,10 +124,10 @@ describe('businessHours', () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date(2026, 3, 1, 12, 0, 0));
     expect(
-      isBookingDateTimeWithinHours('2026/04/07', '2026-04-07 18:00', 180)
+      isBookingDateTimeWithinHours('2026/04/07', '2026-04-07 17:00', 180)
     ).toBe(true);
     expect(
-      isBookingDateTimeWithinHours('2026/04/07', '2026-04-07 19:00', 180)
+      isBookingDateTimeWithinHours('2026/04/07', '2026-04-07 18:00', 180)
     ).toBe(false);
     jest.useRealTimers();
   });
