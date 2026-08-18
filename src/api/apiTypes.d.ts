@@ -14,6 +14,8 @@ export interface AuthResponse {
   isActive: boolean;
   emailVerified: boolean;
   token: string;
+  /** Segundos de vida del access token; el cliente renueva antes de que expire. */
+  expiresIn: number;
 }
 
 export interface CreateReviewBody {

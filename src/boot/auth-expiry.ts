@@ -1,30 +1,35 @@
 import { boot } from 'quasar/wrappers';
 import { useAuthStore } from 'src/stores/auth-store';
+import { refreshOnce } from 'src/api/refresh-interceptor';
 
-export default boot(() => {
+/**
+ * Fase 3b: el boot deja de cerrar la sesión al expirar el token. Ahora hay
+ * refresh, así que lo correcto es intentar renovar y solo cerrar si falla.
+ */
+export default boot(async () => {
   // En SSR/SSG no hay `window`; este boot solo tiene sentido en el cliente.
   if (typeof window === 'undefined') return;
 
   const auth = useAuthStore();
 
-  // Barrido inmediato al iniciar
-  auth.sweepIfExpired();
+  // El access token ya no se persiste (S7): al cargar no existe. Si hay un perfil
+  // persistido de una sesión anterior, se intenta restaurarla con una renovación
+  // silenciosa desde la cookie de refresh; si no hay perfil, es un visitante
+  // anónimo y no se molesta al servidor.
+  if (!auth.token && auth.email) {
+    try {
+      await refreshOnce();
+    } catch {
+      /* la cookie ya no vale: se sigue como anónimo (refreshOnce ya limpió) */
+    }
+  }
 
-  // Cada minuto (ligero y suficiente)
+  // Renovación preventiva: un minuto antes de que expire el access token.
   const id = setInterval(() => {
-    auth.sweepIfExpired();
-    console.log('Auth expiry check run');
-  }, 60_000);
+    if (auth.token && auth.expiresAt - Date.now() < 60_000) {
+      void refreshOnce().catch(() => auth.logout());
+    }
+  }, 30_000);
 
-  // Al volver a la pestaña
-  const onFocus = () => auth.sweepIfExpired();
-  window.addEventListener('visibilitychange', onFocus);
-  window.addEventListener('focus', onFocus);
-
-  // Limpieza (opcional si tu boot no se descarga nunca)
-  window.addEventListener('beforeunload', () => {
-    clearInterval(id);
-    window.removeEventListener('visibilitychange', onFocus);
-    window.removeEventListener('focus', onFocus);
-  });
+  window.addEventListener('beforeunload', () => clearInterval(id));
 });

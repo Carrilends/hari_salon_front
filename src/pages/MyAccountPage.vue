@@ -16,8 +16,8 @@
         <template #avatar>
           <q-icon name="mark_email_unread" color="orange-9" />
         </template>
-        Tu correo aún no está verificado. Revisa tu bandeja de entrada o solicita
-        un nuevo enlace.
+        Tu correo aún no está verificado. Revisa tu bandeja de entrada o
+        solicita un nuevo enlace.
         <template #action>
           <q-btn
             flat
@@ -46,11 +46,7 @@
 
         <q-separator />
 
-        <q-tab-panels
-          v-model="activeTab"
-          animated
-          class="account-panels"
-        >
+        <q-tab-panels v-model="activeTab" animated class="account-panels">
           <q-tab-panel name="name" class="q-pa-md">
             <div class="text-subtitle1 text-weight-medium q-mb-sm">
               Cambiar nombre
@@ -217,14 +213,14 @@ const confirmPasswordRules = [
 ];
 
 const canSaveName = computed(
-  () => !!fullName.value.trim() && fullName.value.trim() !== authStore.fullname,
+  () => !!fullName.value.trim() && fullName.value.trim() !== authStore.fullname
 );
 
 const canSaveEmail = computed(
   () =>
     !!newEmail.value.trim() &&
     !!currentPasswordForEmail.value &&
-    newEmail.value.trim().toLowerCase() !== authStore.email.toLowerCase(),
+    newEmail.value.trim().toLowerCase() !== authStore.email.toLowerCase()
 );
 
 const canSavePassword = computed(
@@ -232,7 +228,7 @@ const canSavePassword = computed(
     !!currentPassword.value &&
     !!newPassword.value &&
     !!confirmNewPassword.value &&
-    newPassword.value === confirmNewPassword.value,
+    newPassword.value === confirmNewPassword.value
 );
 
 onMounted(() => {
@@ -244,12 +240,16 @@ onMounted(() => {
 const isResendingVerification = ref(false);
 
 function syncSession(data: AuthResponse) {
-  authStore.setSession(data.token, {
-    fullName: data.fullName,
-    email: data.email,
-    roles: data.roles,
-    emailVerified: data.emailVerified,
-  });
+  authStore.setSession(
+    data.token,
+    {
+      fullName: data.fullName,
+      email: data.email,
+      roles: data.roles,
+      emailVerified: data.emailVerified,
+    },
+    data.expiresIn * 1000 + Date.now()
+  );
   fullName.value = data.fullName;
   newEmail.value = data.email;
 }
@@ -286,7 +286,10 @@ async function submitName() {
       fullName: fullName.value.trim(),
     });
     syncSession(data);
-    $q.notify({ type: 'positive', message: 'Nombre actualizado correctamente' });
+    $q.notify({
+      type: 'positive',
+      message: 'Nombre actualizado correctamente',
+    });
   } catch (err) {
     $q.notify({
       type: 'negative',
@@ -334,7 +337,10 @@ async function submitPassword() {
     currentPassword.value = '';
     newPassword.value = '';
     confirmNewPassword.value = '';
-    $q.notify({ type: 'positive', message: 'Contraseña actualizada correctamente' });
+    $q.notify({
+      type: 'positive',
+      message: 'Contraseña actualizada correctamente',
+    });
   } catch (err) {
     $q.notify({
       type: 'negative',

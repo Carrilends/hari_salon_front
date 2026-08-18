@@ -2,15 +2,18 @@ import axios from 'axios';
 import type { ReservationOccupancyResponse } from 'src/helpers/booking-occupancy';
 import type { ReservationDto } from 'src/interfaces/booking';
 import { useAuthStore } from 'src/stores/auth-store';
+import { attachRefreshInterceptor } from './refresh-interceptor';
 
 /** Base `.../api`; rutas como `/reservations`. */
 export const reservationsApi = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: true,
 });
 
 /** Instancia con Bearer token para endpoints admin de reservas. */
 export const adminReservationsApi = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: true,
 });
 
 adminReservationsApi.interceptors.request.use((config) => {
@@ -21,6 +24,9 @@ adminReservationsApi.interceptors.request.use((config) => {
   }
   return config;
 });
+
+attachRefreshInterceptor(reservationsApi);
+attachRefreshInterceptor(adminReservationsApi);
 
 export async function fetchReservationOccupancy(
   fromYmd: string,

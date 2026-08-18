@@ -58,4 +58,15 @@ export const authApi = {
     adminServiceApi
       .patch<AuthResponse>('/auth/me/password', body)
       .then((r) => r.data),
+
+  // Fase 3b: sesión con refresh en cookie httpOnly.
+  refresh: () =>
+    servicesApi.post<AuthResponse>('/auth/refresh').then((r) => r.data),
+
+  logout: () => servicesApi.post<void>('/auth/logout').then((r) => r.data),
+
+  loginWithGoogle: (idToken: string, dataPolicyAccepted?: boolean) =>
+    servicesApi
+      .post<AuthResponse>('/auth/google', { idToken, dataPolicyAccepted })
+      .then((r) => r.data),
 };

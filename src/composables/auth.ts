@@ -25,12 +25,16 @@ export const useAuth = () => {
   const mutation = useMutation<AuthResponse, unknown, void>({
     mutationFn: () => authApi.login(loginBody.value),
     onSuccess: (val) => {
-      authStore.setSession(val.token, {
-        fullName: val.fullName,
-        email: val.email,
-        roles: val.roles,
-        emailVerified: val.emailVerified,
-      });
+      authStore.setSession(
+        val.token,
+        {
+          fullName: val.fullName,
+          email: val.email,
+          roles: val.roles,
+          emailVerified: val.emailVerified,
+        },
+        val.expiresIn * 1000 + Date.now()
+      );
     },
   });
 

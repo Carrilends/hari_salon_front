@@ -7,7 +7,11 @@ type DecodedJwt = { exp?: number; [k: string]: unknown };
 function decodeJwtExpMs(token: string): number {
   try {
     const [, payload] = token.split('.');
-    const json = JSON.parse(atob(payload));
+    // base64url -> base64 antes de atob: sin esto un payload con `-`/`_` reventaba
+    // y devolvía exp=0 ("sesión que nunca expira"). Es solo respaldo: la vigencia
+    // real llega en `expiresIn` desde el backend (Fase 3b).
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const json = JSON.parse(atob(base64));
     const exp = (json as DecodedJwt).exp;
     return typeof exp === 'number' ? exp * 1000 : 0;
   } catch {
@@ -84,5 +88,10 @@ export const useAuthStore = defineStore(
       sweepIfExpired,
     };
   },
-  { persist: true }
+  {
+    // S7: el access token deja de persistirse (vive en memoria y se recupera con
+    // una renovación silenciosa al arrancar). El perfil sí se persiste para
+    // evitar el parpadeo de "sesión cerrada" al recargar.
+    persist: { pick: ['fullname', 'email', 'roles', 'emailVerified'] },
+  }
 );

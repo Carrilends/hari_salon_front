@@ -4,6 +4,8 @@ import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { authApi } from 'src/api/auth-api';
 import { useAuthStore } from 'src/stores/auth-store';
+import { useLoginWithGoogle } from 'src/composables/auth/useLoginWithGoogle';
+import GoogleSignInButton from 'src/components/auth/GoogleSignInButton.vue';
 import { useSeo } from 'src/composables/seo/useSeo';
 import {
   hasLowercase,
@@ -42,6 +44,14 @@ useSeo({
 });
 const isSubmitting = ref(false);
 
+// Registro con Google (Fase 3b): registrarse por Google tampoco puede ser una
+// puerta trasera al consentimiento (S9). El botón se habilita solo tras marcar
+// la casilla, y ese consentimiento se envía al backend.
+const { handleCredential } = useLoginWithGoogle();
+function onGoogleRegister(idToken: string) {
+  void handleCredential(idToken, dataPolicyAccepted.value);
+}
+
 const canSubmit = computed(
   () =>
     !!fullName.value.trim() &&
@@ -71,12 +81,16 @@ async function submitRegister() {
       dataPolicyAccepted: dataPolicyAccepted.value,
     });
 
-    authStore.setSession(data.token, {
-      fullName: data.fullName,
-      email: data.email,
-      roles: data.roles ?? ['user'],
-      emailVerified: data.emailVerified,
-    });
+    authStore.setSession(
+      data.token,
+      {
+        fullName: data.fullName,
+        email: data.email,
+        roles: data.roles ?? ['user'],
+        emailVerified: data.emailVerified,
+      },
+      data.expiresIn * 1000 + Date.now()
+    );
 
     await router.push({ path: '/services' });
   } catch (err: unknown) {
@@ -175,6 +189,17 @@ async function submitRegister() {
           />
         </div>
       </q-form>
+
+      <q-separator class="q-my-md" />
+      <div class="text-center text-caption text-grey-7 q-mb-sm">
+        o regístrate con
+      </div>
+      <div class="row justify-center">
+        <GoogleSignInButton
+          :disabled="!dataPolicyAccepted"
+          @credential="onGoogleRegister"
+        />
+      </div>
 
       <q-card-section class="text-center q-pt-md">
         <q-btn flat no-caps color="grey-8" label="Ya estoy registrado, ir a login" :to="{ name: 'login' }" />

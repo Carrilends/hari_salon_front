@@ -3,6 +3,8 @@ import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useAuth } from 'src/composables/auth';
+import { useLoginWithGoogle } from 'src/composables/auth/useLoginWithGoogle';
+import GoogleSignInButton from 'src/components/auth/GoogleSignInButton.vue';
 import { useSeo } from 'src/composables/seo/useSeo';
 import {
   hasNumber,
@@ -35,6 +37,12 @@ useSeo({
 const username = ref('');
 const password = ref('');
 
+const redirectTo =
+  typeof route.query.redirect === 'string' ? route.query.redirect : '/services';
+
+// Inicio de sesión con Google (Fase 3b): comparte la redirección del login local.
+const { handleCredential: onGoogleCredential } = useLoginWithGoogle({ redirectTo });
+
 async function submitLogin() {
   if (!username.value || !password.value) return;
 
@@ -49,7 +57,6 @@ async function submitLogin() {
   });
   try {
     await login();
-    const redirectTo = typeof route.query.redirect === 'string' ? route.query.redirect : '/services';
     router.push({ path: redirectTo });
   } catch (err: unknown) {
     $q.notify({
@@ -107,6 +114,12 @@ async function submitLogin() {
           />
         </div>
       </q-form>
+
+      <q-separator class="q-my-md" />
+      <div class="text-center text-caption text-grey-7 q-mb-sm">o</div>
+      <div class="row justify-center">
+        <GoogleSignInButton @credential="onGoogleCredential" />
+      </div>
       <q-card-section class="text-center q-pt-md q-pb-none">
         <q-btn
           flat

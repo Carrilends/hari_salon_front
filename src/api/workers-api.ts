@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { adminServiceApi } from './services-api';
+import { attachRefreshInterceptor } from './refresh-interceptor';
 
 export type ReservationBlock = {
   startMin: number;
@@ -40,7 +41,9 @@ export type WorkerItem = {
 
 const workersApi = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: true,
 });
+attachRefreshInterceptor(workersApi);
 
 export async function fetchWorkerAvailability(
   dateYmd: string,

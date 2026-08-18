@@ -169,6 +169,7 @@ import BookingDialog from 'src/components/dialogs/bookingDialog.vue';
 import { migrateLegacyBookings, useBookStore } from 'src/stores/book-store';
 import { useAuthStore } from 'src/stores/auth-store';
 import { adminServiceApi } from 'src/api/services-api';
+import { authApi } from 'src/api/auth-api';
 import type { CreateReviewBody, CreateReviewResponse } from 'src/api/apiTypes';
 
 type HeaderActionButton = {
@@ -259,7 +260,14 @@ async function submitReview() {
   }
 }
 
-function onLogout() {
+async function onLogout() {
+  // Revoca el refresh en el servidor y limpia la cookie; sin esto la cookie
+  // seguiría siendo válida hasta caducar. Nunca debe bloquear el cierre local.
+  try {
+    await authApi.logout();
+  } catch {
+    /* la sesión local se cierra igual */
+  }
   authStore.logout();
   router.push({ path: '/' });
 }
