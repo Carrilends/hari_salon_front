@@ -103,6 +103,16 @@ module.exports = configure(function (/* ctx */) {
     devServer: {
       // https: true
       open: true, // opens browser window automatically
+      proxy: {
+        // Mismo esquema que el proxy de Netlify (Fase 3b): en desarrollo la API
+        // tambien se ve como parte del propio origen, asi la cookie de sesion se
+        // comporta igual (primera parte, SameSite=Lax). El backend conserva su
+        // prefijo /api, por eso no se reescribe la ruta.
+        '/api': {
+          target: process.env.DEV_API_TARGET || 'http://localhost:3001',
+          changeOrigin: true,
+        },
+      },
     },
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#framework

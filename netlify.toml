@@ -5,6 +5,18 @@
 [build.environment]
   NODE_VERSION = "20"
 
+# La API se sirve bajo el propio dominio del sitio para que la cookie de sesion
+# sea de primera parte (Fase 3b, decision estructural S5). DEBE ir ANTES del
+# catch-all: Netlify aplica la primera regla que casa. El public/_redirects se
+# procesa despues, asi que no la ensombrece.
+# ### Reemplazar <backend> por la URL real de Railway cuando se despliegue el
+# ### backend (Tarea 4 de tesis/EstadoDespliegue.md, aun pendiente).
+[[redirects]]
+  from = "/api/*"
+  to = "https://REEMPLAZAR-backend.up.railway.app/api/:splat"
+  status = 200
+  force = true
+
 # El _redirects en public/ tambien se respeta. Esto es solo redundancia explicita.
 [[redirects]]
   from = "/*"
