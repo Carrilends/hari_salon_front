@@ -41,7 +41,10 @@ export const hasNumber =
     /[0-9]/.test(val ?? '') || message;
 
 export const matches =
-  (other: () => string, message = 'Las contraseñas no coinciden'): Rule<string> =>
+  (
+    other: () => string,
+    message = 'Las contraseñas no coinciden'
+  ): Rule<string> =>
   (val) =>
     val === other() || message;
 
@@ -63,15 +66,29 @@ export interface ReservationSelection {
   date: unknown;
   stylist: unknown;
   time: unknown;
+  // Fase 4: la reserva se persiste con contacto (Ley 1581); la clienta debe dar
+  // nombre, teléfono y consentimiento antes de reservar.
+  name?: unknown;
+  phone?: unknown;
+  consent?: unknown;
 }
 
 export const reservationPayloadIsComplete = ({
   date,
   stylist,
   time,
+  name,
+  phone,
+  consent,
 }: ReservationSelection): RuleResult => {
   if (!date) return 'Selecciona una fecha';
   if (!stylist) return 'Selecciona un estilista';
   if (!time) return 'Selecciona una hora';
+  if (minTrimmedLength(3)(typeof name === 'string' ? name : '') !== true)
+    return 'Escribe tu nombre (mínimo 3 caracteres)';
+  if (minTrimmedLength(7)(typeof phone === 'string' ? phone : '') !== true)
+    return 'Escribe un teléfono válido (mínimo 7 dígitos)';
+  if (consent !== true)
+    return 'Debes aceptar la política de tratamiento de datos';
   return true;
 };

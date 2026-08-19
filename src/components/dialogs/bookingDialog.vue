@@ -21,7 +21,9 @@
             class="row booking-dialog__inner"
             :class="maximized ? 'q-pt-md q-pb-md q-px-sm' : 'q-pa-md'"
           >
-            <div class="col-12 q-my-md badge-container row items-center no-wrap">
+            <div
+              class="col-12 q-my-md badge-container row items-center no-wrap"
+            >
               <!-- Botón a la izquierda -->
               <q-btn
                 icon="arrow_back"
@@ -55,7 +57,11 @@
                 active-color="primary"
                 indicator-color="primary"
               >
-                <q-tab name="current" label="Reservas actuales" icon="local_mall" />
+                <q-tab
+                  name="current"
+                  label="Reservas actuales"
+                  icon="local_mall"
+                />
                 <q-tab
                   v-if="authStore.isAdmin"
                   name="admin"
@@ -219,7 +225,9 @@
                             rounded
                             color="deep-orange-9"
                             class="booking-detail-btn__promo-badge"
-                            :label="`-${promotionPercentDisplay(line.service)}%`"
+                            :label="`-${promotionPercentDisplay(
+                              line.service
+                            )}%`"
                           />
                         </q-btn>
                       </div>
@@ -236,7 +244,10 @@
                 class="full-width q-mt-sm"
                 style="margin-bottom: 12px"
               />
-              <q-card-section class="q-pa-none" :class="maximized ? 'q-pt-sm' : 'q-pt-md'">
+              <q-card-section
+                class="q-pa-none"
+                :class="maximized ? 'q-pt-sm' : 'q-pt-md'"
+              >
                 <div
                   class="text-left"
                   style="
@@ -256,9 +267,16 @@
                   v-if="bookStore.bookingsDuration > 0"
                   class="booking-duration-summary q-mt-sm"
                 >
-                  <q-icon name="schedule" size="18px" color="blue-grey-6" class="q-mr-xs" />
+                  <q-icon
+                    name="schedule"
+                    size="18px"
+                    color="blue-grey-6"
+                    class="q-mr-xs"
+                  />
                   <span class="booking-duration-label">Tiempo aprox.:</span>
-                  <span class="booking-duration-value">{{ formattedDuration }}</span>
+                  <span class="booking-duration-value">{{
+                    formattedDuration
+                  }}</span>
                 </div>
                 <!-- Recuadro de fecha y hora -->
                 <div class="date-time-info-box q-mt-md">
@@ -294,17 +312,26 @@
               class="col-12 q-my-md q-pa-sm booking-dialog__main-col"
               :class="{ 'booking-dialog__main-col--maximized': maximized }"
             >
-              <div class="q-pa-sm q-mb-sm" style="background: #f2f2f2; border-radius: 8px">
+              <div
+                class="q-pa-sm q-mb-sm"
+                style="background: #f2f2f2; border-radius: 8px"
+              >
                 <div class="text-body2 text-dark">
                   Gestiona las reservas registradas en el sistema
                 </div>
               </div>
 
-              <div v-if="adminReservationsLoading" class="flex flex-center q-py-xl">
+              <div
+                v-if="adminReservationsLoading"
+                class="flex flex-center q-py-xl"
+              >
                 <q-spinner-dots color="primary" size="40px" />
               </div>
 
-              <div v-else-if="!adminReservations.length" class="text-center q-py-xl text-grey-6">
+              <div
+                v-else-if="!adminReservations.length"
+                class="text-center q-py-xl text-grey-6"
+              >
                 <q-icon name="event_busy" size="48px" class="q-mb-sm" />
                 <div class="text-body1">No hay reservas registradas</div>
               </div>
@@ -345,7 +372,11 @@
                         {{ formatReservationDate(res.scheduledAt) }}
                       </q-item-label>
                       <q-item-label caption>
-                        <q-icon name="content_cut" size="14px" class="q-mr-xs" />
+                        <q-icon
+                          name="content_cut"
+                          size="14px"
+                          class="q-mr-xs"
+                        />
                         {{ res.worker?.name ?? 'Sin asignar' }}
                       </q-item-label>
                       <q-item-label caption>
@@ -371,21 +402,63 @@
         </q-card-section>
         <q-separator :inset="!maximized" />
         <q-card-section
-          class="booking-dialog__footer"
-          :class="
-            maximized
-              ? 'row items-center q-px-sm'
-              : 'flex justify-center items-center'
-          "
+          class="booking-dialog__footer flex justify-center"
           style="min-height: 120px"
         >
-          <q-btn
-            @click="sendBookingData"
-            :disable="!bookStore.totalBookingQuantity || reservationPayloadIsComplete({ date, stylist: selectedStylist, time }) !== true"
-            label="Reservar"
-            color="blue"
-            :class="{ 'full-width': maximized }"
-          />
+          <div
+            class="column q-gutter-sm booking-dialog__contact"
+            style="width: 100%; max-width: 420px"
+          >
+            <div class="text-subtitle2">Tus datos de contacto</div>
+            <q-input
+              v-model="customerName"
+              dense
+              outlined
+              label="Nombre"
+              autocomplete="name"
+              maxlength="80"
+            />
+            <q-input
+              v-model="customerPhone"
+              dense
+              outlined
+              label="Teléfono"
+              type="tel"
+              inputmode="tel"
+              autocomplete="tel"
+              maxlength="20"
+            />
+            <q-checkbox v-model="dataConsent" dense size="sm">
+              <span class="text-caption">
+                Autorizo el tratamiento de mis datos para gestionar la reserva,
+                según la
+                <a
+                  :href="privacyPolicyHref"
+                  target="_blank"
+                  rel="noopener"
+                  @click.stop
+                  >política de tratamiento de datos</a
+                >.
+              </span>
+            </q-checkbox>
+            <q-btn
+              @click="sendBookingData"
+              :disable="
+                !bookStore.totalBookingQuantity ||
+                reservationPayloadIsComplete({
+                  date,
+                  stylist: selectedStylist,
+                  time,
+                  name: customerName,
+                  phone: customerPhone,
+                  consent: dataConsent,
+                }) !== true
+              "
+              label="Reservar"
+              color="blue"
+              class="full-width"
+            />
+          </div>
         </q-card-section>
       </q-card>
     </q-dialog>
@@ -488,8 +561,8 @@
                           opt.disable
                             ? 'grey-4'
                             : opt.value === null
-                              ? 'blue-grey-6'
-                              : 'primary'
+                            ? 'blue-grey-6'
+                            : 'primary'
                         "
                         size="sm"
                       />
@@ -519,7 +592,7 @@
                             ? 'grey-4'
                             : stylistAvailabilityColor(
                                 opt.availableMinutes,
-                                opt.capacityMinutes,
+                                opt.capacityMinutes
                               )
                         "
                         :text-color="opt.disable ? 'grey-7' : 'white'"
@@ -624,13 +697,11 @@ import {
 import {
   fetchAllReservations,
   deleteReservation,
-  reservationsApi,
+  createReservation,
 } from 'src/api/reservations-api';
 import { useAuthStore } from 'src/stores/auth-store';
 import type { ReservationDto } from 'src/interfaces/booking';
-import {
-  type WorkerAvailabilityEntry,
-} from 'src/api/workers-api';
+import { type WorkerAvailabilityEntry } from 'src/api/workers-api';
 import type { OccupancyByDateEntry } from 'src/helpers/booking-occupancy';
 import { reservationPayloadIsComplete } from 'src/helpers/validators';
 import {
@@ -659,6 +730,13 @@ const date = ref('' /* '2025/01/01' */);
 const time = ref('');
 const tab = ref('date');
 
+// Fase 4: la reserva se persiste con contacto (nombre + teléfono) y el
+// consentimiento de tratamiento de datos (Ley 1581, casilla sin premarcar).
+const customerName = ref('');
+const customerPhone = ref('');
+const dataConsent = ref(false);
+const privacyPolicyHref = '/politica-tratamiento-datos';
+
 type StylistOption = {
   label: string;
   value: string | null;
@@ -673,30 +751,29 @@ const calendarMonth = ref(new Date().getMonth() + 1);
 const queryClient = useQueryClient();
 
 const defaultCalendarYearMonth = computed(
-  () =>
-    `${calendarYear.value}/${String(calendarMonth.value).padStart(2, '0')}`,
+  () => `${calendarYear.value}/${String(calendarMonth.value).padStart(2, '0')}`
 );
 
 const occupancyQuery = useReservationOccupancy(
   calendarYear,
   calendarMonth,
-  dateCard,
+  dateCard
 );
 const workerAvailabilityQuery = useWorkerAvailability(date, dateCard);
 const occupancyByDate = computed<Record<string, OccupancyByDateEntry>>(
-  () => occupancyQuery.data.value?.byDate ?? {},
+  () => occupancyQuery.data.value?.byDate ?? {}
 );
 const occupancyLoading = computed(
-  () => occupancyQuery.isLoading.value || occupancyQuery.isFetching.value,
+  () => occupancyQuery.isLoading.value || occupancyQuery.isFetching.value
 );
 const occupancyFetchFailed = computed(() => occupancyQuery.isError.value);
 const workerAvailability = computed<WorkerAvailabilityEntry[]>(
-  () => workerAvailabilityQuery.data.value?.workers ?? [],
+  () => workerAvailabilityQuery.data.value?.workers ?? []
 );
 const workerAvailabilityLoading = computed(
   () =>
     workerAvailabilityQuery.isLoading.value ||
-    workerAvailabilityQuery.isFetching.value,
+    workerAvailabilityQuery.isFetching.value
 );
 
 const salonNowForBooking = computed(() => {
@@ -732,7 +809,7 @@ function bookingQDateOptions(dateStr: string): boolean {
   return hasSlotForCart(
     o.usedMinutes,
     o.capacityMinutes,
-    bookStore.bookingsDuration,
+    bookStore.bookingsDuration
   );
 }
 
@@ -772,7 +849,7 @@ watch(
       message: 'No se pudo cargar la ocupación del calendario.',
       position: 'top',
     });
-  },
+  }
 );
 
 watch(
@@ -784,7 +861,7 @@ watch(
       message: 'No se pudo cargar la disponibilidad de estilistas.',
       position: 'top',
     });
-  },
+  }
 );
 
 const stylistOptions = computed<StylistOption[]>(() => {
@@ -803,11 +880,11 @@ const stylistOptions = computed<StylistOption[]>(() => {
   const anyAvailable = workerOpts.some((o) => !o.disable);
   const maxAvailable = assignableWorkers.reduce(
     (max, w) => Math.max(max, w.availableMinutes),
-    0,
+    0
   );
   const maxCapacity = assignableWorkers.reduce(
     (max, w) => Math.max(max, w.capacityMinutes),
-    0,
+    0
   );
 
   return [
@@ -824,7 +901,7 @@ const stylistOptions = computed<StylistOption[]>(() => {
 
 function stylistAvailabilityColor(
   availableMin: number,
-  capacityMin: number,
+  capacityMin: number
 ): string {
   if (capacityMin <= 0) return 'negative';
   const freeRatio = availableMin / capacityMin;
@@ -845,12 +922,9 @@ function formatAvailableTime(minutes: number): string {
 watch(
   () => bookStore.bookingsDuration,
   () => {
-    if (
-      selectedStylist.value &&
-      selectedStylist.value.value !== null
-    ) {
+    if (selectedStylist.value && selectedStylist.value.value !== null) {
       const match = workerAvailability.value.find(
-        (w) => w.id === selectedStylist.value?.value,
+        (w) => w.id === selectedStylist.value?.value
       );
       if (match && match.availableMinutes < bookStore.bookingsDuration) {
         selectedStylist.value = null;
@@ -862,31 +936,29 @@ watch(
     date.value = '';
     time.value = '';
     selectedStylist.value = null;
-  },
+  }
 );
 
 const scheduleHint = `${BUSINESS_SCHEDULE_COPY.weekdayLabel}: ${BUSINESS_SCHEDULE_COPY.weekdayRange}. ${BUSINESS_SCHEDULE_COPY.weekendLabel}: ${BUSINESS_SCHEDULE_COPY.weekendRange}.`;
 
 function isMinuteBlockedByReservations(
   candidateMin: number,
-  cartDuration: number,
+  cartDuration: number
 ): boolean {
   const stylist = selectedStylist.value;
   if (!stylist || stylist.value === null) return false;
-  const worker = workerAvailability.value.find(
-    (w) => w.id === stylist.value,
-  );
+  const worker = workerAvailability.value.find((w) => w.id === stylist.value);
   if (!worker?.reservations?.length) return false;
   const bookingEnd = candidateMin + cartDuration;
   return worker.reservations.some(
-    (r) => candidateMin < r.endMin && r.startMin < bookingEnd,
+    (r) => candidateMin < r.endMin && r.startMin < bookingEnd
   );
 }
 
 const bookingTimeOptions = (
   hour: number | null,
   minute: number | null,
-  second: number | null,
+  second: number | null
 ): boolean => {
   const dateStr = date.value;
   if (!dateStr || hour === null) return false;
@@ -895,7 +967,7 @@ const bookingTimeOptions = (
   const { startTotalMin, endTotalMin } = getBookingTimeBounds(
     dateStr,
     cartDuration,
-    salonNowForBooking.value,
+    salonNowForBooking.value
   );
   if (startTotalMin > endTotalMin) return false;
 
@@ -995,7 +1067,7 @@ const sendBookingData = async () => {
       date.value,
       time.value,
       bookStore.bookingsDuration,
-      salonNowForBooking.value,
+      salonNowForBooking.value
     )
   ) {
     $q.notify({
@@ -1032,9 +1104,14 @@ const sendBookingData = async () => {
     await workerAvailabilityQuery.refetch();
   }
   const selectedWorker = selectedStylist.value?.value
-    ? workerAvailability.value.find((w) => w.id === selectedStylist.value?.value)
+    ? workerAvailability.value.find(
+        (w) => w.id === selectedStylist.value?.value
+      )
     : undefined;
-  if (selectedWorker && selectedWorker.availableMinutes < totalDurationMinutes) {
+  if (
+    selectedWorker &&
+    selectedWorker.availableMinutes < totalDurationMinutes
+  ) {
     $q.notify({
       type: 'warning',
       message:
@@ -1046,12 +1123,20 @@ const sendBookingData = async () => {
 
   $q.loading.show({ message: 'Registrando reserva...' });
   try {
-    await reservationsApi.post('/reservations', {
+    // El carrito ya agrupa cada servicio en una línea (sin repetir ids), así que
+    // basta con sus ids; el back deriva la duración de ellos (no se confía en el
+    // cliente) y exige contacto para una reserva sin sesión (Fase 4).
+    const serviceIds = bookStore.bookings.map((line) => line.service.id);
+    await createReservation({
       scheduledAt,
-      totalDurationMinutes,
+      serviceIds,
       ...(selectedStylist.value?.value
         ? { workerId: selectedStylist.value.value }
         : {}),
+      contact: {
+        name: customerName.value.trim(),
+        phone: customerPhone.value.trim(),
+      },
     });
   } catch {
     $q.notify({
@@ -1079,6 +1164,9 @@ const sendBookingData = async () => {
   });
   openWhatsApp(message);
   bookStore.clearBookings();
+  customerName.value = '';
+  customerPhone.value = '';
+  dataConsent.value = false;
 };
 
 const manageVisualizationDialog = (val: boolean) => {
@@ -1092,7 +1180,7 @@ const confirmDateTime = () => {
       date.value,
       time.value,
       bookStore.bookingsDuration,
-      salonNowForBooking.value,
+      salonNowForBooking.value
     )
   ) {
     $q.notify({
@@ -1241,8 +1329,18 @@ function formatReservationDate(isoStr: string): string {
   try {
     const d = new Date(isoStr);
     const monthNames = [
-      'Enero', 'Feb', 'Marzo', 'Abril', 'Mayo', 'Jun',
-      'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
+      'Enero',
+      'Feb',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dic',
     ];
     const day = d.getDate();
     const month = monthNames[d.getMonth()];

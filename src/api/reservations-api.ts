@@ -49,3 +49,25 @@ export async function fetchAllReservations(): Promise<ReservationDto[]> {
 export async function deleteReservation(id: string): Promise<void> {
   await adminReservationsApi.delete(`/reservations/${id}`);
 }
+
+/** Carga para crear una reserva; coincide con `CreateReservationDto` del back. */
+export interface CreateReservationPayload {
+  scheduledAt: string;
+  serviceIds: string[];
+  workerId?: string;
+  contact?: { name: string; phone: string; email?: string };
+}
+
+/**
+ * Crea una reserva desde el portal público (Fase 4). Va por `reservationsApi`
+ * (sin Bearer): la reserva es anónima, así que el back exige `contact`.
+ */
+export async function createReservation(
+  payload: CreateReservationPayload
+): Promise<ReservationDto> {
+  const { data } = await reservationsApi.post<ReservationDto>(
+    '/reservations',
+    payload
+  );
+  return data;
+}

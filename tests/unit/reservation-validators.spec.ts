@@ -34,16 +34,59 @@ describe('reservation validators (NF05 — frontend)', () => {
 
   it('Caso 5: reservationPayloadIsComplete reporta el primer campo faltante', () => {
     expect(
-      reservationPayloadIsComplete({ date: null, stylist: 'x', time: '10:00' }),
+      reservationPayloadIsComplete({ date: null, stylist: 'x', time: '10:00' })
     ).toBe('Selecciona una fecha');
     expect(
-      reservationPayloadIsComplete({ date: '2026-05-06', stylist: null, time: '10:00' }),
+      reservationPayloadIsComplete({
+        date: '2026-05-06',
+        stylist: null,
+        time: '10:00',
+      })
     ).toBe('Selecciona un estilista');
     expect(
-      reservationPayloadIsComplete({ date: '2026-05-06', stylist: 'x', time: null }),
+      reservationPayloadIsComplete({
+        date: '2026-05-06',
+        stylist: 'x',
+        time: null,
+      })
     ).toBe('Selecciona una hora');
     expect(
-      reservationPayloadIsComplete({ date: '2026-05-06', stylist: 'x', time: '10:00' }),
+      reservationPayloadIsComplete({
+        date: '2026-05-06',
+        stylist: 'x',
+        time: '10:00',
+        name: 'Ana',
+        phone: '3001234567',
+        consent: true,
+      })
     ).toBe(true);
+  });
+
+  it('Caso 6: exige nombre, teléfono y consentimiento de datos (Fase 4)', () => {
+    const base = { date: '2026-05-06', stylist: 'x', time: '10:00' };
+    expect(
+      reservationPayloadIsComplete({
+        ...base,
+        name: 'A',
+        phone: '3001234567',
+        consent: true,
+      })
+    ).not.toBe(true);
+    expect(
+      reservationPayloadIsComplete({
+        ...base,
+        name: 'Ana',
+        phone: '123',
+        consent: true,
+      })
+    ).not.toBe(true);
+    expect(
+      reservationPayloadIsComplete({
+        ...base,
+        name: 'Ana',
+        phone: '3001234567',
+        consent: false,
+      })
+    ).not.toBe(true);
   });
 });
