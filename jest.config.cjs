@@ -19,6 +19,7 @@ module.exports = {
     // Debe ir ANTES del alias genérico `^src/(.*)$`: el módulo real lee
     // `import.meta.env`, que ts-jest no puede compilar a CommonJS.
     '^(?:src/composables/seo|\\.)/site-url$': '<rootDir>/tests/siteUrlMock.ts',
+    '^(?:src/api|\\.)/ws-url$': '<rootDir>/tests/wsUrlMock.ts',
     '^src/(.*)$': '<rootDir>/src/$1',
     '\\.(css|scss|sass)$': '<rootDir>/tests/styleMock.js',
   },
@@ -29,4 +30,3 @@ module.exports = {
     '!src/**/apiTypes.d.ts',
   ],
 };
-

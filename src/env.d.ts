@@ -15,6 +15,8 @@ interface ImportMetaEnv {
   readonly VITE_SITE_URL: string;
   // Fase 3b: client id público de Google Identity Services (viaja al navegador).
   readonly VITE_GOOGLE_CLIENT_ID: string;
+  // Fase 4: URL del WebSocket del panel, directo a Railway (N4), no al proxy.
+  readonly VITE_WS_URL: string;
 }
 
 interface ImportMeta {
