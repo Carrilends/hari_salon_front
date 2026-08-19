@@ -50,6 +50,16 @@ export async function deleteReservation(id: string): Promise<void> {
   await adminReservationsApi.delete(`/reservations/${id}`);
 }
 
+/** Confirma una reserva pendiente (solo administración). */
+export async function confirmReservation(id: string): Promise<void> {
+  await adminReservationsApi.patch(`/reservations/${id}/confirm`);
+}
+
+/** Cancela una reserva (administración; el back registra quién la cancela). */
+export async function cancelReservation(id: string): Promise<void> {
+  await adminReservationsApi.patch(`/reservations/${id}/cancel`);
+}
+
 /** Carga para crear una reserva; coincide con `CreateReservationDto` del back. */
 export interface CreateReservationPayload {
   scheduledAt: string;

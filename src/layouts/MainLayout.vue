@@ -148,7 +148,12 @@
 
         <q-card-actions align="right">
           <q-btn flat label="Cancelar" v-close-popup />
-          <q-btn color="positive" label="Enviar reseña" :loading="isSendingReview" @click="submitReview" />
+          <q-btn
+            color="positive"
+            label="Enviar reseña"
+            :loading="isSendingReview"
+            @click="submitReview"
+          />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -197,7 +202,10 @@ const router = useRouter();
 
 const reviewDialog = ref(false);
 const isSendingReview = ref(false);
-const scoreOptions = [1, 2, 3, 4, 5].map((score) => ({ label: `${score}`, value: score }));
+const scoreOptions = [1, 2, 3, 4, 5].map((score) => ({
+  label: `${score}`,
+  value: score,
+}));
 
 const reviewForm = reactive<CreateReviewBody>({
   name: '',
@@ -208,7 +216,10 @@ const reviewForm = reactive<CreateReviewBody>({
 const showReviewButton = computed(() => {
   if (!authStore.isLoggedIn) return true;
   if (authStore.isAdmin) return false;
-  return authStore.roles.length === 0 || authStore.roles.every((role) => role === 'user');
+  return (
+    authStore.roles.length === 0 ||
+    authStore.roles.every((role) => role === 'user')
+  );
 });
 
 function resetReviewForm() {
@@ -346,6 +357,12 @@ const moreMenuItems = computed<HeaderMenuItem[]>(() =>
       label: 'Mis estilistas',
       visible: () => authStore.isAdmin,
       method: () => router.push('/mis-empleados'),
+    },
+    {
+      icon: 'event_note',
+      label: 'Reservas',
+      visible: () => authStore.isAdmin,
+      method: () => router.push('/reservas'),
     },
     {
       icon: 'help_outline',

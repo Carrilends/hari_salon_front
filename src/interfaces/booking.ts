@@ -6,14 +6,32 @@ export interface BookingLine {
   quantity: number;
 }
 
+export type ReservationStatus =
+  | 'pendiente'
+  | 'confirmada'
+  | 'cumplida'
+  | 'cancelada';
+
+/** Línea de servicio de una reserva (snapshot al momento de reservar). */
+export interface ReservationServiceLine {
+  serviceId: string | null;
+  name: string;
+  price: number;
+  durationMinutes: number;
+}
+
 /** Reserva almacenada en el servidor (respuesta de GET /reservations). */
 export interface ReservationDto {
   id: string;
   scheduledAt: string;
   endedAt: string;
   workerId: string;
-  worker: { id: string; name: string };
+  worker: { id: string; name: string; isDefault?: boolean };
   totalDurationMinutes: number;
+  status: ReservationStatus;
+  userId: string | null;
+  contact: { name: string; phone: string; email?: string | null } | null;
+  services: ReservationServiceLine[];
 }
 
 /**
