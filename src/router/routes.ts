@@ -1,6 +1,7 @@
 import { authRoutes } from 'src/auth/routes';
 import { RouteRecordRaw } from 'vue-router';
 import adminGuard from 'src/auth/guards/admin.guard';
+import sessionGuard from 'src/auth/guards/session.guard';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -29,6 +30,12 @@ const routes: RouteRecordRaw[] = [
       {
         path: '/mi-cuenta',
         component: () => import('pages/MyAccountPage.vue'),
+      },
+      {
+        path: '/mis-reservas',
+        name: 'my-reservations',
+        component: () => import('pages/MyReservationsPage.vue'),
+        beforeEnter: sessionGuard,
       },
       {
         path: '/reservas',

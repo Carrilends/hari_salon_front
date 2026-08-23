@@ -166,7 +166,13 @@ module.exports = configure(function (/* ctx */) {
       // /^\/auth/ cubre login, register y las tres rutas nuevas de la Fase 3a
       // (olvide-contrasena, restablecer, verificar-correo). Los patrones previos
       // /login y /register no casaban con las rutas reales /auth/login|register.
-      exclude: [/^\/mi-cuenta/, /^\/mis-empleados/, /^\/reservas/, /^\/auth/],
+      exclude: [
+        /^\/mi-cuenta/,
+        /^\/mis-empleados/,
+        /^\/mis-reservas/,
+        /^\/reservas/,
+        /^\/auth/,
+      ],
       inlineCriticalCss: true,
     },
 

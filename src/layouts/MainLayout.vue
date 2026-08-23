@@ -340,6 +340,12 @@ const moreMenuItems = computed<HeaderMenuItem[]>(() =>
       method: () => router.push('/mi-cuenta'),
     },
     {
+      icon: 'event_available',
+      label: 'Mis reservas',
+      visible: () => authStore.isLoggedIn,
+      method: () => router.push('/mis-reservas'),
+    },
+    {
       icon: 'rate_review',
       label: 'Testimonios',
       method: () => router.push('/testimonios'),

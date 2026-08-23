@@ -10,13 +10,16 @@ export const reservationsApi = axios.create({
   withCredentials: true,
 });
 
-/** Instancia con Bearer token para endpoints admin de reservas. */
-export const adminReservationsApi = axios.create({
+/**
+ * Instancia con Bearer token para endpoints de reservas que exigen sesión: los
+ * de administración y también «mis reservas» de una clienta normal (Fase 6).
+ */
+export const authedReservationsApi = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true,
 });
 
-adminReservationsApi.interceptors.request.use((config) => {
+authedReservationsApi.interceptors.request.use((config) => {
   const auth = useAuthStore();
   if (auth.token) {
     config.headers = config.headers ?? {};
@@ -26,7 +29,7 @@ adminReservationsApi.interceptors.request.use((config) => {
 });
 
 attachRefreshInterceptor(reservationsApi);
-attachRefreshInterceptor(adminReservationsApi);
+attachRefreshInterceptor(authedReservationsApi);
 
 export async function fetchReservationOccupancy(
   fromYmd: string,
@@ -40,24 +43,35 @@ export async function fetchReservationOccupancy(
 }
 
 export async function fetchAllReservations(): Promise<ReservationDto[]> {
-  const { data } = await adminReservationsApi.get<ReservationDto[]>(
+  const { data } = await authedReservationsApi.get<ReservationDto[]>(
     '/reservations'
   );
   return data;
 }
 
+/**
+ * Reservas de la clienta con sesión iniciada (`GET /reservations/me`). La
+ * identidad sale del JWT en el backend; el cliente no envía ningún userId.
+ */
+export async function fetchMyReservations(): Promise<ReservationDto[]> {
+  const { data } = await authedReservationsApi.get<ReservationDto[]>(
+    '/reservations/me'
+  );
+  return data;
+}
+
 export async function deleteReservation(id: string): Promise<void> {
-  await adminReservationsApi.delete(`/reservations/${id}`);
+  await authedReservationsApi.delete(`/reservations/${id}`);
 }
 
 /** Confirma una reserva pendiente (solo administración). */
 export async function confirmReservation(id: string): Promise<void> {
-  await adminReservationsApi.patch(`/reservations/${id}/confirm`);
+  await authedReservationsApi.patch(`/reservations/${id}/confirm`);
 }
 
 /** Cancela una reserva (administración; el back registra quién la cancela). */
 export async function cancelReservation(id: string): Promise<void> {
-  await adminReservationsApi.patch(`/reservations/${id}/cancel`);
+  await authedReservationsApi.patch(`/reservations/${id}/cancel`);
 }
 
 /** Carga para crear una reserva; coincide con `CreateReservationDto` del back. */
