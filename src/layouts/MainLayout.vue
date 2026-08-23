@@ -161,6 +161,8 @@
     <whoWeAreDialog v-model:dialog="whoWeAreDialogComponent" />
     <ourContact v-model:dialog="ourContactDialog" />
     <BookingDialog v-model:dialog="bookingStore.showDialog" />
+
+    <AssistantLauncher />
   </q-layout>
 </template>
 
@@ -171,6 +173,7 @@ import { useQuasar } from 'quasar';
 import ourContact from 'src/components/dialogs/ourContact.vue';
 import whoWeAreDialog from 'src/components/dialogs/whoWeAreDialog.vue';
 import BookingDialog from 'src/components/dialogs/bookingDialog.vue';
+import AssistantLauncher from 'src/components/assistant/AssistantLauncher.vue';
 import { migrateLegacyBookings, useBookStore } from 'src/stores/book-store';
 import { useAuthStore } from 'src/stores/auth-store';
 import { adminServiceApi } from 'src/api/services-api';
