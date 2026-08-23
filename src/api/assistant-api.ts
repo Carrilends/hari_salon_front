@@ -25,11 +25,44 @@ export interface SendAssistantMessagePayload {
   message: string;
 }
 
+/** Una línea de una propuesta de paquete (Fase 6, T7). */
+export interface PackageProposalLine {
+  serviceId: string;
+  nombre: string;
+  precio: number;
+  minutos: number;
+  categoria: string;
+}
+
+/** Una categoría que el compositor no pudo incluir, con su motivo. */
+export interface PackageProposalOmission {
+  categoria: string;
+  motivo: string;
+}
+
+/**
+ * Propuesta de paquete por evento que el backend surfacea junto al texto cuando
+ * el asistente la compone (herramienta `componerPaquete`). El widget la pinta como
+ * tarjeta; el total y la duración se muestran ANTES de confirmar.
+ */
+export interface PackageProposal {
+  evento: string;
+  completa: boolean;
+  total: number;
+  minutos: number;
+  lineas: PackageProposalLine[];
+  serviciosIds: string[];
+  omitidas: PackageProposalOmission[];
+  fecha?: string;
+}
+
 export interface AssistantReply {
   conversationId?: string;
   reply: string;
   /** Aviso legal, presente en la primera respuesta de cada conversación (RF59). */
   aviso?: string;
+  /** Propuesta de paquete estructurada, cuando el asistente compone una (T7). */
+  propuesta?: PackageProposal;
 }
 
 export async function sendAssistantMessage(

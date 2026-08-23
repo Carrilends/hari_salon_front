@@ -27,13 +27,14 @@
         reservar necesitas iniciar sesión.
       </p>
 
-      <div
-        v-for="(m, i) in messages"
-        :key="i"
-        :class="['assistant-bubble', m.role]"
-      >
-        {{ m.content }}
-      </div>
+      <template v-for="(m, i) in messages" :key="i">
+        <div :class="['assistant-bubble', m.role]">{{ m.content }}</div>
+        <PackageProposalCard
+          v-if="m.propuesta"
+          :propuesta="m.propuesta"
+          @confirm="onConfirmPackage"
+        />
+      </template>
 
       <div
         v-if="loading"
@@ -80,6 +81,8 @@ import { nextTick, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useAssistant } from 'src/composables/assistant/useAssistant';
+import PackageProposalCard from 'src/components/assistant/PackageProposalCard.vue';
+import type { PackageProposal } from 'src/api/assistant-api';
 
 const DEFAULT_NOTICE =
   'Asistente automático. Tus mensajes se procesan con un proveedor de inteligencia artificial fuera de Colombia.';
@@ -99,6 +102,17 @@ async function onSubmit() {
   if (!value.trim() || loading.value) return;
   text.value = '';
   await send(value);
+}
+
+// «Reservar este paquete» no llama al endpoint de reservas: envía un mensaje de
+// confirmación a la conversación, así el asistente mantiene el hilo y reserva él
+// (re-componer es determinista: recupera los mismos serviciosIds y crea la
+// reserva). El backend sigue siendo la autoridad (exige sesión y valida agenda).
+async function onConfirmPackage(propuesta: PackageProposal) {
+  const fecha = propuesta.fecha ? ` para el ${propuesta.fecha}` : '';
+  await send(
+    `Sí, confirmo. Reserva el paquete de ${propuesta.evento}${fecha}.`
+  );
 }
 
 function goLogin() {

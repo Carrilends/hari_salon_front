@@ -73,4 +73,46 @@ describe('useAssistant', () => {
     expect(a.messages.value).toHaveLength(0);
     expect(sessionStorage.getItem('assistant-conversation-id')).toBeNull();
   });
+
+  it('adjunta la propuesta de paquete al mensaje del asistente cuando la trae (T7)', async () => {
+    const propuesta = {
+      evento: 'boda',
+      completa: true,
+      total: 150000,
+      minutos: 165,
+      lineas: [
+        {
+          serviceId: 'r1',
+          nombre: 'Recogido',
+          precio: 60000,
+          minutos: 60,
+          categoria: 'Recogidos',
+        },
+      ],
+      serviciosIds: ['r1'],
+      omitidas: [],
+    };
+    mockSend.mockResolvedValue({
+      conversationId: 'c1',
+      reply: 'Aquí tienes tu paquete.',
+      propuesta,
+    });
+    const a = useAssistant();
+
+    await a.send('me caso');
+
+    const last = a.messages.value[a.messages.value.length - 1];
+    expect(last.role).toBe('assistant');
+    expect(last.propuesta).toEqual(propuesta);
+  });
+
+  it('no adjunta propuesta cuando la respuesta no la trae', async () => {
+    mockSend.mockResolvedValue({ conversationId: 'c1', reply: 'Hola' });
+    const a = useAssistant();
+
+    await a.send('hola');
+
+    const last = a.messages.value[a.messages.value.length - 1];
+    expect(last.propuesta).toBeUndefined();
+  });
 });

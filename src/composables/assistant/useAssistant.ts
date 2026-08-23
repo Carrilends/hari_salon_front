@@ -1,9 +1,14 @@
 import { ref } from 'vue';
-import { sendAssistantMessage } from 'src/api/assistant-api';
+import {
+  sendAssistantMessage,
+  type PackageProposal,
+} from 'src/api/assistant-api';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  /** Propuesta de paquete adjunta a una respuesta del asistente (T7). */
+  propuesta?: PackageProposal;
 }
 
 const STORAGE_KEY = 'assistant-conversation-id';
@@ -62,7 +67,11 @@ export function useAssistant() {
       conversationId = reply.conversationId ?? conversationId;
       writeConversationId(conversationId);
       if (reply.aviso) aviso.value = reply.aviso;
-      messages.value.push({ role: 'assistant', content: reply.reply });
+      messages.value.push({
+        role: 'assistant',
+        content: reply.reply,
+        ...(reply.propuesta ? { propuesta: reply.propuesta } : {}),
+      });
     } catch {
       error.value =
         'No pude responder en este momento. Inténtalo de nuevo o reserva por el flujo de siempre.';
