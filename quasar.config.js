@@ -108,8 +108,13 @@ module.exports = configure(function (/* ctx */) {
         // tambien se ve como parte del propio origen, asi la cookie de sesion se
         // comporta igual (primera parte, SameSite=Lax). El backend conserva su
         // prefijo /api, por eso no se reescribe la ruta.
+        // El destino usa 127.0.0.1 y no 'localhost' a proposito: desde Node 17
+        // la resolucion DNS es `verbatim` por defecto, asi que 'localhost'
+        // resuelve primero a ::1 (IPv6). La API hace listen en 0.0.0.0 (solo
+        // IPv4), de modo que el proxy fallaba en silencio contra ::1 y el
+        // navegador recibia respuestas vacias en vez de un error visible.
         '/api': {
-          target: process.env.DEV_API_TARGET || 'http://localhost:3001',
+          target: process.env.DEV_API_TARGET || 'http://127.0.0.1:3001',
           changeOrigin: true,
         },
       },

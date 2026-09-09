@@ -6,7 +6,7 @@ This is the **frontend** of the thesis monorepo. The parent `../CLAUDE.md` is au
 
 ## Stack
 
-Vue 3 + Quasar 2 (Vite) with the **SSG** extension (`quasar-app-extension-ssg`). State via Pinia (with `pinia-plugin-persistedstate`); server state via **TanStack Vue Query**; forms via vee-validate + yup; head/meta via `@vueuse/head`; HTTP via Axios; Cloudinary via `@cloudinary/url-gen` + `@cloudinary/vue`. Package manager is **yarn** (a `yarn.lock` is committed).
+Vue 3 + Quasar 2 (Vite) with the **SSG** extension (`quasar-app-extension-ssg`). State via Pinia (with `pinia-plugin-persistedstate`); server state via **TanStack Vue Query**; forms via vee-validate + yup; head/meta via `@vueuse/head`; HTTP via Axios; Cloudinary with **no SDK** — signed uploads and delivery URLs are hand-rolled in `src/helpers/cloudinaryHelpers.ts`. Package manager is **yarn** (a `yarn.lock` is committed).
 
 ## Commands
 
@@ -77,7 +77,7 @@ There is **no `typecheck` script**; type checking runs via `vite-plugin-checker`
 Copy `.env.example`:
 
 - `VITE_API_URL` — full backend URL **including `/api`** (e.g. `http://localhost:3000/api`). The backend sets a global `/api` prefix.
-- `VITE_CLOUDINARY_CLOUD_NAME`, `VITE_CLOUDINARY_UPLOAD_PRESET` — Cloudinary read-side (uploads still proxy through the backend).
+- **No Cloudinary env vars.** The cloud name arrives from the backend in the `/api/cloudinary/sign` response, so the frontend never needs its own copy — not locally, not on Netlify. `VITE_CLOUDINARY_CLOUD_NAME` and `VITE_CLOUDINARY_UPLOAD_PRESET` were declared but read nowhere; removed 2026-09-01 from `.env.example` and `src/env.d.ts`. Do not reintroduce them.
 - `VITE_SITE_URL` — absolute site URL, **no trailing slash**. Used by canonical/OG tags and `scripts/generate-sitemap.mjs`.
 
 ## Deploy targets
