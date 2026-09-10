@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query';
 import {
   fetchMyReservations,
   cancelReservation,
+  rescheduleReservation,
 } from 'src/api/reservations-api';
 import type { ReservationDto } from 'src/interfaces/booking';
 
@@ -26,5 +27,15 @@ export function useMyReservations() {
       queryClient.invalidateQueries({ queryKey: ['reservations', 'me'] }),
   });
 
-  return { query, cancel };
+  // Mueve una cita conservando su id. Invalida la misma consulta que cancelar:
+  // ambas vías y el asistente comparten el caso de uso del backend, así que
+  // siempre informan del mismo estado.
+  const reschedule = useMutation({
+    mutationFn: ({ id, scheduledAt }: { id: string; scheduledAt: string }) =>
+      rescheduleReservation(id, scheduledAt),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['reservations', 'me'] }),
+  });
+
+  return { query, cancel, reschedule };
 }

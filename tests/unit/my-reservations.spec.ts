@@ -1,5 +1,6 @@
 import {
   isCancelable,
+  isReschedulable,
   splitReservationsByTime,
 } from 'src/helpers/my-reservations';
 import type { ReservationDto } from 'src/interfaces/booking';
@@ -78,5 +79,33 @@ describe('splitReservationsByTime', () => {
     const { past } = splitReservationsByTime([antigua, reciente], NOW);
 
     expect(past.map((r) => r.id)).toEqual(['b', 'a']);
+  });
+});
+
+describe('isReschedulable', () => {
+  it('pendiente en el futuro se puede mover', () => {
+    expect(isReschedulable(res({ status: 'pendiente' }), NOW)).toBe(true);
+  });
+
+  it('confirmada en el futuro se puede mover y CONSERVA su estado', () => {
+    // El backend no la degrada a pendiente: degradarla la expondría al cron que
+    // cancela las pendientes vencidas.
+    expect(isReschedulable(res({ status: 'confirmada' }), NOW)).toBe(true);
+  });
+
+  it.each(['cumplida', 'cancelada'] as const)(
+    'una reserva %s ya no se mueve',
+    (status) => {
+      expect(isReschedulable(res({ status }), NOW)).toBe(false);
+    }
+  );
+
+  it('una reserva cuya hora ya pasó no se puede mover', () => {
+    expect(
+      isReschedulable(
+        res({ status: 'confirmada', scheduledAt: '2026-08-19T10:00:00.000Z' }),
+        NOW
+      )
+    ).toBe(false);
   });
 });

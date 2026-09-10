@@ -41,3 +41,16 @@ export function splitReservationsByTime(
   past.sort((a, b) => -ascByTime(a, b));
   return { upcoming, past };
 }
+
+/**
+ * Cortesía de interfaz para el botón «Cambiar fecha». Hoy coincide con
+ * `isCancelable` —la regla de plazo es la misma a propósito: un umbral distinto
+ * sería esquivable cancelando y reservando de nuevo—, pero se expresa aparte
+ * porque son decisiones de negocio distintas y el backend puede separarlas con
+ * `RESCHEDULE_MIN_LEAD_MINUTES` sin que el front tenga que adivinarlo.
+ */
+export function isReschedulable(res: ReservationDto, now: Date): boolean {
+  const movibleStatus =
+    res.status === 'pendiente' || res.status === 'confirmada';
+  return movibleStatus && new Date(res.scheduledAt).getTime() > now.getTime();
+}

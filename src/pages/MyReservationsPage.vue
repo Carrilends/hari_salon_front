@@ -55,7 +55,10 @@
             :reservation="res"
             :cancelable="isCancelable(res, now)"
             :canceling="cancel.isPending.value && pendingId === res.id"
+            :reschedulable="isReschedulable(res, now)"
+            :rescheduling="reschedule.isPending.value && pendingId === res.id"
             @cancel="onCancel"
+            @reschedule="onReschedule"
           />
         </div>
       </section>
@@ -69,11 +72,21 @@
             :reservation="res"
             :cancelable="false"
             :canceling="false"
+            :reschedulable="false"
+            :rescheduling="false"
             @cancel="onCancel"
+            @reschedule="onReschedule"
           />
         </div>
       </section>
     </template>
+
+    <RescheduleDialog
+      v-model="rescheduleOpen"
+      :reservation="toReschedule"
+      :loading="reschedule.isPending.value"
+      @confirm="onRescheduleConfirm"
+    />
   </q-page>
 </template>
 
@@ -84,16 +97,18 @@ import { useQuasar } from 'quasar';
 import { useMyReservations } from 'src/composables/reservations/useMyReservations';
 import {
   isCancelable,
+  isReschedulable,
   splitReservationsByTime,
 } from 'src/helpers/my-reservations';
 import ReservationCard from 'src/components/reservations/ReservationCard.vue';
+import RescheduleDialog from 'src/components/reservations/RescheduleDialog.vue';
 import type { ReservationDto } from 'src/interfaces/booking';
 
 defineOptions({ name: 'MyReservationsPage' });
 
 const router = useRouter();
 const $q = useQuasar();
-const { query, cancel } = useMyReservations();
+const { query, cancel, reschedule } = useMyReservations();
 
 // Instante de referencia para separar próximas/pasadas y decidir la cortesía del
 // botón «Cancelar». La regla real la aplica el backend. Se re-evalúa cada vez que
@@ -106,6 +121,10 @@ watch(query.data, () => {
 
 // El botón que se muestra "cargando" es el de la reserva en curso.
 const pendingId = ref<string | null>(null);
+
+// Estado del diálogo de «Cambiar fecha».
+const rescheduleOpen = ref(false);
+const toReschedule = ref<ReservationDto | null>(null);
 
 const all = computed<ReservationDto[]>(() => query.data.value ?? []);
 const split = computed(() => splitReservationsByTime(all.value, now.value));
@@ -133,5 +152,36 @@ function onCancel(res: ReservationDto) {
       pendingId.value = null;
     }
   });
+}
+
+function onReschedule(res: ReservationDto) {
+  toReschedule.value = res;
+  rescheduleOpen.value = true;
+}
+
+async function onRescheduleConfirm(scheduledAt: string) {
+  const res = toReschedule.value;
+  if (!res) return;
+  pendingId.value = res.id;
+  try {
+    await reschedule.mutateAsync({ id: res.id, scheduledAt });
+    rescheduleOpen.value = false;
+    $q.notify({ type: 'positive', message: 'Tu cita quedó movida.' });
+  } catch (error) {
+    // El backend es la autoridad: puede rechazar por solape con el estilista,
+    // por horario o por plazo. Se distingue el solape porque es el caso que la
+    // clienta puede resolver sola eligiendo otra hora.
+    const status = (error as { response?: { status?: number } })?.response
+      ?.status;
+    $q.notify({
+      type: 'negative',
+      message:
+        status === 409
+          ? 'Esa hora ya está ocupada. Elige otra.'
+          : 'No se pudo cambiar la fecha. Revisa el horario e intenta de nuevo.',
+    });
+  } finally {
+    pendingId.value = null;
+  }
 }
 </script>

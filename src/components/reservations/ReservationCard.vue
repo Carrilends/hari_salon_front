@@ -18,6 +18,17 @@
       <div class="col-12 col-sm-auto row items-center justify-end q-gutter-sm">
         <q-badge :color="statusMeta.color" :label="statusMeta.label" />
         <q-btn
+          v-if="reschedulable"
+          color="primary"
+          icon="event_repeat"
+          label="Cambiar fecha"
+          dense
+          no-caps
+          outline
+          :loading="rescheduling"
+          @click="emit('reschedule', reservation)"
+        />
+        <q-btn
           v-if="cancelable"
           color="negative"
           icon="close"
@@ -44,10 +55,13 @@ const props = defineProps<{
   reservation: ReservationDto;
   cancelable: boolean;
   canceling: boolean;
+  reschedulable: boolean;
+  rescheduling: boolean;
 }>();
 
 const emit = defineEmits<{
   (e: 'cancel', reservation: ReservationDto): void;
+  (e: 'reschedule', reservation: ReservationDto): void;
 }>();
 
 const statusMeta = computed(() =>

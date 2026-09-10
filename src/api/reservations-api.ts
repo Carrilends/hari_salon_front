@@ -69,6 +69,19 @@ export async function confirmReservation(id: string): Promise<void> {
   await authedReservationsApi.patch(`/reservations/${id}/confirm`);
 }
 
+/**
+ * Mueve una reserva a otra fecha y hora. Conserva id, servicios y estilista: el
+ * backend solo cambia la ventana, y el estado se conserva.
+ */
+export async function rescheduleReservation(
+  id: string,
+  scheduledAt: string
+): Promise<void> {
+  await authedReservationsApi.patch(`/reservations/${id}/reschedule`, {
+    scheduledAt,
+  });
+}
+
 /** Cancela una reserva (administración; el back registra quién la cancela). */
 export async function cancelReservation(id: string): Promise<void> {
   await authedReservationsApi.patch(`/reservations/${id}/cancel`);
