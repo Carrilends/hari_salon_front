@@ -14,16 +14,18 @@ import { reservationEventEffects } from './reservationEventEffects';
 import { createInvalidationCoalescer } from './invalidationCoalescer';
 
 /**
- * Nombres a los que se suscribe el socket. `satisfies` obliga a que estén los
- * cuatro miembros de la unión: si el backend emite un quinto y alguien amplía
- * `ReservationEvent`, esto deja de compilar hasta que se añada aquí.
+ * Nombres a los que se suscribe el socket. La anotación obliga a que estén los
+ * cuatro miembros de la unión, ni uno más ni uno menos: si el backend emite un
+ * quinto y alguien amplía `ReservationEvent`, esto deja de compilar hasta que
+ * se añada aquí. (No se usa `satisfies`: el esbuild 0.14 de Vite 2 no lo
+ * entiende y rompe `yarn dev`/`yarn build` aunque vue-tsc y jest lo acepten.)
  */
-const RESERVATION_EVENT_NAMES = {
+const RESERVATION_EVENT_NAMES: Record<ReservationEvent['type'], true> = {
   'reservation.created': true,
   'reservation.cancelled': true,
   'reservation.rescheduled': true,
   'reservation.confirmed': true,
-} satisfies Record<ReservationEvent['type'], true>;
+};
 
 /** Todo lo que depende de las reservas; es lo que se refresca al reconectar. */
 const EVERYTHING_RESERVATIONS_TOUCH = [
