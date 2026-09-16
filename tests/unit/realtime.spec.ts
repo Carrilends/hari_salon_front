@@ -37,6 +37,13 @@ describe('cliente del socket de administración', () => {
     expect(getAdminSocket()).not.toBeNull();
   });
 
+  it('no limita los reintentos: un redeploy del backend no deja al panel sin canal', () => {
+    connectAdminSocket('jwt1');
+    const opts = (io as jest.Mock).mock.calls[0][1];
+    expect(opts.reconnectionAttempts).toBeUndefined();
+    expect(opts.reconnection).not.toBe(false);
+  });
+
   it('al reconectar descarta el socket anterior', () => {
     const socket = connectAdminSocket('jwt1');
     connectAdminSocket('jwt2');

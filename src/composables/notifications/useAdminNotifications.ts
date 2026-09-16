@@ -9,6 +9,7 @@ import {
   shouldConnectSocket,
 } from 'src/api/realtime';
 import type { ReservationEvent } from 'src/interfaces/booking';
+import { queryKeys } from 'src/api/query-keys';
 import { reservationEventEffects } from './reservationEventEffects';
 import { createInvalidationCoalescer } from './invalidationCoalescer';
 
@@ -23,6 +24,13 @@ const RESERVATION_EVENT_NAMES = {
   'reservation.rescheduled': true,
   'reservation.confirmed': true,
 } satisfies Record<ReservationEvent['type'], true>;
+
+/** Todo lo que depende de las reservas; es lo que se refresca al reconectar. */
+const EVERYTHING_RESERVATIONS_TOUCH = [
+  queryKeys.reservations.all,
+  queryKeys.occupancy.all,
+  queryKeys.workerAvailability.all,
+];
 
 /**
  * Canal en tiempo real del panel de administración (Fase 4, RF53, ampliado con
@@ -64,6 +72,11 @@ export function useAdminNotifications() {
 
   function connect(token: string) {
     const socket = connectAdminSocket(token);
+    // `connect` se emite en CADA conexión lograda, no solo en la primera. Los
+    // eventos emitidos mientras el socket estaba caído (portátil suspendido,
+    // redeploy del backend) se perdieron: refrescarlo todo aquí es lo que los
+    // recupera. En la primera conexión cuesta, como mucho, un refetch.
+    socket.on('connect', () => coalescer.add(EVERYTHING_RESERVATIONS_TOUCH));
     for (const name of Object.keys(RESERVATION_EVENT_NAMES)) {
       socket.on(name, dispatch);
     }

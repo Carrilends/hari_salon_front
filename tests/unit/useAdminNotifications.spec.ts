@@ -109,6 +109,19 @@ describe('useAdminNotifications — despachador de los cuatro eventos', () => {
     expect(invalidateQueries).toHaveBeenCalledTimes(3); // …pero un refetch por clave
   });
 
+  it('al (re)conectar refresca lista, ocupación y disponibilidad sin avisar', () => {
+    // socket.io emite `connect` en cada conexión lograda. Lo que pasó mientras el
+    // socket estaba caído se perdió; invalidar todo aquí es lo que lo recupera.
+    fakeSocket.emit('connect');
+    expect(notify).not.toHaveBeenCalled();
+    jest.runAllTimers();
+    expect(keysInvalidated()).toEqual([
+      { queryKey: queryKeys.reservations.all },
+      { queryKey: queryKeys.occupancy.all },
+      { queryKey: queryKeys.workerAvailability.all },
+    ]);
+  });
+
   it('el aviso lleva la acción «Ver» que lleva al panel de reservas', () => {
     fakeSocket.emit('reservation.created', createdEvent);
     const actions = notify.mock.calls[0][0].actions as { handler: () => void }[];
