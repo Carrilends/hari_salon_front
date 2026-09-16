@@ -114,6 +114,11 @@ import { useQuasar } from 'quasar';
 import { useAdminReservations } from 'src/composables/reservations/useAdminReservations';
 import { reservationStatusMeta } from 'src/helpers/reservation-status';
 import type { ReservationDto } from 'src/interfaces/booking';
+import {
+  ADMIN_RESERVATION_FILTERS,
+  filterAdminReservations,
+  type AdminReservationFilter,
+} from 'src/helpers/admin-reservation-filter';
 
 defineOptions({ name: 'AdminReservationsPage' });
 
@@ -123,21 +128,15 @@ const { query, confirm, cancel } = useAdminReservations();
 // El botón que se muestra "cargando" es el de la fila en curso.
 const pendingId = ref<string | null>(null);
 
-type Filter = ReservationDto['status'] | 'todas';
-const statusFilter = ref<Filter>('pendiente');
-const filterOptions = [
-  { label: 'Pendientes', value: 'pendiente' },
-  { label: 'Confirmadas', value: 'confirmada' },
-  { label: 'Cumplidas', value: 'cumplida' },
-  { label: 'Canceladas', value: 'cancelada' },
-  { label: 'Todas', value: 'todas' },
-];
+// La lista es de reservas vigentes (ver `admin-reservation-filter.ts`): las
+// canceladas desaparecen de ella —de eso avisa el canal en tiempo real— y las
+// cumplidas ya pasaron, así que el filtro no las ofrece.
+const statusFilter = ref<AdminReservationFilter>('pendiente');
+const filterOptions = ADMIN_RESERVATION_FILTERS;
 
-const filtered = computed<ReservationDto[]>(() => {
-  const list = query.data.value ?? [];
-  if (statusFilter.value === 'todas') return list;
-  return list.filter((r) => r.status === statusFilter.value);
-});
+const filtered = computed<ReservationDto[]>(() =>
+  filterAdminReservations(query.data.value ?? [], statusFilter.value)
+);
 
 const emptyLabel = computed(() =>
   statusFilter.value === 'todas'
