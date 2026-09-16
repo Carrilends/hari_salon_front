@@ -8,6 +8,7 @@ import {
   disconnectAdminSocket,
   shouldConnectSocket,
 } from 'src/api/realtime';
+import { WS_URL } from 'src/api/ws-url';
 import type { ReservationEvent } from 'src/interfaces/booking';
 import { queryKeys } from 'src/api/query-keys';
 import { reservationEventEffects } from './reservationEventEffects';
@@ -84,14 +85,24 @@ export function useAdminNotifications() {
     }
   }
 
+  let warnedNoWsUrl = false;
+
   function sync() {
     // Las páginas del SSG se prerenderizan sin `window`; una clienta nunca abre
     // este socket. Solo administración, y solo en el navegador.
     if (typeof window === 'undefined') return;
-    if (shouldConnectSocket(auth.isAdmin, auth.token)) {
+    if (shouldConnectSocket(auth.isAdmin, auth.token, WS_URL)) {
       connect(auth.token);
-    } else {
-      disconnectAdminSocket();
+      return;
+    }
+    disconnectAdminSocket();
+    // Un despliegue sin `VITE_WS_URL` no debe fallar en silencio: el panel
+    // seguiría funcionando, pero sin tiempo real, y nadie sabría por qué.
+    if (auth.isAdmin && auth.token && !WS_URL && !warnedNoWsUrl) {
+      warnedNoWsUrl = true;
+      console.warn(
+        '[tiempo real] VITE_WS_URL no está definida: el panel no recibirá avisos en vivo.'
+      );
     }
   }
 

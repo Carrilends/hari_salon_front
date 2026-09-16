@@ -12,14 +12,20 @@ import {
 } from 'src/api/realtime';
 
 describe('shouldConnectSocket', () => {
-  it('conecta solo si es admin y hay token', () => {
-    expect(shouldConnectSocket(true, 'jwt')).toBe(true);
+  const WS = 'https://backend.up.railway.app';
+  it('conecta solo si es admin, hay token y hay URL del socket', () => {
+    expect(shouldConnectSocket(true, 'jwt', WS)).toBe(true);
   });
   it('no conecta si no es administrador', () => {
-    expect(shouldConnectSocket(false, 'jwt')).toBe(false);
+    expect(shouldConnectSocket(false, 'jwt', WS)).toBe(false);
   });
   it('no conecta si no hay token', () => {
-    expect(shouldConnectSocket(true, '')).toBe(false);
+    expect(shouldConnectSocket(true, '', WS)).toBe(false);
+  });
+  it('sin VITE_WS_URL no conecta: el proxy de Netlify no negocia WebSocket', () => {
+    // Sin tope de reintentos, intentar `io('/eventos')` contra el proxy sería
+    // un bucle infinito de handshakes fallidos. Mejor no abrir nada y avisar.
+    expect(shouldConnectSocket(true, 'jwt', '')).toBe(false);
   });
 });
 

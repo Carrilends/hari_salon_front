@@ -33,7 +33,8 @@ jest.mock('@tanstack/vue-query', () => ({
 jest.mock('vue-router', () => ({ useRouter: () => ({ push }) }));
 jest.mock('src/stores/auth-store', () => ({ useAuthStore: () => authState }));
 jest.mock('src/api/realtime', () => ({
-  shouldConnectSocket: (isAdmin: boolean, token: string) => isAdmin && !!token,
+  shouldConnectSocket: (isAdmin: boolean, token: string, wsUrl: string) =>
+    isAdmin && !!token && !!wsUrl,
   connectAdminSocket: jest.fn(() => fakeSocket),
   disconnectAdminSocket: jest.fn(),
 }));

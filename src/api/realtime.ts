@@ -3,9 +3,20 @@ import { WS_URL } from './ws-url';
 
 let socket: Socket | null = null;
 
-/** Decisión pura: ¿debe estar conectado el socket de administración? */
-export function shouldConnectSocket(isAdmin: boolean, token: string): boolean {
-  return isAdmin && !!token;
+/**
+ * Decisión pura: ¿debe estar conectado el socket de administración?
+ *
+ * Sin `wsUrl` (Netlify sin `VITE_WS_URL`) la respuesta es no: el socket iría
+ * contra el proxy `/api`, que no negocia WebSocket, y como los reintentos no
+ * tienen tope sería un bucle infinito de handshakes fallidos. Mejor no abrir
+ * nada y que `useAdminNotifications` lo diga por consola.
+ */
+export function shouldConnectSocket(
+  isAdmin: boolean,
+  token: string,
+  wsUrl: string
+): boolean {
+  return isAdmin && !!token && !!wsUrl;
 }
 
 /**
