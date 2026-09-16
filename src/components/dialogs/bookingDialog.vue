@@ -671,6 +671,7 @@ import {
 } from 'vue';
 import { useQuasar } from 'quasar';
 import { useQueryClient } from '@tanstack/vue-query';
+import { queryKeys } from 'src/api/query-keys';
 import ServiceDialog from './serviceDialog.vue';
 import Service from 'src/interfaces/service';
 import { getService } from 'src/composables/services/useService';
@@ -1148,10 +1149,10 @@ const sendBookingData = async () => {
   } finally {
     $q.loading.hide();
     await queryClient.invalidateQueries({
-      queryKey: ['worker-availability'],
+      queryKey: queryKeys.workerAvailability.all,
     });
     await queryClient.invalidateQueries({
-      queryKey: ['reservation-occupancy'],
+      queryKey: queryKeys.occupancy.all,
     });
   }
 
@@ -1208,7 +1209,7 @@ watch(date, (newDate, oldDate) => {
 watch(selectedStylist, () => {
   if (!dateCard.value || !date.value) return;
   void queryClient.invalidateQueries({
-    queryKey: ['worker-availability'],
+    queryKey: queryKeys.workerAvailability.all,
   });
   void workerAvailabilityQuery.refetch();
 });

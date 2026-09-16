@@ -4,6 +4,7 @@ import {
   fetchWorkerAvailability,
   type WorkerAvailabilityResponse,
 } from 'src/api/workers-api';
+import { queryKeys } from 'src/api/query-keys';
 
 export function useWorkerAvailability(
   dateQDate: MaybeRefOrGetter<string>,
@@ -13,7 +14,7 @@ export function useWorkerAvailability(
   const enabled = computed(() => Boolean(toValue(dialogOpen) && toValue(dateQDate)));
 
   return useQuery<WorkerAvailabilityResponse>({
-    queryKey: computed(() => ['worker-availability', dateYmd.value]),
+    queryKey: computed(() => queryKeys.workerAvailability.day(dateYmd.value)),
     queryFn: () => fetchWorkerAvailability(dateYmd.value),
     enabled,
     staleTime: 0,

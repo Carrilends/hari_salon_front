@@ -9,6 +9,7 @@ import {
   shouldConnectSocket,
 } from 'src/api/realtime';
 import type { ReservationCreatedEvent } from 'src/interfaces/booking';
+import { queryKeys } from 'src/api/query-keys';
 
 /** Zona del salón (America/Bogota); el servidor puede correr en UTC. */
 const SALON_TZ = 'America/Bogota';
@@ -51,7 +52,9 @@ export function useAdminNotifications() {
         ],
       });
       // El panel se refresca solo: invalidar la consulta basta.
-      void queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.reservations.all,
+      });
     });
   }
 

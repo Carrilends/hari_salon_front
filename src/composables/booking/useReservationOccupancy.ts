@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/vue-query';
 import { fetchReservationOccupancy } from 'src/api/reservations-api';
 import type { ReservationOccupancyResponse } from 'src/helpers/booking-occupancy';
 import { ymdRangeForCalendarMonth } from 'src/helpers/booking-occupancy';
+import { queryKeys } from 'src/api/query-keys';
 
 export function useReservationOccupancy(
   year: MaybeRefOrGetter<number>,
@@ -15,11 +16,9 @@ export function useReservationOccupancy(
   const enabled = computed(() => Boolean(toValue(dialogOpen)));
 
   return useQuery<ReservationOccupancyResponse>({
-    queryKey: computed(() => [
-      'reservation-occupancy',
-      toValue(year),
-      toValue(month),
-    ]),
+    queryKey: computed(() =>
+      queryKeys.occupancy.month(toValue(year), toValue(month))
+    ),
     queryFn: () =>
       fetchReservationOccupancy(fromTo.value.from, fromTo.value.to),
     enabled,
