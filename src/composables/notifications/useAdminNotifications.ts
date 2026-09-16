@@ -8,25 +8,32 @@ import {
   disconnectAdminSocket,
   shouldConnectSocket,
 } from 'src/api/realtime';
-import type { ReservationCreatedEvent } from 'src/interfaces/booking';
-import { queryKeys } from 'src/api/query-keys';
-
-/** Zona del salón (America/Bogota); el servidor puede correr en UTC. */
-const SALON_TZ = 'America/Bogota';
-
-function formatSalonDateTime(iso: string): string {
-  return new Intl.DateTimeFormat('es-CO', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone: SALON_TZ,
-  }).format(new Date(iso));
-}
+import type { ReservationEvent } from 'src/interfaces/booking';
+import { reservationEventEffects } from './reservationEventEffects';
+import { createInvalidationCoalescer } from './invalidationCoalescer';
 
 /**
- * Aviso en tiempo real de reservas nuevas para administración (Fase 4, RF53). El
- * socket se abre solo para sesiones de administración y se reconstruye en cada
- * cambio de token (login o renovación de la Fase 3b, que el servidor solo valida
- * en el handshake); se cierra al cerrar sesión.
+ * Nombres a los que se suscribe el socket. `satisfies` obliga a que estén los
+ * cuatro miembros de la unión: si el backend emite un quinto y alguien amplía
+ * `ReservationEvent`, esto deja de compilar hasta que se añada aquí.
+ */
+const RESERVATION_EVENT_NAMES = {
+  'reservation.created': true,
+  'reservation.cancelled': true,
+  'reservation.rescheduled': true,
+  'reservation.confirmed': true,
+} satisfies Record<ReservationEvent['type'], true>;
+
+/**
+ * Canal en tiempo real del panel de administración (Fase 4, RF53, ampliado con
+ * la Etapa 2 de WhatsApp). Despachador delgado: cada evento del socket pasa por
+ * la tabla `reservationEventEffects`, que decide el aviso y las consultas a
+ * invalidar; las invalidaciones se coalescen para que una ráfaga no dispare un
+ * refetch por evento.
+ *
+ * El socket se abre solo para sesiones de administración y se reconstruye en
+ * cada cambio de token (login o renovación de la Fase 3b, que el servidor solo
+ * valida en el handshake); se cierra al cerrar sesión.
  */
 export function useAdminNotifications() {
   const auth = useAuthStore();
@@ -34,28 +41,32 @@ export function useAdminNotifications() {
   const queryClient = useQueryClient();
   const router = useRouter();
 
+  const coalescer = createInvalidationCoalescer((keys) => {
+    for (const queryKey of keys) void queryClient.invalidateQueries({ queryKey });
+  });
+
+  function dispatch(event: ReservationEvent) {
+    const { notice, invalidate } = reservationEventEffects(event);
+    $q.notify({
+      ...notice,
+      timeout: 8000,
+      actions: [
+        {
+          label: 'Ver',
+          color: 'white',
+          handler: () => void router.push('/reservas'),
+        },
+      ],
+    });
+    // El panel se refresca solo: invalidar las consultas basta.
+    coalescer.add(invalidate);
+  }
+
   function connect(token: string) {
     const socket = connectAdminSocket(token);
-    socket.on('reservation.created', (event: ReservationCreatedEvent) => {
-      $q.notify({
-        type: 'positive',
-        icon: 'event_available',
-        message: `Nueva reserva de ${event.customerName}`,
-        caption: formatSalonDateTime(event.scheduledAt),
-        timeout: 8000,
-        actions: [
-          {
-            label: 'Ver',
-            color: 'white',
-            handler: () => void router.push('/reservas'),
-          },
-        ],
-      });
-      // El panel se refresca solo: invalidar la consulta basta.
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.reservations.all,
-      });
-    });
+    for (const name of Object.keys(RESERVATION_EVENT_NAMES)) {
+      socket.on(name, dispatch);
+    }
   }
 
   function sync() {
@@ -76,5 +87,10 @@ export function useAdminNotifications() {
     watch(() => [auth.token, auth.isAdmin], sync);
   }
 
-  return { start, stop: disconnectAdminSocket };
+  function stop() {
+    coalescer.dispose();
+    disconnectAdminSocket();
+  }
+
+  return { start, stop };
 }
