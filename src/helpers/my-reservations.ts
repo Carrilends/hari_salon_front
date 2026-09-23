@@ -54,3 +54,51 @@ export function isReschedulable(res: ReservationDto, now: Date): boolean {
     res.status === 'pendiente' || res.status === 'confirmada';
   return movibleStatus && new Date(res.scheduledAt).getTime() > now.getTime();
 }
+
+/**
+ * Motivos con los que el backend acompaña un 409 al mover una cita. Son códigos
+ * estables, no textos: el mensaje del servidor se reescribe, se acorta y se
+ * traduce, y decidir por él dejaría al portal contando la historia equivocada
+ * sin que ninguna prueba se entere.
+ *
+ * Definidos en `hair_salon_back/src/reservations/infrastructure/http/
+ * reservation-domain-exception.filter.ts`.
+ */
+type RescheduleConflictReason = 'estilista_ocupada' | 'hora_ocupada';
+
+/**
+ * Texto para un fallo al cambiar la fecha de una cita.
+ *
+ * El portal traducía **todo** 409 a «Esa hora ya está ocupada. Elige otra.».
+ * Desde que la reprogramación puede repartir de nuevo una cita que no tenía
+ * estilista elegida, ese 409 tiene dos causas con remedios distintos:
+ *
+ *   - `estilista_ocupada`: la ocupada es la estilista que ella eligió, así que
+ *     puede cambiar de hora **o** reservar sin preferencia;
+ *   - `hora_ocupada`: no queda ninguna libre, así que solo cabe cambiar de hora.
+ *
+ * Un 409 sin motivo conserva el texto genérico de siempre: inventarse una de las
+ * dos causas sería peor que no decir cuál.
+ */
+export function rescheduleErrorMessage(
+  error: unknown,
+  res: Pick<ReservationDto, 'worker'>
+): string {
+  const response = (error as { response?: { status?: number; data?: unknown } })
+    ?.response;
+  if (response?.status !== 409) {
+    return 'No se pudo cambiar la fecha. Revisa el horario e intenta de nuevo.';
+  }
+
+  const reason = (response.data as { reason?: RescheduleConflictReason })
+    ?.reason;
+
+  if (reason === 'estilista_ocupada') {
+    const nombre = res.worker?.name || 'Tu estilista';
+    return `${nombre} no tiene ese hueco. Prueba otra hora, o reserva de nuevo sin preferencia de estilista.`;
+  }
+  if (reason === 'hora_ocupada') {
+    return 'No queda ninguna estilista libre a esa hora.';
+  }
+  return 'Esa hora ya está ocupada. Elige otra.';
+}

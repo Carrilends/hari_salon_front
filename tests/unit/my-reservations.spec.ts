@@ -1,6 +1,7 @@
 import {
   isCancelable,
   isReschedulable,
+  rescheduleErrorMessage,
   splitReservationsByTime,
 } from 'src/helpers/my-reservations';
 import type { ReservationDto } from 'src/interfaces/booking';
@@ -107,5 +108,71 @@ describe('isReschedulable', () => {
         NOW
       )
     ).toBe(false);
+  });
+});
+
+/**
+ * El mensaje del 409 al mover una cita.
+ *
+ * El portal traducía **todo** 409 a «Esa hora ya está ocupada. Elige otra.».
+ * Desde que la reprogramación puede repartir de nuevo una cita sin preferencia
+ * de estilista, ese 409 tiene dos causas con remedios distintos: si la ocupada
+ * es la estilista que la clienta eligió, puede cambiar de hora **o** reservar
+ * sin preferencia; si no queda ninguna libre, solo cambiar de hora. Un texto
+ * único obliga a adivinar cuál de los dos le sirve.
+ *
+ * Se decide por el **código** que manda el backend, nunca por el texto de su
+ * mensaje: el texto se reescribe y el portal se quedaría contando la historia
+ * equivocada sin que ninguna prueba se entere.
+ */
+describe('rescheduleErrorMessage', () => {
+  const conflicto = (reason?: string) => ({
+    response: { status: 409, data: reason ? { reason } : {} },
+  });
+
+  it('nombra a la estilista cuando la ocupada es la que eligió la clienta', () => {
+    const mensaje = rescheduleErrorMessage(
+      conflicto('estilista_ocupada'),
+      res({ worker: { id: 'w1', name: 'Sonia' } })
+    );
+
+    expect(mensaje).toContain('Sonia');
+    expect(mensaje).toContain('sin preferencia');
+  });
+
+  it('cuando el salón está lleno no culpa a ninguna estilista', () => {
+    const mensaje = rescheduleErrorMessage(
+      conflicto('hora_ocupada'),
+      res({ worker: { id: 'w1', name: 'Sonia' } })
+    );
+
+    expect(mensaje).not.toContain('Sonia');
+    expect(mensaje).toContain('ninguna estilista libre');
+  });
+
+  it('un 409 sin motivo se queda en el texto genérico de siempre', () => {
+    // Compatibilidad: si el backend fuera anterior a este cambio, inventarse una
+    // de las dos causas sería peor que no decir cuál.
+    expect(rescheduleErrorMessage(conflicto(), res())).toBe(
+      'Esa hora ya está ocupada. Elige otra.'
+    );
+  });
+
+  it('lo que no es 409 sigue siendo el error de horario/plazo', () => {
+    const mensaje = rescheduleErrorMessage(
+      { response: { status: 400, data: {} } },
+      res()
+    );
+
+    expect(mensaje).toContain('No se pudo cambiar la fecha');
+  });
+
+  it('sin nombre de estilista no deja un hueco en la frase', () => {
+    const mensaje = rescheduleErrorMessage(
+      conflicto('estilista_ocupada'),
+      res({ worker: { id: 'w1', name: '' } })
+    );
+
+    expect(mensaje).toContain('Tu estilista');
   });
 });

@@ -98,6 +98,7 @@ import { useMyReservations } from 'src/composables/reservations/useMyReservation
 import {
   isCancelable,
   isReschedulable,
+  rescheduleErrorMessage,
   splitReservationsByTime,
 } from 'src/helpers/my-reservations';
 import ReservationCard from 'src/components/reservations/ReservationCard.vue';
@@ -168,17 +169,14 @@ async function onRescheduleConfirm(scheduledAt: string) {
     rescheduleOpen.value = false;
     $q.notify({ type: 'positive', message: 'Tu cita quedó movida.' });
   } catch (error) {
-    // El backend es la autoridad: puede rechazar por solape con el estilista,
-    // por horario o por plazo. Se distingue el solape porque es el caso que la
-    // clienta puede resolver sola eligiendo otra hora.
-    const status = (error as { response?: { status?: number } })?.response
-      ?.status;
+    // El backend es la autoridad: puede rechazar por solape, por horario o por
+    // plazo. Y el solape ya no es uno solo: distingue si la ocupada es la
+    // estilista que ella eligió (cabe cambiar de hora o reservar sin
+    // preferencia) o si no queda ninguna libre (solo cabe cambiar de hora). El
+    // texto se decide en un ayudante puro para poder probarlo sin el componente.
     $q.notify({
       type: 'negative',
-      message:
-        status === 409
-          ? 'Esa hora ya está ocupada. Elige otra.'
-          : 'No se pudo cambiar la fecha. Revisa el horario e intenta de nuevo.',
+      message: rescheduleErrorMessage(error, res),
     });
   } finally {
     pendingId.value = null;
