@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-This is the **frontend** of the thesis monorepo. The parent `../CLAUDE.md` is authoritative for cross-cutting concerns (monorepo shape, thesis rules, the `tesis-marlene` skill requirement, salon timezone/hours, backend `/api` contract, auth/Cloudinary flow, click-to-chat WhatsApp design). Read that first; this file only covers what is specific to `hari_salon_front/`.
+This is the **frontend** of the thesis monorepo. The parent `../CLAUDE.md` is authoritative for cross-cutting concerns (monorepo shape, thesis rules, the `tesis-marlene` skill requirement, salon timezone/hours, backend `/api` contract, auth/Cloudinary flow, the dual WhatsApp design: click-to-chat on the front, Cloud API on the back). Read that first; this file only covers what is specific to `hari_salon_front/`.
 
 ## Stack
 
@@ -66,7 +66,7 @@ There is **no `typecheck` script**; type checking runs via `vite-plugin-checker`
 
 - `src/helpers/businessHours.ts` — opening hours; must match backend `salon-schedule.ts` / `salon-time.ts`.
 - `src/constants/salon-location.ts` — address and location constants used by SEO + structured data.
-- `src/helpers/whatsappBooking.ts` — builds `wa.me` click-to-chat URLs. The project does **not** use the WhatsApp Business API; do not refactor toward one.
+- `src/helpers/whatsappBooking.ts` — builds `wa.me` click-to-chat URLs for the visitor's hand-off to the salon's phone. The backend separately integrates the **official WhatsApp Cloud API** (notices + inbound webhook, dedicated line); the frontend has no WhatsApp API code and should not gain any — keep this helper as is.
 
 ### SVG icons
 
