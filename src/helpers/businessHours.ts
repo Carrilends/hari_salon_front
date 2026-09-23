@@ -1,7 +1,12 @@
 /**
- * Horarios alineados con el diálogo de contacto (ourContact).
- * Sábado/domingo usan el mismo rango que "festivos" en el cartel; para fechas
- * festivas en día laborable habría que ampliar con un calendario de festivos.
+ * Horarios alineados con el diálogo de contacto (ourContact) y con el backend
+ * `hair_salon_back/src/reservations/salon-schedule.ts`, que es la fuente de
+ * verdad: este archivo replica su regla, nunca al revés.
+ *
+ * Sábado, domingo **y festivos** usan el rango reducido, que es exactamente lo
+ * que dice el cartel. Los festivos se calculan por la Ley Emiliani
+ * (`isColombianHolidayQDate`, más abajo); antes faltaban y el portal ofrecía
+ * las 8:00 de un lunes festivo que el backend rechazaba.
  */
 
 export const BUSINESS_SCHEDULE_COPY = {
@@ -56,6 +61,117 @@ export function isWeekendQDate(dateStr: string): boolean {
   if (!dt) return false;
   const dow = dt.getDay();
   return dow === 0 || dow === 6;
+}
+
+/**
+ * Festivos colombianos CALCULADOS (Ley 51 de 1983, «Ley Emiliani»).
+ *
+ * Réplica exacta de `hair_salon_back/src/reservations/salon-schedule.ts`; el
+ * backend es la fuente de verdad y este archivo le sigue. Los dos repos son
+ * independientes, así que la regla está duplicada a propósito y los tests de
+ * ambos lados comparan contra la MISMA lista de referencia escrita a mano: si
+ * un día divergen, uno de los dos se pone rojo.
+ *
+ * Se calcula en vez de listarse porque una lista por año caduca en silencio: el
+ * día que se acabara, el portal ofrecería las 8:00 de un festivo y la reserva
+ * la rechazaría el backend, sin que nadie supiera por qué.
+ */
+
+/** Fecha fija, nunca se traslada: [mes, día]. */
+const FESTIVOS_FIJOS: [number, number][] = [
+  [1, 1], // Año Nuevo
+  [5, 1], // Día del Trabajo
+  [7, 20], // Grito de Independencia
+  [8, 7], // Batalla de Boyacá
+  [12, 8], // Inmaculada Concepción
+  [12, 25], // Navidad
+];
+
+/** Fecha fija trasladable al lunes siguiente: [mes, día]. */
+const FESTIVOS_TRASLADABLES: [number, number][] = [
+  [1, 6], // Reyes Magos
+  [3, 19], // San José
+  [6, 29], // San Pedro y San Pablo
+  [8, 15], // Asunción de la Virgen
+  [10, 12], // Día de la Raza
+  [11, 1], // Todos los Santos
+  [11, 11], // Independencia de Cartagena
+];
+
+// Desplazamientos desde el Domingo de Pascua. Jueves y Viernes Santo no se
+// trasladan; Ascensión, Corpus Christi y Sagrado Corazón sí, y los valores
+// +43/+64/+71 ya incluyen ese traslado al lunes.
+const PASCUA_SIN_TRASLADO = [-3, -2];
+const PASCUA_CON_TRASLADO = [43, 64, 71];
+
+/** Domingo de Pascua (algoritmo anónimo gregoriano de Meeus/Jones/Butcher). */
+function domingoDePascua(year: number): Date {
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const mes = Math.floor((h + l - 7 * m + 114) / 31);
+  const dia = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(Date.UTC(year, mes - 1, dia));
+}
+
+/** Lunes siguiente, o el mismo día si ya es lunes (traslado Emiliani). */
+function siguienteLunes(fecha: Date): Date {
+  const faltan = (8 - fecha.getUTCDay()) % 7;
+  return new Date(fecha.getTime() + faltan * 24 * 60 * 60 * 1000);
+}
+
+/** Clave q-date `YYYY/MM/DD` a partir de una fecha tratada como UTC. */
+function claveQDate(fecha: Date): string {
+  return fecha.toISOString().slice(0, 10).replace(/-/g, '/');
+}
+
+const cacheFestivos = new Map<number, Set<string>>();
+
+function festivosDelAnio(year: number): Set<string> {
+  const enCache = cacheFestivos.get(year);
+  if (enCache) return enCache;
+
+  const festivos = new Set<string>();
+  for (const [mes, dia] of FESTIVOS_FIJOS) {
+    festivos.add(claveQDate(new Date(Date.UTC(year, mes - 1, dia))));
+  }
+  for (const [mes, dia] of FESTIVOS_TRASLADABLES) {
+    festivos.add(
+      claveQDate(siguienteLunes(new Date(Date.UTC(year, mes - 1, dia))))
+    );
+  }
+  const pascua = domingoDePascua(year);
+  const unDia = 24 * 60 * 60 * 1000;
+  for (const off of [...PASCUA_SIN_TRASLADO, ...PASCUA_CON_TRASLADO]) {
+    festivos.add(claveQDate(new Date(pascua.getTime() + off * unDia)));
+  }
+
+  cacheFestivos.set(year, festivos);
+  return festivos;
+}
+
+/** ¿La fecha q-date `YYYY/MM/DD` es festivo en Colombia? */
+export function isColombianHolidayQDate(dateStr: string): boolean {
+  const parsed = parseQDate(dateStr);
+  if (!parsed) return false;
+  return festivosDelAnio(parsed.y).has(dateStr.trim());
+}
+
+/**
+ * ¿El día usa el horario reducido 9:00–19:00? Sábado, domingo **y festivos**,
+ * que es lo que el cartel («Sábado, domingo y festivos») viene prometiendo.
+ */
+export function usesWeekendHoursQDate(dateStr: string): boolean {
+  return isWeekendQDate(dateStr) || isColombianHolidayQDate(dateStr);
 }
 
 function formatTodayQDate(): string {
@@ -156,10 +272,12 @@ export function getBusinessDayBounds(dateStr: string): {
   openMin: number;
   closeMin: number;
 } {
-  const weekend = isWeekendQDate(dateStr);
+  // Festivo = mismo horario reducido que sábado y domingo, igual que el backend
+  // (`salon-time.ts::getDayBounds`).
+  const reducido = usesWeekendHoursQDate(dateStr);
   return {
-    openMin: weekend ? WEEKEND_OPEN_MIN : WEEKDAY_OPEN_MIN,
-    closeMin: weekend ? WEEKEND_CLOSE_MIN : WEEKDAY_CLOSE_MIN,
+    openMin: reducido ? WEEKEND_OPEN_MIN : WEEKDAY_OPEN_MIN,
+    closeMin: reducido ? WEEKEND_CLOSE_MIN : WEEKDAY_CLOSE_MIN,
   };
 }
 
