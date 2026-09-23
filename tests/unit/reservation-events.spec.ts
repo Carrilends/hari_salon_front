@@ -35,3 +35,21 @@ describe('unión de eventos de reserva', () => {
     }
   });
 });
+
+/**
+ * El quinto campo del evento de reprogramación.
+ *
+ * Desde que mover una cita sin estilista elegida la reparte de nuevo, el evento
+ * lleva si la persona que atiende cambió. Es lo que permite avisar a la clienta
+ * de un cambio que ella no pidió aunque moviera ella la cita —hasta ahora solo
+ * se le contaban las reprogramaciones hechas por la peluquería—. Como el resto
+ * de la unión, es un espejo a mano del backend.
+ */
+describe('reprogramación · cambio de estilista', () => {
+  it('solo el evento de cambio de hora dice si cambió la estilista', () => {
+    for (const event of oneOfEach) {
+      const hasWorkerChanged = 'workerChanged' in event;
+      expect(hasWorkerChanged).toBe(event.type === 'reservation.rescheduled');
+    }
+  });
+});

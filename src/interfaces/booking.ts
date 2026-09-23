@@ -27,11 +27,34 @@ export interface ReservationDto {
   endedAt: string;
   workerId: string;
   worker: { id: string; name: string; isDefault?: boolean };
+  /**
+   * ¿La estilista la eligió la clienta, o la repartió el sistema? Decide si al
+   * ir a cambiar la fecha se le advierte de que puede acabar con otra: a quien
+   * la eligió, reprogramar nunca se la cambia —o la conserva, o el backend
+   * devuelve 409—, así que avisarla sería preocuparla por algo imposible.
+   */
+  workerPinned: boolean;
   totalDurationMinutes: number;
   status: ReservationStatus;
   userId: string | null;
   contact: { name: string; phone: string; email?: string | null } | null;
   services: ReservationServiceLine[];
+}
+
+/**
+ * Lo que devuelve `PATCH /reservations/:id/reschedule`: el agregado serializado,
+ * que **no** trae el nombre de la estilista, solo su id. Con eso basta para
+ * detectar el cambio —la tarjeta ya tenía el id anterior—; el nombre nuevo sale
+ * de la lista que se refresca justo después.
+ */
+export interface RescheduledReservationDto {
+  id: string;
+  scheduledAt: string;
+  endedAt: string;
+  workerId: string;
+  workerPinned: boolean;
+  status: ReservationStatus;
+  totalDurationMinutes: number;
 }
 
 /**
@@ -74,6 +97,13 @@ export interface ReservationRescheduledEvent extends ReservationEventBase {
   byAdmin: boolean;
   /** Dónde estaba la cita antes de moverla; el aviso muestra antes → después. */
   previousScheduledAt: string;
+  /**
+   * ¿Cambió la persona que atiende? Desde que mover una cita sin estilista
+   * elegida la reparte de nuevo, `byAdmin` ya no basta para decidir si a la
+   * clienta hay que contarle algo: puede haberla movido ella y acabar con otra
+   * estilista. El nombre efectivo sigue viajando en `workerName`.
+   */
+  workerChanged: boolean;
 }
 
 /** Confirmar es siempre acción de la peluquería, así que no lleva `byAdmin`. */

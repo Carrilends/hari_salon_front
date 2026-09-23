@@ -42,6 +42,14 @@ export const rescheduledByCustomer: ReservationRescheduledEvent = {
   type: 'reservation.rescheduled',
   byAdmin: false,
   previousScheduledAt: '2026-09-15T10:00:00.000Z',
+  // Movida por ella y sin reasignación: el caso en el que nadie recibe aviso.
+  workerChanged: false,
+};
+
+/** Movida por ella, pero el sistema le repartió otra estilista. */
+export const rescheduledWithWorkerChange: ReservationRescheduledEvent = {
+  ...rescheduledByCustomer,
+  workerChanged: true,
 };
 
 export const rescheduledByAdmin: ReservationRescheduledEvent = {

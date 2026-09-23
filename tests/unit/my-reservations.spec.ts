@@ -2,6 +2,8 @@ import {
   isCancelable,
   isReschedulable,
   rescheduleErrorMessage,
+  rescheduleSuccessMessage,
+  shouldWarnWorkerMayChange,
   splitReservationsByTime,
 } from 'src/helpers/my-reservations';
 import type { ReservationDto } from 'src/interfaces/booking';
@@ -13,6 +15,9 @@ function res(over: Partial<ReservationDto> = {}): ReservationDto {
     endedAt: '2026-08-25T15:00:00.000Z',
     workerId: 'w1',
     worker: { id: 'w1', name: 'Ana' },
+    // Por defecto, la repartió el sistema: es el caso mayoritario («Sin
+    // preferencia» en el formulario, o el chat, que nunca manda estilista).
+    workerPinned: false,
     totalDurationMinutes: 60,
     status: 'pendiente',
     userId: 'u1',
@@ -174,5 +179,90 @@ describe('rescheduleErrorMessage', () => {
     );
 
     expect(mensaje).toContain('Tu estilista');
+  });
+});
+
+/**
+ * El aviso **previo**: «cambiar la hora puede significar que te atienda otra
+ * estilista».
+ *
+ * Es genérico a propósito —«puede»— porque hasta que no se intenta mover nadie
+ * sabe quién quedará libre. Y no se le enseña a todo el mundo: si la clienta
+ * eligió estilista (`workerPinned`), reprogramar **nunca** se la cambia —o la
+ * conserva, o devuelve 409—, así que advertirla sería preocuparla por algo que
+ * no puede pasarle.
+ */
+describe('shouldWarnWorkerMayChange', () => {
+  it('avisa cuando la estilista la repartió el sistema', () => {
+    expect(shouldWarnWorkerMayChange(res({ workerPinned: false }))).toBe(true);
+  });
+
+  it('NO avisa cuando la clienta eligió estilista', () => {
+    expect(shouldWarnWorkerMayChange(res({ workerPinned: true }))).toBe(false);
+  });
+
+  it('ante un backend que no manda el dato, se calla', () => {
+    // Sin el dato no se sabe cuál de los dos casos es, y de los dos errores
+    // posibles el caro es preocupar a quien eligió a su estilista de confianza.
+    const sinDato = { ...res(), workerPinned: undefined } as never;
+    expect(shouldWarnWorkerMayChange(sinDato)).toBe(false);
+  });
+});
+
+/**
+ * El aviso **posterior**: solo si de verdad cambió.
+ *
+ * Decir «tu estilista sigue siendo la misma» en cada reprogramación sería ruido,
+ * y el ruido se acaba ignorando. La respuesta del backend ya trae el `workerId`
+ * nuevo, así que el cambio se detecta comparándolo con el que la tarjeta ya
+ * tenía: no hace falta que el servidor lo declare.
+ */
+describe('rescheduleSuccessMessage', () => {
+  it('sin cambio de estilista, el mensaje de siempre', () => {
+    const mensaje = rescheduleSuccessMessage(
+      res({ workerId: 'w1' }),
+      { workerId: 'w1' },
+      res({ workerId: 'w1', worker: { id: 'w1', name: 'Ana' } })
+    );
+
+    expect(mensaje).toBe('Tu cita quedó movida.');
+  });
+
+  it('con cambio, nombra a la estilista nueva', () => {
+    // En el portal SÍ se puede nombrar: la interfaz ya muestra estilistas con
+    // nombre y la clienta los elige en el formulario.
+    const mensaje = rescheduleSuccessMessage(
+      res({ workerId: 'w1' }),
+      { workerId: 'w2' },
+      res({ workerId: 'w2', worker: { id: 'w2', name: 'Monica' } })
+    );
+
+    expect(mensaje).toContain('Monica');
+    expect(mensaje).toContain('movida');
+  });
+
+  it('con cambio y sin lista refrescada, lo dice igual sin nombre', () => {
+    // El nombre nuevo sale de la lista ya refrescada; si aún no ha llegado,
+    // callarse el cambio sería justo el fallo que este aviso evita.
+    const mensaje = rescheduleSuccessMessage(res({ workerId: 'w1' }), {
+      workerId: 'w2',
+    });
+
+    expect(mensaje).toMatch(/otra estilista/i);
+  });
+
+  it('NUNCA nombra a la estilista de una lista que todavía va atrasada', () => {
+    // El peligro real: si la lista aún trae la fila vieja, su `worker.name` es
+    // el de la estilista ANTERIOR. Nombrarla sería decirle exactamente lo
+    // contrario de lo que pasó. Solo se nombra si la fila refrescada apunta ya
+    // a la estilista que devolvió el servidor.
+    const mensaje = rescheduleSuccessMessage(
+      res({ workerId: 'w1' }),
+      { workerId: 'w2' },
+      res({ workerId: 'w1', worker: { id: 'w1', name: 'Ana' } })
+    );
+
+    expect(mensaje).not.toContain('Ana');
+    expect(mensaje).toMatch(/otra estilista/i);
   });
 });

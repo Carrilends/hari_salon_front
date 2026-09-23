@@ -99,6 +99,7 @@ import {
   isCancelable,
   isReschedulable,
   rescheduleErrorMessage,
+  rescheduleSuccessMessage,
   splitReservationsByTime,
 } from 'src/helpers/my-reservations';
 import ReservationCard from 'src/components/reservations/ReservationCard.vue';
@@ -165,9 +166,19 @@ async function onRescheduleConfirm(scheduledAt: string) {
   if (!res) return;
   pendingId.value = res.id;
   try {
-    await reschedule.mutateAsync({ id: res.id, scheduledAt });
+    const movida = await reschedule.mutateAsync({ id: res.id, scheduledAt });
     rescheduleOpen.value = false;
-    $q.notify({ type: 'positive', message: 'Tu cita quedó movida.' });
+    // Si la estilista la repartió el sistema, mover la cita puede haberla
+    // reasignado. Es un cambio que la clienta no pidió, así que se le dice aquí
+    // mismo en vez de dejar que lo descubra el día de la cita. El nombre nuevo
+    // solo puede salir de la lista ya refrescada (la invalidación se espera
+    // antes de llegar aquí); el ayudante comprueba que esa fila no vaya
+    // atrasada antes de fiarse de su nombre.
+    const refrescada = all.value.find((r) => r.id === res.id);
+    $q.notify({
+      type: 'positive',
+      message: rescheduleSuccessMessage(res, movida, refrescada),
+    });
   } catch (error) {
     // El backend es la autoridad: puede rechazar por solape, por horario o por
     // plazo. Y el solape ya no es uno solo: distingue si la ocupada es la

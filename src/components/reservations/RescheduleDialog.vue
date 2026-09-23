@@ -8,6 +8,21 @@
         </div>
       </q-card-section>
 
+      <!--
+        Consentimiento informado, no sorpresa el día de la cita: si la estilista
+        la repartió el sistema, mover la hora puede traerle otra. Se dice
+        «puede» porque hasta que no se intenta nadie sabe quién quedará libre.
+        A quien eligió estilista no se le enseña: a ella no puede pasarle.
+      -->
+      <q-card-section v-if="warnWorkerMayChange" class="q-pt-none">
+        <q-banner dense class="bg-blue-1 text-blue-9">
+          <template #avatar>
+            <q-icon name="info" />
+          </template>
+          Cambiar la hora puede significar que te atienda otra estilista.
+        </q-banner>
+      </q-card-section>
+
       <q-card-section class="q-gutter-md">
         <q-date
           v-model="date"
@@ -45,6 +60,7 @@ import {
   isBookingDateTimeWithinHours,
   isQDateSelectable,
 } from 'src/helpers/businessHours';
+import { shouldWarnWorkerMayChange } from 'src/helpers/my-reservations';
 import type { ReservationDto } from 'src/interfaces/booking';
 
 defineOptions({ name: 'RescheduleDialog' });
@@ -77,6 +93,12 @@ const durationMinutes = computed(
 );
 
 const salonNow = computed(() => getSalonNowParts());
+
+// La decisión vive en un ayudante puro para poder probarla sin montar el
+// componente; aquí solo se dibuja.
+const warnWorkerMayChange = computed(() =>
+  props.reservation ? shouldWarnWorkerMayChange(props.reservation) : false
+);
 
 const serviceNames = computed(() => {
   const names = (props.reservation?.services ?? []).map((s) => s.name);

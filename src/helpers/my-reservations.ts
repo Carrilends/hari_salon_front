@@ -102,3 +102,55 @@ export function rescheduleErrorMessage(
   }
   return 'Esa hora ya está ocupada. Elige otra.';
 }
+
+/**
+ * ¿Hay que advertirle, **antes** de mover la cita, de que puede acabar con otra
+ * estilista?
+ *
+ * El aviso es genérico por honestidad: hasta que no se intenta mover, nadie sabe
+ * quién quedará libre a la hora nueva. Pero no es para todas: si la clienta
+ * eligió estilista, reprogramar **nunca** se la cambia —el backend o la conserva
+ * o devuelve 409—, así que advertirla sería preocuparla por algo que no puede
+ * pasarle.
+ *
+ * Si el dato no viene (un backend anterior a este cambio), se calla: de los dos
+ * errores posibles, el caro es preocupar a quien pidió a su estilista de
+ * confianza.
+ */
+export function shouldWarnWorkerMayChange(
+  res: Pick<ReservationDto, 'workerPinned'>
+): boolean {
+  return res.workerPinned === false;
+}
+
+/**
+ * Texto tras mover una cita con éxito. Anuncia el cambio de estilista **solo si
+ * de verdad lo hubo**: decir «tu estilista sigue siendo la misma» en cada
+ * reprogramación sería ruido, y el ruido se acaba ignorando.
+ *
+ * El cambio se detecta comparando el `workerId` que devuelve el backend con el
+ * que la tarjeta ya tenía; el servidor no necesita declararlo.
+ *
+ * El **nombre** nuevo solo puede salir de la lista refrescada, porque la
+ * respuesta del PATCH trae el id de la estilista pero no su nombre. Y solo se
+ * usa si esa fila ya apunta a la estilista que devolvió el servidor: si la lista
+ * va atrasada, su nombre es el de la estilista **anterior**, y decirlo sería
+ * contar justo lo contrario de lo que pasó. Sin nombre fiable se avisa igual,
+ * en genérico: callar el cambio es el fallo que este mensaje existe para evitar.
+ */
+export function rescheduleSuccessMessage(
+  previous: Pick<ReservationDto, 'workerId'>,
+  updated: { workerId: string },
+  refreshed?: Pick<ReservationDto, 'workerId' | 'worker'> | null
+): string {
+  if (updated.workerId === previous.workerId) return 'Tu cita quedó movida.';
+
+  const nombre =
+    refreshed && refreshed.workerId === updated.workerId
+      ? refreshed.worker?.name
+      : null;
+
+  return nombre
+    ? `Tu cita quedó movida. Ahora te atiende ${nombre}.`
+    : 'Tu cita quedó movida. Te atenderá otra estilista.';
+}

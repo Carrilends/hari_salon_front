@@ -31,6 +31,11 @@ export function useMyReservations() {
   // Mueve una cita conservando su id. Invalida la misma consulta que cancelar:
   // ambas vías y el asistente comparten el caso de uso del backend, así que
   // siempre informan del mismo estado.
+  //
+  // `onSuccess` **devuelve** la promesa de la invalidación, así que `mutateAsync`
+  // no resuelve hasta que la lista está refrescada. De eso depende poder nombrar
+  // a la estilista nueva cuando el sistema reasigna: la respuesta del PATCH solo
+  // trae su id, y el nombre está en la lista recién traída.
   const reschedule = useMutation({
     mutationFn: ({ id, scheduledAt }: { id: string; scheduledAt: string }) =>
       rescheduleReservation(id, scheduledAt),

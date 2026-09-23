@@ -1,6 +1,9 @@
 import axios from 'axios';
 import type { ReservationOccupancyResponse } from 'src/helpers/booking-occupancy';
-import type { ReservationDto } from 'src/interfaces/booking';
+import type {
+  ReservationDto,
+  RescheduledReservationDto,
+} from 'src/interfaces/booking';
 import { useAuthStore } from 'src/stores/auth-store';
 import { attachRefreshInterceptor } from './refresh-interceptor';
 
@@ -70,16 +73,22 @@ export async function confirmReservation(id: string): Promise<void> {
 }
 
 /**
- * Mueve una reserva a otra fecha y hora. Conserva id, servicios y estilista: el
- * backend solo cambia la ventana, y el estado se conserva.
+ * Mueve una reserva a otra fecha y hora. Conserva id, servicios y estado.
+ *
+ * La estilista **puede cambiar**: solo si la repartió el sistema —quien la
+ * eligió conserva la suya—. Por eso se devuelve la reserva actualizada y no
+ * `void`: su `workerId` es lo que permite decirle a la clienta que la
+ * reasignaron, comparándolo con el que ya tenía en pantalla.
  */
 export async function rescheduleReservation(
   id: string,
   scheduledAt: string
-): Promise<void> {
-  await authedReservationsApi.patch(`/reservations/${id}/reschedule`, {
-    scheduledAt,
-  });
+): Promise<RescheduledReservationDto> {
+  const { data } = await authedReservationsApi.patch<RescheduledReservationDto>(
+    `/reservations/${id}/reschedule`,
+    { scheduledAt }
+  );
+  return data;
 }
 
 /** Cancela una reserva (administración; el back registra quién la cancela). */
