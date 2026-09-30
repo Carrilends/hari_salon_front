@@ -32,6 +32,7 @@ import AssistantChat from 'src/components/assistant/AssistantChat.vue';
 import PackageProposalCard from 'src/components/assistant/PackageProposalCard.vue';
 import ServiceListCard from 'src/components/assistant/ServiceListCard.vue';
 import { useAssistant } from 'src/composables/assistant/useAssistant';
+import { useAuthStore } from 'src/stores/auth-store';
 
 const estado = useAssistant() as unknown as {
   messages: { value: unknown[] };
@@ -67,12 +68,21 @@ const quasar = {
     props: ['src', 'srcset'],
     template: '<img :src="src" :srcset="srcset" />',
   },
+  'q-chip': {
+    props: ['label'],
+    emits: ['click'],
+    template:
+      '<button type="button" class="q-chip" @click="$emit(\'click\')">{{ label }}<slot /></button>',
+  },
 };
 
-function montar() {
-  return mount(AssistantChat, {
-    global: { plugins: [createPinia()], components: quasar },
+function montar({ conSesion = false } = {}) {
+  const pinia = createPinia();
+  const w = mount(AssistantChat, {
+    global: { plugins: [pinia], components: quasar },
   });
+  if (conSesion) useAuthStore(pinia).token = 'un-token';
+  return w;
 }
 
 const PAQUETE = {
@@ -209,6 +219,50 @@ describe('AssistantChat', () => {
     expect(estado.send).toHaveBeenCalledWith(
       expect.stringContaining('Corte clásico')
     );
+  });
+
+  it('ofrece chips de intención en el estado vacío, no solo texto', async () => {
+    const w = montar();
+    const chips = w.findAll('.assistant-chat__chips .q-chip');
+
+    expect(chips.length).toBeGreaterThan(0);
+    await chips[0].trigger('click');
+
+    expect(estado.send).toHaveBeenCalledWith(expect.any(String));
+  });
+
+  it('el chip de «mis reservas» solo aparece con sesión iniciada', async () => {
+    const textoSinSesion = montar().find('.assistant-chat__chips').text();
+    expect(textoSinSesion).not.toContain('Mis reservas');
+
+    const conSesion = montar({ conSesion: true });
+    await conSesion.vm.$nextTick();
+    expect(conSesion.find('.assistant-chat__chips').text()).toContain(
+      'Mis reservas'
+    );
+  });
+
+  it('tras un listado de servicios ofrece seguir con la disponibilidad', async () => {
+    estado.messages.value = [
+      {
+        role: 'assistant',
+        content: 'Esto tenemos:',
+        presentaciones: [SERVICIOS],
+      },
+    ];
+
+    const w = montar();
+    const seguimiento = w.findAll('.assistant-chat__followup .q-chip');
+
+    expect(seguimiento.length).toBe(1);
+    await seguimiento[0].trigger('click');
+    expect(estado.send).toHaveBeenCalledTimes(1);
+  });
+
+  it('no ofrece seguimiento cuando el turno no presentó nada', () => {
+    estado.messages.value = [{ role: 'assistant', content: 'Hola' }];
+
+    expect(montar().find('.assistant-chat__followup').exists()).toBe(false);
   });
 
   it('NO interpreta el texto del asistente como HTML', () => {

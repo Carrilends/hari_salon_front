@@ -22,10 +22,24 @@
     <p class="assistant-chat__notice">{{ aviso || DEFAULT_NOTICE }}</p>
 
     <div ref="thread" class="assistant-chat__thread">
-      <p v-if="messages.length === 0" class="assistant-chat__empty">
-        ¡Hola! 👋 Pregúntame por servicios, precios o disponibilidad. Para
-        reservar necesitas iniciar sesión.
-      </p>
+      <div v-if="messages.length === 0" class="assistant-chat__welcome">
+        <p class="assistant-chat__empty">
+          ¡Hola! 👋 Pregúntame por servicios, precios o disponibilidad. Para
+          reservar necesitas iniciar sesión.
+        </p>
+        <div class="assistant-chat__chips">
+          <q-chip
+            v-for="chip in chipsDeArranque"
+            :key="chip.tool"
+            clickable
+            dense
+            color="pink-1"
+            text-color="pink-9"
+            :label="chip.label"
+            @click="onChip(chip)"
+          />
+        </div>
+      </div>
 
       <template v-for="(m, i) in messages" :key="i">
         <div :class="['assistant-bubble', m.role]">{{ m.content }}</div>
@@ -41,6 +55,21 @@
             @select="onSelectService"
           />
         </template>
+        <div
+          v-if="i === messages.length - 1 && seguimiento.length"
+          class="assistant-chat__followup"
+        >
+          <q-chip
+            v-for="chip in seguimiento"
+            :key="chip.tool"
+            clickable
+            dense
+            outline
+            color="pink-5"
+            :label="chip.label"
+            @click="onChip(chip)"
+          />
+        </div>
       </template>
 
       <div
@@ -84,13 +113,18 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useAssistant } from 'src/composables/assistant/useAssistant';
 import PackageProposalCard from 'src/components/assistant/PackageProposalCard.vue';
 import ServiceListCard from 'src/components/assistant/ServiceListCard.vue';
 import type { PackageProposal, PresentedService } from 'src/api/assistant-api';
+import {
+  INTENT_CHIPS,
+  followUpChips,
+  type IntentChip,
+} from 'src/composables/assistant/intentChips';
 
 const DEFAULT_NOTICE =
   'Asistente automático. Tus mensajes se procesan con un proveedor de inteligencia artificial fuera de Colombia.';
@@ -104,6 +138,28 @@ const { messages, loading, error, aviso, send } = useAssistant();
 
 const text = ref('');
 const thread = ref<HTMLElement | null>(null);
+
+// «Mis reservas» solo se ofrece con sesión: un chip que lleva a un «para eso
+// inicia sesión» es peor que no estar.
+const chipsDeArranque = computed(() =>
+  INTENT_CHIPS.filter((c) => !c.requiresAuth || auth.isLoggedIn)
+);
+
+/**
+ * Continuación sugerida bajo el último mensaje, deducida del dato presentado en
+ * ese turno y no del texto: adivinar leyendo lo que escribió el modelo sería
+ * inventar.
+ */
+const seguimiento = computed<IntentChip[]>(() => {
+  const ultimo = messages.value[messages.value.length - 1];
+  if (!ultimo || ultimo.role !== 'assistant') return [];
+  return followUpChips(ultimo.presentaciones);
+});
+
+async function onChip(chip: IntentChip) {
+  if (loading.value) return;
+  await send(chip.prompt);
+}
 
 async function onSubmit() {
   const value = text.value;
@@ -199,11 +255,32 @@ watch(
   background: #ffffff;
 }
 
-.assistant-chat__empty {
+.assistant-chat__welcome {
   margin: auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.assistant-chat__empty {
+  margin: 0;
   color: #8a8a8a;
   font-size: 0.9rem;
   text-align: center;
+}
+
+// Cuatro sugerencias envueltas: en 270 px útiles caben dos por fila.
+.assistant-chat__chips,
+.assistant-chat__followup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.assistant-chat__followup {
+  justify-content: flex-start;
+  margin-top: 2px;
 }
 
 .assistant-bubble {
