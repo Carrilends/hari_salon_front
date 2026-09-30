@@ -27,6 +27,8 @@ module.exports = {
     // `import.meta.env`, que ts-jest no puede compilar a CommonJS.
     '^(?:src/composables/seo|\\.)/site-url$': '<rootDir>/tests/siteUrlMock.ts',
     '^(?:src/api|\\.)/ws-url$': '<rootDir>/tests/wsUrlMock.ts',
+    '^(?:src/constants|\\.)/whatsapp-phone$':
+      '<rootDir>/tests/whatsappPhoneMock.ts',
     '^src/(.*)$': '<rootDir>/src/$1',
     '\\.(css|scss|sass)$': '<rootDir>/tests/styleMock.js',
   },

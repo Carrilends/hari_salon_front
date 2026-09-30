@@ -15,6 +15,9 @@ interface ImportMetaEnv {
   readonly VITE_GOOGLE_CLIENT_ID: string;
   // Fase 4: URL del WebSocket del panel, directo a Railway (N4), no al proxy.
   readonly VITE_WS_URL: string;
+  // Teléfono del click-to-chat (E.164, sin signos). Opcional: sin ella se usa
+  // el número del negocio de `src/constants/salon-location.ts`.
+  readonly VITE_WHATSAPP_PHONE: string;
 }
 
 interface ImportMeta {

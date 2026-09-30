@@ -686,6 +686,7 @@ import {
   buildWhatsAppUrl,
   generateBookingWhatsAppMessage,
 } from 'src/helpers/whatsappBooking';
+import { WHATSAPP_PHONE } from 'src/constants/whatsapp-phone';
 import {
   bookingSelectionToUtcIso,
   BUSINESS_SCHEDULE_COPY,
@@ -1301,8 +1302,7 @@ const formattedDateTime = computed(() => {
 });
 
 const openWhatsApp = (message: string) => {
-  const phoneNumber = '573208977471';
-  const whatsappUrl = buildWhatsAppUrl(phoneNumber, message);
+  const whatsappUrl = buildWhatsAppUrl(WHATSAPP_PHONE, message);
   window.open(whatsappUrl, '_blank');
 };
 

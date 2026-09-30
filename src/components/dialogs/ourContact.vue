@@ -65,13 +65,13 @@
           Peluquería Marlene está a tu servicio
         </p>
         <div class="contact-row">
-          <a class="contact-phone" href="tel:+573208977471">
-            +57 320 897 74 71
+          <a class="contact-phone" :href="phoneTelHref">
+            {{ phoneDisplay }}
           </a>
           <q-btn
             class="whatsapp-btn"
             tag="a"
-            href="https://wa.me/573208977471"
+            :href="whatsappHref"
             target="_blank"
             rel="noopener noreferrer"
             round
@@ -95,12 +95,23 @@ import {
 } from 'src/composables/dialogs/useDialogService';
 import { useDialogMaximizedBelow } from 'src/composables/dialogs/useDialogMaximizedBelow';
 import { BUSINESS_SCHEDULE_COPY } from 'src/helpers/businessHours';
+import { WHATSAPP_PHONE } from 'src/constants/whatsapp-phone';
+import { formatSalonPhone, telHref } from 'src/helpers/phone';
 
 const props = defineProps<{ dialog: boolean }>();
 const emit = defineEmits<DialogEmits>();
 
 const { dialog } = useDialog(props, emit);
 const { maximized } = useDialogMaximizedBelow();
+
+/**
+ * El teléfono sale de un solo sitio (`VITE_WHATSAPP_PHONE`, con el número del
+ * negocio por defecto), así que lo escrito y lo que se abre al pulsar no pueden
+ * separarse.
+ */
+const phoneDisplay = formatSalonPhone(WHATSAPP_PHONE);
+const phoneTelHref = telHref(WHATSAPP_PHONE);
+const whatsappHref = `https://wa.me/${WHATSAPP_PHONE}`;
 
 /** Desenfoque del velo detrás del modal; en móvil va maximizado, sin blur. */
 const backdropFilter = computed(() =>

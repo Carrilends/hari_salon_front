@@ -1,4 +1,7 @@
 export const SALON_NAME = 'Peluquería Marlene';
+/** El mismo número en E.164 sin signos, que es lo que exigen `wa.me` y `tel:`.
+ *  `tests/unit/phone.spec.ts` vigila que los dos no se separen. */
+export const SALON_PHONE_E164 = '573208977471';
 export const SALON_PHONE = '+57 320 897 7471';
 export const SALON_STREET = 'Carrera 3 #1-18';
 export const SALON_LOCALITY = 'Sopó';
