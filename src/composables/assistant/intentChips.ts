@@ -38,7 +38,7 @@ export const INTENT_CHIPS: IntentChip[] = [
   },
   {
     label: 'Ver disponibilidad',
-    prompt: '¿Qué horarios tienen disponibles esta semana?',
+    prompt: '¿Qué horarios tienen disponibles mañana?',
     tool: 'consultarDisponibilidad',
   },
   {
@@ -54,10 +54,19 @@ export const INTENT_CHIPS: IntentChip[] = [
   },
 ];
 
-/** La continuación obvia de un listado de servicios: cuándo se puede ir. */
+/**
+ * La continuación obvia de un listado de servicios: cuándo se puede ir.
+ *
+ * El texto nombra **un día concreto**, y no «esta semana» ni «los próximos
+ * días», porque la herramienta de disponibilidad consulta una sola fecha. Un
+ * chip que pida un rango obliga al modelo a encadenar consultas y puede agotar
+ * las vueltas del turno: la clienta acabaría leyendo la respuesta de cortesía
+ * después de tocar un botón que le ofrecimos nosotros. Que la herramienta
+ * exista no basta; la promesa tiene que caber en una llamada.
+ */
 const TRAS_SERVICIOS: IntentChip = {
   label: 'Ver disponibilidad',
-  prompt: '¿Qué horarios tienen disponibles?',
+  prompt: '¿Qué horarios tienen disponibles mañana?',
   tool: 'consultarDisponibilidad',
 };
 

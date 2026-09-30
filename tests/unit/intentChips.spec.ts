@@ -37,6 +37,29 @@ describe('intentChips', () => {
     expect(conSesion.map((c) => c.tool)).toEqual(['misReservas']);
   });
 
+  it('ningún chip de disponibilidad pide un rango: la herramienta consulta UN día', () => {
+    // `consultarDisponibilidad` exige una única `fecha`. Un chip que hable de
+    // «esta semana» obliga al modelo a encadenar consultas, y puede agotar las
+    // vueltas del turno: la clienta acabaría leyendo la respuesta de cortesía
+    // después de tocar un botón que le ofrecimos nosotros. Que la herramienta
+    // exista no basta; la promesa tiene que caber en una llamada.
+    const RANGOS = /semana|mes|rango|pr[oó]ximos|entre el|varios d[ií]as/i;
+    const disponibilidad = [
+      ...INTENT_CHIPS,
+      ...followUpChips([
+        {
+          tipo: 'servicios',
+          servicios: [],
+        } as unknown as AssistantPresentation,
+      ]),
+    ].filter((c) => c.tool === 'consultarDisponibilidad');
+
+    expect(disponibilidad).not.toHaveLength(0);
+    for (const chip of disponibilidad) {
+      expect(chip.prompt).not.toMatch(RANGOS);
+    }
+  });
+
   it('tras un listado de servicios ofrece consultar disponibilidad', () => {
     const presentaciones: AssistantPresentation[] = [
       {
