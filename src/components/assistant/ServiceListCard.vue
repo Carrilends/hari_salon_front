@@ -12,6 +12,7 @@
           <q-img
             :src="miniatura(s)"
             :srcset="miniaturaSrcset(s)"
+            :placeholder-src="PLACEHOLDER_IMAGE"
             :alt="s.nombre"
             width="44px"
             height="44px"
@@ -63,6 +64,10 @@ const emit = defineEmits<{ (e: 'select', servicio: PresentedService): void }>();
 const ANCHO_MINIATURA = 96;
 const ANCHOS_SRCSET = [48, 96, 144];
 
+// El mismo marcador se usa como `placeholder-src`: sin él, y sin ruedecita
+// (la tarjeta lleva ocho, ocho ruedecitas serían un estruendo), una miniatura
+// que aún viaja por la red deja un hueco blanco que parece un fallo.
+
 function miniatura(s: PresentedService): string {
   return optimizeCloudinaryUrl(s.imagen, ANCHO_MINIATURA) || PLACEHOLDER_IMAGE;
 }
@@ -83,6 +88,14 @@ function miniaturaSrcset(s: PresentedService): string {
   max-width: 90%;
   border-radius: 12px;
   overflow: hidden;
+  // `flex: none` no es adorno. El hilo es un flex en columna con scroll, y
+  // `overflow: hidden` —que está aquí para recortar las esquinas redondeadas—
+  // anula el `min-height: auto` que impide a un hijo de flex encogerse por
+  // debajo de su contenido. Sin esto, en cuanto la conversación desborda, la
+  // tarjeta se aplasta a una línea gris de tres píxeles con sus siete filas
+  // intactas dentro del DOM. Visto en el navegador, no en las pruebas: jsdom no
+  // calcula maquetación.
+  flex: 0 0 auto;
 }
 
 .service-list-card__row {
