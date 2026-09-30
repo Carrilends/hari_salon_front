@@ -74,8 +74,9 @@ describe('useAssistant', () => {
     expect(sessionStorage.getItem('assistant-conversation-id')).toBeNull();
   });
 
-  it('adjunta la propuesta de paquete al mensaje del asistente cuando la trae (T7)', async () => {
-    const propuesta = {
+  it('adjunta las presentaciones al mensaje del asistente cuando las trae', async () => {
+    const paquete = {
+      tipo: 'paquete',
       evento: 'boda',
       completa: true,
       total: 150000,
@@ -92,10 +93,14 @@ describe('useAssistant', () => {
       serviciosIds: ['r1'],
       omitidas: [],
     };
+    const servicios = {
+      tipo: 'servicios',
+      servicios: [{ id: 's1', nombre: 'Corte', precio: 20000, minutos: 30 }],
+    };
     mockSend.mockResolvedValue({
       conversationId: 'c1',
       reply: 'Aquí tienes tu paquete.',
-      propuesta,
+      presentaciones: [paquete, servicios],
     });
     const a = useAssistant();
 
@@ -103,16 +108,16 @@ describe('useAssistant', () => {
 
     const last = a.messages.value[a.messages.value.length - 1];
     expect(last.role).toBe('assistant');
-    expect(last.propuesta).toEqual(propuesta);
+    expect(last.presentaciones).toEqual([paquete, servicios]);
   });
 
-  it('no adjunta propuesta cuando la respuesta no la trae', async () => {
+  it('no adjunta presentaciones cuando la respuesta no las trae', async () => {
     mockSend.mockResolvedValue({ conversationId: 'c1', reply: 'Hola' });
     const a = useAssistant();
 
     await a.send('hola');
 
     const last = a.messages.value[a.messages.value.length - 1];
-    expect(last.propuesta).toBeUndefined();
+    expect(last.presentaciones).toBeUndefined();
   });
 });

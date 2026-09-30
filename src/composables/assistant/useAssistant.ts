@@ -1,14 +1,14 @@
 import { ref } from 'vue';
 import {
   sendAssistantMessage,
-  type PackageProposal,
+  type AssistantPresentation,
 } from 'src/api/assistant-api';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
-  /** Propuesta de paquete adjunta a una respuesta del asistente (T7). */
-  propuesta?: PackageProposal;
+  /** Tarjetas adjuntas a una respuesta del asistente, en orden. */
+  presentaciones?: AssistantPresentation[];
 }
 
 const STORAGE_KEY = 'assistant-conversation-id';
@@ -70,7 +70,9 @@ export function useAssistant() {
       messages.value.push({
         role: 'assistant',
         content: reply.reply,
-        ...(reply.propuesta ? { propuesta: reply.propuesta } : {}),
+        ...(reply.presentaciones?.length
+          ? { presentaciones: reply.presentaciones }
+          : {}),
       });
     } catch {
       error.value =

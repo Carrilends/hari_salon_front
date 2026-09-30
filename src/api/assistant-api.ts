@@ -56,13 +56,49 @@ export interface PackageProposal {
   fecha?: string;
 }
 
+/**
+ * Un servicio tal y como lo pinta la tarjeta del chat. La `imagen` solo existe
+ * en este canal: el modelo nunca ve una URL, porque el contexto que se le manda
+ * se paga en tokens y una de Cloudinary no le sirve para conversar.
+ */
+export interface PresentedService {
+  id: string;
+  nombre: string;
+  precio: number;
+  minutos: number;
+  imagen?: string;
+}
+
+/** Listado de servicios del catálogo (herramienta `listarServicios`). */
+export interface ServicesPresentation {
+  tipo: 'servicios';
+  servicios: PresentedService[];
+}
+
+/**
+ * Propuesta de paquete. Es la misma forma de siempre con el discriminante
+ * añadido: `PackageProposalCard` sigue recibiendo exactamente lo que recibía.
+ */
+export type PackagePresentation = PackageProposal & { tipo: 'paquete' };
+
+/**
+ * Lo que el backend adjunta a la respuesta para que el widget lo pinte. Unión
+ * discriminada por `tipo`: una clase nueva de tarjeta es una variante más, no
+ * un cambio en el contrato de las que ya existen.
+ */
+export type AssistantPresentation = PackagePresentation | ServicesPresentation;
+
 export interface AssistantReply {
   conversationId?: string;
   reply: string;
   /** Aviso legal, presente en la primera respuesta de cada conversación (RF59). */
   aviso?: string;
-  /** Propuesta de paquete estructurada, cuando el asistente compone una (T7). */
-  propuesta?: PackageProposal;
+  /**
+   * Datos tipados del turno, en el orden en que las herramientas los
+   * produjeron. Son varios desde el plan 03: un turno puede componer un paquete
+   * y además listar servicios.
+   */
+  presentaciones?: AssistantPresentation[];
 }
 
 export async function sendAssistantMessage(

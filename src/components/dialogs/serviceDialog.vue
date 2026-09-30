@@ -125,8 +125,9 @@ import { useDialogPluginComponent } from 'quasar';
 import { useDialogMaximizedBelow } from 'src/composables/dialogs/useDialogMaximizedBelow';
 import Service, { faceTypes } from 'src/interfaces/service';
 import PriceDisplayPill from 'src/components/shared/PriceDisplayPill.vue';
+import { PLACEHOLDER_IMAGE } from 'src/constants/placeholder-image';
 
-const PLACEHOLDER_IMG = 'src/assets/examples/tupper.jpg';
+const PLACEHOLDER_IMG = PLACEHOLDER_IMAGE;
 
 const props = defineProps<{
   service: Service;

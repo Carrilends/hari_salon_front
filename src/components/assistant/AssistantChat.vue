@@ -29,11 +29,18 @@
 
       <template v-for="(m, i) in messages" :key="i">
         <div :class="['assistant-bubble', m.role]">{{ m.content }}</div>
-        <PackageProposalCard
-          v-if="m.propuesta"
-          :propuesta="m.propuesta"
-          @confirm="onConfirmPackage"
-        />
+        <template v-for="(p, j) in m.presentaciones ?? []" :key="`${i}-${j}`">
+          <PackageProposalCard
+            v-if="p.tipo === 'paquete'"
+            :propuesta="p"
+            @confirm="onConfirmPackage"
+          />
+          <ServiceListCard
+            v-else-if="p.tipo === 'servicios'"
+            :servicios="p.servicios"
+            @select="onSelectService"
+          />
+        </template>
       </template>
 
       <div
@@ -82,7 +89,8 @@ import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useAssistant } from 'src/composables/assistant/useAssistant';
 import PackageProposalCard from 'src/components/assistant/PackageProposalCard.vue';
-import type { PackageProposal } from 'src/api/assistant-api';
+import ServiceListCard from 'src/components/assistant/ServiceListCard.vue';
+import type { PackageProposal, PresentedService } from 'src/api/assistant-api';
 
 const DEFAULT_NOTICE =
   'Asistente automático. Tus mensajes se procesan con un proveedor de inteligencia artificial fuera de Colombia.';
@@ -113,6 +121,13 @@ async function onConfirmPackage(propuesta: PackageProposal) {
   await send(
     `Sí, confirmo. Reserva el paquete de ${propuesta.evento}${fecha}.`
   );
+}
+
+// Tocar un servicio de la tarjeta hace lo mismo que «Reservar este paquete»:
+// sigue por el hilo en vez de abrir otra pantalla. El asistente ya sabe de qué
+// servicio se habla, así que basta con nombrarlo.
+async function onSelectService(servicio: PresentedService) {
+  await send(`Cuéntame más sobre ${servicio.nombre}.`);
 }
 
 function goLogin() {

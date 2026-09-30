@@ -216,7 +216,7 @@
                 id: service.id,
                 name: service.name,
                 precio: service.price,
-                url: service.images[0]?.url,
+                url: serviceCardImageUrl(service),
                 havePromotion: service.havePromotion,
                 porcentageDiscount: service.porcentageDiscount,
               }"
@@ -280,6 +280,7 @@ import { useBookStore } from 'src/stores/book-store';
 import { adminServiceApi } from 'src/api/services-api';
 import { serviceIsOnPromotion } from 'src/helpers/service-promotion';
 import { useOptions } from 'src/composables/shared/useOptions';
+import { PLACEHOLDER_IMAGE } from 'src/constants/placeholder-image';
 import { useOptionsStore } from 'src/stores/options-store';
 import { useSeo } from 'src/composables/seo/useSeo';
 import { servicesSchema } from 'src/composables/seo/structuredData';
@@ -331,7 +332,7 @@ const BREAKPOINT_WIDE = 1100;
 const BREAKPOINT_COMPACT_SEARCH = 550;
 const BREAKPOINT_LIST_LAYOUT = 501;
 
-const DEFAULT_SERVICE_IMAGE = 'src/assets/examples/tupper.jpg';
+const DEFAULT_SERVICE_IMAGE = PLACEHOLDER_IMAGE;
 
 const $q = useQuasar();
 
@@ -372,6 +373,14 @@ const isListLayout = computed(
 
 const serviceImageUrl = (service: Service) =>
   optimizeCloudinaryUrl(service.images?.[0]?.url, 120) || DEFAULT_SERVICE_IMAGE;
+
+/**
+ * La vista de tarjetas servía la URL cruda de Cloudinary mientras la de lista
+ * sí la optimizaba: la misma foto, a tamaño original, para pintar una tarjeta.
+ * 480 px cubre la tarjeta más ancha de la rejilla.
+ */
+const serviceCardImageUrl = (service: Service) =>
+  optimizeCloudinaryUrl(service.images?.[0]?.url, 480);
 
 const serviceImageSrcset = (service: Service) =>
   buildCloudinarySrcset(service.images?.[0]?.url, [60, 120, 240]);

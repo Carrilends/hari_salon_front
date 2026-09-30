@@ -8,7 +8,7 @@
       <div :class="['img-container flex flex-center', { hovered: isHovering }]">
         <div class="service-card-img-bg" :style="cardBgStyle" />
         <q-img
-          :src="props.props.url || 'src/assets/examples/tupper.jpg'"
+          :src="props.props.url || FALLBACK_IMG"
           fit="contain"
           spinner-color="primary"
           spinner-size="36px"
@@ -74,6 +74,7 @@ import { computed, ref } from 'vue';
 import DeleteBtn from 'src/components/shared/btns/DeleteBtn.vue';
 import PriceDisplayPill from 'src/components/shared/PriceDisplayPill.vue';
 import ServicePromoButton from 'src/components/servicePage/ServicePromoButton.vue';
+import { PLACEHOLDER_IMAGE } from 'src/constants/placeholder-image';
 
 const authStore = useAuthStore();
 
@@ -91,7 +92,7 @@ const props = defineProps<{
   selected: boolean;
 }>();
 
-const FALLBACK_IMG = 'src/assets/examples/tupper.jpg';
+const FALLBACK_IMG = PLACEHOLDER_IMAGE;
 
 /** Escapa la URL para usarla con seguridad dentro de `url("...")` de CSS. */
 const cssUrl = (raw: string) =>

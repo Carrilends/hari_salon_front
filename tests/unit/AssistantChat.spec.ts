@@ -30,6 +30,7 @@ import { mount } from '@vue/test-utils';
 import { createPinia } from 'pinia';
 import AssistantChat from 'src/components/assistant/AssistantChat.vue';
 import PackageProposalCard from 'src/components/assistant/PackageProposalCard.vue';
+import ServiceListCard from 'src/components/assistant/ServiceListCard.vue';
 import { useAssistant } from 'src/composables/assistant/useAssistant';
 
 const estado = useAssistant() as unknown as {
@@ -37,6 +38,7 @@ const estado = useAssistant() as unknown as {
   loading: { value: boolean };
   error: { value: string | null };
   aviso: { value: string | null };
+  send: jest.Mock;
 };
 
 /**
@@ -61,6 +63,10 @@ const quasar = {
     props: ['modelValue'],
     template: '<input :value="modelValue" />',
   },
+  'q-img': {
+    props: ['src', 'srcset'],
+    template: '<img :src="src" :srcset="srcset" />',
+  },
 };
 
 function montar() {
@@ -69,7 +75,8 @@ function montar() {
   });
 }
 
-const PROPUESTA = {
+const PAQUETE = {
+  tipo: 'paquete' as const,
   evento: 'boda',
   completa: true,
   total: 150000,
@@ -87,12 +94,20 @@ const PROPUESTA = {
   omitidas: [],
 };
 
+const SERVICIOS = {
+  tipo: 'servicios' as const,
+  servicios: [
+    { id: 's1', nombre: 'Corte clásico', precio: 25000, minutos: 30 },
+  ],
+};
+
 describe('AssistantChat', () => {
   beforeEach(() => {
     estado.messages.value = [];
     estado.loading.value = false;
     estado.error.value = null;
     estado.aviso.value = null;
+    estado.send.mockReset();
   });
 
   it('muestra el estado vacío mientras no hay mensajes', () => {
@@ -118,9 +133,13 @@ describe('AssistantChat', () => {
     expect(burbujas[1].text()).toBe('Corte clásico: 25000 pesos (30 minutos)');
   });
 
-  it('pinta la tarjeta del paquete cuando la respuesta trae una propuesta', () => {
+  it('pinta la tarjeta del paquete cuando llega una presentación de paquete', () => {
     estado.messages.value = [
-      { role: 'assistant', content: 'Te propongo esto:', propuesta: PROPUESTA },
+      {
+        role: 'assistant',
+        content: 'Te propongo esto:',
+        presentaciones: [PAQUETE],
+      },
     ];
 
     const w = montar();
@@ -130,10 +149,66 @@ describe('AssistantChat', () => {
     expect(tarjeta.text()).toContain('Recogido de novia');
   });
 
-  it('no pinta tarjeta cuando la respuesta no trae propuesta', () => {
+  it('pinta la tarjeta de servicios cuando llega una presentación de servicios', () => {
+    estado.messages.value = [
+      {
+        role: 'assistant',
+        content: 'Esto es lo que tenemos:',
+        presentaciones: [SERVICIOS],
+      },
+    ];
+
+    const tarjeta = montar().findComponent(ServiceListCard);
+
+    expect(tarjeta.exists()).toBe(true);
+    expect(tarjeta.text()).toContain('Corte clásico');
+  });
+
+  it('pinta las dos tarjetas de un mismo turno, en orden', () => {
+    estado.messages.value = [
+      {
+        role: 'assistant',
+        content: 'Mira:',
+        presentaciones: [PAQUETE, SERVICIOS],
+      },
+    ];
+
+    const w = montar();
+
+    expect(w.findComponent(PackageProposalCard).exists()).toBe(true);
+    expect(w.findComponent(ServiceListCard).exists()).toBe(true);
+  });
+
+  it('no pinta tarjetas cuando la respuesta no trae presentaciones', () => {
     estado.messages.value = [{ role: 'assistant', content: 'Hola' }];
 
-    expect(montar().findComponent(PackageProposalCard).exists()).toBe(false);
+    const w = montar();
+
+    expect(w.findComponent(PackageProposalCard).exists()).toBe(false);
+    expect(w.findComponent(ServiceListCard).exists()).toBe(false);
+  });
+
+  it('al elegir un servicio de la tarjeta, sigue la conversación por el hilo', async () => {
+    estado.messages.value = [
+      {
+        role: 'assistant',
+        content: 'Esto tenemos:',
+        presentaciones: [SERVICIOS],
+      },
+    ];
+
+    const w = montar();
+    await w.findComponent(ServiceListCard).vm.$emit('select', {
+      id: 's1',
+      nombre: 'Corte clásico',
+      precio: 25000,
+      minutos: 30,
+    });
+
+    // No abre otra pantalla: escribe en el chat, como «Reservar este paquete».
+    expect(estado.send).toHaveBeenCalledWith(
+      expect.stringContaining('Corte clásico')
+    );
   });
 
   it('NO interpreta el texto del asistente como HTML', () => {
