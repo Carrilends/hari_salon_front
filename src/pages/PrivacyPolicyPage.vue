@@ -71,6 +71,14 @@
               <li>Nombre completo.</li>
               <li>Correo electrónico.</li>
               <li>Credenciales de acceso (contraseña, almacenada de forma cifrada).</li>
+              <li>
+                Número de teléfono, <strong>solo si el titular lo aporta</strong> al
+                reservar, para recibir los avisos de su cita por WhatsApp.
+              </li>
+              <li>
+                El <strong>texto de la conversación</strong>, si el titular decide
+                usar el asistente del portal.
+              </li>
             </ul>
             <p>
               Adicionalmente, cuando el titular agenda una reserva, se procesan
@@ -98,6 +106,16 @@
                 WhatsApp del establecimiento.
               </li>
               <li>
+                Enviar al titular los <strong>avisos de su cita</strong> —creación,
+                cambio de hora, cancelación y confirmación— por correo electrónico
+                y, si aportó su teléfono, por WhatsApp.
+              </li>
+              <li>
+                Atender sus consultas sobre servicios, disponibilidad y reservas a
+                través del <strong>asistente del portal</strong>, cuyo uso es
+                voluntario.
+              </li>
+              <li>
                 Cumplir con las obligaciones legales, contables y contractuales
                 aplicables al negocio.
               </li>
@@ -106,7 +124,67 @@
 
           <section class="privacy-section">
             <h2 class="text-h6 text-weight-bold">
-              5. Derechos del titular
+              5. Encargados del tratamiento y transferencia internacional
+            </h2>
+            <p>
+              Para operar el portal, Peluquería Marlene se apoya en proveedores que
+              tratan datos personales <strong>por cuenta y según las
+              instrucciones</strong> del establecimiento, y no para finalidades
+              propias. Varios de ellos están ubicados <strong>fuera de
+              Colombia</strong>, de modo que existe una
+              <strong>transferencia internacional</strong> de datos en los términos
+              de la Ley 1581 de 2012. Cada uno recibe únicamente lo imprescindible
+              para su función:
+            </p>
+            <ul>
+              <li>
+                <strong>Google</strong> — inicio de sesión con Google. Si el titular
+                elige ese acceso, Google recibe su solicitud y devuelve su nombre,
+                su correo y el identificador de su cuenta. El portal no le envía
+                reservas ni historial.
+              </li>
+              <li>
+                <strong>Resend</strong> — correo transaccional. Recibe la dirección
+                de correo para enviar la verificación de la cuenta, el
+                restablecimiento de contraseña y los avisos de la cita.
+              </li>
+              <li>
+                <strong>Meta</strong> — avisos por la API de WhatsApp Business.
+                Recibe el número de teléfono y el contenido del aviso: fecha,
+                estilista y servicios. No recibe el precio ni datos de terceros.
+              </li>
+              <li>
+                <strong>Google (Gemini)</strong> — proveedor del asistente
+                conversacional. Recibe el texto de la conversación de quien abre el
+                chat, para redactar la respuesta.
+              </li>
+              <li>
+                <strong>TypeSafe</strong> — verificación de la reserva antes de
+                crearla, para que el asistente no agende algo distinto de lo que se
+                pidió. Recibe los últimos mensajes de la conversación y los nombres
+                de los servicios con el día y la hora propuestos.
+                <strong>No recibe</strong> el nombre del titular, ni su teléfono, ni
+                el identificador de su cuenta, ni el identificador de su reserva.
+              </li>
+            </ul>
+            <p>
+              El portal, su base de datos y las imágenes del catálogo se alojan en
+              infraestructura de proveedores también ubicados fuera de Colombia,
+              que actúan como custodios y no emplean la información para ninguna
+              finalidad propia.
+            </p>
+            <p class="text-caption text-grey-7 q-mb-none">
+              El uso del asistente conversacional es voluntario: el titular puede
+              reservar por el formulario del portal o por WhatsApp sin abrir el
+              chat, y la primera respuesta del asistente advierte de que se trata
+              de un sistema automático y de que el mensaje se procesa con un
+              proveedor ubicado fuera del país.
+            </p>
+          </section>
+
+          <section class="privacy-section">
+            <h2 class="text-h6 text-weight-bold">
+              6. Derechos del titular
             </h2>
             <p>
               Conforme a la Ley 1581 de 2012 y al Decreto 1377 de 2013, el titular
@@ -139,7 +217,7 @@
 
           <section class="privacy-section">
             <h2 class="text-h6 text-weight-bold">
-              6. Ejercicio de los derechos
+              7. Ejercicio de los derechos
             </h2>
             <p>
               Para ejercer los derechos descritos, el titular puede comunicarse con
@@ -151,7 +229,7 @@
 
           <section class="privacy-section">
             <h2 class="text-h6 text-weight-bold">
-              7. Medidas de seguridad
+              8. Medidas de seguridad
             </h2>
             <p>
               Peluquería Marlene implementa medidas técnicas y administrativas
@@ -164,7 +242,7 @@
 
           <section class="privacy-section">
             <h2 class="text-h6 text-weight-bold">
-              8. Consentimiento informado
+              9. Consentimiento informado
             </h2>
             <p>
               El tratamiento de los datos personales recolectados a través del
@@ -176,7 +254,7 @@
           </section>
 
           <section class="privacy-section">
-            <h2 class="text-h6 text-weight-bold">9. Vigencia</h2>
+            <h2 class="text-h6 text-weight-bold">10. Vigencia</h2>
             <p>
               La presente política se encuentra vigente desde la fecha indicada al
               inicio del documento y podrá actualizarse cuando los cambios
@@ -205,8 +283,8 @@
 <script setup lang="ts">
 import { useSeo } from 'src/composables/seo/useSeo';
 
-const POLICY_VERSION = '1.0';
-const LAST_UPDATED_LABEL = '25 de abril de 2026';
+const POLICY_VERSION = '1.1';
+const LAST_UPDATED_LABEL = '30 de septiembre de 2026';
 
 const scrollThumbStyle = {
   right: '2px',
