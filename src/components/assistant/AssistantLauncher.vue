@@ -4,7 +4,7 @@
       <AssistantChat
         v-if="open"
         class="assistant-launcher__panel"
-        @close="open = false"
+        @close="cerrar"
       />
     </transition>
 
@@ -15,16 +15,16 @@
       color="pink-4"
       :icon="open ? 'close' : 'smart_toy'"
       :aria-label="open ? 'Cerrar asistente' : 'Abrir asistente'"
-      @click="open = !open"
+      @click="alternar"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
 import AssistantChat from './AssistantChat.vue';
+import { useAssistantPanel } from 'src/composables/assistant/useAssistantPanel';
 
-const open = ref(false);
+const { abierto: open, cerrar, alternar } = useAssistantPanel();
 </script>
 
 <style scoped lang="scss">

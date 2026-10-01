@@ -176,6 +176,7 @@ import BookingDialog from 'src/components/dialogs/bookingDialog.vue';
 import AssistantLauncher from 'src/components/assistant/AssistantLauncher.vue';
 import { migrateLegacyBookings, useBookStore } from 'src/stores/book-store';
 import { useAuthStore } from 'src/stores/auth-store';
+import { useReviewDialog } from 'src/composables/reviews/useReviewDialog';
 import { adminServiceApi } from 'src/api/services-api';
 import { authApi } from 'src/api/auth-api';
 import type { CreateReviewBody, CreateReviewResponse } from 'src/api/apiTypes';
@@ -203,7 +204,7 @@ const BREAKPOINT_LABELS_PX = 1171;
 const route = useRoute();
 const router = useRouter();
 
-const reviewDialog = ref(false);
+const { abierto: reviewDialog, abrir: abrirResena } = useReviewDialog();
 const isSendingReview = ref(false);
 const scoreOptions = [1, 2, 3, 4, 5].map((score) => ({
   label: `${score}`,
@@ -243,7 +244,7 @@ function onReviewClick() {
   }
 
   resetReviewForm();
-  reviewDialog.value = true;
+  abrirResena();
 }
 
 async function submitReview() {
