@@ -1,0 +1,269 @@
+<template>
+  <section class="review-band">
+    <div
+      class="review-band__resena"
+      data-test="zona-resena"
+      @mouseenter="pausar"
+      @mouseleave="reanudar"
+      @focusin="pausar"
+      @focusout="reanudar"
+    >
+      <div class="review-band__encabezado">
+        <span class="review-band__etiqueta">Lo que dicen</span>
+        <span v-if="total > 1" class="review-band__puntos" aria-hidden="true">
+          <span
+            v-for="(_, posicion) in total"
+            :key="posicion"
+            class="review-band__punto"
+            :class="{ 'review-band__punto--activo': posicion === indice % total }"
+          />
+        </span>
+      </div>
+
+      <template v-if="resena">
+        <blockquote class="review-band__cita" data-test="cita">
+          «{{ resena.description }}»
+        </blockquote>
+        <p class="review-band__autor">{{ resena.name }} · reseña publicada en el portal</p>
+      </template>
+      <p v-else class="review-band__vacio">
+        Todavía no hay reseñas publicadas. La tuya puede ser la primera.
+      </p>
+
+      <button
+        type="button"
+        class="review-band__dejar"
+        data-test="dejar-resena"
+        @click="abrirResena()"
+      >
+        Deja la tuya →
+      </button>
+    </div>
+
+    <div class="review-band__asistente">
+      <div>
+        <div class="review-band__encabezado">
+          <svg
+            class="review-band__icono"
+            width="17"
+            height="17"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path
+              d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-2.8-.4L3 21l1.6-4.6A8.3 8.3 0 0 1 3.6 11.5 8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4z"
+            />
+          </svg>
+          <span class="review-band__etiqueta">Asistente</span>
+        </div>
+        <p class="review-band__invitacion">¿No sabes qué pedir?</p>
+        <p class="review-band__apoyo">Pregúntale y te arma la cita.</p>
+      </div>
+
+      <div class="review-band__chips">
+        <button type="button" class="review-band__chip" @click="abrirAsistente()">
+          ¿Hay cupo hoy?
+        </button>
+        <button type="button" class="review-band__chip" @click="abrirAsistente()">
+          Algo para una boda
+        </button>
+        <button
+          type="button"
+          class="review-band__chip review-band__chip--solido"
+          data-test="abrir-asistente"
+          @click="abrirAsistente()"
+        >
+          Preguntar
+        </button>
+      </div>
+    </div>
+  </section>
+</template>
+
+<script setup lang="ts">
+import { useRotatingReview } from 'src/composables/reviews/useRotatingReview';
+import { useAssistantPanel } from 'src/composables/assistant/useAssistantPanel';
+import { useReviewDialog } from 'src/composables/reviews/useReviewDialog';
+
+const { resena, indice, total, pausar, reanudar } = useRotatingReview();
+const { abrir: abrirAsistente } = useAssistantPanel();
+const { abrir: abrirResena } = useReviewDialog();
+
+defineOptions({ name: 'ReviewAssistantBand' });
+</script>
+
+<style scoped lang="scss">
+.review-band {
+  display: flex;
+  gap: 36px;
+  padding: 24px var(--m-banda-margen) 30px;
+  background: var(--m-hueso);
+}
+
+.review-band__resena {
+  flex: 0 0 47%;
+  display: flex;
+  flex-direction: column;
+  // Reserva el alto de la cita para que la banda no dé un salto cuando la
+  // reseña llega del servidor: la ruta `/` se prerenderiza sin ella.
+  min-height: 150px;
+}
+
+.review-band__encabezado {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.review-band__etiqueta {
+  font-size: 11px;
+  letter-spacing: var(--m-tracking-etiqueta);
+  text-transform: uppercase;
+  color: var(--m-oro-profundo);
+}
+
+.review-band__puntos {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.review-band__punto {
+  width: 6px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--m-filete);
+}
+
+.review-band__punto--activo {
+  width: 16px;
+  background: var(--m-tinta);
+}
+
+.review-band__cita {
+  margin: 0;
+  font-family: var(--m-font-display);
+  font-size: 22px;
+  line-height: 1.45;
+  color: var(--m-tinta);
+  // El freno de la reseña larguísima: tres líneas y elipsis, para que no
+  // empuje la tarjeta del asistente fuera de la pantalla.
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.review-band__autor,
+.review-band__apoyo {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: var(--m-piedra);
+}
+
+.review-band__vacio {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--m-piedra);
+}
+
+.review-band__dejar {
+  align-self: flex-start;
+  margin-top: auto;
+  padding: 14px 0 4px;
+  min-height: var(--m-tactil-min);
+  background: none;
+  border: 0;
+  border-bottom: var(--m-filete-grosor) solid var(--m-filete-rosa);
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: var(--m-tracking-nav);
+  text-transform: uppercase;
+  color: var(--m-rosa-profundo);
+  cursor: pointer;
+}
+
+.review-band__asistente {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  background: var(--m-nieve);
+  border: var(--m-filete-grosor) solid var(--m-filete);
+  border-radius: var(--m-radio-tarjeta);
+}
+
+.review-band__icono {
+  flex: 0 0 auto;
+  color: var(--m-oro-profundo);
+}
+
+.review-band__invitacion {
+  margin: 0;
+  font-family: var(--m-font-display);
+  font-size: 19px;
+  line-height: 1.3;
+  color: var(--m-tinta);
+}
+
+.review-band__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.review-band__chip {
+  padding: 7px 13px;
+  min-height: var(--m-tactil-min);
+  background: none;
+  border: var(--m-filete-grosor) solid var(--m-filete);
+  border-radius: var(--m-radio-pildora);
+  font: inherit;
+  font-size: 11.5px;
+  color: var(--m-tinta);
+  cursor: pointer;
+}
+
+.review-band__chip--solido {
+  padding: 7px 15px;
+  background: var(--m-tinta);
+  border-color: var(--m-tinta);
+  color: var(--m-hueso);
+}
+
+@media (max-width: 699px) {
+  .review-band {
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px var(--m-banda-margen-movil) 20px;
+  }
+
+  .review-band__resena {
+    flex: 0 0 auto;
+    min-height: 0;
+  }
+
+  .review-band__cita {
+    font-size: 17px;
+    line-height: 1.4;
+  }
+
+  .review-band__asistente {
+    padding: 14px 16px;
+  }
+
+  .review-band__invitacion {
+    font-size: 16px;
+  }
+}
+</style>

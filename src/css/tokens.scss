@@ -72,6 +72,11 @@
   /// Filete de 1px sobre tinta: el oro al 35 % separa sin gritar.
   --m-filete-oscuro: rgba(176, 138, 70, 0.35);
 
+  /// Filete rosa bajo «Deja la tuya», el único enlace rosa de la página
+  /// clara. No es color de texto (1,8:1 sobre hueso): el texto va en
+  /// `--m-rosa-profundo` y esto solo subraya.
+  --m-filete-rosa: #e2c6d1;
+
   // --- Canal de WhatsApp ----------------------------------------------------
 
   /// Verde de marca del botón de WhatsApp. Su texto va SIEMPRE oscuro
