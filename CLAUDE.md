@@ -77,6 +77,10 @@ The remodel designed on 2026-09-30 (direction "B · Bandas alternas": alternatin
 - `src/css/quasar.variables.scss` — the target `$primary/$secondary/$accent/$dark` values are still **commented out**. The landing page does not depend on them; uncommenting repaints the whole portal at once.
 - Known mismatch, by design: `/services`, `/testimonios` and the rest show the **new header over old bodies** until each gets its plan.
 
+**Playwright artifacts poison the TypeScript program.** A failed compat run writes `playwright-report/trace/sw.bundle.js`, whose minified code declares a class named `it`; with that folder inside the program it shadows Jest's global `it` and `yarn build:ssg` dies with hundreds of `Value of type 'typeof it' is not callable`. Both `playwright-report` and `test-results` are excluded in `tsconfig.json` and `.eslintignore` — keep them there.
+
+**Who may leave a review is the shell's rule, not the band's.** `MainLayout` registers `onReviewClick` through `useReviewDialog().registrarSolicitud()`; anything outside the shell calls `solicitar()`. Calling `abrir()` directly bypasses the login check and leaves an anonymous visitor filling a form whose submit silently does nothing.
+
 Geometry is checked in `tests/browser-compat/index-layout.spec.ts`, not in jsdom: horizontal overflow at 390 px with reviews served by `page.route`, the three-line clamp, and the fixed bar clearing the footer. Jest cannot see any of it. A green `npx jest` means neither that the project compiles (that is `vue-tsc`, which only runs under `quasar dev`/`build`) nor that the layout holds.
 
 Before touching anything visual, invoke the **`remodelacion-marlene`** skill (palette, typography, band structure, product rules already decided) and read `docs/superpowers/specs/2026-09-30-remodelacion-visual-index-design.md` plus the executed plan in `docs/remodelacion/inicio/`. Still outstanding from the spec's prerequisites: ~10 MB of unoptimized `public/people/` photos (the real risk to NF02), the Spanish strings living in the `en-US` i18n catalogue, and `roboto-font` in `extras`, which stays until the whole portal uses Jost.
