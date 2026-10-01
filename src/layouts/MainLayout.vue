@@ -1,6 +1,6 @@
 <template>
   <q-layout class="shadow-2 background-image" view="hHh lpR fFf">
-    <q-header style="background: #424242" role="banner">
+    <q-header class="main-header-bar" role="banner">
       <div class="main-header">
         <a
           class="main-header__brand"
@@ -8,11 +8,11 @@
           aria-label="Ir al inicio de Peluquería Marlene"
           @click.prevent="router.push('/')"
         >
-          💈 Peluquería Marlene 💈
+          MARLENE
         </a>
         <nav class="main-header__actions" aria-label="Navegación principal">
           <q-btn
-            :class="serviceHomeButton.class"
+            class="main-header__link"
             :icon="serviceHomeButton.icon"
             :label="showButtonLabels ? serviceHomeButton.label : undefined"
             :aria-label="serviceHomeButton.label"
@@ -23,13 +23,12 @@
           />
           <div class="filter-badge-wrapper">
             <q-btn
-              class="color-bar"
+              class="main-header__cta"
               icon="local_mall"
-              :label="showButtonLabels ? 'Tus reservas' : undefined"
-              aria-label="Tus reservas"
+              label="Reservar"
+              aria-label="Reservar"
               rounded
-              flat
-              :dense="!showButtonLabels"
+              unelevated
               @click="bookingStore.showDialogFn()"
             >
             </q-btn>
@@ -48,7 +47,7 @@
             </q-badge>
           </div>
           <q-btn
-            class="color-bar"
+            class="main-header__link"
             icon="expand_more"
             :label="showButtonLabels ? 'Más' : undefined"
             aria-label="Más opciones"
@@ -96,7 +95,7 @@
     </q-page-container>
 
     <q-btn
-      v-if="showReviewButton"
+      v-if="mostrarFabResena"
       class="review-fab"
       color="positive"
       icon="chat"
@@ -216,6 +215,15 @@ const reviewForm = reactive<CreateReviewBody>({
   description: '',
   score: 5,
 });
+
+/**
+ * El inicio ofrece «Deja la tuya» dentro de su banda de reseñas, y la regla de
+ * la remodelación es un solo flotante en pantalla (el del asistente). Aquí la
+ * burbuja verde tapaba el pie y la barra fija de móvil.
+ */
+const mostrarFabResena = computed(
+  () => showReviewButton.value && route.path !== '/',
+);
 
 const showReviewButton = computed(() => {
   if (!authStore.isLoggedIn) return true;
@@ -419,6 +427,14 @@ defineOptions({
 </script>
 
 <style scoped lang="scss">
+.main-header-bar {
+  /* Fondo sólido a propósito: translúcido sobre las fotos de la portada se
+     emborrona al pasar. La cabecera es fija por `view="hHh lpR fFf"`. */
+  background: var(--m-hueso);
+  color: var(--m-tinta);
+  border-bottom: var(--m-filete-grosor) solid var(--m-filete);
+}
+
 .main-header {
   display: flex;
   flex-direction: row;
@@ -426,19 +442,20 @@ defineOptions({
   justify-content: space-between;
   flex-wrap: nowrap;
   gap: 12px;
-  padding: 10px 20px 12px;
-  min-height: 56px;
+  padding: 0 var(--m-banda-margen);
+  min-height: var(--m-cabecera-alto);
   box-sizing: border-box;
 }
 
 .main-header__brand {
   cursor: pointer;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: white;
+  font-family: var(--m-font-display);
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: var(--m-tracking-marca);
+  text-transform: uppercase;
+  color: var(--m-tinta);
   text-decoration: none;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   flex-shrink: 0;
   line-height: 1.2;
   text-align: left;
@@ -446,8 +463,25 @@ defineOptions({
 
 .main-header__brand:hover,
 .main-header__brand:focus {
-  color: white;
+  color: var(--m-tinta);
   text-decoration: none;
+}
+
+/* Las entradas de navegación van planas: el único botón sólido es «Reservar». */
+.main-header__link {
+  font-family: var(--m-font-sans);
+  font-size: 12px;
+  letter-spacing: var(--m-tracking-nav);
+  color: var(--m-tinta);
+}
+
+.main-header__cta {
+  background: var(--m-tinta);
+  color: var(--m-hueso);
+  font-family: var(--m-font-sans);
+  font-size: 12px;
+  letter-spacing: var(--m-tracking-nav);
+  border-radius: var(--m-radio-pildora);
 }
 
 .main-header__actions {
@@ -461,23 +495,21 @@ defineOptions({
   min-width: 0;
 }
 
-@media (max-width: 499px) {
+@media (max-width: 699px) {
   .main-header {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 12px 16px 14px;
-    gap: 10px;
+    padding: 0 var(--m-banda-margen-movil);
+    min-height: var(--m-cabecera-alto-movil);
+    gap: 8px;
   }
 
   .main-header__brand {
-    width: 100%;
-    text-align: center;
+    font-size: 16px;
+    letter-spacing: var(--m-tracking-etiqueta);
   }
 
   .main-header__actions {
-    margin-left: 0;
-    justify-content: center;
-    width: 100%;
+    gap: 6px;
+    flex-wrap: nowrap;
   }
 }
 
