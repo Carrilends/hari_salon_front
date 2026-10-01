@@ -78,12 +78,21 @@ describe('ReviewAssistantBand', () => {
     expect(estado.reanudar).toHaveBeenCalled();
   });
 
-  it('«Deja la tuya» abre el diálogo de reseña del armazón', async () => {
-    const wrapper = mount(ReviewAssistantBand);
+  /**
+   * El armazón no abre el formulario a cualquiera: sin sesión manda al login,
+   * y con sesión rellena el nombre antes de abrir. La banda tiene que pedirlo
+   * por el mismo sitio; abrir el diálogo por su cuenta deja a una visitante
+   * anónima rellenando un formulario cuyo envío no hace nada.
+   */
+  it('«Deja la tuya» pide la reseña al armazón, no abre el diálogo por su cuenta', async () => {
+    const politica = jest.fn();
+    useReviewDialog().registrarSolicitud(politica);
 
+    const wrapper = mount(ReviewAssistantBand);
     await wrapper.get('[data-test="dejar-resena"]').trigger('click');
 
-    expect(useReviewDialog().abierto.value).toBe(true);
+    expect(politica).toHaveBeenCalledTimes(1);
+    expect(useReviewDialog().abierto.value).toBe(false);
   });
 
   it('la tarjeta del asistente abre el panel que ya está montado', async () => {

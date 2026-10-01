@@ -38,12 +38,19 @@ const { abierto: open, cerrar, alternar } = useAssistantPanel();
 
 // La página que monta una barra de acción fija marca el `body`: el flotante
 // sube por encima de ella en vez de taparle el botón de WhatsApp.
-body.m-con-barra-movil .assistant-launcher__fab {
-  bottom: calc(var(--m-barra-movil-alto) + 12px);
-}
+//
+// Dentro del punto de corte a propósito: la barra solo se pinta por debajo de
+// 700 px. Sin esta condición, en escritorio el flotante se apartaba de una
+// barra que no está —89 px del borde en vez de 18— y el hueco que el pie le
+// reserva en su esquina quedaba vacío.
+@media (max-width: 699px) {
+  body.m-con-barra-movil .assistant-launcher__fab {
+    bottom: calc(var(--m-barra-movil-alto) + 12px);
+  }
 
-body.m-con-barra-movil .assistant-launcher__panel {
-  bottom: calc(var(--m-barra-movil-alto) + 78px);
+  body.m-con-barra-movil .assistant-launcher__panel {
+    bottom: calc(var(--m-barra-movil-alto) + 78px);
+  }
 }
 
 .assistant-launcher__panel {

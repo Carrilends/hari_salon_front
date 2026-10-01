@@ -5,6 +5,8 @@
   },
   "exclude": [
     "./dist",
+    "./playwright-report",
+    "./test-results",
     "./.quasar",
     "./node_modules",
     "./src-capacitor",

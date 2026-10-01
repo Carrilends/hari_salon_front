@@ -39,7 +39,7 @@
         type="button"
         class="review-band__dejar"
         data-test="dejar-resena"
-        @click="abrirResena()"
+        @click="pedirResena()"
       >
         Deja la tuya →
       </button>
@@ -109,7 +109,7 @@ const MAX_PUNTOS = 6;
 
 const { resena, indice, total, cargando, pausar, reanudar } = useRotatingReview();
 const { abrir: abrirAsistente, abrirCon } = useAssistantPanel();
-const { abrir: abrirResena } = useReviewDialog();
+const { solicitar: pedirResena } = useReviewDialog();
 
 const hayPuntos = computed(() => total.value > 1 && total.value <= MAX_PUNTOS);
 

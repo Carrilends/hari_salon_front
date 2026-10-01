@@ -119,3 +119,34 @@ test.describe('maqueta del inicio en móvil', () => {
     expect(pie!.y + pie!.height).toBeLessThanOrEqual(barra!.y + 1);
   });
 });
+
+test.describe('el flotante del asistente y la barra fija', () => {
+  /**
+   * La barra marca el `body` mientras está montada, y el flotante sube por
+   * encima de ella. Pero la barra solo se ve por debajo de 700 px: en
+   * escritorio la marca sigue puesta y el flotante se apartaba de una barra
+   * que no está, quedando a 89 px del borde y dejando un hueco en el pie que
+   * se le había reservado.
+   */
+  test('en escritorio se queda en su esquina', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto('/', { waitUntil: 'networkidle' });
+
+    const fab = page.locator('.assistant-launcher__fab');
+    await expect(fab).toBeVisible();
+
+    const separacion = await fab.evaluate(
+      (el) => window.innerHeight - el.getBoundingClientRect().bottom,
+    );
+    expect(separacion).toBeLessThan(40);
+  });
+
+  test('en móvil sube por encima de la barra sin taparla', async ({ page }) => {
+    await page.setViewportSize(MOVIL);
+    await page.goto('/', { waitUntil: 'networkidle' });
+
+    const fab = await page.locator('.assistant-launcher__fab').boundingBox();
+    const barra = await page.locator('.mobile-bar').boundingBox();
+    expect(fab!.y + fab!.height).toBeLessThanOrEqual(barra!.y + 1);
+  });
+});

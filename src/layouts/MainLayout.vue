@@ -203,7 +203,12 @@ const BREAKPOINT_LABELS_PX = 1171;
 const route = useRoute();
 const router = useRouter();
 
-const { abierto: reviewDialog, abrir: abrirResena } = useReviewDialog();
+const { abierto: reviewDialog, abrir: abrirResena, registrarSolicitud } =
+  useReviewDialog();
+
+// La banda de reseñas del inicio pide por aquí: la regla de quién puede dejar
+// una reseña se escribe una sola vez, y es esta.
+registrarSolicitud(onReviewClick);
 const isSendingReview = ref(false);
 const scoreOptions = [1, 2, 3, 4, 5].map((score) => ({
   label: `${score}`,

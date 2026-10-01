@@ -73,3 +73,31 @@ describe('pregunta pendiente del panel del asistente', () => {
     expect(useAssistantPanel().consumirPendiente()).toBeNull();
   });
 });
+
+/**
+ * Quién puede dejar una reseña lo decide el armazón, que es donde viven la
+ * sesión y el router. El diálogo solo ofrece el canal: si nadie registró una
+ * política, no se abre solo.
+ */
+describe('solicitud de reseña', () => {
+  beforeEach(() => {
+    useReviewDialog().cerrar();
+    useReviewDialog().registrarSolicitud(null);
+  });
+
+  it('sin política registrada, pedirla no abre nada', () => {
+    useReviewDialog().solicitar();
+
+    expect(useReviewDialog().abierto.value).toBe(false);
+  });
+
+  it('con política registrada, la llama a ella', () => {
+    const politica = jest.fn();
+    useReviewDialog().registrarSolicitud(politica);
+
+    useReviewDialog().solicitar();
+
+    expect(politica).toHaveBeenCalledTimes(1);
+    expect(useReviewDialog().abierto.value).toBe(false);
+  });
+});
