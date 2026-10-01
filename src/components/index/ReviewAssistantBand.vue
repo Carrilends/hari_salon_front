@@ -10,12 +10,13 @@
     >
       <div class="review-band__encabezado">
         <span class="review-band__etiqueta">Lo que dicen</span>
-        <span v-if="total > 1" class="review-band__puntos" aria-hidden="true">
+        <span v-if="hayPuntos" class="review-band__puntos" aria-hidden="true">
           <span
             v-for="(_, posicion) in total"
             :key="posicion"
             class="review-band__punto"
             :class="{ 'review-band__punto--activo': posicion === indice % total }"
+            data-test="punto"
           />
         </span>
       </div>
@@ -26,6 +27,10 @@
         </blockquote>
         <p class="review-band__autor">{{ resena.name }} · reseña publicada en el portal</p>
       </template>
+      <div v-else-if="cargando" class="review-band__esqueleto" data-test="esqueleto" aria-hidden="true">
+        <span class="review-band__barra" />
+        <span class="review-band__barra review-band__barra--corta" />
+      </div>
       <p v-else class="review-band__vacio">
         Todavía no hay reseñas publicadas. La tuya puede ser la primera.
       </p>
@@ -66,11 +71,15 @@
       </div>
 
       <div class="review-band__chips">
-        <button type="button" class="review-band__chip" @click="abrirAsistente()">
-          ¿Hay cupo hoy?
-        </button>
-        <button type="button" class="review-band__chip" @click="abrirAsistente()">
-          Algo para una boda
+        <button
+          v-for="chip in chips"
+          :key="chip.tool"
+          type="button"
+          class="review-band__chip"
+          data-test="chip-intencion"
+          @click="abrirConPregunta(chip.prompt)"
+        >
+          {{ chip.label }}
         </button>
         <button
           type="button"
@@ -86,13 +95,38 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useRotatingReview } from 'src/composables/reviews/useRotatingReview';
 import { useAssistantPanel } from 'src/composables/assistant/useAssistantPanel';
 import { useReviewDialog } from 'src/composables/reviews/useReviewDialog';
+import { INTENT_CHIPS } from 'src/composables/assistant/intentChips';
 
-const { resena, indice, total, pausar, reanudar } = useRotatingReview();
-const { abrir: abrirAsistente } = useAssistantPanel();
+/**
+ * Pasados de aquí, la fila de puntos es más ancha que un teléfono y arrastra
+ * la página en horizontal. Con tantas reseñas el indicador tampoco dice nada.
+ */
+const MAX_PUNTOS = 6;
+
+const { resena, indice, total, cargando, pausar, reanudar } = useRotatingReview();
+const { abrir: abrirAsistente, abrirCon } = useAssistantPanel();
 const { abrir: abrirResena } = useReviewDialog();
+
+const hayPuntos = computed(() => total.value > 1 && total.value <= MAX_PUNTOS);
+
+/**
+ * Los chips salen del catálogo de intenciones, que es el que la prueba
+ * `intentChips.spec.ts` contrasta con las herramientas que el asistente tiene
+ * de verdad. Escribir aquí rótulos sueltos se saltaría esa red y prometería
+ * cosas que ninguna herramienta sabe hacer. Los que piden sesión se quedan
+ * fuera: esta tarjeta la ve cualquiera que llegue al portal.
+ */
+const chips = computed(() =>
+  INTENT_CHIPS.filter((chip) => !chip.requiresAuth).slice(1, 3),
+);
+
+function abrirConPregunta(prompt: string) {
+  abrirCon(prompt);
+}
 
 defineOptions({ name: 'ReviewAssistantBand' });
 </script>
@@ -165,6 +199,31 @@ defineOptions({ name: 'ReviewAssistantBand' });
   margin: 8px 0 0;
   font-size: 12.5px;
   color: var(--m-piedra);
+}
+
+/* El nombre lo escribe la clienta y el backend acepta 120 caracteres sin
+   exigir espacios: sin esto, uno largo y sin espacios arrastra la página
+   entera en horizontal a 390 px. */
+.review-band__autor {
+  overflow-wrap: anywhere;
+}
+
+/* Mientras la petición viaja no se afirma nada: con SSG este es el HTML que se
+   publica y se indexa, y decir ahí «no hay reseñas» sería mentir. */
+.review-band__esqueleto {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.review-band__barra {
+  height: 18px;
+  border-radius: 2px;
+  background: var(--m-filete);
+}
+
+.review-band__barra--corta {
+  width: 55%;
 }
 
 .review-band__vacio {
@@ -250,7 +309,9 @@ defineOptions({ name: 'ReviewAssistantBand' });
 
   .review-band__resena {
     flex: 0 0 auto;
-    min-height: 0;
+    /* Más bajo que en escritorio, pero NO cero: sin reserva, la banda daba un
+       salto de 53 px al llegar las reseñas y el pie brincaba con ella. */
+    min-height: 118px;
   }
 
   .review-band__cita {

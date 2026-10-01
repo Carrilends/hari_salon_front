@@ -29,6 +29,16 @@ describe('HeroBand', () => {
     expect(wrapper.emitted('ver-servicios')).toHaveLength(1);
   });
 
+  /**
+   * El titular del tablero no nombra el salón, y la cabecera solo pone
+   * «MARLENE». Sin esto, «Peluquería Marlene» —el término por el que la busca
+   * quien vive en Sopó— desaparece del cuerpo de la única página que se
+   * prerenderiza.
+   */
+  it('nombra el salón en el cuerpo de la página, no solo en el título', () => {
+    expect(montar().text()).toContain('Peluquería Marlene');
+  });
+
   it('la foto lleva texto alternativo', () => {
     expect(montar().get('img').attributes('alt')).toBe('Clienta en el salón');
   });

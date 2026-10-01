@@ -1,7 +1,7 @@
 <template>
   <section class="hero-band">
     <div class="hero-band__texto">
-      <p class="hero-band__etiqueta">Peluquería en Sopó</p>
+      <p class="hero-band__etiqueta">Peluquería Marlene · Sopó</p>
       <h1 class="hero-band__titular">Cortes, color<br />y estética</h1>
       <p class="hero-band__lede">
         Elige servicio, día y estilista. Te confirmamos el mismo día.

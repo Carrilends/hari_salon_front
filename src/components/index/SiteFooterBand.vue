@@ -118,13 +118,13 @@ defineOptions({ name: 'SiteFooterBand' });
 
 @media (max-width: 699px) {
   .footer-band {
+    // El respiro para el flotante solo hace falta en escritorio: en móvil el
+    // flotante se posa sobre la barra fija, no sobre el pie.
+    padding-right: var(--m-banda-margen-movil);
     flex-direction: column;
     align-items: center;
     gap: 12px;
     padding: 20px var(--m-banda-margen-movil);
-    // La barra fija de móvil se superpone al final de la página: el pie le
-    // reserva su alto para no quedar debajo de ella.
-    padding-bottom: calc(var(--m-barra-movil-alto) + 16px);
     text-align: center;
   }
 }

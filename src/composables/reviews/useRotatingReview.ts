@@ -14,7 +14,7 @@ const MINIMO_PARA_ROTAR = 3;
  * prerenderiza con SSG y este código corre en Node durante la build.
  */
 export const useRotatingReview = (intervaloMs = 8000) => {
-  const { reviews } = useReviews();
+  const { reviews, isLoading } = useReviews();
 
   const indice = ref(0);
   const pausado = ref(false);
@@ -69,6 +69,12 @@ export const useRotatingReview = (intervaloMs = 8000) => {
     indice,
     total,
     rotando,
+    /**
+     * Con SSG esto es `true` en el HTML publicado: Vue Query no resuelve
+     * durante `quasar ssg generate`. La banda lo usa para enseñar un hueco
+     * neutro en vez de afirmar que el salón no tiene reseñas.
+     */
+    cargando: isLoading,
     // `pausar` y `reanudar` tocan el temporizador a mano en vez de confiar en
     // el watcher: el de Vue se ejecuta en el siguiente flush, y para entonces
     // la reseña que la persona estaba leyendo ya habría cambiado bajo su

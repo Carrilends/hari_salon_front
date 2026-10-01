@@ -113,10 +113,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useAssistant } from 'src/composables/assistant/useAssistant';
+import { useAssistantPanel } from 'src/composables/assistant/useAssistantPanel';
 import PackageProposalCard from 'src/components/assistant/PackageProposalCard.vue';
 import ServiceListCard from 'src/components/assistant/ServiceListCard.vue';
 import type { PackageProposal, PresentedService } from 'src/api/assistant-api';
@@ -154,6 +155,16 @@ const seguimiento = computed<IntentChip[]>(() => {
   const ultimo = messages.value[messages.value.length - 1];
   if (!ultimo || ultimo.role !== 'assistant') return [];
   return followUpChips(ultimo.presentaciones);
+});
+
+/**
+ * Si el panel se abrió desde un chip del inicio, llega con su pregunta puesta y
+ * se envía sola: tocar «Ver disponibilidad» y encontrarse una caja vacía
+ * obligaría a escribir lo que ya se había pedido con el dedo.
+ */
+onMounted(async () => {
+  const pendiente = useAssistantPanel().consumirPendiente();
+  if (pendiente) await send(pendiente);
 });
 
 async function onChip(chip: IntentChip) {

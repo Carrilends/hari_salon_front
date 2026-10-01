@@ -131,7 +131,12 @@
   /// Alturas fijas del armazón del inicio (escritorio 1280 / móvil 390).
   --m-cabecera-alto: 68px;
   --m-cabecera-alto-movil: 56px;
-  --m-barra-movil-alto: 76px;
+  /// Alto REAL de la barra fija de móvil: 12 de relleno + 52 del botón + 12
+  /// de relleno + 1 del filete, más el área segura del teléfono (34 px en los
+  /// iPhone con muesca). De este token cuelgan el relleno inferior de la
+  /// página y la altura del flotante del asistente: si se queda corto, el
+  /// flotante cae dentro de la barra y le roba los toques al WhatsApp.
+  --m-barra-movil-alto: calc(77px + env(safe-area-inset-bottom, 0px));
 
   /// Área táctil mínima de cualquier control. No bajar de aquí.
   --m-tactil-min: 44px;

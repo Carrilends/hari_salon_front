@@ -91,7 +91,10 @@ describe('IndexPage', () => {
   it('el acceso de administración vive en el pie, no en un flotante', async () => {
     const wrapper = mount(IndexPage, { global: { stubs } });
 
-    expect(wrapper.find('.q-page-sticky').exists()).toBe(false);
+    // Sobre la fuente, no sobre el DOM: el stub de `q-page-sticky` no lleva esa
+    // clase, así que buscarla en el árbol montado pasaría siempre.
+    const fuente = readFileSync(join(__dirname, '../../src/pages/IndexPage.vue'), 'utf8');
+    expect(fuente).not.toContain('q-page-sticky');
     await wrapper.getComponent({ name: 'SiteFooterBand' }).vm.$emit('admin');
 
     expect(push).toHaveBeenCalledWith({ name: 'login' });

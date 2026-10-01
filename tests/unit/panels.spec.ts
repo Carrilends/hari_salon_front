@@ -40,3 +40,36 @@ describe.each([
     expect(otro.abierto.value).toBe(true);
   });
 });
+
+/**
+ * Un chip del inicio no solo abre el panel: lleva su pregunta. Sin esto, quien
+ * toca «Ver disponibilidad» se encuentra una caja vacía y tiene que escribirla.
+ * El prompt se consume una sola vez: si el panel se cierra y se vuelve a abrir
+ * a mano, no debe repetir la pregunta de hace un rato.
+ */
+describe('pregunta pendiente del panel del asistente', () => {
+  beforeEach(() => {
+    const panel = useAssistantPanel();
+    panel.cerrar();
+    panel.consumirPendiente();
+  });
+
+  it('sin chip no hay nada pendiente', () => {
+    useAssistantPanel().abrir();
+    expect(useAssistantPanel().consumirPendiente()).toBeNull();
+  });
+
+  it('abrirCon abre el panel y deja la pregunta', () => {
+    useAssistantPanel().abrirCon('¿Qué horarios tienen mañana?');
+
+    expect(useAssistantPanel().abierto.value).toBe(true);
+    expect(useAssistantPanel().consumirPendiente()).toBe('¿Qué horarios tienen mañana?');
+  });
+
+  it('la pregunta se consume una sola vez', () => {
+    useAssistantPanel().abrirCon('¿Qué servicios tienen?');
+    useAssistantPanel().consumirPendiente();
+
+    expect(useAssistantPanel().consumirPendiente()).toBeNull();
+  });
+});

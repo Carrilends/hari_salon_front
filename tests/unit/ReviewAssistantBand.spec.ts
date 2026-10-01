@@ -8,8 +8,15 @@ import { mount } from '@vue/test-utils';
 import ReviewAssistantBand from 'src/components/index/ReviewAssistantBand.vue';
 import { useAssistantPanel } from 'src/composables/assistant/useAssistantPanel';
 import { useReviewDialog } from 'src/composables/reviews/useReviewDialog';
+import { INTENT_CHIPS } from 'src/composables/assistant/intentChips';
 
-const estado = { resena: null as unknown, total: 0, pausar: jest.fn(), reanudar: jest.fn() };
+const estado = {
+  resena: null as unknown,
+  total: 0,
+  cargando: false,
+  pausar: jest.fn(),
+  reanudar: jest.fn(),
+};
 
 // El doble devuelve refs de verdad, no objetos `{ value }`: el composable real
 // devuelve `ComputedRef`, y la plantilla cuenta con que Vue los desenvuelva.
@@ -20,6 +27,7 @@ jest.mock('src/composables/reviews/useRotatingReview', () => ({
     total: computed(() => estado.total),
     indice: computed(() => 0),
     rotando: computed(() => estado.total >= 3),
+    cargando: computed(() => estado.cargando),
     pausar: estado.pausar,
     reanudar: estado.reanudar,
   }),
@@ -36,6 +44,7 @@ const RESENA = {
 beforeEach(() => {
   estado.resena = RESENA;
   estado.total = 4;
+  estado.cargando = false;
   useAssistantPanel().cerrar();
   useReviewDialog().cerrar();
 });
@@ -83,6 +92,78 @@ describe('ReviewAssistantBand', () => {
     await wrapper.get('[data-test="abrir-asistente"]').trigger('click');
 
     expect(useAssistantPanel().abierto.value).toBe(true);
+  });
+
+  /**
+   * Un punto por reseña y sin tope: en cuanto el negocio acumule reseñas, la
+   * fila de puntos es más ancha que el teléfono y arrastra la página entera
+   * en horizontal. Medido: con 40 reseñas la fila pedía 445 px sobre 350.
+   */
+  it('con muchas reseñas no pinta una fila de puntos que desborde', () => {
+    estado.total = 40;
+
+    const puntos = mount(ReviewAssistantBand).findAll('[data-test="punto"]');
+
+    expect(puntos.length).toBeLessThanOrEqual(6);
+  });
+
+  it('con pocas reseñas sí los pinta, uno por reseña', () => {
+    estado.total = 4;
+
+    expect(mount(ReviewAssistantBand).findAll('[data-test="punto"]')).toHaveLength(4);
+  });
+
+  /**
+   * La ruta `/` se prerenderiza y Vue Query no resuelve durante la build: el
+   * HTML publicado se queda con lo que se pinte mientras se carga. Si eso es
+   * la frase de «todavía no hay reseñas», el portal afirma a los buscadores y
+   * al primer pintado que no tiene ninguna, teniéndolas.
+   */
+  it('mientras carga muestra un hueco neutro, sin afirmar que no hay reseñas', () => {
+    estado.cargando = true;
+    estado.resena = null;
+    estado.total = 0;
+
+    const wrapper = mount(ReviewAssistantBand);
+
+    expect(wrapper.find('[data-test="esqueleto"]').exists()).toBe(true);
+    expect(wrapper.text()).not.toContain('Todavía no hay reseñas');
+  });
+
+  it('cuando ya respondió y no hay ninguna, entonces sí lo dice', () => {
+    estado.cargando = false;
+    estado.resena = null;
+    estado.total = 0;
+
+    const wrapper = mount(ReviewAssistantBand);
+
+    expect(wrapper.find('[data-test="esqueleto"]').exists()).toBe(false);
+    expect(wrapper.text()).toContain('Todavía no hay reseñas');
+  });
+
+  /**
+   * `intentChips.ts` fija la regla con prueba propia: cada chip corresponde a
+   * una herramienta que el asistente tiene de verdad. Unos rótulos escritos a
+   * mano en esta tarjeta se saltan esa red, y además abrían un panel vacío:
+   * quien tocaba «¿Hay cupo hoy?» tenía que escribir la pregunta igual.
+   */
+  it('los chips salen del catálogo de intenciones, no de rótulos sueltos', () => {
+    const wrapper = mount(ReviewAssistantBand);
+    const rotulos = wrapper.findAll('[data-test="chip-intencion"]').map((c) => c.text());
+
+    expect(rotulos.length).toBeGreaterThan(0);
+    for (const rotulo of rotulos) {
+      expect(INTENT_CHIPS.map((c) => c.label)).toContain(rotulo);
+    }
+  });
+
+  it('tocar un chip deja su pregunta lista para el panel', async () => {
+    const wrapper = mount(ReviewAssistantBand);
+
+    await wrapper.findAll('[data-test="chip-intencion"]')[0].trigger('click');
+
+    expect(useAssistantPanel().abierto.value).toBe(true);
+    expect(useAssistantPanel().consumirPendiente()).toBe(INTENT_CHIPS[1].prompt);
   });
 
   it('una reseña larguísima no se sale: se recorta con elipsis', () => {
