@@ -62,15 +62,20 @@ There is **no `typecheck` script**; type checking runs via `vite-plugin-checker`
 
 `src/composables/seo/` (`useSeo.ts`, `structuredData.ts`) feeds `@vueuse/head` and emits Schema.org JSON-LD. The old stale values ("Peluquería Pecas", AR locale, ARS currency) are **gone**; `tests/unit/salon-branding.spec.ts` is a regression net that fails if anyone reintroduces them, and it also pins the opening hours against `businessHours.ts`. Business data comes from `src/constants/salon-location.ts`. Canonical/OG URLs are built from `VITE_SITE_URL`.
 
-### Visual remodel scaffolding (prepared, not applied)
+### Visual remodel: the landing page is done, the rest is not
 
-A visual remodel of the **landing page only** was designed on 2026-09-30 (direction "B · Bandas alternas": alternating bone/ink bands, Marcellus + Jost, gold hairlines, the existing pink demoted to a single accent). The scaffolding is in place and **changes nothing on screen yet**:
+The remodel designed on 2026-09-30 (direction "B · Bandas alternas": alternating bone/ink bands, Marcellus + Jost, gold hairlines, the existing pink demoted to a single accent) is **applied to the landing page and to the shell's header**. Everything else still wears the old look, on purpose — each view gets its own plan under `docs/remodelacion/<vista>/`.
 
-- `src/css/tokens.scss` — the palette and rhythm as `--m-*` custom properties, each with its measured contrast. Imported from `app.scss`; it only declares variables. **Use `var(--m-*)`, never a loose hex.** Two traps are documented there: light gold (`--m-oro`) is 2.8:1 on bone and is *not* a text color (use `--m-oro-profundo`), and text on the WhatsApp green must be dark (9.3:1), never white (2.0:1).
-- `index.html` — `preconnect` + Google Fonts for Marcellus and Jost. `body` still uses Quasar's family; the fonts are merely available. When they are applied, reconsider `roboto-font` in `extras`.
-- `src/css/quasar.variables.scss` — the target `$primary/$secondary/$accent/$dark` values sit there **commented out**. Uncommenting them repaints the whole portal at once, so it is explicitly not step zero.
+- `src/components/index/` — the five bands the landing page is made of: `HeroBand`, `CatalogBand` (the **only** dark band), `ReviewAssistantBand`, `SiteFooterBand`, `MobileActionBar`. Flat markup, no Quasar components: they need styling, not behaviour. Each has its spec in `tests/unit/`.
+- `src/pages/IndexPage.vue` composes them in **one tree**; responsiveness is CSS at a single **700 px** breakpoint (`@media (max-width: 699px)`). The old `matchMedia`-in-JS with two parallel trees and two `style-fn` is gone — `tests/unit/IndexPage.spec.ts` fails if it comes back.
+- `src/css/tokens.scss` — the palette and rhythm as `--m-*` custom properties, each with its measured contrast. **Use `var(--m-*)`, never a loose hex.** Three traps documented there: light gold (`--m-oro`) is 2.8:1 on bone and is *not* a text color (use `--m-oro-profundo`), text on the WhatsApp green must be dark (9.3:1), never white (2.0:1), and `--m-filete-rosa` only underlines, it is not a text color either.
+- **One floating button per screen.** The assistant's launcher is it. `MobileActionBar` marks `body.m-con-barra-movil` while mounted so `AssistantLauncher` lifts above the fixed bar; the shell's green review FAB is hidden on `/`, where "Deja la tuya" lives inside the review band instead.
+- **Shared panel state**: `src/composables/assistant/useAssistantPanel.ts` and `src/composables/reviews/useReviewDialog.ts` hold module-level state, because the landing bands and the shell open the same two panels from opposite ends of the tree.
+- `src/constants/index-sections.ts` — the four catalogue sections, with the filter UUIDs pinned by a test. The mock-ups' "desde $X" is **not implemented**: that figure needs the whole catalogue or a new endpoint. Open product decision.
+- `src/css/quasar.variables.scss` — the target `$primary/$secondary/$accent/$dark` values are still **commented out**. The landing page does not depend on them; uncommenting repaints the whole portal at once.
+- Known mismatch, by design: `/services`, `/testimonios` and the rest show the **new header over old bodies** until each gets its plan.
 
-Before touching anything visual, invoke the **`remodelacion-marlene`** skill (palette, typography, band structure, product rules already decided) and read `docs/superpowers/specs/2026-09-30-remodelacion-visual-index-design.md`, which also lists the loose prerequisites found in `IndexPage.vue` (duplicated compact/desktop markup, hardcoded `menuCards`, ~10 MB of unoptimized `public/people/` photos) and the fact that `app.scss` is dead CSS from another project.
+Before touching anything visual, invoke the **`remodelacion-marlene`** skill (palette, typography, band structure, product rules already decided) and read `docs/superpowers/specs/2026-09-30-remodelacion-visual-index-design.md` plus the executed plan in `docs/remodelacion/inicio/`. Still outstanding from the spec's prerequisites: ~10 MB of unoptimized `public/people/` photos (the real risk to NF02), the Spanish strings living in the `en-US` i18n catalogue, and `roboto-font` in `extras`, which stays until the whole portal uses Jost.
 
 ### Single-source-of-truth files (do not duplicate)
 
