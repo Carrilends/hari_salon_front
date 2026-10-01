@@ -1,5 +1,10 @@
 // app global css in SCSS form
 
+// Tokens visuales de la remodelación (paleta, tipografía y ritmo). Solo
+// DECLARA variables en `:root`: no aplica ni un estilo, así que importarlo no
+// cambia un píxel. Ver `tokens.scss` y
+// `docs/superpowers/specs/2026-09-30-remodelacion-visual-index-design.md`.
+@import './tokens.scss';
 
 .title {
   font-weight: bold;

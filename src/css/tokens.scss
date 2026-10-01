@@ -1,0 +1,133 @@
+// =============================================================================
+// Tokens visuales de la Peluquería Marlene
+// =============================================================================
+//
+// Paleta y ritmo de la remodelación «B · Bandas alternas» (decidida el
+// 2026-09-30). Catálogo visual completo, con los dieciséis tableros:
+// https://claude.ai/artifact/DV8xP9qME4QGU2WZqooApA
+//
+// ESTE FICHERO NO PINTA NADA. Solo declara variables: mientras ningún
+// componente las consuma, el portal se ve exactamente igual que antes. Es
+// deliberado — se prepara el terreno sin remodelar.
+//
+// Los contrastes anotados están medidos (WCAG 2.1, fondo real de uso). La
+// regla de lectura es: todo texto ≥ 4,5:1, y los pares que no llegan están
+// marcados como «no es color de texto».
+//
+// Lo usa: `app.scss` (lo importa). Lo completará la remodelación del inicio,
+// descrita en `docs/superpowers/specs/2026-09-30-remodelacion-visual-index-design.md`.
+// -----------------------------------------------------------------------------
+
+:root {
+  // --- Fondos y tinta -------------------------------------------------------
+
+  /// Fondo oscuro y color de texto principal sobre claro. 16,3:1 sobre hueso.
+  /// Es el ancla que le faltaba al portal: sin un oscuro que pese, el pastel
+  /// sobre blanco se lee como «sin terminar», no como «suave».
+  --m-tinta: #16130f;
+
+  /// Superficies oscuras secundarias dentro de una banda tinta (burbujas del
+  /// asistente, tarjetas sobre fondo oscuro). No para texto.
+  --m-carbon: #2a251f;
+
+  /// Fondo claro de la página. Cálido a propósito: el blanco puro enfría el
+  /// conjunto y delata el andamiaje.
+  --m-hueso: #f6f1ea;
+
+  /// Tarjetas y superficies elevadas sobre hueso.
+  --m-nieve: #ffffff;
+
+  // --- Acentos --------------------------------------------------------------
+
+  /// Oro claro: filetes, iconos, bordes y cifras sobre tinta (5,7:1).
+  /// ⚠️ SOBRE HUESO DA 2,8:1 — **NO es color de texto sobre fondo claro**.
+  /// Para texto dorado sobre claro se usa `--m-oro-profundo`.
+  --m-oro: #b08a46;
+
+  /// Oro legible sobre claro: 5,5:1 sobre hueso. Etiquetas en versalitas,
+  /// precios y enlaces de sección.
+  --m-oro-profundo: #7a5c28;
+
+  /// El rosa de siempre de Marlene. Sobre blanco da 1,2:1 y por eso parecía
+  /// pobre; sobre tinta da 11,4:1 y es donde por fin luce. Un acento por
+  /// pantalla: botón encendido, burbuja de la clienta, etiqueta sobre oscuro.
+  --m-rosa: #f8bbd0;
+
+  /// Rosa legible sobre claro: 6,4:1 sobre hueso. Enlaces y acciones
+  /// secundarias (p. ej. «Deja la tuya») en las bandas claras.
+  --m-rosa-profundo: #8e3b5c;
+
+  // --- Neutros --------------------------------------------------------------
+
+  /// Texto secundario sobre hueso: 5,2:1.
+  --m-piedra: #6b635a;
+
+  /// Texto secundario sobre tinta: 10,3:1. (Par oscuro de `--m-piedra`.)
+  --m-piedra-clara: #c9c1b6;
+
+  /// Filete de 1px sobre fondo claro. Es lo que estructura la página: sin
+  /// líneas, el contenido flota.
+  --m-filete: #d9d1c7;
+
+  /// Filete de 1px sobre tinta: el oro al 35 % separa sin gritar.
+  --m-filete-oscuro: rgba(176, 138, 70, 0.35);
+
+  // --- Canal de WhatsApp ----------------------------------------------------
+
+  /// Verde de marca del botón de WhatsApp. Su texto va SIEMPRE oscuro
+  /// (`--m-whatsapp-texto`, 9,3:1); en blanco daría 2,0:1 y no pasa AA.
+  --m-whatsapp: #25d366;
+  --m-whatsapp-texto: #0b2e18;
+
+  // --- Tipografía -----------------------------------------------------------
+  //
+  // Las dos familias se cargan en `index.html` (Google Fonts, `display=swap`).
+  // Aquí solo se nombran: `body` sigue con la familia de Quasar hasta que la
+  // remodelación la cambie.
+
+  /// Titulares, nombre del salón y precios en tarjeta. Romana, con aire de
+  /// rótulo grabado. Peso único (400): no tiene más.
+  --m-font-display: 'Marcellus', 'Times New Roman', serif;
+
+  /// Texto, botones y etiquetas. Geométrica, sin el aire de plantilla que
+  /// deja Roboto. Pesos en uso: 300 / 400 / 500.
+  --m-font-sans: 'Jost', 'Helvetica Neue', Arial, sans-serif;
+
+  /// Versalitas espaciadas: el recurso que más «profesional» aporta por línea
+  /// de CSS. Se aplica junto a `text-transform: uppercase`.
+  --m-tracking-etiqueta: 0.24em;
+  --m-tracking-nav: 0.16em;
+  --m-tracking-marca: 0.3em;
+
+  // --- Ritmo ----------------------------------------------------------------
+
+  /// Grosor único de filete. Nunca 2px: el portal se estructura con líneas
+  /// finas, no con bordes.
+  --m-filete-grosor: 1px;
+
+  /// Radios. Las fotos dentro de banda oscura van casi a canto vivo (2px);
+  /// las tarjetas claras, 3px; el panel del asistente, 6px; las píldoras,
+  /// redondas del todo.
+  --m-radio-foto: 2px;
+  --m-radio-tarjeta: 3px;
+  --m-radio-panel: 6px;
+  --m-radio-pildora: 999px;
+
+  /// Margen lateral de las bandas (el mismo en todas: es lo que da la
+  /// sensación de columna única).
+  --m-banda-margen: 48px;
+  --m-banda-margen-movil: 20px;
+
+  /// Aire vertical dentro de una banda y separación entre tarjetas.
+  --m-banda-padding: 26px;
+  --m-rejilla-gap: 18px;
+  --m-rejilla-gap-movil: 12px;
+
+  /// Alturas fijas del armazón del inicio (escritorio 1280 / móvil 390).
+  --m-cabecera-alto: 68px;
+  --m-cabecera-alto-movil: 56px;
+  --m-barra-movil-alto: 76px;
+
+  /// Área táctil mínima de cualquier control. No bajar de aquí.
+  --m-tactil-min: 44px;
+}

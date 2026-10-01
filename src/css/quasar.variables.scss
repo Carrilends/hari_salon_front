@@ -12,6 +12,24 @@
 // to match your app's branding.
 // Tip: Use the "Theme Builder" on Quasar's documentation website.
 
+// -----------------------------------------------------------------------------
+// VALORES DESTINO DE LA REMODELACIÓN «B · Bandas alternas» (2026-09-30)
+//
+// Descomentar este bloque —y borrar el de abajo— es el PASO 1 de la
+// remodelación, y repinta TODO el portal de golpe: botones, enlaces, diálogos,
+// panel de administración y correos no, pero sí cada pantalla que use un color
+// de marca de Quasar. No se hace hasta que el inicio esté compuesto; mientras
+// tanto, los tokens equivalentes viven en `tokens.scss` y se consumen por
+// nombre (`var(--m-tinta)`), que es lo que permite remodelar una vista sin
+// mover las demás.
+//
+// $primary   : #16130F;  // tinta — botones sólidos y titulares
+// $secondary : #B08A46;  // oro — filetes, iconos y cifras sobre tinta
+// $accent    : #8E3B5C;  // rosa profundo — enlaces legibles sobre claro
+// $dark      : #16130F;
+// $dark-page : #0F0D0B;
+// -----------------------------------------------------------------------------
+
 $primary   : #f8bbd0;
 $secondary : #ffd54f;
 $tertiary  : #bdc9d7;

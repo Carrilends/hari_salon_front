@@ -60,7 +60,17 @@ There is **no `typecheck` script**; type checking runs via `vite-plugin-checker`
 
 ### SEO and SSG-rendered metadata
 
-`src/composables/seo/` (`useSeo.ts`, `structuredData.ts`) feeds `@vueuse/head` and emits Schema.org JSON-LD. These files have **known stale values** ("Peluquería Pecas", AR locale/ARS currency) flagged by the thesis. Confirm intent with the user before editing. Canonical/OG URLs are built from `VITE_SITE_URL`.
+`src/composables/seo/` (`useSeo.ts`, `structuredData.ts`) feeds `@vueuse/head` and emits Schema.org JSON-LD. The old stale values ("Peluquería Pecas", AR locale, ARS currency) are **gone**; `tests/unit/salon-branding.spec.ts` is a regression net that fails if anyone reintroduces them, and it also pins the opening hours against `businessHours.ts`. Business data comes from `src/constants/salon-location.ts`. Canonical/OG URLs are built from `VITE_SITE_URL`.
+
+### Visual remodel scaffolding (prepared, not applied)
+
+A visual remodel of the **landing page only** was designed on 2026-09-30 (direction "B · Bandas alternas": alternating bone/ink bands, Marcellus + Jost, gold hairlines, the existing pink demoted to a single accent). The scaffolding is in place and **changes nothing on screen yet**:
+
+- `src/css/tokens.scss` — the palette and rhythm as `--m-*` custom properties, each with its measured contrast. Imported from `app.scss`; it only declares variables. **Use `var(--m-*)`, never a loose hex.** Two traps are documented there: light gold (`--m-oro`) is 2.8:1 on bone and is *not* a text color (use `--m-oro-profundo`), and text on the WhatsApp green must be dark (9.3:1), never white (2.0:1).
+- `index.html` — `preconnect` + Google Fonts for Marcellus and Jost. `body` still uses Quasar's family; the fonts are merely available. When they are applied, reconsider `roboto-font` in `extras`.
+- `src/css/quasar.variables.scss` — the target `$primary/$secondary/$accent/$dark` values sit there **commented out**. Uncommenting them repaints the whole portal at once, so it is explicitly not step zero.
+
+Before touching anything visual, invoke the **`remodelacion-marlene`** skill (palette, typography, band structure, product rules already decided) and read `docs/superpowers/specs/2026-09-30-remodelacion-visual-index-design.md`, which also lists the loose prerequisites found in `IndexPage.vue` (duplicated compact/desktop markup, hardcoded `menuCards`, ~10 MB of unoptimized `public/people/` photos) and the fact that `app.scss` is dead CSS from another project.
 
 ### Single-source-of-truth files (do not duplicate)
 

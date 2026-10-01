@@ -13,6 +13,18 @@
     <meta name="theme-color" content="#424242">
     <meta name="viewport" content="initial-scale=1, width=device-width<% if (ctx.mode.cordova || ctx.mode.capacitor) { %>, viewport-fit=cover<% } %>">
 
+    <!--
+      Tipografías de la remodelación (Marcellus para titulares, Jost para
+      texto). Se cargan aquí y se nombran en src/css/tokens.scss
+      (--m-font-display / --m-font-sans); `body` sigue con la familia de
+      Quasar hasta que la remodelación del inicio las aplique, así que esto
+      deja las fuentes DISPONIBLES sin cambiar nada de lo que ya se ve.
+      `display=swap` evita el texto invisible mientras descargan.
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Jost:wght@300;400;500&display=swap">
+
     <link rel="icon" type="image/png" sizes="128x128" href="icons/favicon-128x128.png">
     <link rel="icon" type="image/png" sizes="96x96" href="icons/favicon-96x96.png">
     <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
