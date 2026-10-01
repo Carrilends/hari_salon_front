@@ -129,12 +129,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
-import i18n from 'src/i18n';
 import { useRouter, type HistoryState } from 'vue-router';
 import { useOptions } from 'src/composables/shared/useOptions';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useSeo } from 'src/composables/seo/useSeo';
 import { hairSalonSchema } from 'src/composables/seo/structuredData';
+import { INDEX_SECTIONS, type IndexSection } from 'src/constants/index-sections';
 
 useOptions();
 
@@ -153,6 +153,8 @@ const authStore = useAuthStore();
 const router = useRouter();
 
 const compactAvatarSize = '52px';
+
+const menuCards = INDEX_SECTIONS;
 
 const isCompact = ref(
   typeof window !== 'undefined'
@@ -202,58 +204,7 @@ function pageStyleFnCompact(offset: number, height: number) {
   };
 }
 
-export interface MenuCard {
-  imgPath: string;
-  title: string;
-  description: string;
-  filterFormat?: {
-    genres?: string[];
-    services?: string[];
-  };
-}
-
-const menuCards: MenuCard[] = [
-  {
-    imgPath: '/people/man_hairdress.jpg',
-    title: i18n['en-US'].indexPage.man_cut,
-    description:
-      'Redefine tu estilo con cortes modernos, clásicos y servicios de barbería profesional. Afeitado con navaja, arreglo de barba y cuidados especiales para el caballero actual.',
-    filterFormat: {
-      genres: ['47b511ec-2288-4a83-aa51-947d81ecc29b'],
-      services: ['83c6a558-805c-4156-94f6-fa7ea55c7d84'],
-    },
-  },
-  {
-    imgPath: '/people/women-hair-cut.jpg',
-    title: i18n['en-US'].indexPage.woman_cut,
-    description:
-      'Transforma tu look con cortes a la medida, alisados permanentes o temporales y tratamientos que cuidan tu cabello mientras realzan tu belleza natural.',
-    filterFormat: {
-      genres: ['9d53d0d4-225d-4e2d-b8c1-636e8252986f'],
-      services: ['fb2460ea-0400-44d5-a0dc-13275cf33462'],
-    },
-  },
-  {
-    imgPath: '/people/make-up-face-design.jpg',
-    title: i18n['en-US'].indexPage.face_design,
-    description:
-      'Desde maquillaje social hasta técnicas profesionales para eventos, novias o sesiones fotográficas. También ofrecemos limpieza facial, perfilado de cejas y más.',
-    filterFormat: {
-      services: ['d4ffbd0d-b9e0-4d8d-bb5f-054b37e61c9f'],
-    },
-  },
-  {
-    imgPath: '/people/nails-design.jpg',
-    title: i18n['en-US'].indexPage.nail_design,
-    description:
-      'Luce manos y pies impecables con nuestros servicios de cuidado y embellecimiento. Uñas acrílicas, semipermanentes, arte en uñas y tratamientos nutritivos.',
-    filterFormat: {
-      services: ['517d44ba-ff4c-4077-b99a-1ca8021fa21a'],
-    },
-  },
-];
-
-function goToService(card: MenuCard) {
+function goToService(card: IndexSection) {
   router.push({
     path: '/services',
     state: { service: card } as unknown as HistoryState,
