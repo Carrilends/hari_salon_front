@@ -38,10 +38,22 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, onUnmounted } from 'vue';
 import { WHATSAPP_PHONE } from 'src/constants/whatsapp-phone';
 import { buildWhatsAppUrl } from 'src/helpers/whatsappBooking';
 
 const emit = defineEmits<{ (e: 'reservar'): void }>();
+
+/**
+ * El flotante del asistente vive en el armazón y se posa en esta misma
+ * esquina. La marca en el `body` le dice que aquí hay una barra y que suba;
+ * solo la lleva la página que monta la barra, así que las demás no se ven
+ * afectadas. Va en `onMounted` porque la ruta `/` se prerenderiza en Node.
+ */
+const MARCA = 'm-con-barra-movil';
+
+onMounted(() => document.body.classList.add(MARCA));
+onUnmounted(() => document.body.classList.remove(MARCA));
 
 const enlaceWhatsApp = buildWhatsAppUrl(
   WHATSAPP_PHONE,

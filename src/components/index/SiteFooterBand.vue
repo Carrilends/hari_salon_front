@@ -6,6 +6,16 @@
       {{ horario.weekendLabel }} {{ horario.weekendRange }}
     </p>
 
+    <button
+      v-if="mostrarAdmin"
+      type="button"
+      class="footer-band__admin"
+      data-test="admin"
+      @click="emit('admin')"
+    >
+      ¿Eres administrador?
+    </button>
+
     <a
       class="footer-band__whatsapp"
       data-test="whatsapp"
@@ -40,6 +50,9 @@ import { BUSINESS_SCHEDULE_COPY } from 'src/helpers/businessHours';
 import { WHATSAPP_PHONE } from 'src/constants/whatsapp-phone';
 import { buildWhatsAppUrl } from 'src/helpers/whatsappBooking';
 
+withDefaults(defineProps<{ mostrarAdmin?: boolean }>(), { mostrarAdmin: false });
+const emit = defineEmits<{ (e: 'admin'): void }>();
+
 const direccion = SALON_ADDRESS;
 const horario = BUSINESS_SCHEDULE_COPY;
 
@@ -58,6 +71,9 @@ defineOptions({ name: 'SiteFooterBand' });
   justify-content: space-between;
   gap: 18px;
   padding: 16px var(--m-banda-margen);
+  /* El flotante del asistente (56 px + 18 de margen) se posa sobre la esquina
+     inferior derecha: sin este respiro taparía el botón de WhatsApp. */
+  padding-right: calc(var(--m-banda-margen) + 74px);
   background: var(--m-tinta);
   color: var(--m-piedra-clara);
   font-size: 12.5px;
@@ -65,6 +81,22 @@ defineOptions({ name: 'SiteFooterBand' });
 
 .footer-band__dato {
   margin: 0;
+}
+
+/* El acceso de administración vivía en un chip flotante sobre el contenido.
+   Aquí no tapa nada y deja la pantalla con un solo flotante, el del
+   asistente, que es la regla acordada. */
+.footer-band__admin {
+  padding: 0 0 2px;
+  background: none;
+  border: 0;
+  border-bottom: var(--m-filete-grosor) solid var(--m-filete-oscuro);
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: var(--m-tracking-nav);
+  text-transform: uppercase;
+  color: var(--m-piedra-clara);
+  cursor: pointer;
 }
 
 .footer-band__whatsapp {

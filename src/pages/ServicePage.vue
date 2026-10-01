@@ -274,7 +274,7 @@ import { FilterService } from 'src/composables/dialogs/useServiceFilter';
 import { useFiltersStore } from 'src/stores/filters-store';
 import serviceCreateEdit from 'src/components/dialogs/serviceCreateEdit.vue';
 
-import { MenuCard } from './IndexPage.vue';
+import type { IndexSection } from 'src/constants/index-sections';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useBookStore } from 'src/stores/book-store';
 import { adminServiceApi } from 'src/api/services-api';
@@ -417,7 +417,7 @@ watch(isCompactSearch, (compact) => {
   }
 });
 
-type HistoryStateWithService = { service?: MenuCard };
+type HistoryStateWithService = { service?: IndexSection };
 const indexShortcutCard =
   typeof history !== 'undefined'
     ? (history.state as HistoryStateWithService | null | undefined)?.service
@@ -426,7 +426,7 @@ const indexShortcutCard =
 /** Solo se consume una vez al llegar desde el índice con `router.push({ state })`. */
 const indexShortcutPending = ref(!!indexShortcutCard);
 
-function applyShortcutFromIndex(card: MenuCard) {
+function applyShortcutFromIndex(card: IndexSection) {
   const genreIds = card.filterFormat?.genres ?? [];
   const serviceIds = card.filterFormat?.services ?? [];
   filtersStore.setGenres(genreIds);

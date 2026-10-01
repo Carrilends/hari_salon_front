@@ -27,4 +27,18 @@ describe('MobileActionBar', () => {
   it('no muestra el número de teléfono escrito', () => {
     expect(mount(MobileActionBar).text()).not.toMatch(/\d{3}\s?\d{3}\s?\d{2}\s?\d{2}/);
   });
+
+  /**
+   * El flotante del asistente vive en el armazón y se posa en la misma esquina
+   * que esta barra: sin aviso, tapa el botón de WhatsApp. La barra marca el
+   * `body` mientras está puesta para que el flotante se aparte, y lo desmarca
+   * al irse, porque las demás páginas no la tienen.
+   */
+  it('avisa al armazón de que ocupa el borde inferior, y lo retira al irse', () => {
+    const wrapper = mount(MobileActionBar);
+    expect(document.body.classList.contains('m-con-barra-movil')).toBe(true);
+
+    wrapper.unmount();
+    expect(document.body.classList.contains('m-con-barra-movil')).toBe(false);
+  });
 });

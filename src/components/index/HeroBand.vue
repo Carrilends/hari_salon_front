@@ -29,6 +29,10 @@ defineOptions({ name: 'HeroBand' });
 <style scoped lang="scss">
 .hero-band {
   display: flex;
+  // El tablero da 268 px a la portada. Sin este alto, la foto impone el suyo
+  // natural (unos 450 px a 680 de ancho) y empuja la carta fuera de la
+  // primera pantalla.
+  min-height: 268px;
   background: var(--m-hueso);
 }
 
@@ -79,6 +83,9 @@ defineOptions({ name: 'HeroBand' });
 .hero-band__foto {
   flex: 1 1 auto;
   min-width: 0;
+  // El tope corta el alto natural de la foto; `object-fit` recorta en vez de
+  // deformar, y el estirado del flex la lleva justo al alto de la banda.
+  max-height: 268px;
   object-fit: cover;
 }
 

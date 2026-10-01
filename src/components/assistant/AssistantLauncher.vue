@@ -36,6 +36,16 @@ const { abierto: open, cerrar, alternar } = useAssistantPanel();
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
 }
 
+// La página que monta una barra de acción fija marca el `body`: el flotante
+// sube por encima de ella en vez de taparle el botón de WhatsApp.
+body.m-con-barra-movil .assistant-launcher__fab {
+  bottom: calc(var(--m-barra-movil-alto) + 12px);
+}
+
+body.m-con-barra-movil .assistant-launcher__panel {
+  bottom: calc(var(--m-barra-movil-alto) + 78px);
+}
+
 .assistant-launcher__panel {
   position: fixed;
   right: 18px;

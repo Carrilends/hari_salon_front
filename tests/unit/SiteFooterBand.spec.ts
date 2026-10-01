@@ -19,4 +19,18 @@ describe('SiteFooterBand', () => {
   it('el botón de WhatsApp lleva texto visible, no solo icono', () => {
     expect(mount(SiteFooterBand).get('[data-test="whatsapp"]').text()).toContain('WhatsApp');
   });
+
+  it('ofrece el acceso de administración mientras nadie haya entrado', async () => {
+    const wrapper = mount(SiteFooterBand, { props: { mostrarAdmin: true } });
+
+    await wrapper.get('[data-test="admin"]').trigger('click');
+
+    expect(wrapper.emitted('admin')).toHaveLength(1);
+  });
+
+  it('con la sesión iniciada no enseña el acceso de administración', () => {
+    const wrapper = mount(SiteFooterBand, { props: { mostrarAdmin: false } });
+
+    expect(wrapper.find('[data-test="admin"]').exists()).toBe(false);
+  });
 });
