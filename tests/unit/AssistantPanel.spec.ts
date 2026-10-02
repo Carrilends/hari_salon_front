@@ -41,7 +41,8 @@ jest.mock('src/composables/assistant/useAssistant', () => {
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { mount } from '@vue/test-utils';
+import { nextTick } from 'vue';
+import { enableAutoUnmount, mount } from '@vue/test-utils';
 import { createPinia } from 'pinia';
 import AssistantPanel from 'src/components/assistant/AssistantPanel.vue';
 import { useAssistant } from 'src/composables/assistant/useAssistant';
@@ -89,6 +90,14 @@ function montar({ conSesion = false } = {}) {
   if (conSesion) useAuthStore(pinia).token = 'un-token';
   return wrapper;
 }
+
+/**
+ * Cada caso desmonta su panel. No es higiene: el panel escucha el teclado en
+ * `document`, así que un montaje que sobreviva al caso sigue oyendo `Escape` y
+ * cierra paneles de casos siguientes. Con esto, «deja de escuchar al
+ * desmontarse» comprueba lo que dice.
+ */
+enableAutoUnmount(afterEach);
 
 beforeEach(() => {
   estado.messages.value = [];
@@ -180,6 +189,53 @@ describe('AssistantPanel', () => {
     await dialogo.trigger('keydown', { key: 'Tab' });
 
     expect(dialogo.element.contains(document.activeElement)).toBe(true);
+  });
+
+  /**
+   * Visto conduciendo el flujo de verdad, no en jsdom: al enviar el primer
+   * mensaje la fila de chips se rehace —los de arranque dejan su sitio a los de
+   * seguimiento—, el botón que tenía el foco desaparece del DOM y el navegador
+   * devuelve el foco al `body`. Desde ahí, un `@keydown.esc` puesto en la
+   * `<section>` no se entera de nada: `Escape` dejaba de cerrar el panel
+   * justo después de la primera interacción, que es cuando alguien lo usa.
+   */
+  it('Escape cierra aunque el foco se haya ido del panel', async () => {
+    montar();
+    (document.activeElement as HTMLElement | null)?.blur();
+    expect(document.activeElement).toBe(document.body);
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    await nextTick();
+
+    expect(useAssistantPanel().abierto.value).toBe(false);
+  });
+
+  /** Lo mismo por el otro lado: el cerrojo no puede depender del foco actual. */
+  it('el tabulador vuelve al panel aunque el foco se haya escapado', async () => {
+    const wrapper = montar();
+    (document.activeElement as HTMLElement | null)?.blur();
+
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Tab', cancelable: true })
+    );
+    await nextTick();
+
+    expect(
+      wrapper.get('[role="dialog"]').element.contains(document.activeElement)
+    ).toBe(true);
+  });
+
+  it('deja de escuchar al desmontarse', async () => {
+    const wrapper = montar();
+    wrapper.unmount();
+    useAssistantPanel().abrir();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    await nextTick();
+
+    // Si el oyente sobreviviera al desmontaje, este Escape cerraría un panel
+    // que ya no está en pantalla — y con dos visitas al inicio habría dos.
+    expect(useAssistantPanel().abierto.value).toBe(true);
   });
 
   it('enseña el aviso del servidor, y el de respaldo si no llegó ninguno', () => {

@@ -9,8 +9,6 @@
       aria-modal="true"
       aria-label="Asistente de la Peluquería Marlene"
       tabindex="-1"
-      @keydown.esc="cerrar()"
-      @keydown.tab="atraparFoco"
     >
       <header class="assistant-panel__cabecera">
         <button
@@ -161,19 +159,51 @@ onMounted(async () => {
       : null;
   caja.value?.focus();
 
+  document.addEventListener('keydown', alPulsarTecla);
+
   const pendiente = useAssistantPanel().consumirPendiente();
   if (pendiente) await send(pendiente);
 });
 
-onUnmounted(() => foco?.focus());
+onUnmounted(() => {
+  if (typeof document !== 'undefined') {
+    document.removeEventListener('keydown', alPulsarTecla);
+  }
+  foco?.focus();
+});
 
 const FOCABLES =
   'button:not([disabled]), a[href], input:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /**
+ * El teclado se escucha en `document`, no en la `<section>`.
+ *
+ * Parece un detalle y no lo es: al enviar el primer mensaje la fila de chips se
+ * rehace —los de arranque dejan su sitio a los de seguimiento—, así que el botón
+ * que tenía el foco desaparece del DOM y el navegador devuelve el foco al
+ * `body`. Con los manejadores colgando de la sección, desde el `body` no llega
+ * nada: `Escape` dejaba de cerrar y el cerrojo del tabulador dejaba de cerrar,
+ * precisamente después de la primera interacción. Visto conduciendo el flujo de
+ * verdad, no en las pruebas.
+ *
+ * Se registra en `onMounted` y se quita en `onUnmounted`: nunca en el cuerpo
+ * del módulo, que corre en Node durante `quasar ssg generate`.
+ */
+function alPulsarTecla(evento: KeyboardEvent) {
+  if (evento.key === 'Escape') {
+    cerrar();
+    return;
+  }
+  if (evento.key === 'Tab') atraparFoco(evento);
+}
+
+/**
  * El cerrojo del foco (spec §5.2). En escritorio el velo atenúa la página de
  * detrás: si el tabulador se escapa a ella, la clienta termina escribiendo en
  * un formulario que no ve, en una página que parece bloqueada y no lo está.
+ *
+ * Tres casos, no dos: además de envolver en los extremos, devuelve el foco al
+ * panel cuando ya se había ido (el del `body` de arriba).
  */
 function atraparFoco(evento: KeyboardEvent) {
   const panel = caja.value;
@@ -186,6 +216,11 @@ function atraparFoco(evento: KeyboardEvent) {
   const ultimo = focables[focables.length - 1];
   const activo = document.activeElement;
 
+  if (!activo || !panel.contains(activo)) {
+    evento.preventDefault();
+    (evento.shiftKey ? ultimo : primero).focus();
+    return;
+  }
   if (evento.shiftKey && (activo === primero || activo === panel)) {
     evento.preventDefault();
     ultimo.focus();
