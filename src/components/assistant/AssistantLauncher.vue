@@ -1,18 +1,22 @@
 <template>
   <div class="assistant-launcher">
-    <AssistantPanel v-if="open" />
+    <Transition name="assistant-panel">
+      <AssistantPanel v-if="open" />
+    </Transition>
 
-    <q-btn
-      v-if="!open"
-      class="assistant-launcher__fab"
-      data-test="fab"
-      round
-      size="lg"
-      color="pink-4"
-      icon="smart_toy"
-      aria-label="Abrir asistente"
-      @click="abrir"
-    />
+    <Transition name="assistant-fab">
+      <q-btn
+        v-if="!open"
+        class="assistant-launcher__fab"
+        data-test="fab"
+        round
+        size="lg"
+        color="pink-4"
+        icon="smart_toy"
+        aria-label="Abrir asistente"
+        @click="abrir"
+      />
+    </Transition>
   </div>
 </template>
 
@@ -31,9 +35,15 @@ const { abierto: open, abrir } = useAssistantPanel();
  * propio panel.
  *
  * Se fue con él la posición de la burbuja vieja (`.assistant-launcher__panel`,
- * anclada abajo a la derecha) y su transición: el panel nuevo se coloca y se
- * anima por su cuenta, porque es quien sabe de dónde sale en cada ancho —arriba
- * a la derecha en escritorio, a pantalla completa en móvil.
+ * anclada abajo a la derecha): el panel nuevo se coloca solo, porque es quien
+ * sabe dónde va en cada ancho —arriba a la derecha en escritorio, a pantalla
+ * completa en móvil—. Lo que SÍ vive aquí es cuándo entra y cuándo sale: lo
+ * manda quien monta y desmonta. El aspecto de esa entrada y esa salida lo
+ * describe `AssistantPanel.vue`, dueño de sus propias piezas.
+ *
+ * El flotante se desvanece a la par. Vuelve mientras el panel todavía se está
+ * yendo, y un botón que salta al lado de algo que se desvanece delata la
+ * costura.
  */
 .assistant-launcher__fab {
   position: fixed;
@@ -53,6 +63,23 @@ const { abierto: open, abrir } = useAssistantPanel();
 @media (max-width: 699px) {
   body.m-con-barra-movil .assistant-launcher__fab {
     bottom: calc(var(--m-barra-movil-alto) + 12px);
+  }
+}
+
+.assistant-fab-enter-active,
+.assistant-fab-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.assistant-fab-enter-from,
+.assistant-fab-leave-to {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .assistant-fab-enter-active,
+  .assistant-fab-leave-active {
+    transition: none;
   }
 }
 </style>

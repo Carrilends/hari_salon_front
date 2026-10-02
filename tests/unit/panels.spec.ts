@@ -157,6 +157,22 @@ describe('el lanzador mientras el panel está abierto', () => {
     expect(posicionDelLanzador).toBeGreaterThan(finDelContenedor);
   });
 
+  /**
+   * Al cerrarse, el panel se desvanece en vez de desaparecer de golpe. Lo
+   * gobierna un `<Transition>` del lanzador, porque la entrada y la salida las
+   * manda quien monta y desmonta, no el propio panel. La conducta de verdad se
+   * comprueba en `tests/browser-compat/`: jsdom no ejecuta transiciones.
+   */
+  it('el panel se oculta con una transición, no de golpe', () => {
+    const fuente = readFileSync(
+      join(__dirname, '../../src/components/assistant/AssistantLauncher.vue'),
+      'utf8'
+    );
+
+    expect(fuente).toMatch(/<Transition[\s\S]*?name="assistant-panel"/);
+    expect(fuente).toMatch(/<AssistantPanel v-if="open"/);
+  });
+
   it('el panel se pone por encima de la barra fija del inicio', () => {
     const fuente = readFileSync(
       join(__dirname, '../../src/components/assistant/AssistantPanel.vue'),

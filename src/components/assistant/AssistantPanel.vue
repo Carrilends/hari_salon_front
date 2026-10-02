@@ -157,15 +157,45 @@ let foco: HTMLElement | null = null;
  * hacer nada. Sin esto la página de atrás se desplaza igual: en escritorio la
  * rueda sobre el velo la mueve, y en móvil —donde el panel ES la pantalla— no
  * se ve moverse nada, así que la clienta insiste y al cerrar aparece cientos de
- * píxeles más abajo de una página que no eligió. Misma mecánica que la marca de
- * `MobileActionBar`: una clase puesta y quitada aquí.
+ * píxeles más abajo de una página que no eligió.
  *
  * Se marcan **`html` y `body`**, no solo el `body`: bajo Quasar el elemento que
  * desplaza es `html`, y la propagación del `overflow` del cuerpo al viewport no
  * llega a aplicarse —medido: con `body` en `hidden` la página seguía bajando 33
- * px en escritorio y 732 en móvil—. Marcar los dos no depende de esa sutileza.
+ * px en escritorio y 732 en móvil—.
+ *
+ * Y no basta con `overflow: hidden`: al ponerlo en el elemento que desplaza, el
+ * navegador **recorta el scroll a cero**. La página daba un salto al principio
+ * nada más abrir el panel —de 154 px a 0, medido— y al cerrarlo la clienta
+ * aparecía donde no había elegido. Por eso el cuerpo se fija con un `top`
+ * negativo del punto donde estaba: visualmente nada se mueve. Al cerrar se
+ * devuelve el scroll a donde estaba.
+ *
+ * `paddingRight` compensa la barra de desplazamiento que desaparece al
+ * bloquear. En macOS suele ser 0 (barras superpuestas); donde ocupa sitio, sin
+ * esto la página entera se correría 15 px al abrir.
  */
 const SIN_SCROLL = 'm-panel-abierto';
+
+let scrollGuardado = 0;
+
+function bloquearElScroll() {
+  scrollGuardado = window.scrollY;
+  const barra = window.innerWidth - document.documentElement.clientWidth;
+
+  document.body.style.top = `-${scrollGuardado}px`;
+  if (barra > 0) document.body.style.paddingRight = `${barra}px`;
+  document.documentElement.classList.add(SIN_SCROLL);
+  document.body.classList.add(SIN_SCROLL);
+}
+
+function liberarElScroll() {
+  document.documentElement.classList.remove(SIN_SCROLL);
+  document.body.classList.remove(SIN_SCROLL);
+  document.body.style.top = '';
+  document.body.style.paddingRight = '';
+  window.scrollTo(0, scrollGuardado);
+}
 
 onMounted(async () => {
   foco =
@@ -175,8 +205,7 @@ onMounted(async () => {
   caja.value?.focus();
 
   document.addEventListener('keydown', alPulsarTecla);
-  document.documentElement.classList.add(SIN_SCROLL);
-  document.body.classList.add(SIN_SCROLL);
+  bloquearElScroll();
 
   const pendiente = useAssistantPanel().consumirPendiente();
   if (pendiente) await send(pendiente);
@@ -186,8 +215,7 @@ onUnmounted(() => {
   if (typeof document === 'undefined') return;
 
   document.removeEventListener('keydown', alPulsarTecla);
-  document.documentElement.classList.remove(SIN_SCROLL);
-  document.body.classList.remove(SIN_SCROLL);
+  liberarElScroll();
   devolverElFoco();
 });
 
@@ -271,10 +299,28 @@ function atraparFoco(evento: KeyboardEvent) {
 </script>
 
 <style scoped lang="scss">
+/**
+ * La raíz lleva el z-index, y es lo que mantiene el panel por encima de la
+ * cabecera (2000) y de la barra fija del inicio (2500) **también mientras
+ * anima**.
+ *
+ * Sin él, el `opacity` del `<Transition>` crea un contexto de apilamiento en
+ * esta misma raíz y encierra dentro al velo y a la caja: durante los 200 ms de
+ * la entrada todo eso pintaba por debajo de la cabecera, y al llegar a opacidad
+ * 1 el contexto desaparecía y la cabecera se escondía de un tirón. Medido: los
+ * 20 primeros fotogramas daban la cabecera por encima.
+ *
+ * `position: relative` sin desplazamiento no mueve nada ni crea bloque
+ * contenedor para los hijos `position: fixed`; solo habilita el z-index.
+ */
+.assistant-panel {
+  position: relative;
+  z-index: 2650;
+}
+
 .assistant-panel__velo {
   position: fixed;
   inset: 0;
-  z-index: 2650;
   background: var(--m-velo);
 }
 
@@ -287,7 +333,8 @@ function atraparFoco(evento: KeyboardEvent) {
   position: fixed;
   top: 26px;
   right: 26px;
-  z-index: 2700;
+  // Dentro del contexto de la raíz: solo ordena la caja sobre el velo.
+  z-index: 1;
   display: flex;
   flex-direction: column;
   width: 424px;
@@ -305,7 +352,6 @@ function atraparFoco(evento: KeyboardEvent) {
   border-radius: var(--m-radio-panel);
   overflow: hidden;
   box-shadow: 0 18px 50px rgba(11, 9, 7, 0.45);
-  animation: assistant-panel-entra 0.18s ease-out;
 }
 
 .assistant-panel__caja:focus-visible {
@@ -313,11 +359,41 @@ function atraparFoco(evento: KeyboardEvent) {
   outline-offset: -2px;
 }
 
-@keyframes assistant-panel-entra {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
+/**
+ * Entrada y salida. Las clases las pone el `<Transition name="assistant-panel">`
+ * del lanzador —quien monta y desmonta manda el cuándo—, y aquí se describe el
+ * cómo, que es cosa del panel.
+ *
+ * **El desvanecido va en la raíz, y es deliberado.** Vue mide la duración de la
+ * transición en el elemento al que le pone las clases, que es la raíz: con las
+ * transiciones solo en los hijos no medía nada, y bajo `prefers-reduced-motion`
+ * el panel se quedaba esperando en vez de irse en el acto. Al estar en la raíz,
+ * desvanece de una vez la caja y el velo —que además es lo que se quiere: si
+ * solo se fuera la caja, la página quedaría atenuada un instante sobre nada—.
+ *
+ * `opacity` en la raíz es seguro; `transform` NO lo sería: crearía un bloque
+ * contenedor para los hijos `position: fixed` y los recolocaría a mitad de la
+ * animación. Por eso el deslizamiento se queda en la caja, donde es decorativo
+ * y a Vue le da igual.
+ */
+.assistant-panel-enter-active,
+.assistant-panel-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.assistant-panel-enter-from,
+.assistant-panel-leave-to {
+  opacity: 0;
+}
+
+.assistant-panel-enter-active .assistant-panel__caja,
+.assistant-panel-leave-active .assistant-panel__caja {
+  transition: transform 0.2s ease;
+}
+
+.assistant-panel-enter-from .assistant-panel__caja,
+.assistant-panel-leave-to .assistant-panel__caja {
+  transform: translateY(8px);
 }
 
 .assistant-panel__cabecera {
@@ -467,8 +543,11 @@ function atraparFoco(evento: KeyboardEvent) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .assistant-panel__caja {
-    animation: none;
+  .assistant-panel-enter-active,
+  .assistant-panel-leave-active,
+  .assistant-panel-enter-active .assistant-panel__caja,
+  .assistant-panel-leave-active .assistant-panel__caja {
+    transition: none;
   }
 }
 </style>

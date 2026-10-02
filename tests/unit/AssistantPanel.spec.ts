@@ -449,9 +449,45 @@ describe('AssistantPanel', () => {
     }
   });
 
-  /** Punto 5: quien pidió menos movimiento no recibe una animación de entrada. */
+  /** Punto 5: quien pidió menos movimiento no recibe animación, ni al entrar ni al salir. */
   it('respeta prefers-reduced-motion', () => {
     expect(FUENTE).toContain('prefers-reduced-motion');
+
+    const reducido = FUENTE.slice(
+      FUENTE.indexOf('@media (prefers-reduced-motion')
+    );
+    expect(reducido).toContain('assistant-panel-enter-active');
+    expect(reducido).toContain('assistant-panel-leave-active');
+  });
+
+  it('la salida se desvanece desde la raíz, que es donde Vue la mide', () => {
+    // En la raíz y no solo en los hijos: Vue mide la duración en el elemento al
+    // que pone las clases, y con las transiciones colgando de los hijos no
+    // medía nada — bajo `prefers-reduced-motion` el panel se quedaba esperando
+    // en vez de irse en el acto. Además desvanece caja y velo de una vez.
+    expect(FUENTE).toMatch(
+      /\.assistant-panel-enter-active,\s*\n\.assistant-panel-leave-active \{\s*\n\s*transition: opacity/
+    );
+    expect(FUENTE).toMatch(
+      /\.assistant-panel-enter-from,\s*\n\.assistant-panel-leave-to \{\s*\n\s*opacity: 0;/
+    );
+  });
+
+  /**
+   * El `transform` nunca en la raíz: una raíz transformada se vuelve bloque
+   * contenedor de sus hijos `position: fixed` y los recolocaría a mitad de la
+   * animación. Se queda en la caja, donde es decorativo.
+   */
+  it('la raíz no se transforma, solo se desvanece', () => {
+    const salida = FUENTE.slice(FUENTE.indexOf('.assistant-panel-enter-active'));
+    const raiz = salida.slice(0, salida.indexOf('.assistant-panel__cabecera'));
+    const transformaciones = [...raiz.matchAll(/transform: translateY/g)];
+
+    expect(transformaciones.length).toBeGreaterThan(0);
+    for (const t of transformaciones) {
+      const regla = raiz.lastIndexOf('{', t.index);
+      expect(raiz.slice(0, regla)).toMatch(/assistant-panel__caja[^{]*$/);
+    }
   });
 
   /** Ningún hexadecimal suelto: todo color sale de `var(--m-*)`. */

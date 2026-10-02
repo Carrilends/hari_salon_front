@@ -9,7 +9,16 @@
 // El panel del asistente marca el `body` mientras está abierto para que la
 // página de detrás no se desplace. Va aquí y no en el componente porque un
 // estilo `scoped` no puede alcanzar al `body`. Ver `AssistantPanel.vue`.
-html.m-panel-abierto,
+html.m-panel-abierto {
+  overflow: hidden;
+}
+
+// El cuerpo se fija con un `top` negativo que `AssistantPanel.vue` calcula: así
+// `overflow: hidden` no puede recortar el scroll a cero y la página de detrás
+// se queda exactamente donde estaba. `width: 100%` porque al fijarlo pierde el
+// ancho que heredaba del flujo.
 body.m-panel-abierto {
+  position: fixed;
+  width: 100%;
   overflow: hidden;
 }
