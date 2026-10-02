@@ -20,7 +20,9 @@ describe('las fotos de la carta', () => {
     expect(fotos).toHaveLength(2);
     expect(fotos[0].classes()).toContain('m-foto--esperando');
 
-    await fotos[0].trigger('load');
+    // El `load` se dispara en el `<img>` de dentro del `<picture>`: no burbujea,
+    // así que lanzarlo sobre el `<picture>` no llegaría al manejador.
+    await wrapper.findAll('.catalog-band__foto img')[0].trigger('load');
 
     expect(wrapper.findAll('.catalog-band__foto')[0].classes()).not.toContain(
       'm-foto--esperando'
@@ -31,11 +33,18 @@ describe('las fotos de la carta', () => {
     );
   });
 
+  it('las de la carta sí se aplazan: están bajo el pliegue', () => {
+    const wrapper = mount(CatalogBand, { props: { secciones: SECCIONES } });
+
+    expect(wrapper.findAll('img')[0].attributes('loading')).toBe('lazy');
+    expect(wrapper.findAll('source')).toHaveLength(2);
+  });
+
   /** Una foto rota no puede quedarse palpitando para siempre. */
   it('una foto que falla también deja de esperar', async () => {
     const wrapper = mount(CatalogBand, { props: { secciones: SECCIONES } });
 
-    await wrapper.findAll('.catalog-band__foto')[0].trigger('error');
+    await wrapper.findAll('.catalog-band__foto img')[0].trigger('error');
 
     expect(wrapper.findAll('.catalog-band__foto')[0].classes()).not.toContain(
       'm-foto--esperando'

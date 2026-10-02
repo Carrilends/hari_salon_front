@@ -26,16 +26,14 @@
         data-test="seccion"
         @click="emit('abrir', seccion)"
       >
-        <img
+        <FotoResponsiva
           class="catalog-band__foto"
           :class="{ 'm-foto--esperando': !llego(seccion.imgPath) }"
-          :data-foto="seccion.imgPath"
-          :src="seccion.imgPath"
+          :foto="seccion.imgPath"
           :alt="seccion.title"
-          loading="lazy"
-          decoding="async"
-          @load="marcar(seccion.imgPath)"
-          @error="marcar(seccion.imgPath)"
+          :anchos="ANCHOS_CARTA"
+          medidas="(max-width: 699px) 50vw, 25vw"
+          @cargada="marcar(seccion.imgPath)"
         />
         <span class="catalog-band__nombre">{{ seccion.title }}</span>
         <!--
@@ -52,6 +50,8 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
+import FotoResponsiva from 'src/components/shared/FotoResponsiva.vue';
+import { ANCHOS_CARTA } from 'src/constants/anchos-de-foto';
 import type { IndexSection } from 'src/constants/index-sections';
 import { useImagenesEnEspera } from 'src/composables/shared/useImagenesEnEspera';
 
@@ -125,13 +125,24 @@ defineOptions({ name: 'CatalogBand' });
 }
 
 .catalog-band__foto {
+  // `block` porque el `<picture>` es un contenedor en línea: sin esto no toma
+  // el alto y la tarjeta se descuadra.
   display: block;
   width: 100%;
   height: 122px;
-  object-fit: cover;
   border-radius: var(--m-radio-foto);
+  // El recorte va aquí, en el `<picture>`: el radio lo pone este nodo y es el
+  // que tiene que recortar al `<img>` de dentro.
+  overflow: hidden;
   // El hueco mientras la foto llega: carbón, que es la superficie de esta banda.
   background: var(--m-carbon);
+}
+
+.catalog-band__foto :deep(img) {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .catalog-band__nombre {
