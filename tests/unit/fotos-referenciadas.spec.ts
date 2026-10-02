@@ -5,7 +5,7 @@
  * La prueba lee el disco y el código: si alguien añade una foto y olvida usarla,
  * o quita el último uso de una que sigue ahí, esto se pone rojo.
  */
-import { readdirSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const RAIZ = join(__dirname, '../..');
@@ -34,5 +34,16 @@ describe('las fotos de public/people', () => {
       .filter((f) => !codigo.includes(f));
 
     expect(huerfanas).toEqual([]);
+  });
+
+  /**
+   * Un `background-image` no admite `<picture>`, y `image-set()` no llega a la
+   * matriz de NF06. El arreglo aquí es el simple: el mismo JPEG, más pequeño.
+   * Esta prueba vigila el peso, que es lo único que importa de esos cuatro.
+   */
+  it('el fondo de los formularios pesa lo que debe pesar', () => {
+    const { size } = statSync(join(FOTOS, 'rainbow_hair.jpg'));
+
+    expect(size).toBeLessThan(180 * 1024);
   });
 });
