@@ -8,6 +8,7 @@
  * `innerWidth`. Si pasa, la página principal se arrastra en horizontal.
  */
 import { test, expect, type Page } from '@playwright/test';
+import { irA, json, servirApiVacia } from './api-offline';
 
 const MOVIL = { width: 390, height: 844 };
 
@@ -29,12 +30,13 @@ const resena = (n: number, extra: Partial<Resena> = {}): Resena => ({
 });
 
 async function servirResenas(page: Page, resenas: Resena[]) {
-  await page.route('**/api/reviews', (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(resenas),
-    }),
+  // Toda la API, no solo las reseñas: con el backend apagado una XHR sin
+  // interceptar se queda colgada y `networkidle` no llega nunca. Ver
+  // `api-offline.ts`.
+  await servirApiVacia(page);
+  await page.route(
+    (url) => url.pathname === '/api/reviews',
+    (route) => route.fulfill(json(resenas)),
   );
 }
 
@@ -54,7 +56,7 @@ test.describe('maqueta del inicio en móvil', () => {
       Array.from({ length: 40 }, (_, i) => resena(i + 1)),
     );
 
-    await page.goto('/', { waitUntil: 'networkidle' });
+    await irA(page, '/');
     await expect(page.locator('.review-band')).toBeVisible();
 
     const { scroll, ventana } = await anchoDesbordado(page);
@@ -72,7 +74,7 @@ test.describe('maqueta del inicio en móvil', () => {
       resena(3),
     ]);
 
-    await page.goto('/', { waitUntil: 'networkidle' });
+    await irA(page, '/');
     await expect(page.locator('.review-band__autor')).toBeVisible();
 
     const { scroll, ventana } = await anchoDesbordado(page);
@@ -88,7 +90,7 @@ test.describe('maqueta del inicio en móvil', () => {
       resena(3),
     ]);
 
-    await page.goto('/', { waitUntil: 'networkidle' });
+    await irA(page, '/');
 
     const cita = page.locator('.review-band__cita');
     await expect(cita).toBeVisible();
@@ -108,10 +110,14 @@ test.describe('maqueta del inicio en móvil', () => {
   test('la barra fija no tapa el botón de WhatsApp del pie', async ({ page }) => {
     await servirResenas(page, [resena(1), resena(2), resena(3)]);
 
-    await page.goto('/', { waitUntil: 'networkidle' });
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await irA(page, '/');
+    // `scrollIntoViewIfNeeded` y no un `scrollTo` al alto del documento: sin
+    // esperar a `networkidle` ese alto todavía crece —fuentes, fotos— y el
+    // salto dejaba el pie fuera de la pantalla. Esto espera al nodo y lo trae.
+    const whatsapp = page.locator('.footer-band__whatsapp');
+    await whatsapp.scrollIntoViewIfNeeded();
 
-    const pie = await page.locator('.footer-band__whatsapp').boundingBox();
+    const pie = await whatsapp.boundingBox();
     const barra = await page.locator('.mobile-bar').boundingBox();
     expect(pie, 'el WhatsApp del pie no se ve').not.toBeNull();
     expect(barra, 'la barra fija no se ve').not.toBeNull();
@@ -130,7 +136,7 @@ test.describe('el flotante del asistente y la barra fija', () => {
    */
   test('en escritorio se queda en su esquina', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto('/', { waitUntil: 'networkidle' });
+    await irA(page, '/');
 
     const fab = page.locator('.assistant-launcher__fab');
     await expect(fab).toBeVisible();
@@ -143,7 +149,7 @@ test.describe('el flotante del asistente y la barra fija', () => {
 
   test('en móvil sube por encima de la barra sin taparla', async ({ page }) => {
     await page.setViewportSize(MOVIL);
-    await page.goto('/', { waitUntil: 'networkidle' });
+    await irA(page, '/');
 
     const fab = await page.locator('.assistant-launcher__fab').boundingBox();
     const barra = await page.locator('.mobile-bar').boundingBox();

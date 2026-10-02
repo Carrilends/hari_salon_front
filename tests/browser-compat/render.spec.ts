@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { irA, servirApiVacia } from './api-offline';
 
 const ROUTES: Array<{ path: string; slug: string }> = [
   { path: '/', slug: 'home' },
@@ -10,7 +11,9 @@ const ROUTES: Array<{ path: string; slug: string }> = [
 
 for (const { path, slug } of ROUTES) {
   test(`renderiza ${slug} (${path})`, async ({ page }, testInfo) => {
-    const response = await page.goto(path, { waitUntil: 'networkidle' });
+    // Ver `api-offline.ts`: sin esto, con la API apagada el `goto` no vuelve.
+    await servirApiVacia(page);
+    const response = await irA(page, path);
     expect(response, `sin respuesta HTTP en ${path}`).not.toBeNull();
     expect(response!.status(), `status no OK en ${path}`).toBeLessThan(400);
 
