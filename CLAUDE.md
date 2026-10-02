@@ -19,6 +19,7 @@ yarn build                 # generate-sitemap.mjs + quasar build (SPA)
 yarn build:ssg             # generate-sitemap.mjs + quasar ssg generate (output: dist/ssg)
 yarn serve:ssg             # quasar ssg serve dist/ssg
 yarn generate:sitemap      # run sitemap script only
+yarn optimizar:imagenes    # regenerate public/people/ from imagenes-originales/
 
 yarn lint                  # eslint .js/.ts/.vue (--ext, no --fix flag)
 yarn format                # prettier write
@@ -103,7 +104,50 @@ Geometry is in `tests/browser-compat/assistant-layout.spec.ts`: full screen with
 
 Geometry is checked in `tests/browser-compat/index-layout.spec.ts`, not in jsdom: horizontal overflow at 390 px with reviews served by `page.route`, the three-line clamp, and the fixed bar clearing the footer. Jest cannot see any of it. A green `npx jest` means neither that the project compiles (that is `vue-tsc`, which only runs under `quasar dev`/`build`) nor that the layout holds.
 
-Before touching anything visual, invoke the **`remodelacion-marlene`** skill (palette, typography, band structure, product rules already decided) and read `docs/superpowers/specs/2026-09-30-remodelacion-visual-index-design.md` plus the executed plan in `docs/remodelacion/inicio/`. Still outstanding from the spec's prerequisites: ~10 MB of unoptimized `public/people/` photos (the real risk to NF02), the Spanish strings living in the `en-US` i18n catalogue, and `roboto-font` in `extras`, which stays until the whole portal uses Jost.
+Before touching anything visual, invoke the **`remodelacion-marlene`** skill (palette, typography, band structure, product rules already decided) and read `docs/superpowers/specs/2026-09-30-remodelacion-visual-index-design.md` plus the executed plan in `docs/remodelacion/inicio/`. Still outstanding from the spec's prerequisites: the Spanish strings living in the `en-US` i18n catalogue, and `roboto-font` in `extras`, which stays until the whole portal uses Jost. The ~10 MB of unoptimized photos are **done** — see *The photos in `public/people/`* below.
+
+### The photos in `public/people/`
+
+Everything there is **generated**, and the originals are not published.
+
+```bash
+yarn optimizar:imagenes    # reads imagenes-originales/, writes public/people/
+```
+
+- **The originals live in `imagenes-originales/`, outside `public/`.** Vite copies
+  all of `public/` verbatim into `dist/`, and `ignorePublicFolder` is all-or-nothing,
+  so an `originales/` folder *inside* `public/` would deploy the 9.7 MB this
+  conversion exists to avoid. The script is the only thing that reads them.
+- **The variants are committed.** The deploy does not convert anything: Netlify runs
+  `yarn build:ssg` and serves static files. `sharp` is a **devDependency** and must
+  stay one.
+- **Running the script twice is safe.** It always starts from the original, never
+  from a variant, so a JPEG does not degrade on each pass — checked by hash.
+- **The recipe is a contract with the markup.** Widths live twice by necessity —
+  `scripts/recetas-imagenes.mjs` (Node, with `sharp`) and
+  `src/constants/anchos-de-foto.ts` (ships to the browser) — and
+  `tests/unit/optimizar-imagenes.spec.ts` compares them. A width the markup asks for
+  and the recipe does not generate is a broken hole on the page. Note
+  `women-hair-cut.jpg` is used **twice**, in the hero and as the catalogue's fourth
+  card, so its recipe is the union of both sets of widths.
+- **Every WebP goes inside a `<picture>` with a JPEG `<img>` behind it**, never as a
+  loose `src`: NF06 (Tabla 44) promises **Safari 13.1+** and WebP only arrives in
+  Safari 14. That is what `FotoResponsiva.vue` is for — the same mistake `100dvh`
+  already cost a whole review.
+- **CSS backgrounds cannot use `<picture>`**, and `image-set()` does not reach the
+  NF06 matrix, so the four `rainbow_hair.jpg` backgrounds just get a smaller JPEG
+  (824 KB → 47 KB). `tests/unit/fotos-referenciadas.spec.ts` watches that weight, and
+  also fails if a photo lands in `public/people/` that no code references.
+- **The weight ceiling is `tests/browser-compat/peso-del-inicio.spec.ts`**: under
+  400 KB for the landing page, measured on what the browser actually *paints*.
+  Measured today: 108 KB in Chromium at 1x, 196 KB in WebKit at 2x — from 9.8 MB.
+- **One quirk worth knowing.** When Vue builds the `<picture>` on the client, WebKit
+  fetches *two* files per photo: the `<img>` gets its `src` before it is inside the
+  `<picture>`, and a detached `<img>` starts loading the moment `src` is set, so it
+  pulls the JPEG and then re-selects the WebP. The markup is not at fault — the same
+  template as static HTML asks for one file. And `/` is prerendered (`ssg.routes`), so
+  a visitor gets the `<picture>` assembled by the parser: verified against
+  `dist/ssg` in WebKit, which requests **only** WebP.
 
 ### Single-source-of-truth files (do not duplicate)
 
