@@ -13,6 +13,19 @@ jest.mock('vue-router', () => ({
   useRouter: () => ({ push: jest.fn() }),
 }));
 
+/**
+ * `ServiceListCard` ahora añade a la bolsa, y ese puente llega hasta
+ * `services-api`, que lee `import.meta.env` — algo que ts-jest no sabe compilar
+ * a CommonJS. Se corta aquí. (Este fichero desaparece al entrar
+ * `AssistantPanel`; la nota vive en `CLAUDE.md`.)
+ */
+jest.mock('src/composables/booking/useAddToBag', () => ({
+  useAddToBag: () => ({
+    añadirServicio: jest.fn().mockResolvedValue({ ok: true, añadidos: 1 }),
+    añadirVarios: jest.fn().mockResolvedValue({ ok: true, añadidos: 1 }),
+  }),
+}));
+
 jest.mock('src/composables/assistant/useAssistant', () => {
   const { ref } = require('vue');
   const estado = {

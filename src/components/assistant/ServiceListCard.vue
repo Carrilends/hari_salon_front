@@ -1,48 +1,73 @@
 <template>
-  <q-card flat bordered class="service-list-card">
-    <q-list dense>
-      <q-item
-        v-for="s in servicios"
-        :key="s.id"
-        clickable
-        class="service-list-card__row"
-        @click="emit('select', s)"
+  <ul class="service-card">
+    <li
+      v-for="s in servicios"
+      :key="s.id"
+      class="service-card__fila"
+      data-test="fila"
+    >
+      <img
+        class="service-card__foto"
+        :src="miniatura(s)"
+        :srcset="miniaturaSrcset(s)"
+        alt=""
+        width="58"
+        height="58"
+        loading="lazy"
+        decoding="async"
+      />
+
+      <span class="service-card__texto">
+        <span class="service-card__nombre">{{ s.nombre }}</span>
+        <span class="service-card__meta">
+          {{ formatDurationMinutes(s.minutos) }} ·
+          <span class="service-card__precio">
+            ${{ formatCopDisplay(s.precio) }}
+          </span>
+        </span>
+        <span
+          v-if="hecho === s.id"
+          class="service-card__hecho"
+          role="status"
+        >
+          Añadido
+        </span>
+        <span v-if="fallo[s.id]" class="service-card__fallo" role="status">
+          {{ fallo[s.id] }}
+        </span>
+      </span>
+
+      <button
+        type="button"
+        class="service-card__anadir"
+        data-test="anadir"
+        :disabled="ocupado === s.id"
+        :aria-label="`Añadir ${s.nombre}`"
+        @click="anadir(s)"
       >
-        <q-item-section avatar class="service-list-card__thumb">
-          <q-img
-            :src="miniatura(s)"
-            :srcset="miniaturaSrcset(s)"
-            :placeholder-src="PLACEHOLDER_IMAGE"
-            :alt="s.nombre"
-            width="44px"
-            height="44px"
-            fit="cover"
-            no-spinner
-            class="service-list-card__img"
-          />
-        </q-item-section>
-
-        <q-item-section>
-          <div class="service-list-card__name">{{ s.nombre }}</div>
-          <div class="service-list-card__meta">
-            {{ formatDurationMinutes(s.minutos) }}
-          </div>
-        </q-item-section>
-
-        <q-item-section side class="service-list-card__price">
-          ${{ formatCopDisplay(s.precio) }}
-        </q-item-section>
-      </q-item>
-    </q-list>
-
-    <q-card-section class="service-list-card__hint">
-      Toca un servicio para seguir por el chat.
-    </q-card-section>
-  </q-card>
+        <span class="service-card__rotulo">Añadir</span>
+        <svg
+          class="service-card__mas"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+      </button>
+    </li>
+  </ul>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import type { PresentedService } from 'src/api/assistant-api';
+import { useAddToBag } from 'src/composables/booking/useAddToBag';
 import {
   buildCloudinarySrcset,
   optimizeCloudinaryUrl,
@@ -54,19 +79,33 @@ import { PLACEHOLDER_IMAGE } from 'src/constants/placeholder-image';
 defineOptions({ name: 'ServiceListCard' });
 
 defineProps<{ servicios: PresentedService[] }>();
-const emit = defineEmits<{ (e: 'select', servicio: PresentedService): void }>();
+
+const { añadirServicio } = useAddToBag();
+
+/** Id del servicio cuya petición está en vuelo: su botón no acepta otro toque. */
+const ocupado = ref<string | null>(null);
+const hecho = ref<string | null>(null);
+const fallo = ref<Record<string, string>>({});
+
+async function anadir(servicio: PresentedService) {
+  if (ocupado.value) return;
+  ocupado.value = servicio.id;
+  delete fallo.value[servicio.id];
+
+  const resultado = await añadirServicio(servicio.id);
+  ocupado.value = null;
+
+  if (resultado.ok) hecho.value = servicio.id;
+  else fallo.value = { ...fallo.value, [servicio.id]: resultado.motivo };
+}
 
 /**
- * El panel mide `min(92vw, 380px)` y la miniatura 44: pedirle a Cloudinary el
- * original sería mandar una foto de mil píxeles para pintar cuarenta y cuatro.
- * `optimizeCloudinaryUrl` y `buildCloudinarySrcset` ya existían y son puras.
+ * La fila mide 58 px (52 en móvil): pedirle a Cloudinary el original sería
+ * mandar una foto de mil píxeles para pintar cincuenta y ocho.
+ * `optimizeCloudinaryUrl` y `buildCloudinarySrcset` son puras.
  */
 const ANCHO_MINIATURA = 96;
 const ANCHOS_SRCSET = [48, 96, 144];
-
-// El mismo marcador se usa como `placeholder-src`: sin él, y sin ruedecita
-// (la tarjeta lleva ocho, ocho ruedecitas serían un estruendo), una miniatura
-// que aún viaja por la red deja un hueco blanco que parece un fallo.
 
 function miniatura(s: PresentedService): string {
   return optimizeCloudinaryUrl(s.imagen, ANCHO_MINIATURA) || PLACEHOLDER_IMAGE;
@@ -79,66 +118,146 @@ function miniaturaSrcset(s: PresentedService): string {
 
 <style scoped lang="scss">
 /**
- * Diseñada para 270 px útiles desde el principio, que es lo que queda de la
- * burbuja dentro del panel. Una fila por servicio y nada de dos columnas: en
- * móvil no caben.
+ * Diseñada para los ~340 px útiles que deja el hilo dentro del panel. Una fila
+ * por servicio y nada de dos columnas: en móvil no caben.
  */
-.service-list-card {
-  align-self: flex-start;
-  max-width: 90%;
-  border-radius: 12px;
-  overflow: hidden;
-  // `flex: none` no es adorno. El hilo es un flex en columna con scroll, y
-  // `overflow: hidden` —que está aquí para recortar las esquinas redondeadas—
-  // anula el `min-height: auto` que impide a un hijo de flex encogerse por
-  // debajo de su contenido. Sin esto, en cuanto la conversación desborda, la
-  // tarjeta se aplasta a una línea gris de tres píxeles con sus siete filas
+.service-card {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  align-self: stretch;
+  // `flex: none` no es adorno. El hilo es un flex en columna con scroll: sin
+  // esto, en cuanto la conversación desborda, la lista se aplasta con sus filas
   // intactas dentro del DOM. Visto en el navegador, no en las pruebas: jsdom no
   // calcula maquetación.
   flex: 0 0 auto;
 }
 
-.service-list-card__row {
-  min-height: 56px;
-  padding: 6px 10px;
+.service-card__fila {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: var(--m-nieve);
+  border: var(--m-filete-grosor) solid var(--m-filete);
+  border-radius: var(--m-radio-tarjeta);
+  padding: 10px 12px;
 }
 
-.service-list-card__thumb {
-  min-width: 44px;
-  padding-right: 10px;
+.service-card__foto {
+  flex: 0 0 auto;
+  width: 58px;
+  height: 58px;
+  object-fit: cover;
+  border-radius: var(--m-radio-foto);
+  background: var(--m-hueso);
 }
 
-.service-list-card__img {
-  border-radius: 8px;
+.service-card__texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
-.service-list-card__name {
-  font-size: 0.86rem;
-  line-height: 1.2;
-  font-weight: 600;
-  color: #22282f;
-  // Dos líneas como mucho: un nombre largo no puede empujar el precio fuera.
+.service-card__nombre {
+  font-family: var(--m-font-display);
+  font-size: 15.5px;
+  line-height: 1.25;
+  color: var(--m-tinta);
+  // Dos líneas como mucho: un nombre largo no puede empujar el botón fuera.
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  overflow-wrap: anywhere;
 }
 
-.service-list-card__meta {
-  font-size: 0.72rem;
-  color: #78838d;
+.service-card__meta {
+  font-family: var(--m-font-sans);
+  font-size: 12px;
+  color: var(--m-piedra);
 }
 
-.service-list-card__price {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #22282f;
+/// El dorado claro no es color de texto sobre nieve (2,8:1): aquí va el profundo.
+.service-card__precio {
+  color: var(--m-oro-profundo);
+  font-weight: 500;
   white-space: nowrap;
 }
 
-.service-list-card__hint {
-  padding: 4px 10px 8px;
-  font-size: 0.68rem;
-  color: #8a949d;
+.service-card__hecho {
+  font-family: var(--m-font-sans);
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: var(--m-tracking-etiqueta);
+  color: var(--m-oro-profundo);
+}
+
+.service-card__fallo {
+  font-family: var(--m-font-sans);
+  font-size: 11.5px;
+  color: var(--m-rosa-profundo);
+}
+
+.service-card__anadir {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--m-tactil-min);
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--m-radio-pildora);
+  background: var(--m-tinta);
+  color: var(--m-hueso);
+  font-family: var(--m-font-sans);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: var(--m-tracking-nav);
+  cursor: pointer;
+}
+
+.service-card__anadir:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.service-card__anadir:focus-visible {
+  outline: 2px solid var(--m-oro);
+  outline-offset: 2px;
+}
+
+// El «+» solo aparece en móvil, donde el botón es un círculo.
+.service-card__mas {
+  display: none;
+}
+
+@media (max-width: 699px) {
+  .service-card__foto {
+    width: 52px;
+    height: 52px;
+  }
+
+  // Círculo de 44 px con un «+». El rótulo se va de la vista, pero el
+  // `aria-label` del botón sigue nombrando el servicio.
+  .service-card__anadir {
+    width: var(--m-tactil-min);
+    min-width: var(--m-tactil-min);
+    height: var(--m-tactil-min);
+    padding: 0;
+    border-radius: 50%;
+  }
+
+  .service-card__rotulo {
+    display: none;
+  }
+
+  .service-card__mas {
+    display: block;
+  }
 }
 </style>
