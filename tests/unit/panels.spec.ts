@@ -4,6 +4,22 @@
  * se comparte por módulo: si cada importador tuviera el suyo, la banda abriría
  * un panel distinto del que está montado y no pasaría nada en pantalla.
  */
+/**
+ * El lanzador importa el panel, y el panel llega hasta `assistant-api` y
+ * `services-api`, que leen `import.meta.env` — algo que ts-jest no compila a
+ * CommonJS. Aquí el panel es una caja negra: lo que se comprueba es el
+ * flotante, no lo que hay dentro.
+ */
+jest.mock('src/components/assistant/AssistantPanel.vue', () => ({
+  __esModule: true,
+  default: { name: 'AssistantPanel', template: '<div class="panel" />' },
+}));
+
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { nextTick } from 'vue';
+import { mount } from '@vue/test-utils';
+import AssistantLauncher from 'src/components/assistant/AssistantLauncher.vue';
 import { useAssistantPanel } from 'src/composables/assistant/useAssistantPanel';
 import { useReviewDialog } from 'src/composables/reviews/useReviewDialog';
 
@@ -99,5 +115,61 @@ describe('solicitud de reseña', () => {
 
     expect(politica).toHaveBeenCalledTimes(1);
     expect(useReviewDialog().abierto.value).toBe(false);
+  });
+});
+
+/**
+ * El panel se abre sobre cualquier página y en móvil la ocupa entera. Mientras
+ * está abierto no puede quedar nada flotando encima: ni el propio botón que lo
+ * abrió, ni la barra fija del inicio.
+ */
+describe('el lanzador mientras el panel está abierto', () => {
+  beforeEach(() => useAssistantPanel().cerrar());
+
+  it('esconde su botón flotante', async () => {
+    const wrapper = mount(AssistantLauncher, {
+      global: { stubs: { AssistantPanel: true, 'q-btn': true } },
+    });
+    expect(wrapper.find('[data-test="fab"]').exists()).toBe(true);
+
+    useAssistantPanel().abrir();
+    await nextTick();
+
+    expect(wrapper.find('[data-test="fab"]').exists()).toBe(false);
+  });
+
+  /**
+   * Punto 2 del enfoque de revisión: el panel es del armazón, no de una página.
+   * Si alguien toca «Servicios» con el asistente abierto, la conversación no
+   * puede desaparecer con la página que la tenía debajo. Hoy el lanzador vive
+   * FUERA de `<router-view>` y así debe seguir: montarlo dentro lo desmontaría
+   * en cada navegación.
+   */
+  it('el lanzador vive fuera de router-view, así que navegar no cierra el panel', () => {
+    const layout = readFileSync(
+      join(__dirname, '../../src/layouts/MainLayout.vue'),
+      'utf8'
+    );
+    const finDelContenedor = layout.indexOf('</q-page-container>');
+    const posicionDelLanzador = layout.indexOf('<AssistantLauncher');
+
+    expect(finDelContenedor).toBeGreaterThan(-1);
+    expect(posicionDelLanzador).toBeGreaterThan(finDelContenedor);
+  });
+
+  it('el panel se pone por encima de la barra fija del inicio', () => {
+    const fuente = readFileSync(
+      join(__dirname, '../../src/components/assistant/AssistantPanel.vue'),
+      'utf8'
+    );
+    const barra = readFileSync(
+      join(__dirname, '../../src/components/index/MobileActionBar.vue'),
+      'utf8'
+    );
+
+    const zPanel = Number(fuente.match(/z-index:\s*(\d+)/)?.[1]);
+    const zBarra = Number(barra.match(/z-index:\s*(\d+)/)?.[1]);
+
+    expect(zPanel).toBeGreaterThan(zBarra);
   });
 });

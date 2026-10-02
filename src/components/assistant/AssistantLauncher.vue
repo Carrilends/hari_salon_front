@@ -1,17 +1,17 @@
 <template>
   <div class="assistant-launcher">
-    <transition name="assistant-pop">
-      <AssistantPanel v-if="open" />
-    </transition>
+    <AssistantPanel v-if="open" />
 
     <q-btn
+      v-if="!open"
       class="assistant-launcher__fab"
+      data-test="fab"
       round
       size="lg"
       color="pink-4"
-      :icon="open ? 'close' : 'smart_toy'"
-      :aria-label="open ? 'Cerrar asistente' : 'Abrir asistente'"
-      @click="alternar"
+      icon="smart_toy"
+      aria-label="Abrir asistente"
+      @click="abrir"
     />
   </div>
 </template>
@@ -20,10 +20,21 @@
 import AssistantPanel from './AssistantPanel.vue';
 import { useAssistantPanel } from 'src/composables/assistant/useAssistantPanel';
 
-const { abierto: open, alternar } = useAssistantPanel();
+const { abierto: open, abrir } = useAssistantPanel();
 </script>
 
 <style scoped lang="scss">
+/**
+ * El flotante solo existe mientras el panel está cerrado. Con el panel abierto
+ * no puede quedar nada flotando encima: en móvil el panel ES la pantalla, y en
+ * escritorio una burbuja sobre el velo competiría con el botón de cerrar del
+ * propio panel.
+ *
+ * Se fue con él la posición de la burbuja vieja (`.assistant-launcher__panel`,
+ * anclada abajo a la derecha) y su transición: el panel nuevo se coloca y se
+ * anima por su cuenta, porque es quien sabe de dónde sale en cada ancho —arriba
+ * a la derecha en escritorio, a pantalla completa en móvil.
+ */
 .assistant-launcher__fab {
   position: fixed;
   right: 18px;
@@ -42,37 +53,6 @@ const { abierto: open, alternar } = useAssistantPanel();
 @media (max-width: 699px) {
   body.m-con-barra-movil .assistant-launcher__fab {
     bottom: calc(var(--m-barra-movil-alto) + 12px);
-  }
-
-  body.m-con-barra-movil .assistant-launcher__panel {
-    bottom: calc(var(--m-barra-movil-alto) + 78px);
-  }
-}
-
-.assistant-launcher__panel {
-  position: fixed;
-  right: 18px;
-  bottom: 84px;
-  z-index: 2600;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
-}
-
-.assistant-pop-enter-active,
-.assistant-pop-leave-active {
-  transition: opacity 0.16s ease, transform 0.16s ease;
-  transform-origin: bottom right;
-}
-
-.assistant-pop-enter-from,
-.assistant-pop-leave-to {
-  opacity: 0;
-  transform: translateY(8px) scale(0.98);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .assistant-pop-enter-active,
-  .assistant-pop-leave-active {
-    transition: none;
   }
 }
 </style>
