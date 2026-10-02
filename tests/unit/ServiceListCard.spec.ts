@@ -102,6 +102,56 @@ describe('ServiceListCard', () => {
     resolver({ ok: true, añadidos: 1 });
   });
 
+  /**
+   * El bloqueo era de la tarjeta entera, no de la fila: mientras viajaba la
+   * petición de una, tocar otra no hacía **nada** —ni la añadía, ni se veía
+   * deshabilitada, ni decía nada—. Añadir dos servicios en una conexión lenta
+   * es el caso normal, y el segundo se perdía en silencio. Es justo lo que la
+   * especificación §5.1 prohíbe: «un botón que no hace nada es peor que un
+   * error».
+   */
+  it('mientras una fila viaja, las demás siguen vivas', async () => {
+    let resolver: (r: unknown) => void = () => undefined;
+    añadirServicio
+      .mockReturnValueOnce(new Promise((r) => (resolver = r)))
+      .mockResolvedValue({ ok: true, añadidos: 1 });
+    const wrapper = montar();
+    const botones = wrapper.findAll('[data-test="anadir"]');
+
+    await botones[0].trigger('click');
+    await botones[1].trigger('click');
+
+    expect(añadirServicio).toHaveBeenNthCalledWith(1, 's1');
+    expect(añadirServicio).toHaveBeenNthCalledWith(2, 's2');
+    expect(botones[1].attributes('disabled')).toBeUndefined();
+
+    resolver({ ok: true, añadidos: 1 });
+  });
+
+  /** Spec §5.1: «el botón queda deshabilitado **y lo dice**». */
+  it('mientras viaja, el botón dice que está trabajando', async () => {
+    añadirServicio.mockReturnValue(new Promise(() => undefined));
+    const wrapper = montar();
+
+    await wrapper.findAll('[data-test="anadir"]')[0].trigger('click');
+
+    const boton = wrapper.findAll('[data-test="anadir"]')[0];
+    expect(boton.text()).toContain('Añadiendo');
+    expect(boton.attributes('aria-busy')).toBe('true');
+  });
+
+  it('dos servicios añadidos dejan DOS confirmaciones, no una que migra', async () => {
+    añadirServicio.mockResolvedValue({ ok: true, añadidos: 1 });
+    const wrapper = montar();
+
+    await wrapper.findAll('[data-test="anadir"]')[0].trigger('click');
+    await flushPromises();
+    await wrapper.findAll('[data-test="anadir"]')[1].trigger('click');
+    await flushPromises();
+
+    expect(wrapper.findAll('.service-card__hecho')).toHaveLength(2);
+  });
+
   it('al terminar lo confirma en la propia fila, sin ensuciar la conversación', async () => {
     añadirServicio.mockResolvedValue({ ok: true, añadidos: 1 });
     const wrapper = montar();

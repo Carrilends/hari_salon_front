@@ -162,13 +162,16 @@ describe('AssistantPanel', () => {
     expect(document.activeElement).toBe(wrapper.get('[role="dialog"]').element);
   });
 
-  it('al cerrarse el foco vuelve a donde estaba', () => {
+  it('al cerrarse el foco vuelve a donde estaba', async () => {
     const antes = document.createElement('button');
     document.body.appendChild(antes);
     antes.focus();
 
     const wrapper = montar();
     wrapper.unmount();
+    // La devolución espera un parche: el flotante vuelve en el mismo en que se
+    // va el panel, así que buscarlo antes no encontraría nada.
+    await nextTick();
 
     expect(document.activeElement).toBe(antes);
     antes.remove();
@@ -179,16 +182,45 @@ describe('AssistantPanel', () => {
    * desde el último control lleva al menú de una página atenuada que parece
    * bloqueada y no lo está.
    */
-  it('el tabulador no se escapa del panel', async () => {
+  it('el tabulador no se escapa del panel: del último vuelve al primero', async () => {
     const wrapper = montar();
     const dialogo = wrapper.get('[role="dialog"]');
-    const foco = dialogo.element.querySelectorAll<HTMLElement>('button');
-    const ultimo = foco[foco.length - 1];
+    const focables =
+      dialogo.element.querySelectorAll<HTMLElement>('button, a[href]');
+    const primero = focables[0];
+    const ultimo = focables[focables.length - 1];
+    expect(ultimo).not.toBe(primero);
     ultimo.focus();
 
-    await dialogo.trigger('keydown', { key: 'Tab' });
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Tab', cancelable: true })
+    );
+    await nextTick();
 
-    expect(dialogo.element.contains(document.activeElement)).toBe(true);
+    // El destino, no la contención: jsdom no mueve el foco con un Tab
+    // sintético, así que «sigue dentro» da verde sin cerrojo ninguno.
+    expect(document.activeElement).toBe(primero);
+  });
+
+  it('y con shift, del primero al último', async () => {
+    const wrapper = montar();
+    const dialogo = wrapper.get('[role="dialog"]');
+    const focables =
+      dialogo.element.querySelectorAll<HTMLElement>('button, a[href]');
+    const primero = focables[0];
+    const ultimo = focables[focables.length - 1];
+    primero.focus();
+
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'Tab',
+        shiftKey: true,
+        cancelable: true,
+      })
+    );
+    await nextTick();
+
+    expect(document.activeElement).toBe(ultimo);
   });
 
   /**
@@ -236,6 +268,58 @@ describe('AssistantPanel', () => {
     // Si el oyente sobreviviera al desmontaje, este Escape cerraría un panel
     // que ya no está en pantalla — y con dos visitas al inicio habría dos.
     expect(useAssistantPanel().abierto.value).toBe(true);
+  });
+
+  /**
+   * El panel dice `aria-modal="true"`, y eso promete que detrás no se puede
+   * hacer nada. Sin bloquear el scroll la página de atrás se mueve igual: en
+   * móvil el panel ES la pantalla, así que nada parece moverse, la clienta
+   * insiste y acaba 700 px más abajo de una página que no eligió. Medido en
+   * navegador antes de arreglarlo: 58 px en escritorio, 703 en móvil.
+   */
+  it('mientras está abierto, la página de detrás no se mueve', () => {
+    // `html` además del `body`: bajo Quasar el que desplaza es `html`, y con
+    // solo el cuerpo marcado la página seguía bajando (medido en navegador).
+    const marcados = () =>
+      [document.documentElement, document.body].filter((n) =>
+        n.classList.contains('m-panel-abierto')
+      ).length;
+
+    expect(marcados()).toBe(0);
+
+    const wrapper = montar();
+    expect(marcados()).toBe(2);
+
+    wrapper.unmount();
+    expect(marcados()).toBe(0);
+  });
+
+  /**
+   * El foco vuelve al flotante que lo abrió (spec §5.2). No basta con apuntar
+   * `document.activeElement` al montar: el flotante es `v-if="!open"`, así que
+   * Vue lo quita en el MISMO parche que monta el panel y para cuando corre
+   * `onMounted` el foco ya está en el `body`. Quien navega con teclado acababa
+   * en lo alto del documento cada vez que cerraba.
+   */
+  it('al cerrarse el foco vuelve al flotante que lo abrió', async () => {
+    const lanzador = document.createElement('button');
+    lanzador.dataset.test = 'fab';
+    document.body.appendChild(lanzador);
+    lanzador.focus();
+
+    const wrapper = montar();
+    // Lo que hace `v-if="!open"`: el flotante desaparece al abrirse el panel,
+    // así que el elemento que apuntó `onMounted` ya no sirve para volver.
+    lanzador.remove();
+    expect(lanzador.isConnected).toBe(false);
+
+    wrapper.unmount();
+    // Y vuelve al cerrarse.
+    document.body.appendChild(lanzador);
+    await nextTick();
+
+    expect(document.activeElement).toBe(lanzador);
+    lanzador.remove();
   });
 
   it('enseña el aviso del servidor, y el de respaldo si no llegó ninguno', () => {
@@ -337,7 +421,32 @@ describe('AssistantPanel', () => {
    */
   it('en móvil mide el alto visible, no el de la pantalla', () => {
     expect(FUENTE).toContain('100dvh');
-    expect(FUENTE).not.toMatch(/height:\s*100vh/);
+  });
+
+  /**
+   * `dvh` es el valor bueno, pero llega en Chrome 108, Firefox 101 y Safari
+   * 15.4, y NF06 (Tabla 44) promete **Chrome 87+, Firefox 78+, Edge 88+ y
+   * Safari 13.1+**. En todos esos el navegador tira la declaración al
+   * analizarla: sin una anterior con `100vh`, en móvil sobrevive el
+   * `height: 848px` de la regla base con `max-height: none`, el panel sale más
+   * alto que la pantalla y el campo de texto queda debajo del borde — sin
+   * scroll que lo rescate, porque la caja es `fixed` con `overflow: hidden`.
+   * La clienta no puede escribir. Cada `100dvh` necesita su `100vh` delante.
+   */
+  it('cae a 100vh en los navegadores que la tesis promete soportar', () => {
+    const conDvh = [
+      ...FUENTE.matchAll(/(max-height|height):\s*([^;]*100dvh[^;]*);/g),
+    ];
+
+    expect(conDvh.length).toBeGreaterThan(0);
+    for (const [, propiedad, valor] of conDvh) {
+      const respaldo = `${propiedad}: ${valor.replace('100dvh', '100vh')};`;
+      expect(FUENTE.indexOf(respaldo)).toBeGreaterThan(-1);
+      // Y delante, que si no gana el respaldo.
+      expect(FUENTE.indexOf(respaldo)).toBeLessThan(
+        FUENTE.indexOf(`${propiedad}: ${valor};`)
+      );
+    }
   });
 
   /** Punto 5: quien pidió menos movimiento no recibe una animación de entrada. */

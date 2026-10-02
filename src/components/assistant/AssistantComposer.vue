@@ -123,10 +123,17 @@ function enviar() {
   cursor: default;
 }
 
-.assistant-composer__chip:focus-visible,
 .assistant-composer__enviar:focus-visible,
 .assistant-composer__campo input:focus-visible {
   outline: 2px solid var(--m-oro);
+  outline-offset: 2px;
+}
+
+/// Los chips se posan sobre `--m-hueso`, y el oro claro da 2,84:1 ahí: por
+/// debajo del 3:1 que WCAG pide a un indicador de foco, que no es texto pero
+/// tampoco es decoración. Sobre hueso, el dorado es el profundo.
+.assistant-composer__chip:focus-visible {
+  outline: 2px solid var(--m-oro-profundo);
   outline-offset: 2px;
 }
 

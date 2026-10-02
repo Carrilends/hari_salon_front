@@ -84,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useAssistant } from 'src/composables/assistant/useAssistant';
@@ -152,6 +152,21 @@ function irALogin() {
  */
 let foco: HTMLElement | null = null;
 
+/**
+ * El panel dice `aria-modal="true"`, y eso promete que detrás no se puede
+ * hacer nada. Sin esto la página de atrás se desplaza igual: en escritorio la
+ * rueda sobre el velo la mueve, y en móvil —donde el panel ES la pantalla— no
+ * se ve moverse nada, así que la clienta insiste y al cerrar aparece cientos de
+ * píxeles más abajo de una página que no eligió. Misma mecánica que la marca de
+ * `MobileActionBar`: una clase puesta y quitada aquí.
+ *
+ * Se marcan **`html` y `body`**, no solo el `body`: bajo Quasar el elemento que
+ * desplaza es `html`, y la propagación del `overflow` del cuerpo al viewport no
+ * llega a aplicarse —medido: con `body` en `hidden` la página seguía bajando 33
+ * px en escritorio y 732 en móvil—. Marcar los dos no depende de esa sutileza.
+ */
+const SIN_SCROLL = 'm-panel-abierto';
+
 onMounted(async () => {
   foco =
     typeof document !== 'undefined'
@@ -160,17 +175,39 @@ onMounted(async () => {
   caja.value?.focus();
 
   document.addEventListener('keydown', alPulsarTecla);
+  document.documentElement.classList.add(SIN_SCROLL);
+  document.body.classList.add(SIN_SCROLL);
 
   const pendiente = useAssistantPanel().consumirPendiente();
   if (pendiente) await send(pendiente);
 });
 
 onUnmounted(() => {
-  if (typeof document !== 'undefined') {
-    document.removeEventListener('keydown', alPulsarTecla);
-  }
-  foco?.focus();
+  if (typeof document === 'undefined') return;
+
+  document.removeEventListener('keydown', alPulsarTecla);
+  document.documentElement.classList.remove(SIN_SCROLL);
+  document.body.classList.remove(SIN_SCROLL);
+  devolverElFoco();
 });
+
+/**
+ * El foco vuelve al flotante que lo abrió (spec §5.2).
+ *
+ * No basta con el elemento que `onMounted` apuntó: el flotante es
+ * `v-if="!open"`, así que Vue lo quita en el MISMO parche que monta el panel y
+ * para cuando corre `onMounted` el foco ya está en el `body`. Se busca el
+ * flotante tras el siguiente parche —cuando ha vuelto— y solo si no está se
+ * recurre al que había. Sin esto, quien navega con teclado acababa en lo alto
+ * del documento cada vez que cerraba el panel.
+ */
+function devolverElFoco() {
+  void nextTick(() => {
+    const lanzador = document.querySelector<HTMLElement>('[data-test="fab"]');
+    const destino = lanzador ?? foco;
+    if (destino?.isConnected) destino.focus();
+  });
+}
 
 const FOCABLES =
   'button:not([disabled]), a[href], input:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -255,6 +292,14 @@ function atraparFoco(evento: KeyboardEvent) {
   flex-direction: column;
   width: 424px;
   height: 848px;
+  // `100vh` primero y `100dvh` después, en ese orden y las dos: `dvh` es el
+  // valor bueno —sigue al viewport visible, que es lo que respeta un teclado
+  // virtual— pero llega en Chrome 108, Firefox 101 y Safari 15.4, y NF06
+  // promete Chrome 87+, Firefox 78+, Edge 88+ y Safari 13.1+. Ahí la
+  // declaración se tira al analizarla; sin el respaldo sobrevive el `height`
+  // de arriba, el panel sale más alto que la pantalla y el campo de texto
+  // queda debajo del borde, sin scroll que lo rescate.
+  max-height: calc(100vh - 52px);
   max-height: calc(100dvh - 52px);
   background: var(--m-hueso);
   border-radius: var(--m-radio-panel);
@@ -389,6 +434,7 @@ function atraparFoco(evento: KeyboardEvent) {
   .assistant-panel__caja {
     inset: 0;
     width: 100%;
+    height: 100vh;
     height: 100dvh;
     max-height: none;
     border-radius: 0;

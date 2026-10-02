@@ -5,3 +5,11 @@
 // cambia un píxel. Ver `tokens.scss` y
 // `docs/superpowers/specs/2026-09-30-remodelacion-visual-index-design.md`.
 @import './tokens.scss';
+
+// El panel del asistente marca el `body` mientras está abierto para que la
+// página de detrás no se desplace. Va aquí y no en el componente porque un
+// estilo `scoped` no puede alcanzar al `body`. Ver `AssistantPanel.vue`.
+html.m-panel-abierto,
+body.m-panel-abierto {
+  overflow: hidden;
+}

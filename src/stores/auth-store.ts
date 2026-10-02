@@ -1,6 +1,7 @@
 // src/stores/auth-store.ts
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import { limpiarDatosDeSesion } from 'src/stores/session-cleanup';
 
 type DecodedJwt = { exp?: number; [k: string]: unknown };
 
@@ -61,6 +62,12 @@ export const useAuthStore = defineStore(
     }
 
     function logout() {
+      // Lo que cada dueño haya registrado: hoy, el hilo del asistente. Vive en
+      // ámbito de módulo y ya no muere al cerrar el panel, así que cerrar sesión
+      // tiene que llevárselo — en un ordenador compartido el gesto de fin de
+      // turno es salir, no recargar, y con la herramienta `misReservas` en esa
+      // conversación puede haber citas y fechas de quien se acaba de ir.
+      limpiarDatosDeSesion();
       token.value = '';
       fullname.value = '';
       email.value = '';

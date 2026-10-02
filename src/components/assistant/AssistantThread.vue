@@ -92,6 +92,8 @@ watch(
   gap: 14px;
   padding: 18px;
   overflow-y: auto;
+  // Al llegar al final del hilo, el gesto no se lo pasa a la página de detrás.
+  overscroll-behavior: contain;
   flex: 1 1 auto;
   min-height: 0;
   font-family: var(--m-font-sans);

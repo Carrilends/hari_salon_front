@@ -3,6 +3,7 @@ import {
   sendAssistantMessage,
   type AssistantPresentation,
 } from 'src/api/assistant-api';
+import { registrarLimpiezaDeSesion } from 'src/stores/session-cleanup';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -100,3 +101,13 @@ export function useAssistant() {
 
   return { messages, loading, error, aviso, send, reset };
 }
+
+/**
+ * Cerrar sesión se lleva la conversación. Desde que el estado es de módulo, el
+ * hilo ya no muere al cerrar el panel: sin esto, en un ordenador compartido la
+ * siguiente persona abriría el panel y leería lo que habló la anterior —y con
+ * la herramienta `misReservas` ahí puede haber sus citas, su estilista y sus
+ * fechas—. Se registra aquí y no en `auth-store` para no invertir la
+ * dependencia: ver `session-cleanup.ts`.
+ */
+registrarLimpiezaDeSesion(() => useAssistant().reset());

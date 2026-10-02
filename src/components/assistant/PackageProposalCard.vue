@@ -39,9 +39,10 @@
       class="package-card__anadir"
       data-test="anadir-paquete"
       :disabled="ocupado"
+      :aria-busy="ocupado ? 'true' : undefined"
       @click="anadir()"
     >
-      Añadir los {{ propuesta.lineas.length }}
+      {{ ocupado ? 'Añadiendo…' : `Añadir los ${propuesta.lineas.length}` }}
     </button>
     <p v-if="hecho" class="package-card__nota" role="status">
       Añadido a tu reserva. Recuerda: elige el día al confirmar.
@@ -85,8 +86,13 @@ async function anadir() {
   );
   ocupado.value = false;
 
-  if (resultado.ok) hecho.value = true;
-  else motivoFallo.value = resultado.motivo;
+  if (resultado.ok) {
+    hecho.value = true;
+  } else {
+    // Un reintento fallido no puede dejar «Añadido» y el error a la vez.
+    hecho.value = false;
+    motivoFallo.value = resultado.motivo;
+  }
 }
 
 const EVENT_LABELS: Record<string, string> = {

@@ -10,7 +10,14 @@ import { test, expect, type Page } from '@playwright/test';
 import { irA, json, servirApiVacia } from './api-offline';
 
 const MOVIL = { width: 390, height: 844 };
-const ESCRITORIO = { width: 1280, height: 900 };
+/**
+ * 800 y no 900 de alto a propósito: el panel mide 848 px de base y se recorta
+ * con `max-height`. A 900 la suma `26 + 848 = 874` cabe igual aunque el recorte
+ * no funcione, así que la aserción de «cabe en la ventana» no comprobaba nada.
+ * A 800 solo cabe si el recorte está puesto — y es el alto de un portátil
+ * cualquiera, no un caso raro.
+ */
+const ESCRITORIO = { width: 1280, height: 800 };
 
 async function servirApi(page: Page) {
   await servirApiVacia(page);

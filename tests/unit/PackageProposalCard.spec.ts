@@ -104,6 +104,34 @@ describe('PackageProposalCard', () => {
     resolver({ ok: true, añadidos: 2 });
   });
 
+  /** Spec §5.1: «el botón queda deshabilitado **y lo dice**». */
+  it('mientras viaja, el botón dice que está trabajando', async () => {
+    añadirVarios.mockReturnValue(new Promise(() => undefined));
+    const wrapper = montar();
+
+    await wrapper.get('[data-test="anadir-paquete"]').trigger('click');
+
+    const boton = wrapper.get('[data-test="anadir-paquete"]');
+    expect(boton.text()).toContain('Añadiendo');
+    expect(boton.attributes('aria-busy')).toBe('true');
+  });
+
+  it('un reintento que falla no deja «Añadido» y el error a la vez', async () => {
+    añadirVarios
+      .mockResolvedValueOnce({ ok: true, añadidos: 2 })
+      .mockResolvedValue({ ok: false, motivo: 'Ese servicio ya no está disponible.' });
+    const wrapper = montar();
+    const boton = wrapper.get('[data-test="anadir-paquete"]');
+
+    await boton.trigger('click');
+    await flushPromises();
+    await boton.trigger('click');
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('ya no está disponible');
+    expect(wrapper.find('.package-card__nota').exists()).toBe(false);
+  });
+
   /**
    * El asistente consulta el cupo, no lo aparta: entre la propuesta y la
    * confirmación ese hueco se lo puede llevar otra persona. La tarjeta lo dice

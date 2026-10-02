@@ -25,11 +25,7 @@
             ${{ formatCopDisplay(s.precio) }}
           </span>
         </span>
-        <span
-          v-if="hecho === s.id"
-          class="service-card__hecho"
-          role="status"
-        >
+        <span v-if="hecho.has(s.id)" class="service-card__hecho" role="status">
           Añadido
         </span>
         <span v-if="fallo[s.id]" class="service-card__fallo" role="status">
@@ -41,11 +37,14 @@
         type="button"
         class="service-card__anadir"
         data-test="anadir"
-        :disabled="ocupado === s.id"
+        :disabled="ocupado.has(s.id)"
+        :aria-busy="ocupado.has(s.id) ? 'true' : undefined"
         :aria-label="`Añadir ${s.nombre}`"
         @click="anadir(s)"
       >
-        <span class="service-card__rotulo">Añadir</span>
+        <span class="service-card__rotulo">
+          {{ ocupado.has(s.id) ? 'Añadiendo…' : 'Añadir' }}
+        </span>
         <svg
           class="service-card__mas"
           width="18"
@@ -82,21 +81,43 @@ defineProps<{ servicios: PresentedService[] }>();
 
 const { añadirServicio } = useAddToBag();
 
-/** Id del servicio cuya petición está en vuelo: su botón no acepta otro toque. */
-const ocupado = ref<string | null>(null);
-const hecho = ref<string | null>(null);
+/**
+ * Estado **por fila**, no por tarjeta. Las tres cosas se guardan por id a
+ * propósito:
+ *
+ * - `ocupado` frena el doble toque en LA MISMA fila, que es el que añadiría dos
+ *   veces y descuadraría el contador. Entre filas distintas no hay carrera: cada
+ *   una trae su servicio y `addBooking` es síncrono. Con un solo id, tocar una
+ *   segunda fila mientras la primera viajaba no hacía nada —ni la añadía, ni se
+ *   veía deshabilitada, ni lo decía—, y añadir dos servicios en una conexión
+ *   lenta es el caso normal.
+ * - `hecho` es un conjunto porque la confirmación va «en su sitio» (§5.1): con
+ *   un solo id, añadir un segundo servicio borraba el «Añadido» del primero.
+ */
+const ocupado = ref<Set<string>>(new Set());
+const hecho = ref<Set<string>>(new Set());
 const fallo = ref<Record<string, string>>({});
 
 async function anadir(servicio: PresentedService) {
-  if (ocupado.value) return;
-  ocupado.value = servicio.id;
+  if (ocupado.value.has(servicio.id)) return;
+  ocupado.value = new Set(ocupado.value).add(servicio.id);
   delete fallo.value[servicio.id];
 
   const resultado = await añadirServicio(servicio.id);
-  ocupado.value = null;
 
-  if (resultado.ok) hecho.value = servicio.id;
-  else fallo.value = { ...fallo.value, [servicio.id]: resultado.motivo };
+  const enVuelo = new Set(ocupado.value);
+  enVuelo.delete(servicio.id);
+  ocupado.value = enVuelo;
+
+  if (resultado.ok) {
+    hecho.value = new Set(hecho.value).add(servicio.id);
+  } else {
+    // Un reintento fallido no puede dejar «Añadido» y el error a la vez.
+    const hechos = new Set(hecho.value);
+    hechos.delete(servicio.id);
+    hecho.value = hechos;
+    fallo.value = { ...fallo.value, [servicio.id]: resultado.motivo };
+  }
 }
 
 /**

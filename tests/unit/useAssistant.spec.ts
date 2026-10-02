@@ -2,7 +2,10 @@ jest.mock('src/api/assistant-api', () => ({
   sendAssistantMessage: jest.fn(),
 }));
 
+import { createPinia, setActivePinia } from 'pinia';
+
 import { sendAssistantMessage } from 'src/api/assistant-api';
+import { useAuthStore } from 'src/stores/auth-store';
 import { useAssistant } from 'src/composables/assistant/useAssistant';
 
 const mockSend = sendAssistantMessage as jest.Mock;
@@ -158,5 +161,35 @@ describe('el hilo sobrevive al desmontaje', () => {
     panel.reset();
 
     expect(useAssistant().messages.value).toEqual([]);
+  });
+});
+
+/**
+ * El hilo vive en ámbito de módulo y ya no muere al cerrar el panel, así que
+ * cerrar sesión tiene que llevárselo: el gesto natural de fin de turno en un
+ * ordenador compartido es **salir**, no recargar. Sin esto, la siguiente
+ * persona abre el panel y lee la conversación de la anterior —y el asistente
+ * tiene una herramienta `misReservas`, así que ahí puede haber sus citas, su
+ * estilista y sus fechas—. Antes de subir el estado a módulo no pasaba, porque
+ * cerrar el panel ya lo borraba: la fuga la introdujo esta tanda.
+ */
+describe('cerrar sesión no deja rastro de la conversación', () => {
+  beforeEach(() => {
+    useAssistant().reset();
+    mockSend.mockReset();
+    sessionStorage.clear();
+    setActivePinia(createPinia());
+  });
+
+  it('logout vacía el hilo y el conversationId', async () => {
+    mockSend.mockResolvedValue({ conversationId: 'c1', reply: 'tus citas son…' });
+    await useAssistant().send('¿cuáles son mis reservas?');
+    expect(useAssistant().messages.value.length).toBeGreaterThan(0);
+    expect(sessionStorage.getItem('assistant-conversation-id')).toBe('c1');
+
+    useAuthStore().logout();
+
+    expect(useAssistant().messages.value).toEqual([]);
+    expect(sessionStorage.getItem('assistant-conversation-id')).toBeNull();
   });
 });
