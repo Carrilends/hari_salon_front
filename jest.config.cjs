@@ -3,7 +3,9 @@ module.exports = {
   testEnvironment: 'jsdom',
   testMatch: ['<rootDir>/tests/**/*.spec.(ts|js)'],
   testPathIgnorePatterns: ['/node_modules/', '<rootDir>/tests/browser-compat/'],
-  moduleFileExtensions: ['ts', 'js', 'json', 'vue'],
+  // `mjs` está aquí por `scripts/optimizar-imagenes.mjs`: la prueba de la receta
+  // importa el script de verdad, para que receta y marcado no se separen.
+  moduleFileExtensions: ['ts', 'js', 'mjs', 'json', 'vue'],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   transform: {
     '^.+\\.vue$': '@vue/vue3-jest',
@@ -13,7 +15,7 @@ module.exports = {
         tsconfig: '<rootDir>/tsconfig.json',
       },
     ],
-    '^.+\\.(js|jsx)$': 'babel-jest',
+    '^.+\\.(js|jsx|mjs)$': 'babel-jest',
   },
   moduleNameMapper: {
     // Con `testEnvironment: jsdom`, Jest resuelve la condición de exportación

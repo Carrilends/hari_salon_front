@@ -18,7 +18,8 @@
     "build": "node scripts/generate-sitemap.mjs && quasar build",
     "build:ssg": "node scripts/generate-sitemap.mjs && quasar ssg generate",
     "serve:ssg": "quasar ssg serve dist/ssg",
-    "generate:sitemap": "node scripts/generate-sitemap.mjs"
+    "generate:sitemap": "node scripts/generate-sitemap.mjs",
+    "optimizar:imagenes": "node scripts/optimizar-imagenes.mjs"
   },
   "dependencies": {
     "@quasar/extras": "^1.16.4",
@@ -58,6 +59,7 @@
     "prettier": "^2.5.1",
     "quasar-app-extension-ssg": "^5.2.0",
     "sass": "~1.77.0",
+    "sharp": "0.33.5",
     "ts-jest": "^29.4.9",
     "typescript": "~5.5.4",
     "vite-plugin-checker": "^0.8.0",
