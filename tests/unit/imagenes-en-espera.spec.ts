@@ -53,10 +53,21 @@ describe('la foto de la portada', () => {
       'm-foto--esperando'
     );
 
-    await wrapper.get('.hero-band__foto').trigger('load');
+    // El `load` se dispara en el `<img>` de dentro del `<picture>`: no burbujea,
+    // así que lanzarlo sobre el `<picture>` no llegaría al manejador.
+    await wrapper.get('.hero-band__foto img').trigger('load');
 
     expect(wrapper.get('.hero-band__foto').classes()).not.toContain(
       'm-foto--esperando'
     );
+  });
+
+  it('la foto de la portada no se aplaza: es la que marca la velocidad', () => {
+    const wrapper = mount(HeroBand, {
+      props: { foto: '/people/women-hair-cut.jpg', fotoAlt: 'Clienta' },
+    });
+
+    expect(wrapper.get('img').attributes('loading')).toBe('eager');
+    expect(wrapper.get('source').attributes('type')).toBe('image/webp');
   });
 });

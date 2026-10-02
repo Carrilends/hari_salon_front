@@ -10,6 +10,11 @@
  * copia que podría quedarse atrás.
  */
 import {
+  ANCHOS_CARTA as ANCHOS_CARTA_MARCADO,
+  ANCHOS_PORTADA as ANCHOS_PORTADA_MARCADO,
+} from 'src/constants/anchos-de-foto';
+
+import {
   ANCHOS_CARTA,
   ANCHOS_PORTADA,
   RECETAS,
@@ -51,6 +56,18 @@ describe('la receta de las variantes', () => {
     for (const ancho of ANCHOS_CARTA) {
       expect(RECETAS['women-hair-cut.jpg'].anchos).toContain(ancho);
     }
+  });
+
+  /**
+   * El script y el marcado son dos mundos —Node y el navegador— y cada uno
+   * necesita su módulo: el del script no puede llevar `sharp` al paquete del
+   * cliente. Lo que no puede pasar es que se separen: si el marcado pide un
+   * ancho que la receta no genera, el navegador se queda con un hueco roto. Esta
+   * prueba es la costura.
+   */
+  it('el marcado pide exactamente los anchos que el script genera', () => {
+    expect(ANCHOS_PORTADA_MARCADO).toEqual(ANCHOS_PORTADA);
+    expect(ANCHOS_CARTA_MARCADO).toEqual(ANCHOS_CARTA);
   });
 
   it('nombra las variantes de forma predecible', () => {

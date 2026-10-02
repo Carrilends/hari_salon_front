@@ -15,21 +15,24 @@
         Ver servicios →
       </button>
     </div>
-    <img
+    <FotoResponsiva
       class="hero-band__foto"
       :class="{ 'm-foto--esperando': !llego(foto) }"
-      :data-foto="foto"
-      :src="foto"
+      :foto="foto"
       :alt="fotoAlt"
-      decoding="async"
-      @load="marcar(foto)"
-      @error="marcar(foto)"
+      :anchos="ANCHOS_PORTADA"
+      medidas="(max-width: 699px) 100vw, 53vw"
+      prioritaria
+      @cargada="marcar(foto)"
     />
   </section>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
+
+import FotoResponsiva from 'src/components/shared/FotoResponsiva.vue';
+import { ANCHOS_PORTADA } from 'src/constants/anchos-de-foto';
 import { useImagenesEnEspera } from 'src/composables/shared/useImagenesEnEspera';
 
 defineProps<{ foto: string; fotoAlt: string }>();
@@ -121,6 +124,13 @@ defineOptions({ name: 'HeroBand' });
   // `height: 100%` explícito y no `bottom: 0`: una imagen es un elemento
   // reemplazado, y con el alto en `auto` usa el suyo intrínseco e ignora el
   // `bottom` — se quedaba 283 px corta del borde de la banda oscura.
+  height: 100%;
+  // El `<picture>` es un contenedor en línea: sin esto no toma el alto.
+  display: block;
+}
+
+.hero-band__foto :deep(img) {
+  width: 100%;
   height: 100%;
   object-fit: cover;
 }
