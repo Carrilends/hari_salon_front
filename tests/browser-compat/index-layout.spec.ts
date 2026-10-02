@@ -156,3 +156,91 @@ test.describe('el flotante del asistente y la barra fija', () => {
     expect(fab!.y + fab!.height).toBeLessThanOrEqual(barra!.y + 1);
   });
 });
+
+/**
+ * La página en una ventana alta, que es donde se veía la costura: con el
+ * contenido más corto que la pantalla, `q-page` estira por su `min-height` y
+ * el sobrante asomaba DEBAJO del pie como una franja de hueso. Ahora la página
+ * es una columna flexible y ese sobrante se lo queda la portada.
+ */
+test.describe('el reparto vertical del inicio', () => {
+  const ALTA = { width: 1280, height: 1400 };
+
+  test('el pie termina al final del documento, sin franja debajo', async ({
+    page,
+  }) => {
+    await page.setViewportSize(ALTA);
+    await servirResenas(page, [resena(1), resena(2), resena(3)]);
+    await irA(page, '/');
+    await expect(page.locator('.footer-band')).toBeVisible();
+
+    const { pie, documento } = await page.evaluate(() => ({
+      pie: document.querySelector('.footer-band')!.getBoundingClientRect().bottom,
+      documento: document.documentElement.scrollHeight,
+    }));
+
+    expect(Math.round(pie)).toBe(documento);
+  });
+
+  test('el sobrante se lo queda la portada, no el final de la página', async ({
+    page,
+  }) => {
+    await page.setViewportSize(ALTA);
+    await servirResenas(page, [resena(1), resena(2), resena(3)]);
+    await irA(page, '/');
+    await expect(page.locator('.hero-band')).toBeVisible();
+
+    const alto = await page
+      .locator('.hero-band')
+      .evaluate((el) => el.getBoundingClientRect().height);
+
+    // Su alto natural ronda los 294 px; en una ventana alta tiene que crecer.
+    expect(alto).toBeGreaterThan(350);
+  });
+
+  /**
+   * La foto llega hasta el borde de la banda oscura. Antes se quedaba corta
+   * —tenía un tope de 268 px mientras la banda crecía con el texto— y parecía
+   * flotar sobre una franja de hueso.
+   */
+  test('la foto de la portada toca la banda oscura', async ({ page }) => {
+    await page.setViewportSize(ALTA);
+    await servirResenas(page, [resena(1), resena(2), resena(3)]);
+    await irA(page, '/');
+    await expect(page.locator('.hero-band__foto')).toBeVisible();
+
+    const { foto, carta } = await page.evaluate(() => ({
+      foto: document.querySelector('.hero-band__foto')!.getBoundingClientRect()
+        .bottom,
+      carta: document.querySelector('.catalog-band')!.getBoundingClientRect().top,
+    }));
+
+    expect(Math.abs(foto - carta)).toBeLessThanOrEqual(1);
+  });
+
+  /**
+   * La tarjeta del asistente adelgaza y la reseña se queda ese ancho. Antes la
+   * tarjeta era la ancha de las dos (591 contra 556 a 1280 px).
+   */
+  test('la tarjeta del asistente es más estrecha que la columna de la reseña', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await servirResenas(page, [resena(1), resena(2), resena(3)]);
+    await irA(page, '/');
+    await expect(page.locator('.review-band__asistente')).toBeVisible();
+
+    const { tarjeta, columna } = await page.evaluate(() => ({
+      tarjeta: document
+        .querySelector('.review-band__asistente')!
+        .getBoundingClientRect().width,
+      columna: document
+        .querySelector('.review-band__resena')!
+        .getBoundingClientRect().width,
+    }));
+
+    expect(tarjeta).toBeLessThan(columna);
+    // «Unos 50 px» menos de los 591 que medía.
+    expect(tarjeta).toBeLessThan(560);
+  });
+});

@@ -21,17 +21,27 @@
         </span>
       </div>
 
-      <template v-if="resena">
-        <blockquote class="review-band__cita" data-test="cita">
-          «{{ resena.description }}»
-        </blockquote>
-        <p class="review-band__autor">{{ resena.name }} · reseña publicada en el portal</p>
-      </template>
-      <div v-else-if="cargando" class="review-band__esqueleto" data-test="esqueleto" aria-hidden="true">
+      <!--
+        La llave es el índice, no la reseña: es lo que hace que Vue monte un
+        nodo nuevo en vez de repintar el mismo con otro texto, que es lo que
+        había y por eso el cambio era un salto seco. `out-in` para que no se
+        solapen dos reseñas a media opacidad, que se lee fatal.
+      -->
+      <Transition name="review-band__cruce" mode="out-in">
+        <div v-if="resena" :key="indice" class="review-band__texto">
+          <blockquote class="review-band__cita" data-test="cita">
+            «{{ resena.description }}»
+          </blockquote>
+          <p class="review-band__autor">
+            {{ resena.name }} · reseña publicada en el portal
+          </p>
+        </div>
+      </Transition>
+      <div v-if="!resena && cargando" class="review-band__esqueleto" data-test="esqueleto" aria-hidden="true">
         <span class="review-band__barra" />
         <span class="review-band__barra review-band__barra--corta" />
       </div>
-      <p v-else class="review-band__vacio">
+      <p v-else-if="!resena" class="review-band__vacio">
         Todavía no hay reseñas publicadas. La tuya puede ser la primera.
       </p>
 
@@ -139,8 +149,14 @@ defineOptions({ name: 'ReviewAssistantBand' });
   background: var(--m-hueso);
 }
 
+/**
+ * La reseña es la que crece. El reparto estaba al revés —la tarjeta del
+ * asistente se quedaba con 591 px de 1184 y la reseña con 556— y la caja blanca
+ * pesaba más que lo que de verdad cuenta la banda: lo que dice una clienta.
+ */
 .review-band__resena {
-  flex: 0 0 47%;
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   // Reserva el alto de la cita para que la banda no dé un salto cuando la
@@ -178,6 +194,34 @@ defineOptions({ name: 'ReviewAssistantBand' });
 .review-band__punto--activo {
   width: 16px;
   background: var(--m-tinta);
+}
+
+/**
+ * El cruce entre una reseña y la siguiente. Se desvanece y se desplaza un pelo:
+ * el movimiento da sensación de relevo, que un desvanecido a secas no tiene.
+ * Son 0,25 s de ida y 0,25 de vuelta, muy por debajo de los 8 s que tarda en
+ * rotar, así que nunca se pisan.
+ */
+.review-band__cruce-enter-active,
+.review-band__cruce-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.review-band__cruce-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.review-band__cruce-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .review-band__cruce-enter-active,
+  .review-band__cruce-leave-active {
+    transition: none;
+  }
 }
 
 .review-band__cita {
@@ -250,7 +294,8 @@ defineOptions({ name: 'ReviewAssistantBand' });
 }
 
 .review-band__asistente {
-  flex: 1 1 auto;
+  // Unos 50 px menos de los que tenía; se los lleva la columna de la reseña.
+  flex: 0 0 46%;
   min-width: 0;
   display: flex;
   flex-direction: column;

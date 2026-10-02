@@ -4,6 +4,9 @@
  * tiene reseñas, y unas comillas vacías son peor que no enseñar nada.
  */
 import { computed } from 'vue';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { mount } from '@vue/test-utils';
 import ReviewAssistantBand from 'src/components/index/ReviewAssistantBand.vue';
 import { useAssistantPanel } from 'src/composables/assistant/useAssistantPanel';
@@ -181,5 +184,45 @@ describe('ReviewAssistantBand', () => {
     const cita = mount(ReviewAssistantBand).get('[data-test="cita"]');
 
     expect(cita.classes()).toContain('review-band__cita');
+  });
+});
+
+/**
+ * El texto no salta de una reseña a otra: se cruza con un desvanecido. Lo pedía
+ * la especificación del inicio desde el principio («una cada ~8 s con
+ * desvanecido») y se había quedado sin hacer.
+ *
+ * La transición va **con llave en el índice**: sin ella Vue repinta el mismo
+ * nodo con otro texto y no hay entrada ni salida que animar.
+ */
+describe('el cambio de reseña', () => {
+  const FUENTE = readFileSync(
+    join(__dirname, '../../src/components/index/ReviewAssistantBand.vue'),
+    'utf8'
+  );
+
+  it('se cruza con una transición con llave en el índice', () => {
+    expect(FUENTE).toMatch(/<Transition[\s\S]{0,120}name="review-band__cruce"/);
+    expect(FUENTE).toMatch(/<Transition[\s\S]{0,160}mode="out-in"/);
+    expect(FUENTE).toMatch(/:key="indice"/);
+  });
+
+  it('declara el desvanecido y lo anula si se pidió menos movimiento', () => {
+    expect(FUENTE).toContain('.review-band__cruce-enter-active');
+    expect(FUENTE).toContain('.review-band__cruce-leave-active');
+
+    const reducido = FUENTE.slice(
+      FUENTE.indexOf('@media (prefers-reduced-motion')
+    );
+    expect(reducido).toContain('review-band__cruce');
+  });
+
+  it('la cita sigue siendo la misma pieza, con su recorte de tres líneas', () => {
+    estado.resena = RESENA;
+
+    const cita = mount(ReviewAssistantBand).get('[data-test="cita"]');
+
+    expect(cita.classes()).toContain('review-band__cita');
+    expect(cita.text()).toContain(RESENA.description);
   });
 });

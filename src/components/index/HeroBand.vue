@@ -28,10 +28,14 @@ defineOptions({ name: 'HeroBand' });
 
 <style scoped lang="scss">
 .hero-band {
+  position: relative;
   display: flex;
-  // El tablero da 268 px a la portada. Sin este alto, la foto impone el suyo
-  // natural (unos 450 px a 680 de ancho) y empuja la carta fuera de la
-  // primera pantalla.
+  // El texto se centra en vertical: la portada es la que absorbe el aire que
+  // sobra en la página, y con el texto arriba ese aire se lee como un hueco
+  // olvidado en vez de como margen.
+  align-items: center;
+  // El tablero da 268 px a la portada. Sin este suelo, la banda se queda en el
+  // alto del texto.
   min-height: 268px;
   background: var(--m-hueso);
 }
@@ -80,18 +84,32 @@ defineOptions({ name: 'HeroBand' });
   cursor: pointer;
 }
 
+/**
+ * La foto ocupa la mitad derecha **de borde a borde**, pegada abajo a la banda
+ * oscura que viene después.
+ *
+ * Va absoluta, y es lo que lo hace posible: como elemento de flex traía su alto
+ * natural (unos 450 px), así que había que ponerle un tope de 268 — y en cuanto
+ * la banda crecía, por el texto o por el reparto vertical de la página, la foto
+ * se quedaba corta y parecía flotar sobre una franja de hueso. Sacada del flujo
+ * no impone alto ninguno y se estira con la banda, pase lo que pase.
+ */
 .hero-band__foto {
-  flex: 1 1 auto;
-  min-width: 0;
-  // El tope corta el alto natural de la foto; `object-fit` recorta en vez de
-  // deformar, y el estirado del flex la lleva justo al alto de la banda.
-  max-height: 268px;
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 53%;
+  // `height: 100%` explícito y no `bottom: 0`: una imagen es un elemento
+  // reemplazado, y con el alto en `auto` usa el suyo intrínseco e ignora el
+  // `bottom` — se quedaba 283 px corta del borde de la banda oscura.
+  height: 100%;
   object-fit: cover;
 }
 
 @media (max-width: 699px) {
   .hero-band {
     flex-direction: column-reverse;
+    align-items: stretch;
   }
 
   .hero-band__texto {
@@ -103,7 +121,10 @@ defineOptions({ name: 'HeroBand' });
     font-size: 29px;
   }
 
+  // En móvil vuelve al flujo: la banda es una columna y la foto va arriba.
   .hero-band__foto {
+    position: static;
+    width: 100%;
     height: 186px;
   }
 }

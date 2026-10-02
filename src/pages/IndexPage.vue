@@ -69,9 +69,23 @@ defineOptions({
 </script>
 
 <style scoped lang="scss">
+/**
+ * Columna flexible, y no por gusto: `q-page` recibe un `min-height` de Quasar
+ * (la ventana menos la cabecera), así que en una pantalla alta la página estira
+ * más de lo que ocupa su contenido y el sobrante asomaba DEBAJO del pie, como
+ * una franja de hueso bajo la banda oscura. Repartirlo en columna deja el pie
+ * donde tiene que estar —al final— y le da el aire que sobra a la portada, que
+ * es la que mejor lo aprovecha: su foto crece con él.
+ */
 .index-page {
+  display: flex;
+  flex-direction: column;
   background: var(--m-hueso);
   font-family: var(--m-font-sans);
+}
+
+.index-page > .hero-band {
+  flex: 1 0 auto;
 }
 
 @media (max-width: 699px) {
