@@ -22,3 +22,34 @@ body.m-panel-abierto {
   width: 100%;
   overflow: hidden;
 }
+
+/**
+ * El hueco de una foto que todavía no ha llegado.
+ *
+ * Las de `public/people/` pesan unos 10 MB sin optimizar —la deuda abierta más
+ * seria para NF02— así que en una conexión normal se ven aparecer, y hasta
+ * entonces quedaba un rectángulo vacío. El color de fondo lo pone cada banda:
+ * hueso sobre claro, carbón sobre la banda oscura. Aquí solo late.
+ *
+ * Late con `opacity` sobre el propio `img`: mientras no hay píxeles que pintar,
+ * lo único que se ve es ese fondo. En cuanto la foto llega, la clase se va.
+ */
+.m-foto--esperando {
+  animation: m-foto-espera 1.4s ease-in-out infinite;
+}
+
+@keyframes m-foto-espera {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-foto--esperando {
+    animation: none;
+  }
+}

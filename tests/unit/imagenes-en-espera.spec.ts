@@ -1,0 +1,62 @@
+/**
+ * Las fotos del inicio llegan tarde —`public/people/` pesa unos 10 MB sin
+ * optimizar— y hasta ahora dejaban un rectángulo vacío. Ahora el hueco espera
+ * con vida y se apaga cuando la foto llega.
+ */
+import { mount } from '@vue/test-utils';
+import CatalogBand from 'src/components/index/CatalogBand.vue';
+import HeroBand from 'src/components/index/HeroBand.vue';
+
+const SECCIONES = [
+  { title: 'Corte de caballero', imgPath: '/people/a.jpg', filterId: '1' },
+  { title: 'Maquillaje', imgPath: '/people/b.jpg', filterId: '2' },
+] as never[];
+
+describe('las fotos de la carta', () => {
+  it('esperan marcadas, y dejan de hacerlo cuando llegan', async () => {
+    const wrapper = mount(CatalogBand, { props: { secciones: SECCIONES } });
+    const fotos = wrapper.findAll('.catalog-band__foto');
+
+    expect(fotos).toHaveLength(2);
+    expect(fotos[0].classes()).toContain('m-foto--esperando');
+
+    await fotos[0].trigger('load');
+
+    expect(wrapper.findAll('.catalog-band__foto')[0].classes()).not.toContain(
+      'm-foto--esperando'
+    );
+    // La otra sigue esperando: el estado es por foto, no por banda.
+    expect(wrapper.findAll('.catalog-band__foto')[1].classes()).toContain(
+      'm-foto--esperando'
+    );
+  });
+
+  /** Una foto rota no puede quedarse palpitando para siempre. */
+  it('una foto que falla también deja de esperar', async () => {
+    const wrapper = mount(CatalogBand, { props: { secciones: SECCIONES } });
+
+    await wrapper.findAll('.catalog-band__foto')[0].trigger('error');
+
+    expect(wrapper.findAll('.catalog-band__foto')[0].classes()).not.toContain(
+      'm-foto--esperando'
+    );
+  });
+});
+
+describe('la foto de la portada', () => {
+  it('espera marcada, y deja de hacerlo cuando llega', async () => {
+    const wrapper = mount(HeroBand, {
+      props: { foto: '/people/portada.jpg', fotoAlt: 'Clienta' },
+    });
+
+    expect(wrapper.get('.hero-band__foto').classes()).toContain(
+      'm-foto--esperando'
+    );
+
+    await wrapper.get('.hero-band__foto').trigger('load');
+
+    expect(wrapper.get('.hero-band__foto').classes()).not.toContain(
+      'm-foto--esperando'
+    );
+  });
+});

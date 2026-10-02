@@ -15,6 +15,7 @@
     <div
       v-if="secciones.length"
       class="catalog-band__rejilla"
+      ref="rejilla"
       data-test="rejilla"
     >
       <button
@@ -27,10 +28,14 @@
       >
         <img
           class="catalog-band__foto"
+          :class="{ 'm-foto--esperando': !llego(seccion.imgPath) }"
+          :data-foto="seccion.imgPath"
           :src="seccion.imgPath"
           :alt="seccion.title"
           loading="lazy"
           decoding="async"
+          @load="marcar(seccion.imgPath)"
+          @error="marcar(seccion.imgPath)"
         />
         <span class="catalog-band__nombre">{{ seccion.title }}</span>
         <!--
@@ -45,13 +50,23 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
+
 import type { IndexSection } from 'src/constants/index-sections';
+import { useImagenesEnEspera } from 'src/composables/shared/useImagenesEnEspera';
 
 defineProps<{ secciones: IndexSection[] }>();
 const emit = defineEmits<{
   (e: 'abrir', seccion: IndexSection): void;
   (e: 'ver-todo'): void;
 }>();
+
+/**
+ * Las fotos de `public/people/` pesan y se ven aparecer: hasta que llegan, el
+ * hueco espera con vida en vez de quedarse en blanco.
+ */
+const rejilla = ref<HTMLElement | null>(null);
+const { marcar, llego } = useImagenesEnEspera(rejilla);
 
 defineOptions({ name: 'CatalogBand' });
 </script>
@@ -115,6 +130,8 @@ defineOptions({ name: 'CatalogBand' });
   height: 122px;
   object-fit: cover;
   border-radius: var(--m-radio-foto);
+  // El hueco mientras la foto llega: carbón, que es la superficie de esta banda.
+  background: var(--m-carbon);
 }
 
 .catalog-band__nombre {

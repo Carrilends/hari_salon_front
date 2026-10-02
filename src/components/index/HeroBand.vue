@@ -1,5 +1,5 @@
 <template>
-  <section class="hero-band">
+  <section ref="banda" class="hero-band">
     <div class="hero-band__texto">
       <p class="hero-band__etiqueta">Peluquería Marlene · Sopó</p>
       <h1 class="hero-band__titular">Cortes, color<br />y estética</h1>
@@ -15,13 +15,32 @@
         Ver servicios →
       </button>
     </div>
-    <img class="hero-band__foto" :src="foto" :alt="fotoAlt" decoding="async" />
+    <img
+      class="hero-band__foto"
+      :class="{ 'm-foto--esperando': !llego(foto) }"
+      :data-foto="foto"
+      :src="foto"
+      :alt="fotoAlt"
+      decoding="async"
+      @load="marcar(foto)"
+      @error="marcar(foto)"
+    />
   </section>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
+import { useImagenesEnEspera } from 'src/composables/shared/useImagenesEnEspera';
+
 defineProps<{ foto: string; fotoAlt: string }>();
 const emit = defineEmits<{ (e: 'ver-servicios'): void }>();
+
+/**
+ * Las fotos de `public/people/` pesan y se ven aparecer: hasta que llegan, el
+ * hueco espera con vida en vez de quedarse en blanco.
+ */
+const banda = ref<HTMLElement | null>(null);
+const { marcar, llego } = useImagenesEnEspera(banda);
 
 defineOptions({ name: 'HeroBand' });
 </script>

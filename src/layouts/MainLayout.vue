@@ -73,7 +73,7 @@
                   @click="item.method"
                 >
                   <q-item-section avatar>
-                    <q-icon :name="item.icon" class="more-menu__icon" />
+                    <StrokeIcon :nombre="item.icon" class="more-menu__icon" />
                   </q-item-section>
                   <q-item-section>
                     <q-item-label>{{ item.label }}</q-item-label>
@@ -173,6 +173,7 @@ import ourContact from 'src/components/dialogs/ourContact.vue';
 import whoWeAreDialog from 'src/components/dialogs/whoWeAreDialog.vue';
 import BookingDialog from 'src/components/dialogs/bookingDialog.vue';
 import AssistantLauncher from 'src/components/assistant/AssistantLauncher.vue';
+import StrokeIcon from 'src/components/shared/StrokeIcon.vue';
 import { migrateLegacyBookings, useBookStore } from 'src/stores/book-store';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useReviewDialog } from 'src/composables/reviews/useReviewDialog';
@@ -356,63 +357,63 @@ const serviceHomeButton = ref<HeaderActionButton>({
 const moreMenuItems = computed<HeaderMenuItem[]>(() =>
   [
     {
-      icon: 'manage_accounts',
+      icon: 'cuenta',
       label: 'Mi cuenta',
       visible: () => authStore.isLoggedIn,
       method: () => router.push('/mi-cuenta'),
     },
     {
-      icon: 'event_available',
+      icon: 'reservas',
       label: 'Mis reservas',
       visible: () => authStore.isLoggedIn,
       method: () => router.push('/mis-reservas'),
     },
     {
-      icon: 'rate_review',
+      icon: 'testimonios',
       label: 'Testimonios',
       method: () => router.push('/testimonios'),
     },
     {
-      icon: 'groups',
+      icon: 'equipo',
       label: '¿Quiénes somos?',
       method: () =>
         (whoWeAreDialogComponent.value = !whoWeAreDialogComponent.value),
     },
     {
-      icon: 'schedule',
+      icon: 'horario',
       label: 'Horarios',
       method: () => (ourContactDialog.value = !ourContactDialog.value),
     },
     {
-      icon: 'supervisor_account',
+      icon: 'estilistas',
       label: 'Mis estilistas',
       visible: () => authStore.isAdmin,
       method: () => router.push('/mis-empleados'),
     },
     {
-      icon: 'event_note',
+      icon: 'agenda',
       label: 'Reservas',
       visible: () => authStore.isAdmin,
       method: () => router.push('/reservas'),
     },
     {
-      icon: 'help_outline',
+      icon: 'ayuda',
       label: 'Preguntas frecuentes',
       method: () => router.push('/preguntas-frecuentes'),
     },
     {
-      icon: 'privacy_tip',
+      icon: 'privacidad',
       label: 'Política de datos',
       method: () => router.push({ name: 'privacy-policy' }),
     },
     {
-      icon: 'login',
+      icon: 'entrar',
       label: 'Iniciar sesión',
       visible: () => !authStore.isLoggedIn,
       method: onLogin,
     },
     {
-      icon: 'logout',
+      icon: 'salir',
       label: 'Cerrar sesión',
       visible: () => authStore.isLoggedIn,
       method: onLogout,
@@ -644,6 +645,5 @@ defineOptions({
 /// El dorado claro no es color de icono sobre nieve (2,8:1): aquí, el profundo.
 .more-menu__icon {
   color: var(--m-oro-profundo);
-  font-size: 20px;
 }
 </style>
