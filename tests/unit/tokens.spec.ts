@@ -21,4 +21,12 @@ describe('tokens visuales', () => {
   it('cuenta también el filete superior de la barra', () => {
     expect(valorDe('m-barra-movil-alto')).toContain('77px');
   });
+
+  it('declara el velo del panel del asistente', () => {
+    expect(valorDe('m-velo')).toBe('rgba(15, 13, 11, 0.52)');
+  });
+
+  it('declara el fondo de la banda de aviso', () => {
+    expect(valorDe('m-aviso-fondo')).toBe('#efe7dc');
+  });
 });

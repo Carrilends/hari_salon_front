@@ -77,6 +77,15 @@
   /// `--m-rosa-profundo` y esto solo subraya.
   --m-filete-rosa: #e2c6d1;
 
+  /// Velo que atenúa la página cuando el panel del asistente está abierto en
+  /// escritorio. No es color de texto: solo oscurece lo que hay detrás.
+  --m-velo: rgba(15, 13, 11, 0.52);
+
+  /// Fondo de la banda del aviso legal del asistente. Arena, para que la banda
+  /// se distinga de la conversación sin competir con ella. Con `--m-piedra`
+  /// encima da 4,8:1 (calculado), así que pasa AA.
+  --m-aviso-fondo: #efe7dc;
+
   // --- Canal de WhatsApp ----------------------------------------------------
 
   /// Verde de marca del botón de WhatsApp. Su texto va SIEMPRE oscuro
