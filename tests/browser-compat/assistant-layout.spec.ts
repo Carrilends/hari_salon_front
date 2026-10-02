@@ -180,11 +180,12 @@ test.describe('el panel del asistente', () => {
     await page.setViewportSize(ESCRITORIO);
     await servirApi(page);
     await irA(page, '/');
-    // Se abre por el flotante, que es fijo: pulsar un botón del cuerpo haría
-    // que Playwright lo trajera a la vista y moviera el scroll justo antes de
-    // medirlo.
-    const flotante = page.locator('[data-test="fab"]');
-    await flotante.waitFor();
+    // Se abre con `dispatchEvent` y no con `click`: el flotante ya no existe en
+    // el inicio, así que hay que tirar del botón de la banda de reseñas — y un
+    // `click` de Playwright lo traería a la vista, moviendo el scroll justo
+    // antes de medirlo. `dispatchEvent` no desplaza nada.
+    const abrir = page.locator('[data-test="abrir-asistente"]');
+    await abrir.waitFor();
 
     await page.evaluate(() => window.scrollTo(0, 150));
     await page.waitForTimeout(200);
@@ -196,7 +197,7 @@ test.describe('el panel del asistente', () => {
     }));
     expect(antes.y).toBeGreaterThan(0);
 
-    await flotante.click();
+    await abrir.dispatchEvent('click');
     await expect(page.locator('[role="dialog"]')).toBeVisible();
 
     const durante = await page.evaluate(() =>
@@ -231,7 +232,7 @@ test.describe('el panel del asistente', () => {
     await page.setViewportSize(ESCRITORIO);
     await servirApi(page);
     await irA(page, '/');
-    await page.locator('[data-test="fab"]').waitFor();
+    await page.locator('[data-test="abrir-asistente"]').waitFor();
 
     const traza = await page.evaluate(
       () =>
@@ -243,7 +244,9 @@ test.describe('el panel del asistente', () => {
             if (e.closest('.assistant-panel')) return 'panel';
             return e.closest('.q-header') ? 'cabecera' : 'otro';
           };
-          (document.querySelector('[data-test="fab"]') as HTMLElement).click();
+          (
+            document.querySelector('[data-test="abrir-asistente"]') as HTMLElement
+          ).click();
           const marcas: string[] = [];
           let n = 0;
           const paso = () => {

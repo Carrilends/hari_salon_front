@@ -34,4 +34,17 @@ describe('cabecera del portal', () => {
     expect(flotante.slice(0, 300)).toContain('mostrarFabResena');
     expect(LAYOUT).toContain("route.path !== '/'");
   });
+
+  /**
+   * El flotante del asistente no sale en el inicio, igual que ya no sale el de
+   * reseñas: allí la banda de reseñas ofrece el asistente con sus chips. Lo
+   * decide el armazón por ruta y se lo pasa al lanzador, que así no necesita
+   * saber de rutas.
+   */
+  it('oculta el flotante del asistente en el inicio', () => {
+    expect(LAYOUT).toContain(':mostrar-flotante="mostrarFlotanteAsistente"');
+
+    const regla = LAYOUT.slice(LAYOUT.indexOf('const mostrarFlotanteAsistente'));
+    expect(regla.slice(0, 160)).toContain("route.path !== '/'");
+  });
 });

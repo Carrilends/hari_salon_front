@@ -126,34 +126,47 @@ test.describe('maqueta del inicio en móvil', () => {
   });
 });
 
-test.describe('el flotante del asistente y la barra fija', () => {
-  /**
-   * La barra marca el `body` mientras está montada, y el flotante sube por
-   * encima de ella. Pero la barra solo se ve por debajo de 700 px: en
-   * escritorio la marca sigue puesta y el flotante se apartaba de una barra
-   * que no está, quedando a 89 px del borde y dejando un hueco en el pie que
-   * se le había reservado.
-   */
-  test('en escritorio se queda en su esquina', async ({ page }) => {
-    await page.setViewportSize({ width: 1280, height: 900 });
+/**
+ * El flotante del asistente **no sale en el inicio**: la banda de reseñas ya
+ * ofrece el asistente con sus chips. Fuera del inicio sí, y es una píldora con
+ * rótulo, porque allí nadie ha visto esa tarjeta.
+ *
+ * Esto jubila las dos pruebas que vivían aquí —que el flotante se quedaba en su
+ * esquina en escritorio y que subía por encima de la barra fija en móvil—: la
+ * barra solo se pinta en el inicio, así que esos dos nunca vuelven a coincidir.
+ */
+test.describe('el flotante del asistente', () => {
+  test('en el inicio no existe, y la barra fija se queda la esquina', async ({
+    page,
+  }) => {
+    await page.setViewportSize(MOVIL);
+    await servirResenas(page, [resena(1), resena(2), resena(3)]);
     await irA(page, '/');
+    await expect(page.locator('.mobile-bar')).toBeVisible();
 
-    const fab = page.locator('.assistant-launcher__fab');
-    await expect(fab).toBeVisible();
-
-    const separacion = await fab.evaluate(
-      (el) => window.innerHeight - el.getBoundingClientRect().bottom,
-    );
-    expect(separacion).toBeLessThan(40);
+    await expect(page.locator('[data-test="fab"]')).toHaveCount(0);
   });
 
-  test('en móvil sube por encima de la barra sin taparla', async ({ page }) => {
-    await page.setViewportSize(MOVIL);
-    await irA(page, '/');
+  test('fuera del inicio es una píldora con rótulo, y abre el panel', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await servirResenas(page, []);
+    await irA(page, '/preguntas-frecuentes');
 
-    const fab = await page.locator('.assistant-launcher__fab').boundingBox();
-    const barra = await page.locator('.mobile-bar').boundingBox();
-    expect(fab!.y + fab!.height).toBeLessThanOrEqual(barra!.y + 1);
+    const flotante = page.locator('[data-test="fab"]');
+    await expect(flotante).toBeVisible();
+    await expect(flotante).toHaveText(/asistente/i);
+
+    // Píldora, no círculo: más ancha que alta, y con área táctil de sobra.
+    const caja = (await flotante.boundingBox())!;
+    expect(caja.width).toBeGreaterThan(caja.height);
+    expect(caja.height).toBeGreaterThanOrEqual(44);
+
+    await flotante.click();
+    await expect(page.locator('[role="dialog"]')).toBeVisible();
+    // Y mientras está abierto no queda flotando encima.
+    await expect(flotante).toHaveCount(0);
   });
 });
 

@@ -161,7 +161,7 @@
     <ourContact v-model:dialog="ourContactDialog" />
     <BookingDialog v-model:dialog="bookingStore.showDialog" />
 
-    <AssistantLauncher />
+    <AssistantLauncher :mostrar-flotante="mostrarFlotanteAsistente" />
   </q-layout>
 </template>
 
@@ -226,6 +226,14 @@ const reviewForm = reactive<CreateReviewBody>({
  * la remodelación es un solo flotante en pantalla (el del asistente). Aquí la
  * burbuja verde tapaba el pie y la barra fija de móvil.
  */
+/**
+ * El flotante del asistente tampoco sale en el inicio: allí la banda de reseñas
+ * ya ofrece el asistente con sus chips, y un botón más en esa esquina sería
+ * ruido. Solo se oculta el botón — el panel sigue montado, porque esos chips
+ * son justamente los que lo abren.
+ */
+const mostrarFlotanteAsistente = computed(() => route.path !== '/');
+
 const mostrarFabResena = computed(
   () => showReviewButton.value && route.path !== '/',
 );

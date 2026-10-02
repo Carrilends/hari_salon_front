@@ -126,16 +126,51 @@ describe('solicitud de reseña', () => {
 describe('el lanzador mientras el panel está abierto', () => {
   beforeEach(() => useAssistantPanel().cerrar());
 
-  it('esconde su botón flotante', async () => {
-    const wrapper = mount(AssistantLauncher, {
-      global: { stubs: { AssistantPanel: true, 'q-btn': true } },
+  const montarLanzador = (props = {}) =>
+    mount(AssistantLauncher, {
+      props,
+      global: { stubs: { AssistantPanel: true } },
     });
+
+  it('esconde su botón flotante', async () => {
+    const wrapper = montarLanzador();
     expect(wrapper.find('[data-test="fab"]').exists()).toBe(true);
 
     useAssistantPanel().abrir();
     await nextTick();
 
     expect(wrapper.find('[data-test="fab"]').exists()).toBe(false);
+  });
+
+  /**
+   * Es una píldora con rótulo, no un círculo con un icono: fuera del inicio
+   * nadie ha visto todavía la tarjeta del asistente, así que el botón tiene que
+   * decir qué es sin que haya que tocarlo.
+   */
+  it('el flotante dice lo que es, con rótulo y nombre accesible', () => {
+    const boton = montarLanzador().get('[data-test="fab"]');
+
+    expect(boton.text()).toContain('Asistente');
+    expect(boton.attributes('aria-label')).toBe('Abrir el asistente');
+    expect(boton.element.tagName).toBe('BUTTON');
+  });
+
+  /**
+   * En el inicio no sale: la banda de reseñas ya ofrece el asistente con sus
+   * chips, y el armazon lo decide por ruta. Pero el PANEL sigue montado ahi —si
+   * no, el chip del inicio no tendria nada que abrir—.
+   */
+  it('en el inicio no hay flotante, pero el panel sigue disponible', () => {
+    const wrapper = montarLanzador({ mostrarFlotante: false });
+
+    expect(wrapper.find('[data-test="fab"]').exists()).toBe(false);
+
+    useAssistantPanel().abrir();
+    return nextTick().then(() => {
+      expect(wrapper.findComponent({ name: 'AssistantPanel' }).exists()).toBe(
+        true
+      );
+    });
   });
 
   /**

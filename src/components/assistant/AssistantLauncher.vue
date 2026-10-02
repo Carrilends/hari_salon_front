@@ -5,17 +5,32 @@
     </Transition>
 
     <Transition name="assistant-fab">
-      <q-btn
-        v-if="!open"
+      <button
+        v-if="!open && mostrarFlotante"
+        type="button"
         class="assistant-launcher__fab"
         data-test="fab"
-        round
-        size="lg"
-        color="pink-4"
-        icon="smart_toy"
-        aria-label="Abrir asistente"
+        aria-label="Abrir el asistente"
         @click="abrir"
-      />
+      >
+        <svg
+          class="assistant-launcher__icono"
+          width="17"
+          height="17"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path
+            d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-2.8-.4L3 21l1.6-4.6A8.3 8.3 0 0 1 3.6 11.5 8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4z"
+          />
+        </svg>
+        Asistente
+      </button>
     </Transition>
   </div>
 </template>
@@ -24,46 +39,66 @@
 import AssistantPanel from './AssistantPanel.vue';
 import { useAssistantPanel } from 'src/composables/assistant/useAssistantPanel';
 
+/**
+ * `mostrarFlotante` lo decide el armazón por ruta: en el inicio no sale, porque
+ * la banda de reseñas ya ofrece el asistente con sus chips. Es un prop y no una
+ * consulta al router a propósito — el lanzador no tiene por qué saber de rutas,
+ * y así se puede montar en una prueba sin media aplicación detrás.
+ *
+ * Ojo: solo se oculta el BOTÓN. El panel sigue montado en el inicio; si no, el
+ * chip de la banda no tendría nada que abrir.
+ */
+withDefaults(defineProps<{ mostrarFlotante?: boolean }>(), {
+  mostrarFlotante: true,
+});
+
+defineOptions({ name: 'AssistantLauncher' });
+
 const { abierto: open, abrir } = useAssistantPanel();
 </script>
 
 <style scoped lang="scss">
 /**
- * El flotante solo existe mientras el panel está cerrado. Con el panel abierto
- * no puede quedar nada flotando encima: en móvil el panel ES la pantalla, y en
- * escritorio una burbuja sobre el velo competiría con el botón de cerrar del
- * propio panel.
+ * Una píldora con rótulo, no un círculo con un icono.
  *
- * Se fue con él la posición de la burbuja vieja (`.assistant-launcher__panel`,
- * anclada abajo a la derecha): el panel nuevo se coloca solo, porque es quien
- * sabe dónde va en cada ancho —arriba a la derecha en escritorio, a pantalla
- * completa en móvil—. Lo que SÍ vive aquí es cuándo entra y cuándo sale: lo
- * manda quien monta y desmonta. El aspecto de esa entrada y esa salida lo
- * describe `AssistantPanel.vue`, dueño de sus propias piezas.
+ * Fuera del inicio nadie ha visto la tarjeta del asistente, así que el botón
+ * tiene que decir qué es sin que haya que tocarlo; y de paso habla el mismo
+ * idioma que los chips y «Reservar». Dentro, el globo va en oro sobre tinta
+ * (5,7:1) y el rótulo en hueso (16,3:1).
  *
- * El flotante se desvanece a la par. Vuelve mientras el panel todavía se está
- * yendo, y un botón que salta al lado de algo que se desvanece delata la
- * costura.
+ * El flotante solo existe mientras el panel está cerrado: con el panel abierto
+ * no puede quedar nada flotando encima —en móvil el panel ES la pantalla, y en
+ * escritorio una burbuja sobre el velo competiría con su botón de cerrar—.
  */
 .assistant-launcher__fab {
   position: fixed;
   right: 18px;
   bottom: 18px;
   z-index: 2600;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 48px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--m-radio-pildora);
+  background: var(--m-tinta);
+  color: var(--m-hueso);
+  font-family: var(--m-font-sans);
+  font-size: 12px;
+  letter-spacing: var(--m-tracking-nav);
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(11, 9, 7, 0.28);
 }
 
-// La página que monta una barra de acción fija marca el `body`: el flotante
-// sube por encima de ella en vez de taparle el botón de WhatsApp.
-//
-// Dentro del punto de corte a propósito: la barra solo se pinta por debajo de
-// 700 px. Sin esta condición, en escritorio el flotante se apartaba de una
-// barra que no está —89 px del borde en vez de 18— y el hueco que el pie le
-// reserva en su esquina quedaba vacío.
-@media (max-width: 699px) {
-  body.m-con-barra-movil .assistant-launcher__fab {
-    bottom: calc(var(--m-barra-movil-alto) + 12px);
-  }
+.assistant-launcher__icono {
+  color: var(--m-oro);
+}
+
+.assistant-launcher__fab:focus-visible {
+  outline: 2px solid var(--m-oro);
+  outline-offset: 3px;
 }
 
 .assistant-fab-enter-active,
