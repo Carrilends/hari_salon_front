@@ -1,11 +1,7 @@
 <template>
   <div class="assistant-launcher">
     <transition name="assistant-pop">
-      <AssistantChat
-        v-if="open"
-        class="assistant-launcher__panel"
-        @close="cerrar"
-      />
+      <AssistantPanel v-if="open" />
     </transition>
 
     <q-btn
@@ -21,10 +17,10 @@
 </template>
 
 <script setup lang="ts">
-import AssistantChat from './AssistantChat.vue';
+import AssistantPanel from './AssistantPanel.vue';
 import { useAssistantPanel } from 'src/composables/assistant/useAssistantPanel';
 
-const { abierto: open, cerrar, alternar } = useAssistantPanel();
+const { abierto: open, alternar } = useAssistantPanel();
 </script>
 
 <style scoped lang="scss">
