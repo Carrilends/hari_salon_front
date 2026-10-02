@@ -1,0 +1,246 @@
+/**
+ * Lo que jsdom no puede comprobar: que la maqueta del inicio aguante los datos
+ * reales en un teléfono. Las dos entradas que rompían la página venían de
+ * texto que escribe la clienta y de reseñas que se acumulan con el tiempo —
+ * nada exótico, solo un negocio que lleva un año abierto.
+ *
+ * La medida es siempre la misma: `document.scrollWidth` no puede pasar de
+ * `innerWidth`. Si pasa, la página principal se arrastra en horizontal.
+ */
+import { test, expect, type Page } from '@playwright/test';
+import { irA, json, servirApiVacia } from './api-offline';
+
+const MOVIL = { width: 390, height: 844 };
+
+type Resena = {
+  id: string;
+  name: string;
+  description: string;
+  score: number;
+  createdAt: string;
+};
+
+const resena = (n: number, extra: Partial<Resena> = {}): Resena => ({
+  id: `r${n}`,
+  name: `Clienta ${n}`,
+  description: 'Muy buena atención, salí encantada con el resultado.',
+  score: 5,
+  createdAt: '2026-09-01T12:00:00.000Z',
+  ...extra,
+});
+
+async function servirResenas(page: Page, resenas: Resena[]) {
+  // Toda la API, no solo las reseñas: con el backend apagado una XHR sin
+  // interceptar se queda colgada y `networkidle` no llega nunca. Ver
+  // `api-offline.ts`.
+  await servirApiVacia(page);
+  await page.route(
+    (url) => url.pathname === '/api/reviews',
+    (route) => route.fulfill(json(resenas)),
+  );
+}
+
+async function anchoDesbordado(page: Page) {
+  return page.evaluate(() => ({
+    scroll: document.documentElement.scrollWidth,
+    ventana: window.innerWidth,
+  }));
+}
+
+test.describe('maqueta del inicio en móvil', () => {
+  test.use({ viewport: MOVIL });
+
+  test('cuarenta reseñas no arrastran la página en horizontal', async ({ page }) => {
+    await servirResenas(
+      page,
+      Array.from({ length: 40 }, (_, i) => resena(i + 1)),
+    );
+
+    await irA(page, '/');
+    await expect(page.locator('.review-band')).toBeVisible();
+
+    const { scroll, ventana } = await anchoDesbordado(page);
+    expect(scroll, `la página pide ${scroll}px en una ventana de ${ventana}px`).toBeLessThanOrEqual(
+      ventana,
+    );
+  });
+
+  test('un nombre larguísimo y sin espacios tampoco', async ({ page }) => {
+    await servirResenas(page, [
+      resena(1, {
+        name: 'MariaDelPilarEcheverriMontoyaDeLaCruzYSantamariaDelCarmenRodriguezGutierrez',
+      }),
+      resena(2),
+      resena(3),
+    ]);
+
+    await irA(page, '/');
+    await expect(page.locator('.review-band__autor')).toBeVisible();
+
+    const { scroll, ventana } = await anchoDesbordado(page);
+    expect(scroll).toBeLessThanOrEqual(ventana);
+  });
+
+  test('una reseña kilométrica se recorta y no empuja la tarjeta del asistente', async ({
+    page,
+  }) => {
+    await servirResenas(page, [
+      resena(1, { description: 'palabra '.repeat(300) }),
+      resena(2),
+      resena(3),
+    ]);
+
+    await irA(page, '/');
+
+    const cita = page.locator('.review-band__cita');
+    await expect(cita).toBeVisible();
+
+    // Tres líneas recortadas: la caja tiene que ser mucho más baja que su
+    // contenido. Si el recorte se cae, estos dos números se igualan.
+    const { caja, contenido } = await cita.evaluate((el) => ({
+      caja: el.clientHeight,
+      contenido: el.scrollHeight,
+    }));
+    expect(caja).toBeLessThan(contenido / 2);
+
+    const { scroll, ventana } = await anchoDesbordado(page);
+    expect(scroll).toBeLessThanOrEqual(ventana);
+  });
+
+  test('la barra fija no tapa el botón de WhatsApp del pie', async ({ page }) => {
+    await servirResenas(page, [resena(1), resena(2), resena(3)]);
+
+    await irA(page, '/');
+    // `scrollIntoViewIfNeeded` y no un `scrollTo` al alto del documento: sin
+    // esperar a `networkidle` ese alto todavía crece —fuentes, fotos— y el
+    // salto dejaba el pie fuera de la pantalla. Esto espera al nodo y lo trae.
+    const whatsapp = page.locator('.footer-band__whatsapp');
+    await whatsapp.scrollIntoViewIfNeeded();
+
+    const pie = await whatsapp.boundingBox();
+    const barra = await page.locator('.mobile-bar').boundingBox();
+    expect(pie, 'el WhatsApp del pie no se ve').not.toBeNull();
+    expect(barra, 'la barra fija no se ve').not.toBeNull();
+
+    expect(pie!.y + pie!.height).toBeLessThanOrEqual(barra!.y + 1);
+  });
+});
+
+test.describe('el flotante del asistente y la barra fija', () => {
+  /**
+   * La barra marca el `body` mientras está montada, y el flotante sube por
+   * encima de ella. Pero la barra solo se ve por debajo de 700 px: en
+   * escritorio la marca sigue puesta y el flotante se apartaba de una barra
+   * que no está, quedando a 89 px del borde y dejando un hueco en el pie que
+   * se le había reservado.
+   */
+  test('en escritorio se queda en su esquina', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await irA(page, '/');
+
+    const fab = page.locator('.assistant-launcher__fab');
+    await expect(fab).toBeVisible();
+
+    const separacion = await fab.evaluate(
+      (el) => window.innerHeight - el.getBoundingClientRect().bottom,
+    );
+    expect(separacion).toBeLessThan(40);
+  });
+
+  test('en móvil sube por encima de la barra sin taparla', async ({ page }) => {
+    await page.setViewportSize(MOVIL);
+    await irA(page, '/');
+
+    const fab = await page.locator('.assistant-launcher__fab').boundingBox();
+    const barra = await page.locator('.mobile-bar').boundingBox();
+    expect(fab!.y + fab!.height).toBeLessThanOrEqual(barra!.y + 1);
+  });
+});
+
+/**
+ * La página en una ventana alta, que es donde se veía la costura: con el
+ * contenido más corto que la pantalla, `q-page` estira por su `min-height` y
+ * el sobrante asomaba DEBAJO del pie como una franja de hueso. Ahora la página
+ * es una columna flexible y ese sobrante se lo queda la portada.
+ */
+test.describe('el reparto vertical del inicio', () => {
+  const ALTA = { width: 1280, height: 1400 };
+
+  test('el pie termina al final del documento, sin franja debajo', async ({
+    page,
+  }) => {
+    await page.setViewportSize(ALTA);
+    await servirResenas(page, [resena(1), resena(2), resena(3)]);
+    await irA(page, '/');
+    await expect(page.locator('.footer-band')).toBeVisible();
+
+    const { pie, documento } = await page.evaluate(() => ({
+      pie: document.querySelector('.footer-band')!.getBoundingClientRect().bottom,
+      documento: document.documentElement.scrollHeight,
+    }));
+
+    expect(Math.round(pie)).toBe(documento);
+  });
+
+  test('el sobrante se lo queda la portada, no el final de la página', async ({
+    page,
+  }) => {
+    await page.setViewportSize(ALTA);
+    await servirResenas(page, [resena(1), resena(2), resena(3)]);
+    await irA(page, '/');
+    await expect(page.locator('.hero-band')).toBeVisible();
+
+    const alto = await page
+      .locator('.hero-band')
+      .evaluate((el) => el.getBoundingClientRect().height);
+
+    // Su alto natural ronda los 294 px; en una ventana alta tiene que crecer.
+    expect(alto).toBeGreaterThan(350);
+  });
+
+  /**
+   * La foto llega hasta el borde de la banda oscura. Antes se quedaba corta
+   * —tenía un tope de 268 px mientras la banda crecía con el texto— y parecía
+   * flotar sobre una franja de hueso.
+   */
+  test('la foto de la portada toca la banda oscura', async ({ page }) => {
+    await page.setViewportSize(ALTA);
+    await servirResenas(page, [resena(1), resena(2), resena(3)]);
+    await irA(page, '/');
+    await expect(page.locator('.hero-band__foto')).toBeVisible();
+
+    const { foto, carta } = await page.evaluate(() => ({
+      foto: document.querySelector('.hero-band__foto')!.getBoundingClientRect()
+        .bottom,
+      carta: document.querySelector('.catalog-band')!.getBoundingClientRect().top,
+    }));
+
+    expect(Math.abs(foto - carta)).toBeLessThanOrEqual(1);
+  });
+
+  /**
+   * La tarjeta del asistente adelgaza y la reseña se queda ese ancho. Antes la
+   * tarjeta era la ancha de las dos (591 contra 556 a 1280 px).
+   */
+  test('la tarjeta del asistente es más estrecha que la columna de la reseña', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await servirResenas(page, [resena(1), resena(2), resena(3)]);
+    await irA(page, '/');
+    await expect(page.locator('.review-band__asistente')).toBeVisible();
+
+    const { tarjeta, columna } = await page.evaluate(() => ({
+      tarjeta: document
+        .querySelector('.review-band__asistente')!
+        .getBoundingClientRect().width,
+      columna: document
+        .querySelector('.review-band__resena')!
+        .getBoundingClientRect().width,
+    }));
+
+    expect(tarjeta).toBeLessThan(columna);
+    // «Unos 50 px» menos de los 591 que medía.
+    expect(tarjeta).toBeLessThan(560);
+  });
+});

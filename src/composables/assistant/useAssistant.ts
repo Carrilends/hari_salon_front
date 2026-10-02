@@ -3,6 +3,7 @@ import {
   sendAssistantMessage,
   type AssistantPresentation,
 } from 'src/api/assistant-api';
+import { registrarLimpiezaDeSesion } from 'src/stores/session-cleanup';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -41,17 +42,21 @@ function clearConversationId(): void {
 }
 
 /**
- * Estado del widget del asistente. El `conversationId` vive en `sessionStorage`
- * (no `localStorage`): la conversación no tiene por qué sobrevivir al cierre de
- * la pestaña. Sin dependencia de Vue Query: es estado de UI, no de servidor.
+ * Estado del widget del asistente, **compartido por módulo**: el panel se
+ * desmonta al cerrarlo y la conversación tiene que seguir ahí al volver a
+ * abrirlo. Se borra al recargar la pestaña, nunca se guarda en el navegador: en
+ * un ordenador compartido no debe quedar rastro.
+ *
+ * El `conversationId` vive en `sessionStorage` (no `localStorage`) desde antes,
+ * por la misma razón. Sin dependencia de Vue Query: es estado de UI.
  */
-export function useAssistant() {
-  const messages = ref<ChatMessage[]>([]);
-  const loading = ref(false);
-  const error = ref<string | null>(null);
-  const aviso = ref<string | null>(null);
-  let conversationId = readConversationId();
+const messages = ref<ChatMessage[]>([]);
+const loading = ref(false);
+const error = ref<string | null>(null);
+const aviso = ref<string | null>(null);
+let conversationId = readConversationId();
 
+export function useAssistant() {
   async function send(text: string): Promise<void> {
     const content = text.trim();
     if (!content || loading.value) return;
@@ -60,8 +65,12 @@ export function useAssistant() {
     messages.value.push({ role: 'user', content });
     loading.value = true;
     try {
+      // `?? readConversationId()`: al ser de módulo, la lectura inicial ocurre al
+      // importar — en la build de SSG eso pasa en Node, sin `sessionStorage`. Si
+      // no hay id en memoria se vuelve a mirar el almacén de la pestaña, que es
+      // donde el servidor dejó el hilo.
       const reply = await sendAssistantMessage({
-        conversationId,
+        conversationId: conversationId ?? readConversationId(),
         message: content,
       });
       conversationId = reply.conversationId ?? conversationId;
@@ -92,3 +101,13 @@ export function useAssistant() {
 
   return { messages, loading, error, aviso, send, reset };
 }
+
+/**
+ * Cerrar sesión se lleva la conversación. Desde que el estado es de módulo, el
+ * hilo ya no muere al cerrar el panel: sin esto, en un ordenador compartido la
+ * siguiente persona abriría el panel y leería lo que habló la anterior —y con
+ * la herramienta `misReservas` ahí puede haber sus citas, su estilista y sus
+ * fechas—. Se registra aquí y no en `auth-store` para no invertir la
+ * dependencia: ver `session-cleanup.ts`.
+ */
+registrarLimpiezaDeSesion(() => useAssistant().reset());

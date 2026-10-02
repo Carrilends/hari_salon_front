@@ -62,15 +62,48 @@ There is **no `typecheck` script**; type checking runs via `vite-plugin-checker`
 
 `src/composables/seo/` (`useSeo.ts`, `structuredData.ts`) feeds `@vueuse/head` and emits Schema.org JSON-LD. The old stale values ("Peluquería Pecas", AR locale, ARS currency) are **gone**; `tests/unit/salon-branding.spec.ts` is a regression net that fails if anyone reintroduces them, and it also pins the opening hours against `businessHours.ts`. Business data comes from `src/constants/salon-location.ts`. Canonical/OG URLs are built from `VITE_SITE_URL`.
 
-### Visual remodel scaffolding (prepared, not applied)
+### Visual remodel: the landing page is done, the rest is not
 
-A visual remodel of the **landing page only** was designed on 2026-09-30 (direction "B · Bandas alternas": alternating bone/ink bands, Marcellus + Jost, gold hairlines, the existing pink demoted to a single accent). The scaffolding is in place and **changes nothing on screen yet**:
+The remodel designed on 2026-09-30 (direction "B · Bandas alternas": alternating bone/ink bands, Marcellus + Jost, gold hairlines, the existing pink demoted to a single accent) is **applied to the landing page and to the shell's header**. Everything else still wears the old look, on purpose — each view gets its own plan under `docs/remodelacion/<vista>/`.
 
-- `src/css/tokens.scss` — the palette and rhythm as `--m-*` custom properties, each with its measured contrast. Imported from `app.scss`; it only declares variables. **Use `var(--m-*)`, never a loose hex.** Two traps are documented there: light gold (`--m-oro`) is 2.8:1 on bone and is *not* a text color (use `--m-oro-profundo`), and text on the WhatsApp green must be dark (9.3:1), never white (2.0:1).
-- `index.html` — `preconnect` + Google Fonts for Marcellus and Jost. `body` still uses Quasar's family; the fonts are merely available. When they are applied, reconsider `roboto-font` in `extras`.
-- `src/css/quasar.variables.scss` — the target `$primary/$secondary/$accent/$dark` values sit there **commented out**. Uncommenting them repaints the whole portal at once, so it is explicitly not step zero.
+- `src/components/index/` — the five bands the landing page is made of: `HeroBand`, `CatalogBand` (the **only** dark band), `ReviewAssistantBand`, `SiteFooterBand`, `MobileActionBar`. Flat markup, no Quasar components: they need styling, not behaviour. Each has its spec in `tests/unit/`.
+- `src/pages/IndexPage.vue` composes them in **one tree**; responsiveness is CSS at a single **700 px** breakpoint (`@media (max-width: 699px)`). The old `matchMedia`-in-JS with two parallel trees and two `style-fn` is gone — `tests/unit/IndexPage.spec.ts` fails if it comes back.
+- `src/css/tokens.scss` — the palette and rhythm as `--m-*` custom properties, each with its measured contrast. **Use `var(--m-*)`, never a loose hex.** Three traps documented there: light gold (`--m-oro`) is 2.8:1 on bone and is *not* a text color (use `--m-oro-profundo`), text on the WhatsApp green must be dark (9.3:1), never white (2.0:1), and `--m-filete-rosa` only underlines, it is not a text color either.
+- **Reviews are client-side only.** The `/` route is prerendered and Vue Query does not resolve during `quasar ssg generate`, so **whatever the band paints while loading is the published, indexed HTML**. It paints a neutral skeleton — never a claim like "no reviews yet", which would be a lie in the file that ships. Same reason the band reserves a `min-height` at both widths.
+- **The assistant chips come from `INTENT_CHIPS`** (`src/composables/assistant/intentChips.ts`), never hand-written labels: `intentChips.spec.ts` checks every chip against a tool the assistant really has. They open the panel through `abrirCon(prompt)`, and `AssistantPanel` sends that prompt on mount.
+- **One floating button per screen.** The assistant's launcher is it. `MobileActionBar` marks `body.m-con-barra-movil` while mounted so `AssistantLauncher` lifts above the fixed bar; the shell's green review FAB is hidden on `/`, where "Deja la tuya" lives inside the review band instead. While the panel is **open** the launcher's FAB is unmounted (`v-if="!open"`): on mobile the panel *is* the screen, and on desktop a bubble over the scrim competes with the panel's own close button.
+- **Shared panel state**: `src/composables/assistant/useAssistantPanel.ts` and `src/composables/reviews/useReviewDialog.ts` hold module-level state, because the landing bands and the shell open the same two panels from opposite ends of the tree.
+- `src/constants/index-sections.ts` — the four catalogue sections, with the filter UUIDs pinned by a test. The mock-ups' "desde $X" is **not implemented**: that figure needs the whole catalogue or a new endpoint. Open product decision.
+- `src/css/quasar.variables.scss` — the target `$primary/$secondary/$accent/$dark` values are still **commented out**. The landing page does not depend on them; uncommenting repaints the whole portal at once.
+- Known mismatch, by design: `/services`, `/testimonios` and the rest show the **new header over old bodies** until each gets its plan.
 
-Before touching anything visual, invoke the **`remodelacion-marlene`** skill (palette, typography, band structure, product rules already decided) and read `docs/superpowers/specs/2026-09-30-remodelacion-visual-index-design.md`, which also lists the loose prerequisites found in `IndexPage.vue` (duplicated compact/desktop markup, hardcoded `menuCards`, ~10 MB of unoptimized `public/people/` photos) and the fact that `app.scss` is dead CSS from another project.
+### The assistant panel (remodelled 2026-10-01)
+
+Plan and findings: `docs/remodelacion/asistente/`. Spec: `docs/superpowers/specs/2026-10-01-modernizacion-asistente-design.md`.
+
+`AssistantChat.vue` is **gone**. The panel is four pieces of flat markup styled with `--m-*`, all in `src/components/assistant/`:
+
+- `AssistantPanel.vue` — the shell: scrim, header, the legal-notice band, and the modal behaviour. It owns the chip decision and is the only piece that talks to `useAssistant()`.
+- `AssistantThread.vue` — bubbles, cards, "typing", error, the empty-state greeting, and the auto-scroll.
+- `AssistantComposer.vue` — **one** chip row (start chips and follow-up chips both) above a real `<input>` + `<label>`.
+- `ServiceListCard.vue` / `PackageProposalCard.vue` — repainted, and they **add to the bag; they do not reserve**.
+
+Four things to know before touching it:
+
+- **The cards fill `book-store`, they don't book.** `useAddToBag` (`src/composables/booking/`) fetches the real `Service` by id with `getService` — *not* `useService()`, which opens a Quasar dialog as a side effect — and calls `addBooking`. A package is all-or-nothing, and its **date does not travel**: the bag holds no dates and the portal's flow asks again, which is the only check that counts (the assistant *queries* capacity, it never holds it). The backend's `crearReserva` / `reservarPaquete` tools **stay published** — the MCP server pins them and the thesis documents them — so someone who *writes* "resérvamelo" still gets it booked. Only the buttons went away.
+- **The thread lives in module scope.** `useAssistant()` keeps `messages`/`loading`/`error`/`aviso` outside the function, so closing the panel no longer throws away a conversation the server still remembers via `sessionStorage`. It dies on reload and is never written to the browser: on a shared computer no trace stays. `conversationId` is read lazily (`?? readConversationId()`) because the module-level read would otherwise run once at import — in Node, during `quasar ssg generate`, where there is no `sessionStorage`.
+- **The legal notice is the server's words.** `aviso` comes from the backend and `DEFAULT_NOTICE` is the fallback; it is NF12. The design board governs how that band *looks*, never what it *says*.
+- **A unit test that mounts any assistant piece must `jest.mock('src/composables/booking/useAddToBag')`.** The real chain reaches `services-api`, which reads `import.meta.env` — syntax ts-jest cannot compile to CommonJS. `stubs` do not help: the import is hoisted before anything mounts. The four assistant suites all do this; `panels.spec.ts` mocks the whole `AssistantPanel.vue` module instead, since there the subject is the launcher.
+
+Geometry is in `tests/browser-compat/assistant-layout.spec.ts`: full screen with nothing on top at 390, scrim and fit at 1280, and no horizontal drag from a 400-character message with no spaces. The panel uses **`100dvh`, never `100vh`** — with `100vh` the mobile keyboard covers the input and you cannot type.
+
+**Playwright artifacts poison the TypeScript program.** A failed compat run writes `playwright-report/trace/sw.bundle.js`, whose minified code declares a class named `it`; with that folder inside the program it shadows Jest's global `it` and `yarn build:ssg` dies with hundreds of `Value of type 'typeof it' is not callable`. Both `playwright-report` and `test-results` are excluded in `tsconfig.json` and `.eslintignore` — keep them there.
+
+**Who may leave a review is the shell's rule, not the band's.** `MainLayout` registers `onReviewClick` through `useReviewDialog().registrarSolicitud()`; anything outside the shell calls `solicitar()`. Calling `abrir()` directly bypasses the login check and leaves an anonymous visitor filling a form whose submit silently does nothing.
+
+Geometry is checked in `tests/browser-compat/index-layout.spec.ts`, not in jsdom: horizontal overflow at 390 px with reviews served by `page.route`, the three-line clamp, and the fixed bar clearing the footer. Jest cannot see any of it. A green `npx jest` means neither that the project compiles (that is `vue-tsc`, which only runs under `quasar dev`/`build`) nor that the layout holds.
+
+Before touching anything visual, invoke the **`remodelacion-marlene`** skill (palette, typography, band structure, product rules already decided) and read `docs/superpowers/specs/2026-09-30-remodelacion-visual-index-design.md` plus the executed plan in `docs/remodelacion/inicio/`. Still outstanding from the spec's prerequisites: ~10 MB of unoptimized `public/people/` photos (the real risk to NF02), the Spanish strings living in the `en-US` i18n catalogue, and `roboto-font` in `extras`, which stays until the whole portal uses Jost.
 
 ### Single-source-of-truth files (do not duplicate)
 
