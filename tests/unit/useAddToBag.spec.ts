@@ -1,0 +1,80 @@
+/**
+ * El puente entre lo que el asistente enseña y lo que la bolsa guarda. Lo que
+ * más importa es el fallo: un botón que no hace nada y no lo dice es peor que
+ * un error en pantalla.
+ */
+import { createPinia, setActivePinia } from 'pinia';
+import type Service from 'src/interfaces/service';
+import { useBookStore } from 'src/stores/book-store';
+import { useAddToBag } from 'src/composables/booking/useAddToBag';
+
+const traer = jest.fn();
+jest.mock('src/composables/services/useService', () => ({
+  getService: (id: string) => traer(id),
+}));
+
+const servicio = (id: string): Service =>
+  ({ id, name: `Servicio ${id}`, price: 30000, duration: 30 } as Service);
+
+beforeEach(() => {
+  setActivePinia(createPinia());
+  traer.mockReset();
+});
+
+describe('useAddToBag', () => {
+  it('añade un servicio a la bolsa trayéndolo por su id', async () => {
+    traer.mockResolvedValue(servicio('s1'));
+
+    const resultado = await useAddToBag().añadirServicio('s1');
+
+    expect(traer).toHaveBeenCalledWith('s1');
+    expect(resultado).toEqual({ ok: true, añadidos: 1 });
+    expect(useBookStore().bookings).toHaveLength(1);
+  });
+
+  it('añadir dos veces el mismo servicio sube su cantidad, no lo duplica', async () => {
+    traer.mockResolvedValue(servicio('s1'));
+    const bolsa = useAddToBag();
+
+    await bolsa.añadirServicio('s1');
+    await bolsa.añadirServicio('s1');
+
+    const store = useBookStore();
+    expect(store.bookings).toHaveLength(1);
+    expect(store.bookings[0].quantity).toBe(2);
+  });
+
+  it('un paquete añade todas sus líneas', async () => {
+    traer.mockImplementation((id: string) => Promise.resolve(servicio(id)));
+
+    const resultado = await useAddToBag().añadirVarios(['s1', 's2']);
+
+    expect(resultado).toEqual({ ok: true, añadidos: 2 });
+    expect(useBookStore().bookings).toHaveLength(2);
+  });
+
+  it('si el servicio ya no existe lo dice, y no deja la bolsa a medias', async () => {
+    traer.mockRejectedValue(new Error('404'));
+
+    const resultado = await useAddToBag().añadirServicio('fantasma');
+
+    expect(resultado).toEqual({
+      ok: false,
+      motivo: 'Ese servicio ya no está disponible.',
+    });
+    expect(useBookStore().bookings).toHaveLength(0);
+  });
+
+  it('si falla una línea del paquete, no añade ninguna', async () => {
+    traer.mockImplementation((id: string) =>
+      id === 's2'
+        ? Promise.reject(new Error('404'))
+        : Promise.resolve(servicio(id))
+    );
+
+    const resultado = await useAddToBag().añadirVarios(['s1', 's2']);
+
+    expect(resultado.ok).toBe(false);
+    expect(useBookStore().bookings).toHaveLength(0);
+  });
+});
