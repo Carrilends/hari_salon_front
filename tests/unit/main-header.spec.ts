@@ -47,4 +47,37 @@ describe('cabecera del portal', () => {
     const regla = LAYOUT.slice(LAYOUT.indexOf('const mostrarFlotanteAsistente'));
     expect(regla.slice(0, 160)).toContain("route.path !== '/'");
   });
+
+  /**
+   * El desplegable de «Más» era lo último con la pintura vieja: degradado de
+   * rosa a azul, iconos morados y esquinas de 14 px. Ahora habla el idioma de
+   * la remodelación, y como todo lo demás, por token y nunca por hexadecimal.
+   */
+  it('el desplegable de «Más» se pinta con la paleta, no con hexadecimales', () => {
+    // El bloque vive fuera de `scoped`: Quasar teletransporta el menú al `body`
+    // y su raíz no lleva el atributo de ámbito, así que ninguna regla scoped la
+    // alcanzaría. Por eso se mide desde ahí hasta el final del fichero.
+    const bloque = LAYOUT.slice(LAYOUT.indexOf('.more-menu {'));
+
+    expect(LAYOUT.indexOf('<style lang="scss">')).toBeGreaterThan(
+      LAYOUT.indexOf('<style scoped lang="scss">')
+    );
+
+    expect(bloque).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+    for (const token of [
+      '--m-nieve',
+      '--m-filete',
+      '--m-tinta',
+      '--m-oro-profundo',
+      '--m-font-sans',
+      '--m-tactil-min',
+    ]) {
+      expect(bloque).toContain(token);
+    }
+  });
+
+  it('ya no quedan el degradado ni el icono morado de antes', () => {
+    expect(LAYOUT).not.toContain('#5a4f77');
+    expect(LAYOUT).not.toContain('linear-gradient(180deg, #fff9fc');
+  });
 });

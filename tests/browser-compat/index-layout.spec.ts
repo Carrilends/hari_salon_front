@@ -257,3 +257,39 @@ test.describe('el reparto vertical del inicio', () => {
     expect(tarjeta).toBeLessThan(560);
   });
 });
+
+/**
+ * El desplegable de «Más» lo monta Quasar en un portal, fuera del árbol de la
+ * cabecera: comprobar su hoja de estilos en el fuente no basta para saber que
+ * de verdad se pinta así. Esto lo abre y lo mide.
+ */
+test.describe('el desplegable de «Más»', () => {
+  test('se pinta con la paleta y sus filas se pueden tocar', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await servirApiVacia(page);
+    await irA(page, '/preguntas-frecuentes');
+
+    await page.locator('[aria-label="Más opciones"]').click();
+    const menu = page.locator('.more-menu');
+    await expect(menu).toBeVisible();
+
+    const pintura = await menu.evaluate((el) => {
+      const lista = el.querySelector('.more-menu__list')!;
+      const fila = el.querySelector('.more-menu__item')!;
+      const icono = el.querySelector('.more-menu__icon')!;
+      return {
+        fondo: getComputedStyle(lista).backgroundColor,
+        borde: getComputedStyle(el).borderTopColor,
+        letra: getComputedStyle(lista).fontFamily,
+        icono: getComputedStyle(icono).color,
+        alto: fila.getBoundingClientRect().height,
+      };
+    });
+
+    expect(pintura.fondo).toBe('rgb(255, 255, 255)'); // nieve
+    expect(pintura.borde).toBe('rgb(217, 209, 199)'); // filete
+    expect(pintura.icono).toBe('rgb(122, 92, 40)'); // oro profundo
+    expect(pintura.letra).toContain('Jost');
+    expect(pintura.alto).toBeGreaterThanOrEqual(44);
+  });
+});

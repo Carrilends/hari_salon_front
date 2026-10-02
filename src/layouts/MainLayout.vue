@@ -60,8 +60,8 @@
               auto-close
               anchor="bottom right"
               self="top right"
-              transition-show="jump-down"
-              transition-hide="jump-up"
+              transition-show="fade"
+              transition-hide="fade"
             >
               <q-list class="more-menu__list" separator>
                 <q-item
@@ -541,33 +541,6 @@ defineOptions({
   background: linear-gradient(100deg, #f8bbd0 0%, #bdc9d7 90%);
   color: black;
 }
-
-.more-menu {
-  border-radius: 14px;
-  overflow: hidden;
-  backdrop-filter: blur(4px);
-}
-
-.more-menu__list {
-  min-width: 230px;
-  padding: 6px;
-  background: linear-gradient(180deg, #fff9fc 0%, #f3f7fb 100%);
-}
-
-.more-menu__item {
-  border-radius: 10px;
-  transition: background-color 0.2s ease, transform 0.2s ease;
-}
-
-.more-menu__item:hover {
-  background: rgba(248, 187, 208, 0.35);
-  transform: translateX(2px);
-}
-
-.more-menu__icon {
-  color: #5a4f77;
-}
-
 .background-image {
   background-image: url('/people/rainbow_hair.jpg');
   background-size: cover;
@@ -602,5 +575,75 @@ defineOptions({
 .review-dialog {
   width: min(92vw, 460px);
   border-radius: 14px;
+}
+</style>
+
+<!--
+  Sin `scoped` a propósito. Quasar teletransporta el menú al `body`, así que su
+  raíz no lleva el atributo de ámbito del componente y ninguna regla scoped la
+  alcanza. De hecho el `border-radius` y el `backdrop-filter` que había antes
+  aquí nunca llegaron a aplicarse: solo pegaban las de la lista y las filas, que
+  sí viven en esta plantilla. Las clases van prefijadas, así que no se escapan.
+-->
+<style lang="scss">
+/**
+ * El desplegable de «Más», con el lenguaje de la remodelación.
+ *
+ * Era lo último que quedaba de la pintura vieja: degradado de rosa a azul,
+ * iconos morados, esquinas de 14 px, píldoras dentro de la tarjeta y un
+ * desplazamiento al pasar el ratón. Ahora es una tarjeta de nieve con filete,
+ * filas separadas por una línea de 1 px y los rótulos en versalitas, como la
+ * fila de navegación de la que cuelga.
+ */
+.more-menu {
+  border-radius: var(--m-radio-tarjeta);
+  border: var(--m-filete-grosor) solid var(--m-filete);
+  box-shadow: 0 14px 34px rgba(11, 9, 7, 0.16);
+}
+
+.more-menu__list {
+  min-width: 258px;
+  padding: 0;
+  background: var(--m-nieve);
+  font-family: var(--m-font-sans);
+}
+
+/// La línea entre filas es el filete, no el gris que trae Quasar.
+.more-menu__list.q-list--separator > .q-item-type + .q-item-type {
+  border-top-color: var(--m-filete);
+}
+
+.more-menu__item {
+  min-height: var(--m-tactil-min);
+  padding: 10px 18px;
+  color: var(--m-tinta);
+}
+
+.more-menu__item .q-item__label {
+  font-size: 11.5px;
+  letter-spacing: var(--m-tracking-nav);
+  text-transform: uppercase;
+  line-height: 1.35;
+}
+
+/// Quasar reserva 56 px para el hueco del icono; con uno de 20 sobra la mitad.
+.more-menu__item .q-item__section--avatar {
+  min-width: 34px;
+  padding-right: 12px;
+}
+
+.more-menu__item:hover {
+  background: var(--m-hueso);
+}
+
+.more-menu__item:focus-visible {
+  outline: 2px solid var(--m-oro);
+  outline-offset: -2px;
+}
+
+/// El dorado claro no es color de icono sobre nieve (2,8:1): aquí, el profundo.
+.more-menu__icon {
+  color: var(--m-oro-profundo);
+  font-size: 20px;
 }
 </style>
