@@ -9,6 +9,9 @@ const mockSend = sendAssistantMessage as jest.Mock;
 
 describe('useAssistant', () => {
   beforeEach(() => {
+    // El estado es de módulo desde que el hilo sobrevive a cerrar el panel: sin
+    // este reset, cada caso heredaría los mensajes del anterior.
+    useAssistant().reset();
     mockSend.mockReset();
     sessionStorage.clear();
   });
@@ -119,5 +122,41 @@ describe('useAssistant', () => {
 
     const last = a.messages.value[a.messages.value.length - 1];
     expect(last.presentaciones).toBeUndefined();
+  });
+});
+
+/**
+ * El panel se desmonta al cerrarlo (`v-if` en el lanzador). Si el estado nace y
+ * muere con el componente, cerrar borra la conversación — y el backend, que
+ * guarda el `conversationId` en sessionStorage, sigue recordándola. La pantalla
+ * olvidaba lo que el servidor recordaba.
+ */
+describe('el hilo sobrevive al desmontaje', () => {
+  beforeEach(() => {
+    useAssistant().reset();
+    mockSend.mockReset();
+    sessionStorage.clear();
+    mockSend.mockResolvedValue({ conversationId: 'c1', reply: 'Tenemos corte.' });
+  });
+
+  it('conserva los mensajes entre dos montajes', async () => {
+    const primero = useAssistant();
+
+    await primero.send('¿Qué servicios tienen?');
+    expect(primero.messages.value.length).toBeGreaterThan(0);
+
+    // Otro montaje del panel: misma conversación.
+    const segundo = useAssistant();
+
+    expect(segundo.messages.value).toEqual(primero.messages.value);
+  });
+
+  it('reset deja el hilo vacío para todos', async () => {
+    const panel = useAssistant();
+    await panel.send('hola');
+
+    panel.reset();
+
+    expect(useAssistant().messages.value).toEqual([]);
   });
 });

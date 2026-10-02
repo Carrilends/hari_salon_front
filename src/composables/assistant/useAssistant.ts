@@ -41,17 +41,21 @@ function clearConversationId(): void {
 }
 
 /**
- * Estado del widget del asistente. El `conversationId` vive en `sessionStorage`
- * (no `localStorage`): la conversación no tiene por qué sobrevivir al cierre de
- * la pestaña. Sin dependencia de Vue Query: es estado de UI, no de servidor.
+ * Estado del widget del asistente, **compartido por módulo**: el panel se
+ * desmonta al cerrarlo y la conversación tiene que seguir ahí al volver a
+ * abrirlo. Se borra al recargar la pestaña, nunca se guarda en el navegador: en
+ * un ordenador compartido no debe quedar rastro.
+ *
+ * El `conversationId` vive en `sessionStorage` (no `localStorage`) desde antes,
+ * por la misma razón. Sin dependencia de Vue Query: es estado de UI.
  */
-export function useAssistant() {
-  const messages = ref<ChatMessage[]>([]);
-  const loading = ref(false);
-  const error = ref<string | null>(null);
-  const aviso = ref<string | null>(null);
-  let conversationId = readConversationId();
+const messages = ref<ChatMessage[]>([]);
+const loading = ref(false);
+const error = ref<string | null>(null);
+const aviso = ref<string | null>(null);
+let conversationId = readConversationId();
 
+export function useAssistant() {
   async function send(text: string): Promise<void> {
     const content = text.trim();
     if (!content || loading.value) return;
@@ -60,8 +64,12 @@ export function useAssistant() {
     messages.value.push({ role: 'user', content });
     loading.value = true;
     try {
+      // `?? readConversationId()`: al ser de módulo, la lectura inicial ocurre al
+      // importar — en la build de SSG eso pasa en Node, sin `sessionStorage`. Si
+      // no hay id en memoria se vuelve a mirar el almacén de la pestaña, que es
+      // donde el servidor dejó el hilo.
       const reply = await sendAssistantMessage({
-        conversationId,
+        conversationId: conversationId ?? readConversationId(),
         message: content,
       });
       conversationId = reply.conversationId ?? conversationId;
