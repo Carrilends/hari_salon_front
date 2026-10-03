@@ -1,7 +1,7 @@
 /**
- * Las fotos del inicio llegan tarde —`public/people/` pesa unos 10 MB sin
- * optimizar— y hasta ahora dejaban un rectángulo vacío. Ahora el hueco espera
- * con vida y se apaga cuando la foto llega.
+ * Las fotos del inicio llegan después del texto —menos ahora que van optimizadas,
+ * pero llegan— y antes dejaban un rectángulo vacío. Ahora el hueco espera con vida
+ * y se apaga cuando la foto llega.
  */
 import { mount } from '@vue/test-utils';
 import CatalogBand from 'src/components/index/CatalogBand.vue';
@@ -37,7 +37,10 @@ describe('las fotos de la carta', () => {
     const wrapper = mount(CatalogBand, { props: { secciones: SECCIONES } });
 
     expect(wrapper.findAll('img')[0].attributes('loading')).toBe('lazy');
-    expect(wrapper.findAll('source')).toHaveLength(2);
+    // Dos `<source>` por foto: el WebP y el JPEG de respaldo.
+    expect(wrapper.findAll('source')).toHaveLength(4);
+    expect(wrapper.findAll('source')[0].attributes('type')).toBe('image/webp');
+    expect(wrapper.findAll('source')[1].attributes('type')).toBe('image/jpeg');
   });
 
   /** Una foto rota no puede quedarse palpitando para siempre. */

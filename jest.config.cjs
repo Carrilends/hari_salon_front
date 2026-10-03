@@ -3,7 +3,7 @@ module.exports = {
   testEnvironment: 'jsdom',
   testMatch: ['<rootDir>/tests/**/*.spec.(ts|js)'],
   testPathIgnorePatterns: ['/node_modules/', '<rootDir>/tests/browser-compat/'],
-  // `mjs` está aquí por `scripts/optimizar-imagenes.mjs`: la prueba de la receta
+  // `mjs` está aquí por `scripts/recetas-imagenes.mjs`: la prueba de la receta
   // importa el script de verdad, para que receta y marcado no se separen.
   moduleFileExtensions: ['ts', 'js', 'mjs', 'json', 'vue'],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],

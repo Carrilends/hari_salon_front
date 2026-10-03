@@ -26,13 +26,15 @@ body.m-panel-abierto {
 /**
  * El hueco de una foto que todavía no ha llegado.
  *
- * Las de `public/people/` pesan unos 10 MB sin optimizar —la deuda abierta más
- * seria para NF02— así que en una conexión normal se ven aparecer, y hasta
- * entonces quedaba un rectángulo vacío. El color de fondo lo pone cada banda:
- * hueso sobre claro, carbón sobre la banda oscura. Aquí solo late.
+ * Las de `public/people/` ya van optimizadas —WebP con respaldo JPEG, al ancho que
+ * se pintan; ver `FotoResponsiva.vue`—, pero en una conexión lenta siguen llegando
+ * después del texto, y hasta entonces quedaba un rectángulo vacío. El color de
+ * fondo lo pone cada banda: hueso sobre claro, carbón sobre la banda oscura. Aquí
+ * solo late.
  *
- * Late con `opacity` sobre el propio `img`: mientras no hay píxeles que pintar,
- * lo único que se ve es ese fondo. En cuanto la foto llega, la clase se va.
+ * Late con `opacity` sobre el `<picture>` que envuelve la foto: mientras no hay
+ * píxeles que pintar, lo único que se ve es ese fondo. En cuanto la foto llega, la
+ * clase se va.
  */
 .m-foto--esperando {
   animation: m-foto-espera 1.4s ease-in-out infinite;

@@ -4,9 +4,9 @@ import { onMounted, ref, type Ref } from 'vue';
  * Marca qué fotos ya llegaron, para que las que no den un hueco con vida en vez
  * de un agujero.
  *
- * Las fotos del inicio viven en `public/people/` sin optimizar —unos 10 MB, la
- * deuda abierta más seria para NF02—, así que en una conexión normal se ven
- * aparecer. Hasta entonces quedaba un rectángulo vacío.
+ * Las fotos del inicio ya van optimizadas —WebP con respaldo JPEG, al ancho que
+ * se pintan; ver `FotoResponsiva.vue`—, pero en una conexión lenta siguen llegando
+ * después del texto. Hasta entonces quedaba un rectángulo vacío.
  *
  * **La trampa está en el `onMounted`.** Si la foto ya estaba en caché, el evento
  * `load` se dispara ANTES de que Vue ate el manejador, y la imagen se quedaría

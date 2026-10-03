@@ -15,13 +15,14 @@
  * escalón pequeño para móvil. Más escalones no mejoran nada y multiplican los
  * ficheros a mantener.
  */
-import { mkdirSync, readdirSync, statSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { mkdirSync, readdirSync, realpathSync, statSync, unlinkSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
 import {
   RECETAS,
+  ficherosEsperados,
   nombreDeRespaldo,
   nombreDeVariante,
 } from './recetas-imagenes.mjs';
@@ -42,21 +43,21 @@ async function generar() {
     const entrada = join(ORIGINALES, original);
     statSync(entrada); // revienta claro si falta el original
 
-    for (const ancho of receta.anchos) {
-      const base = sharp(entrada).resize({ width: ancho, withoutEnlargement: true });
+    // Un fondo de CSS no puede usar `srcset`: de esos solo sale el respaldo.
+    if (!receta.soloJpeg) {
+      for (const ancho of receta.anchos) {
+        const base = sharp(entrada).resize({ width: ancho, withoutEnlargement: true });
 
-      if (!receta.soloJpeg) {
         await base
           .clone()
           .webp({ quality: CALIDAD_WEBP })
           .toFile(join(DESTINO, nombreDeVariante(original, ancho, 'webp')));
-        escritos++;
+        await base
+          .clone()
+          .jpeg({ quality: CALIDAD_JPEG, mozjpeg: true })
+          .toFile(join(DESTINO, nombreDeVariante(original, ancho, 'jpg')));
+        escritos += 2;
       }
-      await base
-        .clone()
-        .jpeg({ quality: CALIDAD_JPEG, mozjpeg: true })
-        .toFile(join(DESTINO, nombreDeVariante(original, ancho, 'jpg')));
-      escritos++;
     }
 
     // El respaldo con el nombre de siempre, para que las rutas que ya existen
@@ -69,12 +70,26 @@ async function generar() {
     escritos++;
   }
 
+  /**
+   * Lo que la receta ya no manda, fuera. Sin esto, quitar un ancho dejaría el
+   * fichero viejo commiteado y desplegado para siempre: `public/people/` es un
+   * directorio derivado, no un cajón donde se acumula.
+   */
+  const esperados = ficherosEsperados();
+  let borrados = 0;
+  for (const fichero of readdirSync(DESTINO)) {
+    if (!/\.(jpe?g|webp)$/i.test(fichero)) continue;
+    if (esperados.has(fichero)) continue;
+    unlinkSync(join(DESTINO, fichero));
+    borrados++;
+  }
+
   const total = readdirSync(DESTINO)
     .filter((f) => /\.(jpe?g|webp)$/i.test(f))
     .reduce((suma, f) => suma + statSync(join(DESTINO, f)).size, 0);
 
   console.log(
-    `${escritos} ficheros escritos · ${(total / 1024 / 1024).toFixed(2)} MB en public/people/`
+    `${escritos} ficheros escritos · ${borrados} borrados · ${(total / 1024 / 1024).toFixed(2)} MB en public/people/`
   );
 }
 
@@ -83,7 +98,14 @@ async function generar() {
  * este módulo para fijar la receta, y sin esta guarda el simple `import` pondría
  * a `sharp` a convertir las seis fotos dentro de la suite.
  */
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+// `realpathSync` y no `resolve`: Node resuelve los enlaces simbólicos en la URL
+// del módulo, así que con el proyecto detrás de un enlace las dos rutas no
+// coincidirían, `generar()` no correría y el script saldría con un 0 silencioso,
+// indistinguible de haber funcionado.
+if (
+  process.argv[1] &&
+  realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))
+) {
   generar().catch((error) => {
     console.error(error);
     process.exit(1);

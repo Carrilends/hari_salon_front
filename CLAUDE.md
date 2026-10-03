@@ -129,25 +129,42 @@ yarn optimizar:imagenes    # reads imagenes-originales/, writes public/people/
   `tests/unit/optimizar-imagenes.spec.ts` compares them. A width the markup asks for
   and the recipe does not generate is a broken hole on the page. Note
   `women-hair-cut.jpg` is used **twice**, in the hero and as the catalogue's fourth
-  card, so its recipe is the union of both sets of widths.
-- **Every WebP goes inside a `<picture>` with a JPEG `<img>` behind it**, never as a
-  loose `src`: NF06 (Tabla 44) promises **Safari 13.1+** and WebP only arrives in
-  Safari 14. That is what `FotoResponsiva.vue` is for — the same mistake `100dvh`
-  already cost a whole review.
+  card (not the fourth), so its recipe is the union of both sets of widths.
+- **Every WebP goes inside a `<picture>` with a JPEG behind it**, never as a loose
+  `src`: NF06 (Tabla 44) promises **Safari 13.1+** and WebP only arrives in Safari 14.
+  That is what `FotoResponsiva.vue` is for — the same mistake `100dvh` already cost a
+  whole review.
+- **`FotoResponsiva`'s shape is load-order-sensitive, and all three details are
+  load-bearing.** Two `<source>` elements (WebP then JPEG, both with `srcset`+`sizes`),
+  `loading` declared **before** `src`, and a `src` pointing at the *smallest* variant.
+  An `<img>` starts fetching the moment `src` is set, and Vue sets attributes while the
+  element is still outside the `<picture>` — so a client-rendered `/` had WebKit pulling
+  **three files per photo, 640 KB**, before it inserted the element and picked the WebP.
+  Putting the responsive JPEG in its own `<source>` leaves the `<img>` with no `srcset`
+  to fire early, `loading="lazy"` first makes the browser defer the stray fetch, and a
+  small `src` caps what the `eager` hero cannot defer. That took WebKit to **213 KB**
+  (the 17 KB hero `src` is the only overhead left). `tests/unit/FotoResponsiva.spec.ts`
+  pins the attribute order; do not "tidy" it.
 - **CSS backgrounds cannot use `<picture>`**, and `image-set()` does not reach the
   NF06 matrix, so the four `rainbow_hair.jpg` backgrounds just get a smaller JPEG
   (824 KB → 47 KB). `tests/unit/fotos-referenciadas.spec.ts` watches that weight, and
   also fails if a photo lands in `public/people/` that no code references.
 - **The weight ceiling is `tests/browser-compat/peso-del-inicio.spec.ts`**: under
-  400 KB for the landing page, measured on what the browser actually *paints*.
-  Measured today: 108 KB in Chromium at 1x, 196 KB in WebKit at 2x — from 9.8 MB.
-- **One quirk worth knowing.** When Vue builds the `<picture>` on the client, WebKit
-  fetches *two* files per photo: the `<img>` gets its `src` before it is inside the
-  `<picture>`, and a detached `<img>` starts loading the moment `src` is set, so it
-  pulls the JPEG and then re-selects the WebP. The markup is not at fault — the same
-  template as static HTML asks for one file. And `/` is prerendered (`ssg.routes`), so
-  a visitor gets the `<picture>` assembled by the parser: verified against
-  `dist/ssg` in WebKit, which requests **only** WebP.
+  400 KB for the landing page, asserted **twice** — on what the browser paints and on
+  everything it requests. Both matter: the painted figure is what a visitor who lands
+  on the prerendered `/` downloads, the requested figure is what one who arrives from
+  another page downloads, and only the second one saw the 640 KB regression above.
+  Measured: 108 KB in Chromium at 1x, 213 KB in WebKit at 2x — from 9.8 MB.
+  A third test reads each variant's width **out of its filename**, not from
+  `naturalWidth`, which is density-corrected and reports `sizes` rather than the file
+  (a 760 px file reports 678).
+- **`public/people/` is derived, not a drawer.** `yarn optimizar:imagenes` deletes any
+  variant the recipe no longer calls for, and `tests/unit/optimizar-imagenes.spec.ts`
+  compares the directory against the expected set **in both directions**. Missing
+  matters more than it sounds: when a browser has already picked a `<source>`, a 404
+  there does **not** fall back to the `<img>` — the whole landing page becomes alt
+  text. Extra matters too: that is how a 47 KB `rainbow_hair-1600.jpg` nobody
+  referenced rode along until the check was added.
 
 ### Single-source-of-truth files (do not duplicate)
 

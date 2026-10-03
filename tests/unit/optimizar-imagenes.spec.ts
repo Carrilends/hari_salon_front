@@ -9,6 +9,9 @@
  * módulo que el script usa de verdad (`scripts/recetas-imagenes.mjs`), no de una
  * copia que podría quedarse atrás.
  */
+import { readdirSync } from 'node:fs';
+import { join } from 'node:path';
+
 import {
   ANCHOS_CARTA as ANCHOS_CARTA_MARCADO,
   ANCHOS_PORTADA as ANCHOS_PORTADA_MARCADO,
@@ -18,6 +21,7 @@ import {
   ANCHOS_CARTA,
   ANCHOS_PORTADA,
   RECETAS,
+  ficherosEsperados,
   nombreDeVariante,
 } from '../../scripts/recetas-imagenes.mjs';
 
@@ -48,7 +52,7 @@ describe('la receta de las variantes', () => {
 
   /**
    * `women-hair-cut.jpg` es la única que sirve a dos sitios —la portada a 678 px
-   * y la cuarta tarjeta de la carta a 283 (`src/constants/index-sections.ts`)—,
+   * y la segunda tarjeta de la carta a 283 (`src/constants/index-sections.ts`)—,
    * así que su receta tiene que cubrir los anchos de los dos consumidores. Sin
    * esto, la carta pediría `women-hair-cut-200.webp`, que no existiría.
    */
@@ -68,6 +72,26 @@ describe('la receta de las variantes', () => {
   it('el marcado pide exactamente los anchos que el script genera', () => {
     expect(ANCHOS_PORTADA_MARCADO).toEqual(ANCHOS_PORTADA);
     expect(ANCHOS_CARTA_MARCADO).toEqual(ANCHOS_CARTA);
+  });
+
+  /**
+   * La prueba de arriba compara dos listas de números entre sí, y eso deja fuera
+   * el fallo más probable: cambiar la receta y olvidar `yarn optimizar:imagenes`.
+   * Esto mira el disco.
+   *
+   * Y mira en los dos sentidos. Que no falte ninguno, porque un `<source>` que
+   * apunta a un WebP que no está **no cae al JPEG** —cuando el navegador ya eligió
+   * una fuente, el `src` del `<img>` no se vuelve a consultar— y la portada entera
+   * se queda en texto alternativo. Y que no sobre ninguno, porque un ancho que se
+   * quita de la receta deja un fichero commiteado y desplegado que ya nadie mira:
+   * exactamente el peso muerto que la Tarea 1 existe para evitar.
+   */
+  it('en public/people está exactamente lo que la receta manda, ni más ni menos', () => {
+    const enDisco = readdirSync(join(__dirname, '../../public/people'))
+      .filter((f) => /\.(jpe?g|webp)$/i.test(f))
+      .sort();
+
+    expect(enDisco).toEqual([...ficherosEsperados()].sort());
   });
 
   it('nombra las variantes de forma predecible', () => {

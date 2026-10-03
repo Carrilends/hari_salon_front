@@ -21,39 +21,67 @@ const montar = (props = {}) =>
   });
 
 describe('FotoResponsiva', () => {
-  it('ofrece WebP primero y deja el JPEG detrás', () => {
-    const wrapper = montar();
+  it('ofrece WebP primero y el JPEG detrás, los dos a varios anchos', () => {
+    const fuentes = montar().findAll('source');
 
-    expect(wrapper.get('source').attributes('type')).toBe('image/webp');
-    expect(wrapper.get('source').attributes('srcset')).toContain(
+    expect(fuentes).toHaveLength(2);
+    expect(fuentes[0].attributes('type')).toBe('image/webp');
+    expect(fuentes[0].attributes('srcset')).toContain(
       '/people/women-hair-cut-760.webp 760w'
     );
-    // El `src` del `<img>` es el JPEG de siempre: lo que ve Safari 13.1.
-    expect(wrapper.get('img').attributes('src')).toBe(
-      '/people/women-hair-cut.jpg'
-    );
-    expect(wrapper.get('img').attributes('srcset')).toContain(
+    /**
+     * El JPEG va en su propio `<source>`, no en el `srcset` del `<img>`: así
+     * Safari 13.1 —que no tiene WebP— recibe un JPEG **del tamaño que pinta**, y
+     * el `<img>` se queda sin `srcset` que disparar antes de tiempo.
+     */
+    expect(fuentes[1].attributes('type')).toBe('image/jpeg');
+    expect(fuentes[1].attributes('srcset')).toContain(
       '/people/women-hair-cut-760.jpg 760w'
     );
   });
 
   it('dice a cada pantalla cuánto va a ocupar', () => {
-    const wrapper = montar();
+    const fuentes = montar().findAll('source');
 
-    expect(wrapper.get('source').attributes('sizes')).toBe(
-      '(max-width: 699px) 100vw, 53vw'
+    expect(fuentes[0].attributes('sizes')).toBe('(max-width: 699px) 100vw, 53vw');
+    expect(fuentes[1].attributes('sizes')).toBe('(max-width: 699px) 100vw, 53vw');
+  });
+
+  /**
+   * El `src` es el último recurso —un navegador sin `srcset`, que no está en la
+   * matriz de NF06— así que es la variante más pequeña y no el original: ese `src`
+   * se pide una vez de más en WebKit cuando Vue construye el `<picture>` en el
+   * cliente, y pagarlo a 131 KB en vez de a 17 era la mayor parte de los 640 KB
+   * que medía la portada al llegar desde otra página.
+   */
+  it('el src de último recurso es la variante más pequeña', () => {
+    expect(montar().get('img').attributes('src')).toBe(
+      '/people/women-hair-cut-420.jpg'
     );
-    expect(wrapper.get('img').attributes('sizes')).toBe(
-      '(max-width: 699px) 100vw, 53vw'
-    );
+    expect(montar().get('img').attributes('srcset')).toBeUndefined();
+  });
+
+  /**
+   * El orden de los atributos no es cosmético. Un `<img>` empieza a cargar en
+   * cuanto se le pone el `src`, y Vue se los pone mientras todavía está fuera del
+   * `<picture>`: si `loading` llega después, el navegador ya arrancó una descarga
+   * que nadie va a usar. Con `loading` delante, la aplaza.
+   */
+  it('pone loading antes del src, que es lo que evita la descarga de más', () => {
+    const html = montar().get('img').html();
+
+    expect(html.indexOf('loading=')).toBeGreaterThan(-1);
+    expect(html.indexOf('loading=')).toBeLessThan(html.indexOf('src='));
   });
 
   it('las rutas son absolutas desde la raíz, que es lo que publica el SSG', () => {
-    const srcset = montar().get('source').attributes('srcset') ?? '';
-
-    for (const trozo of srcset.split(',')) {
-      expect(trozo.trim().startsWith('/people/')).toBe(true);
+    for (const fuente of montar().findAll('source')) {
+      const srcset = fuente.attributes('srcset') ?? '';
+      for (const trozo of srcset.split(',')) {
+        expect(trozo.trim().startsWith('/people/')).toBe(true);
+      }
     }
+    expect(montar().get('img').attributes('src')).toMatch(/^\/people\//);
   });
 
   /**
