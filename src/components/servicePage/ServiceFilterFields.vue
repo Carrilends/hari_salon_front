@@ -53,6 +53,7 @@
             step="1"
             :value="prices.min"
             @input="alMoverMinimo"
+            @change="alSoltarPerilla"
           />
         </label>
         <label class="campos__perilla">
@@ -65,6 +66,7 @@
             step="1"
             :value="prices.max"
             @input="alMoverMaximo"
+            @change="alSoltarPerilla"
           />
         </label>
       </div>
@@ -191,14 +193,25 @@ function alternarPromos(evento: Event) {
  * no devolvería nada, sin decir por qué.
  */
 function alMoverMinimo(evento: Event) {
-  const valor = Number((evento.target as HTMLInputElement).value);
-  prices.value.min = Math.min(valor, prices.value.max);
-  sendFilter();
+  const entrada = evento.target as HTMLInputElement;
+  prices.value.min = Math.min(Number(entrada.value), prices.value.max);
+  // Si el valor encerrado no cambia, `:value` no se vuelve a pintar y la perilla
+  // nativa se queda donde el dedo la dejó: se reescribe a mano.
+  entrada.value = String(prices.value.min);
 }
 
 function alMoverMaximo(evento: Event) {
-  const valor = Number((evento.target as HTMLInputElement).value);
-  prices.value.max = Math.max(valor, prices.value.min);
+  const entrada = evento.target as HTMLInputElement;
+  prices.value.max = Math.max(Number(entrada.value), prices.value.min);
+  entrada.value = String(prices.value.max);
+}
+
+/**
+ * `input` salta en cada paso del arrastre (hasta ~195 por pasada) y cada valor
+ * es una consulta distinta: la etiqueta y el store siguen el arrastre, pero la
+ * búsqueda sale solo con `change`, al soltar la perilla o confirmar con teclado.
+ */
+function alSoltarPerilla() {
   sendFilter();
 }
 

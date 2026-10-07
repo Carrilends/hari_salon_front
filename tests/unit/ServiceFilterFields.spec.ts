@@ -229,6 +229,7 @@ describe('ServiceFilterFields · precio y promociones', () => {
     const minimo = wrapper.get('[data-test="precio-min"]');
     (minimo.element as HTMLInputElement).value = '120';
     await minimo.trigger('input');
+    await minimo.trigger('change');
 
     expect(useFiltersStore(pinia).prices).toEqual({ min: 60, max: 60 });
     const aplicado = wrapper.emitted('aplicar')?.at(-1)?.[0] as {
@@ -247,8 +248,53 @@ describe('ServiceFilterFields · precio y promociones', () => {
     const maximo = wrapper.get('[data-test="precio-max"]');
     (maximo.element as HTMLInputElement).value = '20';
     await maximo.trigger('input');
+    await maximo.trigger('change');
 
     expect(useFiltersStore(pinia).prices).toEqual({ min: 80, max: 80 });
+    const aplicado = wrapper.emitted('aplicar')?.at(-1)?.[0] as {
+      prices: { min: number; max: number };
+    };
+    expect(aplicado.prices).toEqual({ min: 80, max: 80 });
+  });
+
+  it('un segundo arrastre pasado del tope devuelve la perilla al tope', async () => {
+    const { wrapper } = montar();
+    await marcar(wrapper, 'precio-activo', true);
+    const maximo = wrapper.get('[data-test="precio-max"]');
+    (maximo.element as HTMLInputElement).value = '60';
+    await maximo.trigger('input');
+    const minimo = wrapper.get('[data-test="precio-min"]');
+
+    (minimo.element as HTMLInputElement).value = '120';
+    await minimo.trigger('input');
+    (minimo.element as HTMLInputElement).value = '130';
+    await minimo.trigger('input');
+
+    expect((minimo.element as HTMLInputElement).value).toBe('60');
+  });
+
+  it('arrastrar no busca en cada paso: solo al soltar, y con el cuerpo ya encerrado', async () => {
+    const { wrapper } = montar();
+    await marcar(wrapper, 'precio-activo', true);
+    const antes = wrapper.emitted('aplicar')?.length ?? 0;
+    const maximo = wrapper.get('[data-test="precio-max"]');
+    (maximo.element as HTMLInputElement).value = '60';
+    await maximo.trigger('input');
+    const minimo = wrapper.get('[data-test="precio-min"]');
+
+    for (const v of ['70', '90', '120']) {
+      (minimo.element as HTMLInputElement).value = v;
+      await minimo.trigger('input');
+    }
+    expect(wrapper.emitted('aplicar')?.length ?? 0).toBe(antes);
+
+    await minimo.trigger('change');
+
+    expect(wrapper.emitted('aplicar')).toHaveLength(antes + 1);
+    const aplicado = wrapper.emitted('aplicar')?.at(-1)?.[0] as {
+      prices: { min: number; max: number };
+    };
+    expect(aplicado.prices).toEqual({ min: 60, max: 60 });
   });
 
   it('las perillas van de 5 a 200, la escala de hoy', async () => {
