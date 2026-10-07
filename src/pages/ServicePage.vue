@@ -1,244 +1,132 @@
 <template>
-  <q-page class="row full-width items-start q-px-lg q-pt-md">
-    <div class="col-12 box-style service-header-box q-my-sm">
-      <div class="service-header-inner">
-        <transition name="service-header-fade" mode="out-in">
-          <div
-            v-if="isCompactSearch && compactSearchOverlayOpen"
-            key="search-overlay"
-            class="compact-search-overlay"
-          >
-            <q-btn
-              flat
-              round
-              dense
-              color="grey-8"
-              icon="close"
-              aria-label="Cerrar búsqueda"
-              class="compact-search-overlay-close"
-              @click="compactSearchOverlayOpen = false"
-            />
-            <q-input
-              ref="compactSearchInputRef"
-              dense
-              filled
-              clearable
-              color="blue"
-              debounce="1000"
-              placeholder="Buscar servicio…"
-              v-model="filterService.name"
-              class="compact-search-overlay-input"
-              @keyup.enter="compactSearchOverlayOpen = false"
-            >
-              <template v-slot:before>
-                <q-icon name="search" color="blue" />
-              </template>
-            </q-input>
-          </div>
-          <div
-            v-else
-            key="heading-row"
-            class="service-page-heading"
-            :class="{ 'service-page-heading--compact': isCompactSearch }"
-          >
-            <div
-              class="service-heading-search"
-              :class="{ 'service-heading-search--expanded': !isCompactSearch }"
-            >
-              <q-input
-                v-if="!isCompactSearch"
-                dense
-                filled
-                clearable
-                color="blue"
-                debounce="1000"
-                label="Busca por nombre del servicio"
-                v-model="filterService.name"
-                class="full-width service-heading-search-input"
-              >
-                <template v-slot:before>
-                  <q-icon name="search" />
-                </template>
-              </q-input>
-              <q-btn
-                v-else
-                round
-                flat
-                color="blue"
-                icon="search"
-                aria-label="Buscar por nombre"
-                @click="openCompactSearchOverlay"
+  <q-page class="mostrador">
+    <ServiceToolbar
+      :total="totalServices"
+      :mostrados="services.length"
+      :busqueda="filterService.name"
+      :filtros-activos="externalAmountOfFilters"
+      :es-admin="authStore.isAdmin"
+      @update:busqueda="alBuscar"
+      @abrir-filtros="showFilterDialog = true"
+      @crear-servicio="dialogCreation = true"
+    />
+
+    <div class="mostrador__cuerpo">
+      <!--
+        La ficha tumbada de móvil y la rejilla de tarjetas siguen aquí tal como
+        estaban: las sustituyen `ServiceRow.vue` y `ServiceCardsGrid.vue` en la
+        fase B. Lo único que cambia es que ya no van dentro de un
+        caja de scroll interno de altura calculada (D4).
+      -->
+      <q-list v-if="esListaMovil" class="mostrador__lista">
+        <q-item
+          v-for="(service, index) in services"
+          :key="`${index}_${service.id}`"
+          dense
+          class="mostrador__renglon"
+        >
+          <q-item-section avatar class="mostrador__avatar-hueco">
+            <q-avatar rounded size="52px" class="mostrador__avatar">
+              <img
+                :src="serviceImageUrl(service)"
+                :srcset="serviceImageSrcset(service)"
+                sizes="52px"
+                :alt="`Imagen del servicio ${service.name}`"
+                loading="lazy"
+                decoding="async"
+                width="52"
+                height="52"
               />
-            </div>
-            <div
-              class="service-heading-actions"
-              :class="{ 'service-heading-actions--compact': isCompactSearch }"
-            >
+            </q-avatar>
+          </q-item-section>
+          <q-item-section class="mostrador__renglon-texto">
+            <q-item-label lines="2" class="mostrador__renglon-nombre">
+              {{ service.name }}
+            </q-item-label>
+            <q-item-label caption class="mostrador__renglon-precio">
+              <div class="row items-center no-wrap">
+                <PriceDisplayPill :amount="service.price" dense />
+                <ServicePromoButton
+                  :have-promotion="service.havePromotion"
+                  :porcentage-discount="Number(service.porcentageDiscount ?? 0)"
+                  placement="inline"
+                  @promo-click="handlePromotionAction(service)"
+                />
+              </div>
+            </q-item-label>
+          </q-item-section>
+          <q-item-section side top class="mostrador__renglon-lado">
+            <div class="column q-gutter-xs mostrador__renglon-acciones">
               <q-btn
                 v-if="authStore.isAdmin"
-                @click="dialogCreation = true"
-                color="indigo-5"
-                icon="las la-plus"
-                :label="showActionButtonLabels ? 'Crear' : undefined"
-                :round="!showActionButtonLabels"
-                :rounded="showActionButtonLabels"
+                flat
+                dense
+                no-caps
+                size="sm"
+                padding="xs sm"
+                color="indigo-6"
+                label="Editar"
+                @click.stop="openEditService(service.id)"
               />
-              <div class="filter-badge-wrapper">
-                <q-btn
-                  @click="showFilterDialog = true"
-                  class="color-bar"
-                  icon="las la-filter"
-                  :label="showActionButtonLabels ? 'Filtros' : undefined"
-                  :round="!showActionButtonLabels"
-                  :rounded="showActionButtonLabels"
-                  flat
-                />
-                <q-badge
-                  v-if="externalAmountOfFilters > 0"
-                  color="red"
-                  rounded
-                  floating
-                  class="filter-badge-count"
-                >
-                  {{ externalAmountOfFilters > 9 ? '9+' : externalAmountOfFilters }}
-                </q-badge>
-              </div>
+              <q-btn
+                flat
+                dense
+                no-caps
+                size="sm"
+                padding="xs sm"
+                color="primary"
+                label="Detalle"
+                @click.stop="openServiceDetail(service.id)"
+              />
+              <q-btn
+                v-if="authStore.isAdmin"
+                flat
+                dense
+                no-caps
+                size="sm"
+                padding="xs sm"
+                color="negative"
+                label="Eliminar"
+                @click.stop="confirmDeleteService(service.id)"
+              />
             </div>
-          </div>
-        </transition>
+          </q-item-section>
+        </q-item>
+      </q-list>
+
+      <div v-else class="mostrador__rejilla">
+        <div
+          v-for="(service, index) in services"
+          :key="`${index}_${service.id}`"
+          class="mostrador__celda"
+        >
+          <TabsByEachService
+            @detail-service="() => (serviceIdRef = service.id)"
+            @delete-service="fetchServices"
+            @edit-service="() => openEditService(service.id)"
+            @promo-service="() => handlePromotionAction(service)"
+            :props="{
+              id: service.id,
+              name: service.name,
+              precio: service.price,
+              url: serviceCardImageUrl(service),
+              havePromotion: service.havePromotion,
+              porcentageDiscount: service.porcentageDiscount,
+            }"
+            :selected="true"
+          />
+        </div>
       </div>
     </div>
-    <div class="col-12 box-style service-body-box">
-      <q-scroll-area
-        v-if="isListLayout"
-        class="service-body-mobile q-py-lg"
-        :style="{ height: `${desktopScrollBodyPx}px` }"
-        :thumb-style="thumbStyle"
-      >
-        <q-list
-          bordered
-          separator
-          class="service-list-mobile rounded-borders q-mx-sm"
-        >
-          <q-item
-            v-for="(service, index) in services"
-            :key="`${index}_${service.id}`"
-            dense
-            class="service-list-item"
-          >
-            <q-item-section avatar class="service-list-avatar-wrap">
-              <q-avatar rounded size="52px" class="service-list-avatar">
-                <img
-                  :src="serviceImageUrl(service)"
-                  :srcset="serviceImageSrcset(service)"
-                  sizes="52px"
-                  :alt="`Imagen del servicio ${service.name}`"
-                  loading="lazy"
-                  decoding="async"
-                  width="52"
-                  height="52"
-                />
-              </q-avatar>
-            </q-item-section>
-            <q-item-section class="service-list-main">
-              <q-item-label lines="2" class="text-body2 text-weight-medium">
-                {{ service.name }}
-              </q-item-label>
-              <q-item-label caption class="q-mt-xs service-list-price">
-                <div class="row items-center no-wrap">
-                  <PriceDisplayPill :amount="service.price" dense />
-                  <ServicePromoButton
-                    :have-promotion="service.havePromotion"
-                    :porcentage-discount="Number(service.porcentageDiscount ?? 0)"
-                    placement="inline"
-                    @promo-click="handlePromotionAction(service)"
-                  />
-                </div>
-              </q-item-label>
-            </q-item-section>
-            <q-item-section side top class="service-list-side">
-              <div class="service-list-actions column q-gutter-xs">
-                <q-btn
-                  v-if="authStore.isAdmin"
-                  flat
-                  dense
-                  no-caps
-                  size="sm"
-                  padding="xs sm"
-                  color="indigo-6"
-                  label="Editar"
-                  @click.stop="openEditService(service.id)"
-                />
-                <q-btn
-                  flat
-                  dense
-                  no-caps
-                  size="sm"
-                  padding="xs sm"
-                  color="primary"
-                  label="Detalle"
-                  @click.stop="openServiceDetail(service.id)"
-                />
-                <q-btn
-                  v-if="authStore.isAdmin"
-                  flat
-                  dense
-                  no-caps
-                  size="sm"
-                  padding="xs sm"
-                  color="negative"
-                  label="Eliminar"
-                  @click.stop="confirmDeleteService(service.id)"
-                />
-              </div>
-            </q-item-section>
-          </q-item>
-        </q-list>
-      </q-scroll-area>
-      <q-scroll-area
-        v-else
-        class="service-scroll-area q-py-lg"
-        :style="{ height: `${desktopScrollBodyPx}px` }"
-        :thumb-style="thumbStyle"
-      >
-        <div class="service-cards-grid q-px-md">
-          <div
-            v-for="(service, index) in services"
-            :key="`${index}_${service.id}`"
-            class="service-card-cell"
-          >
-            <TabsByEachService
-              @detail-service="() => (serviceIdRef = service.id)"
-              @delete-service="fetchServices"
-              @edit-service="() => openEditService(service.id)"
-              @promo-service="() => handlePromotionAction(service)"
-              :props="{
-                id: service.id,
-                name: service.name,
-                precio: service.price,
-                url: serviceCardImageUrl(service),
-                havePromotion: service.havePromotion,
-                porcentageDiscount: service.porcentageDiscount,
-              }"
-              :selected="true"
-            />
-          </div>
-        </div>
-      </q-scroll-area>
-    </div>
-    <div class="col-12 flex flex-center box-style" style="padding: 10px 0">
-      <q-pagination
-        v-model="filterService.page"
-        color="blue"
-        :max="totalPages"
-        :max-pages="10"
-        boundary-numbers
-        ellipses
-        size="sm"
-        gutter="2px"
-        direction-links
-      />
-    </div>
+
+    <ServicePagerBar
+      :pagina="filterService.page"
+      :total-paginas="totalPages"
+      :mostrados="services.length"
+      :total="totalServices"
+      @update:pagina="filterService.page = $event"
+    />
+
     <ServiceFilterDialog
       v-model:dialog="showFilterDialog"
       @update:amount="externalAmountOfFilters = $event"
@@ -259,6 +147,7 @@ import {
 } from 'vue';
 import { useQuasar } from 'quasar';
 import { useServices } from 'src/composables/services/useServices';
+import { useServiceViewport } from 'src/composables/services/useServiceViewport';
 import {
   deleteService,
   getService,
@@ -266,6 +155,8 @@ import {
   useServiceForEdition,
 } from 'src/composables/services/useService';
 import TabsByEachService from 'src/components/servicePage/TabsByEachService.vue';
+import ServiceToolbar from 'src/components/servicePage/ServiceToolbar.vue';
+import ServicePagerBar from 'src/components/servicePage/ServicePagerBar.vue';
 import ServicePromoButton from 'src/components/servicePage/ServicePromoButton.vue';
 import PriceDisplayPill from 'src/components/shared/PriceDisplayPill.vue';
 import type Service from 'src/interfaces/service';
@@ -296,7 +187,10 @@ const filtersStore = useFiltersStore();
 const authStore = useAuthStore();
 const bookStore = useBookStore();
 
-const { services, filterService, totalPages, refetch } = useServices();
+const { services, filterService, totalPages, totalServices, refetch } =
+  useServices();
+
+const { esListaMovil } = useServiceViewport();
 
 useSeo({
   title: 'Servicios | Peluquería Marlene',
@@ -328,48 +222,9 @@ const openEditService = (id: string) => {
 const showFilterDialog = ref(false);
 const externalAmountOfFilters = ref(0);
 
-const BREAKPOINT_WIDE = 1100;
-const BREAKPOINT_COMPACT_SEARCH = 550;
-const BREAKPOINT_LIST_LAYOUT = 501;
-
 const DEFAULT_SERVICE_IMAGE = PLACEHOLDER_IMAGE;
 
 const $q = useQuasar();
-
-const windowWidth = ref(
-  typeof window !== 'undefined' ? window.innerWidth : BREAKPOINT_WIDE + 1
-);
-const windowHeight = ref(
-  typeof window !== 'undefined' ? window.innerHeight : 800
-);
-
-/** Altura del q-scroll-area solo en vista de cards: encaja en el viewport sin dejar un “hueco” scrolleable vacío. */
-const SCROLL_BODY_MAX = 680;
-const SCROLL_BODY_MIN = 280;
-const SCROLL_BODY_VIEWPORT_RESERVE = 260;
-
-const desktopScrollBodyPx = computed(() => {
-  const h = windowHeight.value - SCROLL_BODY_VIEWPORT_RESERVE;
-  return Math.round(
-    Math.max(SCROLL_BODY_MIN, Math.min(SCROLL_BODY_MAX, h))
-  );
-});
-const compactSearchOverlayOpen = ref(false);
-const compactSearchInputRef = ref<{ focus: () => void } | null>(null);
-
-const openCompactSearchOverlay = () => {
-  compactSearchOverlayOpen.value = true;
-};
-
-const showActionButtonLabels = computed(
-  () => windowWidth.value >= BREAKPOINT_WIDE
-);
-const isCompactSearch = computed(
-  () => windowWidth.value < BREAKPOINT_COMPACT_SEARCH
-);
-const isListLayout = computed(
-  () => windowWidth.value < BREAKPOINT_LIST_LAYOUT
-);
 
 const serviceImageUrl = (service: Service) =>
   optimizeCloudinaryUrl(service.images?.[0]?.url, 120) || DEFAULT_SERVICE_IMAGE;
@@ -389,33 +244,15 @@ const openServiceDetail = (id: string) => {
   serviceIdRef.value = id;
 };
 
-const syncViewport = () => {
-  windowWidth.value = window.innerWidth;
-  windowHeight.value = window.innerHeight;
+/**
+ * Buscar vuelve a la primera página. Hoy no lo hacía: buscando desde la página
+ * 3, el backend devuelve `[]` para un término que sí tiene resultados y la
+ * lista se queda en blanco.
+ */
+const alBuscar = (texto: string) => {
+  filterService.value.name = texto;
+  filterService.value.page = 1;
 };
-
-watch(
-  () => filterService.value.name,
-  () => {
-    if (compactSearchOverlayOpen.value) {
-      compactSearchOverlayOpen.value = false;
-    }
-  }
-);
-
-watch(compactSearchOverlayOpen, (open) => {
-  if (open) {
-    void nextTick(() => {
-      compactSearchInputRef.value?.focus();
-    });
-  }
-});
-
-watch(isCompactSearch, (compact) => {
-  if (!compact) {
-    compactSearchOverlayOpen.value = false;
-  }
-});
 
 type HistoryStateWithService = { service?: IndexSection };
 const indexShortcutCard =
@@ -621,22 +458,22 @@ const handlePromotionAction = (service: Service) => {
   askPromotionPercentage(service);
 };
 
-const thumbStyle = {
-  right: '4px',
-  borderRadius: '5px',
-  backgroundColor: '#abd7fa',
-  width: '5px',
-  opacity: '0.75',
-};
-
+/**
+ * El riel dorado es del documento, no de un `<div>`: desde que la página dejó
+ * su scroll interno (D4), el que desplaza es `html`. Se enciende al entrar y se
+ * apaga al salir para que el oro no se cuele en las bandas claras del inicio.
+ * La regla vive en `app.scss` (`html.m-riel-oro`).
+ */
 onMounted(() => {
-  syncViewport();
-  window.addEventListener('resize', syncViewport);
+  if (typeof document === 'undefined') return;
+  document.documentElement.classList.add('m-riel-oro');
 });
 
 onUnmounted(() => {
-  window.removeEventListener('resize', syncViewport);
+  if (typeof document === 'undefined') return;
+  document.documentElement.classList.remove('m-riel-oro');
 });
+
 
 defineOptions({
   name: 'ServicePage',
@@ -644,180 +481,121 @@ defineOptions({
 </script>
 
 <style lang="scss" scoped>
-.service-header-box {
-  overflow: hidden;
-}
-
-.service-header-inner {
-  padding: 12px 16px;
-}
-
-.service-page-heading {
+/**
+ * «El mostrador»: el nombre interno del armazón, que es como lo rotula el
+ * tablero de escritorio del lienzo. El `<h1>` dice «Servicios», que es lo que
+ * se busca y lo que publica el `<title>`.
+ *
+ * Columna, y no fila dentro de una caja: la caja gris con sombra lila era lo que
+ * hacía que la página pareciera un formulario dentro de otra página. El fondo
+ * tinta se declara aquí porque el `q-layout` lleva una foto de fondo.
+ */
+.mostrador {
   display: flex;
-  align-items: center;
-  flex-wrap: nowrap;
-  width: 100%;
+  flex-direction: column;
+  padding: 0 var(--m-banda-margen) 40px;
+  background: var(--m-tinta);
+  color: var(--m-hueso);
+  font-family: var(--m-font-sans);
+}
+
+.mostrador__cuerpo {
+  // Se come el alto sobrante para que el pie quede al final y no flotando a
+  // media pantalla: `q-page` recibe un `min-height` de Quasar.
+  flex: 1 0 auto;
   min-width: 0;
-  gap: 20px;
+  padding: 22px 0 10px;
 }
 
-.service-heading-search {
-  min-width: 0;
-}
-
-.service-heading-search--expanded {
-  flex: 1 1 auto;
-}
-
-.service-heading-search-input :deep(.q-field__control) {
-  min-height: 40px;
-}
-
-.service-heading-actions {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  gap: 15px;
-}
-
-.service-heading-actions--compact {
-  margin-left: auto;
-}
-
-.compact-search-overlay {
-  display: flex;
-  align-items: center;
-  flex-wrap: nowrap;
-  width: 100%;
-  gap: 10px;
-  min-height: 40px;
-}
-
-.compact-search-overlay-close {
-  flex-shrink: 0;
-}
-
-.compact-search-overlay-input {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.compact-search-overlay-input :deep(.q-field__control) {
-  min-height: 40px;
-}
-
-.service-header-fade-enter-active,
-.service-header-fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-
-.service-header-fade-enter-from,
-.service-header-fade-leave-to {
-  opacity: 0;
-}
-
-.color-bar {
-  background: linear-gradient(100deg, #f8bbd0 0%, #bdc9d7 90%);
-}
-.filter-badge-wrapper {
-  position: relative;
-  display: inline-block;
-}
-
-.filter-badge-count {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  font-size: 13px; // Aumenta el tamaño del texto
-  padding: 4px 8px; // Aumenta el padding para hacerlo más ancho/alto
-  line-height: 1;
-  z-index: 10;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
-}
-
-.box-style {
-  box-shadow: 0 0 10px #dbcbee;
-  background: #f5f5f5;
-  border-radius: 10px;
-}
-
-.service-body-box {
-  min-width: 0;
-}
-
-.service-body-mobile {
-  width: 100%;
-  min-height: 0;
-}
-
-.service-scroll-area {
-  width: 100%;
-}
-
-.service-cards-grid {
+.mostrador__rejilla {
   display: grid;
-  grid-template-columns: repeat(
-    auto-fill,
-    minmax(min(100%, 260px), 350px)
-  );
-  gap: 1rem 1.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 350px));
+  gap: var(--m-rejilla-gap);
   justify-content: center;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
 }
 
-.service-card-cell {
+.mostrador__celda {
   display: flex;
   justify-content: center;
   width: 100%;
   min-width: 0;
 }
 
-.service-list-mobile {
-  background: #fff;
-  box-shadow:
-    0 1px 2px rgba(60, 64, 67, 0.12),
-    0 1px 3px rgba(60, 64, 67, 0.08);
+/**
+ * La ficha tumbada de móvil, lo justo para que no quede blanca sobre tinta. La
+ * reescribe `ServiceRow.vue` en la fase B; los tres botones de dentro siguen
+ * con los colores de Quasar hasta que la fase E los sustituya.
+ */
+.mostrador__lista {
+  background: var(--m-carbon);
+  border: var(--m-filete-grosor) solid var(--m-filete-oscuro);
+  border-radius: var(--m-radio-tarjeta);
+  color: var(--m-hueso);
 }
 
-.service-list-item {
+.mostrador__renglon {
   min-height: 72px;
 }
 
-.service-list-avatar-wrap {
+.mostrador__renglon + .mostrador__renglon {
+  border-top: var(--m-filete-grosor) solid var(--m-filete-oscuro);
+}
+
+.mostrador__avatar-hueco {
   min-width: 52px;
 }
 
-.service-list-avatar img {
+.mostrador__avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.service-list-main {
+.mostrador__renglon-texto {
   min-width: 0;
 }
 
-.service-list-side {
+.mostrador__renglon-nombre {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.mostrador__renglon-lado {
   flex-shrink: 0;
   padding-left: 4px;
 }
 
-.service-list-price :deep(.cop-price-pill--dense .cop-price-pill__amount) {
+.mostrador__renglon-acciones {
+  align-items: stretch;
+  min-width: 5.5rem;
+}
+
+.mostrador__renglon-precio :deep(.cop-price-pill--dense .cop-price-pill__amount) {
   font-size: 0.8125rem;
 }
 
-.service-list-price :deep(.cop-price-pill--dense .cop-price-pill__suffix) {
+.mostrador__renglon-precio :deep(.cop-price-pill--dense .cop-price-pill__suffix) {
   font-size: 0.5rem;
 }
 
-.service-list-price :deep(.cop-price-pill) {
+.mostrador__renglon-precio :deep(.cop-price-pill) {
   margin-top: 2px;
 }
 
-.service-list-actions {
-  align-items: stretch;
-  min-width: 5.5rem;
+@media (max-width: 699px) {
+  .mostrador {
+    padding: 0 var(--m-banda-margen-movil) 28px;
+  }
+
+  .mostrador__cuerpo {
+    padding: 16px 0 8px;
+  }
+
+  .mostrador__rejilla {
+    gap: var(--m-rejilla-gap-movil);
+  }
 }
 </style>
