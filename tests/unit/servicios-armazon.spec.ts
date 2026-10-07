@@ -32,6 +32,12 @@ const HEXADECIMAL = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})\b/;
 
 const PAGINA = leer('src/pages/ServicePage.vue');
 
+/** Quienes pintan las fotos de la lista desde la fase B. */
+const FOTOS_DE_LA_LISTA = [
+  'src/components/servicePage/ServiceCard.vue',
+  'src/components/servicePage/ServiceRow.vue',
+];
+
 describe('paleta del mostrador', () => {
   it.each(ARCHIVOS)('%s no escribe ni un hexadecimal', (_nombre, ruta) => {
     expect(leer(ruta)).not.toMatch(HEXADECIMAL);
@@ -98,9 +104,10 @@ describe('lo que la fase A no puede romper', () => {
     );
   });
 
-  it('sigue usando la tarjeta y el diálogo de filtros de siempre', () => {
-    // Las sustituyen las fases B y C, no esta.
-    expect(PAGINA).toContain('TabsByEachService');
+  it('ya no usa la tarjeta vieja, y sigue con el diálogo de filtros', () => {
+    // La tarjeta la sustituyó la fase B (ServiceCardsGrid); el diálogo de
+    // filtros lo sustituye la fase C, así que ese sigue donde estaba.
+    expect(PAGINA).not.toContain('TabsByEachService');
     expect(PAGINA).toContain('ServiceFilterDialog');
   });
 
@@ -109,10 +116,49 @@ describe('lo que la fase A no puede romper', () => {
     expect(PAGINA).toContain('servicesSchema');
   });
 
+  /**
+   * Desde la fase B las fotos de la lista las pintan la tarjeta y el renglón, no
+   * la página, así que la guardia se mudó con ellas: la página ya no pinta
+   * ninguna `<img>`, y quien sí lo hace pasa la URL por los dos ayudantes.
+   */
   it('nunca sirve una imagen de Cloudinary sin optimizar', () => {
-    expect(PAGINA).toContain('optimizeCloudinaryUrl');
-    expect(PAGINA).toContain('buildCloudinarySrcset');
-    expect(PAGINA).toContain('PLACEHOLDER_IMAGE');
+    expect(PAGINA).not.toMatch(/<img\b/);
+    expect(PAGINA).not.toContain('images?.[0]?.url');
+
+    for (const ruta of FOTOS_DE_LA_LISTA) {
+      const fuente = leer(ruta);
+      // Del módulo sin Axios (ver las restricciones de la fase B).
+      expect(fuente).toMatch(
+        /import \{\s*buildCloudinarySrcset,\s*optimizeCloudinaryUrl,?\s*\} from 'src\/helpers\/cloudinaryUrl';/
+      );
+      // La única `<img>` lleva la URL ya optimizada y su `srcset`…
+      expect(fuente.match(/<img\b/g)).toHaveLength(1);
+      expect(fuente).toContain(':src="foto"');
+      expect(fuente).toMatch(
+        /const foto = computed\(\(\) => optimizeCloudinaryUrl\(urlOriginal\.value, ANCHO\)\);/
+      );
+      expect(fuente).toMatch(/buildCloudinarySrcset\(urlOriginal\.value, ANCHOS_SRCSET\)/);
+      // …y la original nunca llega a un atributo.
+      expect(fuente).not.toMatch(/:src(set)?="urlOriginal"/);
+    }
+  });
+
+  /**
+   * `PLACEHOLDER_IMAGE` sigue siendo el único sustituto de imagen (§6.6). La
+   * tarjeta y el renglón no lo usan a propósito (D-B2: sin foto pintan «Sin
+   * foto» y no piden ninguna imagen), pero tampoco inventan otro.
+   */
+  it('sin foto, la lista no pide imagen ni inventa otro sustituto', () => {
+    for (const ruta of FOTOS_DE_LA_LISTA) {
+      const fuente = leer(ruta);
+      expect(fuente).toMatch(/<img\s+v-if="tieneFoto"/);
+      expect(fuente).not.toMatch(/:src="[^"]*\|\|/);
+      // Ni un `src="…"` estático (el `:src` enlazado es el de arriba).
+      expect(fuente).not.toMatch(/(?<![:\w-])src="/);
+    }
+    expect(leer('src/constants/placeholder-image.ts')).toContain(
+      'export const PLACEHOLDER_IMAGE'
+    );
   });
 
   it('conserva los manejadores de administración', () => {

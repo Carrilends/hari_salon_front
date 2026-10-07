@@ -13,110 +13,21 @@
 
     <div class="mostrador__cuerpo">
       <!--
-        La ficha tumbada de móvil y la rejilla de tarjetas siguen aquí tal como
-        estaban: las sustituyen `ServiceRow.vue` y `ServiceCardsGrid.vue` en la
-        fase B. Lo único que cambia es que ya no van dentro de un
-        caja de scroll interno de altura calculada (D4).
+        La ranura `acciones` se queda vacía hasta la fase E (D-B6): allí van
+        los tres botones de administración (`ServiceCardAdminActions`).
       -->
-      <q-list v-if="esListaMovil" class="mostrador__lista">
-        <q-item
-          v-for="(service, index) in services"
-          :key="`${index}_${service.id}`"
-          dense
-          class="mostrador__renglon"
-        >
-          <q-item-section avatar class="mostrador__avatar-hueco">
-            <q-avatar rounded size="52px" class="mostrador__avatar">
-              <img
-                :src="serviceImageUrl(service)"
-                :srcset="serviceImageSrcset(service)"
-                sizes="52px"
-                :alt="`Imagen del servicio ${service.name}`"
-                loading="lazy"
-                decoding="async"
-                width="52"
-                height="52"
-              />
-            </q-avatar>
-          </q-item-section>
-          <q-item-section class="mostrador__renglon-texto">
-            <q-item-label lines="2" class="mostrador__renglon-nombre">
-              {{ service.name }}
-            </q-item-label>
-            <q-item-label caption class="mostrador__renglon-precio">
-              <div class="row items-center no-wrap">
-                <PriceDisplayPill :amount="service.price" dense />
-                <ServicePromoButton
-                  :have-promotion="service.havePromotion"
-                  :porcentage-discount="Number(service.porcentageDiscount ?? 0)"
-                  placement="inline"
-                  @promo-click="handlePromotionAction(service)"
-                />
-              </div>
-            </q-item-label>
-          </q-item-section>
-          <q-item-section side top class="mostrador__renglon-lado">
-            <div class="column q-gutter-xs mostrador__renglon-acciones">
-              <q-btn
-                v-if="authStore.isAdmin"
-                flat
-                dense
-                no-caps
-                size="sm"
-                padding="xs sm"
-                color="indigo-6"
-                label="Editar"
-                @click.stop="openEditService(service.id)"
-              />
-              <q-btn
-                flat
-                dense
-                no-caps
-                size="sm"
-                padding="xs sm"
-                color="primary"
-                label="Detalle"
-                @click.stop="openServiceDetail(service.id)"
-              />
-              <q-btn
-                v-if="authStore.isAdmin"
-                flat
-                dense
-                no-caps
-                size="sm"
-                padding="xs sm"
-                color="negative"
-                label="Eliminar"
-                @click.stop="confirmDeleteService(service.id)"
-              />
-            </div>
-          </q-item-section>
-        </q-item>
-      </q-list>
-
-      <div v-else class="mostrador__rejilla">
-        <div
-          v-for="(service, index) in services"
-          :key="`${index}_${service.id}`"
-          class="mostrador__celda"
-        >
-          <TabsByEachService
-            @detail-service="() => (serviceIdRef = service.id)"
-            @delete-service="fetchServices"
-            @edit-service="() => openEditService(service.id)"
-            @promo-service="() => handlePromotionAction(service)"
-            :props="{
-              id: service.id,
-              name: service.name,
-              precio: service.price,
-              url: serviceCardImageUrl(service),
-              havePromotion: service.havePromotion,
-              porcentageDiscount: service.porcentageDiscount,
-            }"
-            :selected="true"
-          />
-        </div>
-      </div>
+      <ServiceCardsGrid
+        :servicios="services"
+        :columnas="columnas"
+        :renglones="esListaMovil"
+        :cargando="isLoading"
+        :recargando="recargandoLista"
+        :error="Boolean(error)"
+        :hay-filtros="hayFiltrosActivos"
+        @detalle="openServiceDetail"
+        @limpiar-filtros="limpiarFiltros"
+        @reintentar="reintentar"
+      />
     </div>
 
     <ServicePagerBar
@@ -154,11 +65,9 @@ import {
   useService,
   useServiceForEdition,
 } from 'src/composables/services/useService';
-import TabsByEachService from 'src/components/servicePage/TabsByEachService.vue';
+import ServiceCardsGrid from 'src/components/servicePage/ServiceCardsGrid.vue';
 import ServiceToolbar from 'src/components/servicePage/ServiceToolbar.vue';
 import ServicePagerBar from 'src/components/servicePage/ServicePagerBar.vue';
-import ServicePromoButton from 'src/components/servicePage/ServicePromoButton.vue';
-import PriceDisplayPill from 'src/components/shared/PriceDisplayPill.vue';
 import type Service from 'src/interfaces/service';
 import ServiceFilterDialog from 'src/components/dialogs/serviceFilterDialog.vue';
 import { FilterService } from 'src/composables/dialogs/useServiceFilter';
@@ -171,14 +80,9 @@ import { useBookStore } from 'src/stores/book-store';
 import { adminServiceApi } from 'src/api/services-api';
 import { serviceIsOnPromotion } from 'src/helpers/service-promotion';
 import { useOptions } from 'src/composables/shared/useOptions';
-import { PLACEHOLDER_IMAGE } from 'src/constants/placeholder-image';
 import { useOptionsStore } from 'src/stores/options-store';
 import { useSeo } from 'src/composables/seo/useSeo';
 import { servicesSchema } from 'src/composables/seo/structuredData';
-import {
-  buildCloudinarySrcset,
-  optimizeCloudinaryUrl,
-} from 'src/helpers/cloudinaryHelpers';
 
 useOptions();
 const optionsStore = useOptionsStore();
@@ -187,10 +91,20 @@ const filtersStore = useFiltersStore();
 const authStore = useAuthStore();
 const bookStore = useBookStore();
 
-const { services, filterService, totalPages, totalServices, refetch } =
-  useServices();
+const {
+  services,
+  filterService,
+  totalPages,
+  totalServices,
+  refetch,
+  isLoading,
+  isFetching,
+  error,
+} = useServices();
 
-const { esListaMovil } = useServiceViewport();
+// D9: los cortes de ancho son del composable. Renglones solo por debajo de
+// 501 px; entre 501 y 759 px, una columna de tarjetas.
+const { esListaMovil, columnas } = useServiceViewport();
 
 useSeo({
   title: 'Servicios | Peluquería Marlene',
@@ -211,6 +125,22 @@ const { serviceIdRef } = useService();
 const { serviceIdEditRef } = useServiceForEdition();
 const dialogCreation = ref(false);
 
+/**
+ * ATENCIÓN · deuda de la fase B. Estos manejadores se quedan **sin consumidor**
+ * hasta la fase E, que pinta los botones de administración dentro de la ranura
+ * `acciones` de la rejilla: `openEditService`, `confirmDeleteService` y
+ * `handlePromotionAction` (con `askPromotionPercentage`, `askPromotionRemoval`,
+ * `applyPromotionToService`, `buildPromotionPayload` y `normalizeServiceTags`).
+ *
+ * No se borran por una razón concreta: `applyPromotionToService` es quien llama
+ * a `bookStore.syncBookingWithService(fresh)` (§6.1 de la hoja de ruta), y
+ * perder esa llamada deja una reserva en curso con el precio viejo.
+ *
+ * En este repo `@typescript-eslint/no-unused-vars` es un **error**, no un aviso:
+ * por eso los tres que se quedan sin uso llevan su `eslint-disable-next-line`,
+ * que la fase E retira al volver a consumirlos.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- lo retira la fase E (D-B6)
 const openEditService = (id: string) => {
   if (!authStore.isAdmin) return;
   serviceIdEditRef.value = '';
@@ -222,26 +152,48 @@ const openEditService = (id: string) => {
 const showFilterDialog = ref(false);
 const externalAmountOfFilters = ref(0);
 
-const DEFAULT_SERVICE_IMAGE = PLACEHOLDER_IMAGE;
-
 const $q = useQuasar();
-
-const serviceImageUrl = (service: Service) =>
-  optimizeCloudinaryUrl(service.images?.[0]?.url, 120) || DEFAULT_SERVICE_IMAGE;
-
-/**
- * La vista de tarjetas servía la URL cruda de Cloudinary mientras la de lista
- * sí la optimizaba: la misma foto, a tamaño original, para pintar una tarjeta.
- * 480 px cubre la tarjeta más ancha de la rejilla.
- */
-const serviceCardImageUrl = (service: Service) =>
-  optimizeCloudinaryUrl(service.images?.[0]?.url, 480);
-
-const serviceImageSrcset = (service: Service) =>
-  buildCloudinarySrcset(service.images?.[0]?.url, [60, 120, 240]);
 
 const openServiceDetail = (id: string) => {
   serviceIdRef.value = id;
+};
+
+/**
+ * La recarga (otra página, o un filtro nuevo) no es la primera carga: con
+ * `placeholderData: previousData` las filas anteriores siguen puestas, así que
+ * se avisa con una línea discreta y **no** con el esqueleto (§6.3).
+ */
+const recargandoLista = computed(() => isFetching.value && !isLoading.value);
+
+/** Para decidir si el vacío ofrece «Limpiar filtros» o solo explica. */
+const hayFiltrosActivos = computed(
+  () =>
+    externalAmountOfFilters.value > 0 ||
+    filterService.value.includePriceRange ||
+    filterService.value.includePromotionsOnly ||
+    Boolean(filterService.value.name)
+);
+
+/**
+ * Limpiar escribe en `filters-store`, que es el estado compartido y persistido
+ * (§6.2), y no en una copia local: el carril de la fase C y la hoja de móvil
+ * leen de ahí.
+ */
+const limpiarFiltros = () => {
+  filtersStore.clearGenders();
+  filtersStore.clearSelectedServices();
+  filterService.value.name = '';
+  filterService.value.selectedGenres = [];
+  filterService.value.selectedServicesIDs = [];
+  filterService.value.includePriceRange = false;
+  filterService.value.includePromotionsOnly = false;
+  filterService.value.page = 1;
+  externalAmountOfFilters.value = 0;
+};
+
+/** El botón «Reintentar»: `refetch` forma parte de la clave de la consulta. */
+const reintentar = () => {
+  refetch.value++;
 };
 
 /**
@@ -313,6 +265,7 @@ const fetchServices = (e: FilterService | string) => {
   }
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- lo retira la fase E (D-B6)
 const confirmDeleteService = (id: string) => {
   if (!authStore.isAdmin) return;
   $q.dialog({
@@ -449,6 +402,7 @@ const askPromotionRemoval = (service: Service) => {
   });
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- lo retira la fase E (D-B6)
 const handlePromotionAction = (service: Service) => {
   if (!(authStore.isLoggedIn && authStore.isAdmin)) return;
   if (serviceIsOnPromotion(service)) {
@@ -507,84 +461,6 @@ defineOptions({
   padding: 22px 0 10px;
 }
 
-.mostrador__rejilla {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 350px));
-  gap: var(--m-rejilla-gap);
-  justify-content: center;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-.mostrador__celda {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  min-width: 0;
-}
-
-/**
- * La ficha tumbada de móvil, lo justo para que no quede blanca sobre tinta. La
- * reescribe `ServiceRow.vue` en la fase B; los tres botones de dentro siguen
- * con los colores de Quasar hasta que la fase E los sustituya.
- */
-.mostrador__lista {
-  background: var(--m-carbon);
-  border: var(--m-filete-grosor) solid var(--m-filete-oscuro);
-  border-radius: var(--m-radio-tarjeta);
-  color: var(--m-hueso);
-}
-
-.mostrador__renglon {
-  min-height: 72px;
-}
-
-.mostrador__renglon + .mostrador__renglon {
-  border-top: var(--m-filete-grosor) solid var(--m-filete-oscuro);
-}
-
-.mostrador__avatar-hueco {
-  min-width: 52px;
-}
-
-.mostrador__avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.mostrador__renglon-texto {
-  min-width: 0;
-}
-
-.mostrador__renglon-nombre {
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.mostrador__renglon-lado {
-  flex-shrink: 0;
-  padding-left: 4px;
-}
-
-.mostrador__renglon-acciones {
-  align-items: stretch;
-  min-width: 5.5rem;
-}
-
-.mostrador__renglon-precio :deep(.cop-price-pill--dense .cop-price-pill__amount) {
-  font-size: 0.8125rem;
-}
-
-.mostrador__renglon-precio :deep(.cop-price-pill--dense .cop-price-pill__suffix) {
-  font-size: 0.5rem;
-}
-
-.mostrador__renglon-precio :deep(.cop-price-pill) {
-  margin-top: 2px;
-}
-
 @media (max-width: 699px) {
   .mostrador {
     padding: 0 var(--m-banda-margen-movil) 28px;
@@ -592,10 +468,6 @@ defineOptions({
 
   .mostrador__cuerpo {
     padding: 16px 0 8px;
-  }
-
-  .mostrador__rejilla {
-    gap: var(--m-rejilla-gap-movil);
   }
 }
 </style>
