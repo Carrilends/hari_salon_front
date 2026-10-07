@@ -8,7 +8,7 @@
       <button
         v-if="haySeleccion"
         type="button"
-        class="caja__limpiar"
+        class="caja__limpiar m-boton-plano"
         data-test="limpiar-categoria"
         aria-label="Quitar la categoría elegida"
         @click="clear"
@@ -232,7 +232,8 @@ defineExpose({ clear, hydrateFromIds, resetLocalState });
 }
 
 /// Con `containedScroll` el panel desplaza por dentro, con el riel dorado. Sin
-/// él, desplaza la página (D4): dos scrolls anidados es lo que se quita.
+/// él, desplaza quien lo contiene (el carril o el cuerpo de la hoja): dos
+/// scrolls anidados es lo que se quita.
 .caja__panel--contenida {
   flex: 1 1 auto;
   min-height: 0;
@@ -370,5 +371,37 @@ defineExpose({ clear, hydrateFromIds, resetLocalState });
 
 .caja--oscuro .caja__panel--contenida {
   scrollbar-color: var(--m-oro) var(--m-carbon);
+}
+
+/**
+ * Realce al pasar (solo puntero fino): el COLOR. El movimiento —subir 1 px con
+ * sombra suave, hundirse a 0,96 al pulsar— es global, en `app.scss`
+ * («Realce y hundido»).
+ */
+@media (hover: hover) and (pointer: fine) {
+  .caja__chip:hover:not(:disabled) {
+    border-color: var(--m-oro);
+  }
+
+  // Sobre claro el activo es oro profundo macizo: el filete se aclara a oro.
+  .caja--claro .caja__chip--activo:hover:not(:disabled) {
+    border-color: var(--m-oro);
+  }
+
+  .caja--oscuro .caja__chip--activo:hover:not(:disabled) {
+    border-color: var(--m-oro-claro);
+    background: var(--m-oro-claro);
+  }
+
+  // Sobre claro, el profundo: el oro claro no es color de icono sobre hueso.
+  .caja--claro .caja__limpiar:hover {
+    border-color: var(--m-oro);
+    color: var(--m-oro-profundo);
+  }
+
+  .caja--oscuro .caja__limpiar:hover {
+    border-color: var(--m-oro);
+    color: var(--m-oro);
+  }
 }
 </style>

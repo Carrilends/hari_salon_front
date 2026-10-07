@@ -117,4 +117,15 @@ const { abierto: open, abrir } = useAssistantPanel();
     transition: none;
   }
 }
+
+/**
+ * Realce al pasar (solo puntero fino): el COLOR. El movimiento —subir 1 px con
+ * sombra suave, hundirse a 0,96 al pulsar— es global, en `app.scss`
+ * («Realce y hundido»).
+ */
+@media (hover: hover) and (pointer: fine) {
+  .assistant-launcher__fab:hover {
+    color: var(--m-oro);
+  }
+}
 </style>

@@ -31,20 +31,25 @@
               unelevated
               @click="bookingStore.showDialogFn()"
             >
+              <!--
+                Dentro del botón para hundirse con él al pulsar («Realce y
+                hundido», `app.scss`); como hermano se quedaba quieto. `q-btn`
+                ya es `position: relative`, que es lo que ancla el `floating`.
+              -->
+              <q-badge
+                v-if="bookingStore.totalBookingQuantity > 0"
+                color="red"
+                rounded
+                floating
+                class="filter-badge-count"
+              >
+                {{
+                  bookingStore.totalBookingQuantity > 9
+                    ? '9+'
+                    : bookingStore.totalBookingQuantity
+                }}
+              </q-badge>
             </q-btn>
-            <q-badge
-              v-if="bookingStore.totalBookingQuantity > 0"
-              color="red"
-              rounded
-              floating
-              class="filter-badge-count"
-            >
-              {{
-                bookingStore.totalBookingQuantity > 9
-                  ? '9+'
-                  : bookingStore.totalBookingQuantity
-              }}
-            </q-badge>
           </div>
           <q-btn
             class="main-header__link"
@@ -235,8 +240,15 @@ const reviewForm = reactive<CreateReviewBody>({
  */
 const mostrarFlotanteAsistente = computed(() => route.path !== '/');
 
+/**
+ * Tampoco en `/services`: allí el pie con el paginador está siempre a la vista
+ * y la burbuja, abajo a la izquierda, se le sentaba encima. Mismo criterio que
+ * en el inicio: un solo flotante por pantalla, el del asistente. Lo marca cada
+ * ruta con `meta.sinFabResena` (`src/router/routes.ts`) y no una comparación
+ * de `route.path`, que en producción vale `/services/` con barra final.
+ */
 const mostrarFabResena = computed(
-  () => showReviewButton.value && route.path !== '/',
+  () => showReviewButton.value && !route.meta.sinFabResena,
 );
 
 const showReviewButton = computed(() => {
@@ -576,6 +588,24 @@ defineOptions({
 .review-dialog {
   width: min(92vw, 460px);
   border-radius: 14px;
+}
+
+/**
+ * Realce al pasar (solo puntero fino): el COLOR. El movimiento —subir 1 px con
+ * sombra suave, hundirse a 0,96 al pulsar— es global, en `app.scss`
+ * («Realce y hundido»).
+ */
+@media (hover: hover) and (pointer: fine) {
+  // Navegación plana sobre hueso: el dorado legible es el profundo (5,5:1).
+  .main-header__link:hover {
+    color: var(--m-oro-profundo);
+  }
+
+  // «Reservar», tinta maciza: el rótulo se enciende en oro (5,8:1 sobre tinta).
+  // Es un `q-btn`: de la regla global solo recibe el hundido.
+  .main-header__cta:hover {
+    color: var(--m-oro);
+  }
 }
 </style>
 

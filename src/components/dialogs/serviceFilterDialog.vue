@@ -20,7 +20,7 @@
         <h2 class="hoja__titulo">Filtros</h2>
         <button
           type="button"
-          class="hoja__limpiar"
+          class="hoja__limpiar m-boton-plano"
           data-test="limpiar"
           @click="limpiar"
         >
@@ -61,7 +61,7 @@
       <footer class="hoja__pie">
         <button
           type="button"
-          class="hoja__ver"
+          class="hoja__ver m-boton--ancho"
           data-test="aplicar"
           @click="verResultados"
         >
@@ -77,7 +77,10 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import ServiceFilterFields from 'src/components/servicePage/ServiceFilterFields.vue';
 import { useDialog } from 'src/composables/dialogs/useDialogService';
 import { useDialogMaximizedBelow } from 'src/composables/dialogs/useDialogMaximizedBelow';
-import { ANCHO_CARRIL_PX } from 'src/stores/filters-store';
+import {
+  ANCHO_CARRIL_PX,
+  CONSULTA_PANTALLA_BAJA,
+} from 'src/stores/filters-store';
 import { escucharConsulta } from 'src/helpers/escuchar-consulta';
 import type { FilterService } from 'src/composables/dialogs/useServiceFilter';
 
@@ -111,23 +114,21 @@ const { maximized: esHoja } = useDialogMaximizedBelow(ANCHO_CARRIL_PX);
  * «Ver N servicios»— fuera de la pantalla. Por debajo de 560 px de alto pasa a
  * pantalla completa. Detrás de la guarda de SSG porque `build:ssg`
  * prerenderiza sin `window`, y de la de `matchMedia` porque jsdom no siempre lo
- * trae.
+ * trae. El corte viene del store: es el mismo en que la página de servicios
+ * vuelve a desplazar entera.
  */
-const ALTO_MINIMO_HOJA_PX = 560;
-const CONSULTA_ALTO = `(max-height: ${ALTO_MINIMO_HOJA_PX - 1}px)`;
-
 const hayMatchMedia = () =>
   typeof window !== 'undefined' && typeof window.matchMedia === 'function';
 
 const pantallaCompleta = ref(
-  hayMatchMedia() ? window.matchMedia(CONSULTA_ALTO).matches : false
+  hayMatchMedia() ? window.matchMedia(CONSULTA_PANTALLA_BAJA).matches : false
 );
 
 let dejarDeEscuchar: (() => void) | null = null;
 
 onMounted(() => {
   if (!hayMatchMedia()) return;
-  const consulta = window.matchMedia(CONSULTA_ALTO);
+  const consulta = window.matchMedia(CONSULTA_PANTALLA_BAJA);
   const sincronizar = () => {
     pantallaCompleta.value = consulta.matches;
   };
@@ -182,6 +183,9 @@ function verResultados() {
  * de alto el diálogo se maximiza y esta regla deja de aplicarse.
  */
 .hoja {
+  /* Quasar quita los clics a `.q-dialog__inner` y solo los devuelve a sus
+     hijos `<div>`: sin esto, cada clic atraviesa la raíz y cae en el velo. */
+  pointer-events: all;
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -313,5 +317,24 @@ function verResultados() {
   text-transform: uppercase;
   letter-spacing: var(--m-tracking-nav);
   cursor: pointer;
+}
+
+/**
+ * Realce al pasar (solo puntero fino): el COLOR. El movimiento —subir 1 px con
+ * sombra suave, hundirse a 0,96 al pulsar— es global, en `app.scss`
+ * («Realce y hundido»).
+ */
+@media (hover: hover) and (pointer: fine) {
+  .hoja__cerrar:hover {
+    border-color: var(--m-oro);
+  }
+
+  .hoja__limpiar:hover {
+    color: var(--m-oro-claro);
+  }
+
+  .hoja__ver:hover {
+    background: var(--m-oro-claro);
+  }
 }
 </style>

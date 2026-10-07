@@ -785,6 +785,26 @@ describe('ficha del servicio · el contrato visual', () => {
     expect(ESTILOS).not.toMatch(/\bheight: 640px/);
   });
 
+  /**
+   * La foto grande y las miniaturas se ven ENTERAS, centradas, sobre carbón:
+   * recortadas (`cover`), la miniatura de un retrato no se distinguía de otra.
+   */
+  it('la foto grande y las miniaturas se ven enteras sobre carbón', () => {
+    expect(ESTILOS).toMatch(
+      /\.ficha__galeria \{[^}]*background: var\(--m-carbon\);/
+    );
+    expect(ESTILOS).toMatch(
+      /\.ficha__foto \{[^}]*object-fit: contain;[^}]*object-position: center;/
+    );
+    expect(ESTILOS).toMatch(
+      /\.ficha__miniatura \{[^}]*background: var\(--m-carbon\);/
+    );
+    expect(ESTILOS).toMatch(
+      /\.ficha__miniatura img \{[^}]*object-fit: contain;[^}]*object-position: center;/
+    );
+    expect(ESTILOS).not.toContain('object-fit: cover');
+  });
+
   it('maximizada en una ventana bajita, la foto cede alto a la lectura', () => {
     expect(ESTILOS).toMatch(
       /\.ficha--amplia \{[\s\S]*?\.ficha__galeria \{\s*height: min\(240px, 34vh\);/

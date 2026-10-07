@@ -1,5 +1,10 @@
 <template>
-  <article class="tarjeta-servicio" data-test="tarjeta">
+  <article
+    ref="raiz"
+    class="tarjeta-servicio m-tarjeta-pulsable"
+    :class="{ 'm-foto-cargando': tieneFoto && cargando(foto) }"
+    data-test="tarjeta"
+  >
     <!--
       El orden de los atributos importa: la imagen empieza a bajar en cuanto
       recibe `src`. `loading` primero para que WebKit aplace la descarga, y `src`
@@ -7,13 +12,15 @@
     -->
     <img
       v-if="tieneFoto"
-      class="tarjeta-servicio__foto"
+      class="tarjeta-servicio__foto m-foto-fundido"
+      :class="{ 'm-foto-fundido--esperando': cargando(foto) }"
       loading="lazy"
       decoding="async"
       :srcset="fotoSrcset || undefined"
       :sizes="MEDIDAS"
       :alt="`Foto del servicio ${servicio.name}`"
       :src="foto"
+      @load="alCargar"
       @error="fotoRota = true"
     />
     <div v-else class="tarjeta-servicio__sin-foto" data-test="sin-foto">
@@ -86,7 +93,7 @@
 
     <button
       type="button"
-      class="tarjeta-servicio__enlace"
+      class="tarjeta-servicio__enlace m-boton-estirado"
       data-test="tarjeta-enlace"
       :aria-label="`Ver el detalle de ${servicio.name}`"
       @click="emit('detalle', servicio.id)"
@@ -109,6 +116,7 @@ import {
 } from 'src/helpers/service-promotion';
 import { etiquetaDeCategoria } from 'src/helpers/service-category';
 import { urlDeFotoPrincipal } from 'src/helpers/service-photo';
+import { useCargaImagen } from 'src/composables/shared/useCargaImagen';
 
 defineOptions({ name: 'ServiceCard' });
 
@@ -145,10 +153,28 @@ watch(urlOriginal, () => {
   fotoRota.value = false;
 });
 
-const tieneFoto = computed(() => Boolean(urlOriginal.value) && !fotoRota.value);
 const foto = computed(() => optimizeCloudinaryUrl(urlOriginal.value, ANCHO));
 const fotoSrcset = computed(() =>
   buildCloudinarySrcset(urlOriginal.value, ANCHOS_SRCSET)
+);
+
+/**
+ * Mientras la foto no llega, la tarjeta entera brilla (es la foto); al llegar,
+ * la foto entra con un fundido. Un `error` ya lo cubre `fotoRota`: la imagen
+ * se va y con ella la clase.
+ */
+const raiz = ref<HTMLElement | null>(null);
+const { cargando, fallida, alCargar } = useCargaImagen(raiz, () => [
+  foto.value,
+]);
+
+/**
+ * Sin URL, con un `error` ya oído (`fotoRota`) o con una foto que había fallado
+ * antes de montar (`fallida`, del repaso de `useCargaImagen`): «Sin foto».
+ */
+const tieneFoto = computed(
+  () =>
+    Boolean(urlOriginal.value) && !fotoRota.value && !fallida(foto.value)
 );
 
 const categoria = computed(() => etiquetaDeCategoria(props.servicio));
@@ -185,11 +211,18 @@ const precioBase = computed(() =>
   border-color: var(--m-oro);
 }
 
+/**
+ * La foto entera, centrada, nunca recortada: lo que sobra del marco se pinta
+ * en carbón, el equivalente cálido del fondo gris del diseño viejo. Recortar
+ * le quitaba la cabeza a un retrato en una tarjeta apaisada.
+ */
 .tarjeta-servicio__foto {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
+  background: var(--m-carbon);
 }
 
 /**

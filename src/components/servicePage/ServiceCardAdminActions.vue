@@ -113,12 +113,6 @@ defineOptions({ name: 'ServiceCardAdminActions' });
   color: var(--m-hueso);
   font-family: var(--m-font-sans);
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
-}
-
-.acciones-admin__boton:hover {
-  background: var(--m-tinta);
-  transform: translateY(-1px);
 }
 
 .acciones-admin__boton:focus-visible {
@@ -127,8 +121,7 @@ defineOptions({ name: 'ServiceCardAdminActions' });
 }
 
 /* Promoción activa: el control se rellena de oro y dice el porcentaje. */
-.acciones-admin__boton--oro,
-.acciones-admin__boton--oro:hover {
+.acciones-admin__boton--oro {
   background: var(--m-oro);
   color: var(--m-tinta);
 }
@@ -155,13 +148,32 @@ defineOptions({ name: 'ServiceCardAdminActions' });
   color: var(--m-hueso);
 }
 
-.acciones-admin--compacto .acciones-admin__boton:hover {
-  background: var(--m-tinta);
-}
-
-.acciones-admin--compacto .acciones-admin__boton--oro,
-.acciones-admin--compacto .acciones-admin__boton--oro:hover {
+.acciones-admin--compacto .acciones-admin__boton--oro {
   background: var(--m-oro);
   color: var(--m-tinta);
+}
+
+/**
+ * Realce al pasar (solo puntero fino): el COLOR. El movimiento —subir 1 px con
+ * sombra suave, hundirse a 0,96 al pulsar— es global, en `app.scss`
+ * («Realce y hundido»).
+ */
+@media (hover: hover) and (pointer: fine) {
+  // Antes la pieza subía 1 px con su propia transición; ahora el movimiento es
+  // el global y aquí solo queda el color: el velo se cierra a tinta y el trazo
+  // se enciende en oro (5,8:1 sobre tinta).
+  .acciones-admin__boton:hover,
+  .acciones-admin--compacto .acciones-admin__boton:hover {
+    background: var(--m-tinta);
+    color: var(--m-oro);
+  }
+
+  // Con la promoción activa, el oro macizo se aclara.
+  .acciones-admin__boton--oro:hover,
+  .acciones-admin--compacto .acciones-admin__boton--oro:hover {
+    border-color: var(--m-oro-claro);
+    background: var(--m-oro-claro);
+    color: var(--m-tinta);
+  }
 }
 </style>

@@ -44,6 +44,12 @@
   /// Para texto dorado sobre claro se usa `--m-oro-profundo`.
   --m-oro: #b08a46;
 
+  /// Oro aclarado: el realce al pasar por un botón de oro macizo (rótulo en
+  /// `--m-tinta`, 7,8:1 — sube desde los 5,8:1 del oro normal, así que el
+  /// realce nunca resta legibilidad). Como su hermano, **no es color de texto
+  /// sobre hueso** (2,1:1): solo fondo o borde.
+  --m-oro-claro: #c9a35f;
+
   /// Oro legible sobre claro: 5,5:1 sobre hueso. Etiquetas en versalitas,
   /// precios y enlaces de sección.
   --m-oro-profundo: #7a5c28;
@@ -106,6 +112,12 @@
   /// 2,6:1 (calculado): basta para un pulgar, y no es color de texto.
   --m-riel-canal-claro: #e6ded3;
 
+  /// Carbón aclarado: el brillo que recorre el hueco de una foto remota que
+  /// todavía no ha llegado (`.m-foto-cargando`, en `app.scss`). Sobre
+  /// `--m-carbon` apenas se separa, y es lo que se busca: un reflejo, no una
+  /// luz. No es color de texto: nada se escribe encima.
+  --m-carbon-claro: #3b342b;
+
   /// Fondo de un botón que se posa sobre una foto (las acciones de la dueña en
   /// la tarjeta). No es color de texto: solo asienta el icono.
   --m-velo-accion: rgba(22, 19, 15, 0.72);
@@ -116,6 +128,10 @@
   /// (`--m-whatsapp-texto`, 9,3:1); en blanco daría 2,0:1 y no pasa AA.
   --m-whatsapp: #25d366;
   --m-whatsapp-texto: #0b2e18;
+
+  /// El verde de WhatsApp al pasar el ratón: un punto más luminoso. Su texto
+  /// sigue siendo `--m-whatsapp-texto` (8,5:1, calculado); nunca blanco.
+  --m-whatsapp-realce: #2fe074;
 
   // --- Tipografía -----------------------------------------------------------
   //
@@ -171,6 +187,33 @@
   /// flotante cae dentro de la barra y le roba los toques al WhatsApp.
   --m-barra-movil-alto: calc(77px + env(safe-area-inset-bottom, 0px));
 
+  // --- Movimiento -----------------------------------------------------------
+
+  /// Fundido con que entra una foto remota cuando por fin llega
+  /// (`.m-foto-fundido`, en `app.scss`). Corto: lo bastante para que la foto
+  /// no salte, no tanto como para que la clienta la espere. No es un color.
+  --m-transicion-fundido: 250ms;
+
+  /// «Realce y hundido» de los botones (`app.scss`): duración y curva del
+  /// paso de reposo a realce (al pasar) y de hundido a reposo (al soltar). La
+  /// curva pasa de 1 en su segundo punto de control —por eso rebota—, pero
+  /// poco: la escala de 0,96 vuelve a ~1,003 y se queda en 1. Se siente, no se
+  /// ve. No son colores.
+  --m-transicion-pulsar: 150ms;
+  --m-curva-pulsar: cubic-bezier(0.34, 1.4, 0.64, 1);
+
+  /// Sombra del botón realzado: muy suave, para que el botón «se despegue» un
+  /// píxel sin que parezca un azulejo. `rgba(22, 19, 15, α)` son los canales
+  /// de `--m-tinta` (una sombra necesita alfa y `color-mix()` no llega a
+  /// Safari 13.1). No es color de texto.
+  --m-sombra-realce: 0 3px 10px rgba(22, 19, 15, 0.16);
+
   /// Área táctil mínima de cualquier control. No bajar de aquí.
   --m-tactil-min: 44px;
+
+  /// Lo que un pie fijo deja libre abajo para que el lanzador del asistente
+  /// (`AssistantLauncher.vue`: 18 px del borde inferior, 48 de alto) no le
+  /// tape los controles, más 8 px de hueco. Si la píldora cambia de sitio o de
+  /// alto, esto cambia con ella (lo vigila `tokens.spec.ts`). No es un color.
+  --m-flotante-despeje: calc(18px + 48px + 8px);
 }

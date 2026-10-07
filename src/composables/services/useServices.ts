@@ -2,6 +2,7 @@ import { computed, ref, watch } from 'vue';
 import { useQuery } from '@tanstack/vue-query';
 
 import { useServicesStore } from 'src/stores/service-store';
+import { PRECIO_ESCALA_MAX, PRECIO_ESCALA_MIN } from 'src/stores/filters-store';
 import { servicesApi } from 'src/api/services-api';
 import Service from 'src/interfaces/service';
 
@@ -43,9 +44,10 @@ export const useServices = () => {
     selectedServicesIDs: [],
     includePriceRange: false,
     includePromotionsOnly: false,
+    // La escala entera del control de precio, la misma del store.
     prices: {
-      min: 5,
-      max: 200,
+      min: PRECIO_ESCALA_MIN,
+      max: PRECIO_ESCALA_MAX,
     },
     // Used for pagination
     page: 1,

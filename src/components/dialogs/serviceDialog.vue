@@ -35,13 +35,21 @@
         </svg>
       </button>
 
-      <div class="ficha__galeria" data-test="galeria">
+      <div
+        ref="galeria"
+        class="ficha__galeria"
+        :class="{ 'm-foto-cargando': cargando(fotoGrande) }"
+        data-test="galeria"
+      >
         <img
-          class="ficha__foto"
+          class="ficha__foto m-foto-fundido"
+          :class="{ 'm-foto-fundido--esperando': cargando(fotoGrande) }"
           data-test="foto"
           :src="fotoGrande"
           :alt="props.service.name"
           decoding="async"
+          @load="alCargar"
+          @error="alFallar"
         />
 
         <ul v-if="fotos.length > 1" class="ficha__miniaturas">
@@ -49,19 +57,28 @@
             <button
               type="button"
               class="ficha__miniatura"
-              :class="{ 'ficha__miniatura--elegida': i === elegida }"
+              :class="{
+                'ficha__miniatura--elegida': i === elegida,
+                'm-foto-cargando': cargando(miniatura(imagen.url)),
+              }"
               data-test="miniatura"
               :aria-label="`Ver foto ${i + 1} de ${fotos.length}`"
               :aria-current="i === elegida ? 'true' : undefined"
               @click="elegida = i"
             >
               <img
+                class="m-foto-fundido"
+                :class="{
+                  'm-foto-fundido--esperando': cargando(miniatura(imagen.url)),
+                }"
                 :src="miniatura(imagen.url)"
                 alt=""
                 width="56"
                 height="56"
                 loading="lazy"
                 decoding="async"
+                @load="alCargar"
+                @error="alFallar"
               />
             </button>
           </li>
@@ -137,7 +154,7 @@
         <div class="ficha__botones">
           <button
             type="button"
-            class="ficha__anadir"
+            class="ficha__anadir m-boton--ancho"
             data-test="anadir-reserva"
             @click="anadir"
           >
@@ -169,6 +186,7 @@ import {
 } from 'src/helpers/service-category';
 import { optimizeCloudinaryUrl } from 'src/helpers/cloudinaryUrl';
 import { PLACEHOLDER_IMAGE } from 'src/constants/placeholder-image';
+import { useCargaImagen } from 'src/composables/shared/useCargaImagen';
 import { formatCopDisplay } from 'src/helpers/price-display';
 import {
   effectiveServiceUnitPrice,
@@ -295,14 +313,39 @@ const fotos = computed<Image[]>(() => {
 
 const elegida = ref(0);
 
-const fotoGrande = computed(
+const fotoPedida = computed(
   () =>
     optimizeCloudinaryUrl(fotos.value[elegida.value]?.url, ANCHO_FOTO) ||
     PLACEHOLDER_IMAGE
 );
 
-const miniatura = (url: string) =>
+const miniaturaPedida = (url: string) =>
   optimizeCloudinaryUrl(url, ANCHO_MINIATURA) || PLACEHOLDER_IMAGE;
+
+/**
+ * La galería brilla mientras la foto grande no llega, y cada miniatura mientras
+ * no llega la suya (ver `useCargaImagen`). El estado va por URL: elegir otra
+ * miniatura vuelve a esperar la foto nueva sin reiniciar nada a mano.
+ *
+ * Si una foto falla (borrada en Cloudinary, sin red), se pinta el sustituto en
+ * su lugar: un hueco con el texto alternativo no es una foto. El sustituto es un
+ * SVG en línea, no puede fallar, así que no hay bucle.
+ */
+const galeria = ref<HTMLElement | null>(null);
+const { cargando, fallida, alCargar, alFallar } = useCargaImagen(galeria, () =>
+  [fotoPedida.value].concat(
+    fotos.value.map((imagen) => miniaturaPedida(imagen.url))
+  )
+);
+
+const fotoGrande = computed(() =>
+  fallida(fotoPedida.value) ? PLACEHOLDER_IMAGE : fotoPedida.value
+);
+
+const miniatura = (url: string) => {
+  const pedida = miniaturaPedida(url);
+  return fallida(pedida) ? PLACEHOLDER_IMAGE : pedida;
+};
 
 /**
  * D3: la cifra grande es el precio que de verdad se va a cobrar. `price` llega
@@ -415,6 +458,9 @@ const rostros = computed<string[]>(() =>
  * ficha entera, 420 px de foto dejarían la lectura en 140 px. 420/880 = 48 %.
  */
 .ficha {
+  /* Quasar quita los clics a `.q-dialog__inner` y solo los devuelve a sus
+     hijos `<div>`: sin esto, cada clic atraviesa la raíz y cae en el velo. */
+  pointer-events: all;
   position: relative;
   display: grid;
   grid-template-columns: clamp(220px, 48%, 420px) minmax(0, 1fr);
@@ -436,18 +482,24 @@ const rostros = computed<string[]>(() =>
 
 /* --- La columna de la foto ------------------------------------------------ */
 
+/*
+ * La foto grande y las miniaturas se ven enteras (`contain`), centradas, y lo
+ * que sobra de su marco es carbón: recortadas, la miniatura de un retrato no
+ * se distinguía de otra.
+ */
 .ficha__galeria {
   grid-area: foto;
   position: relative;
   min-width: 0;
-  background: var(--m-tinta);
+  background: var(--m-carbon);
 }
 
 .ficha__foto {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
 }
 
 .ficha__miniaturas {
@@ -463,13 +515,15 @@ const rostros = computed<string[]>(() =>
 }
 
 .ficha__miniatura {
+  // Ancla el brillo de carga (`.m-foto-cargando::before`, en `app.scss`).
+  position: relative;
   display: block;
   width: 56px;
   height: 56px;
   padding: 0;
   overflow: hidden;
   cursor: pointer;
-  background: var(--m-tinta);
+  background: var(--m-carbon);
   border: var(--m-filete-grosor) solid var(--m-filete-oscuro);
   border-radius: var(--m-radio-foto);
 }
@@ -482,7 +536,8 @@ const rostros = computed<string[]>(() =>
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
 }
 
 .ficha__miniatura:focus-visible {
@@ -761,6 +816,34 @@ const rostros = computed<string[]>(() =>
 
   .ficha__precio {
     font-size: 22px;
+  }
+}
+
+/**
+ * Realce al pasar (solo puntero fino): el COLOR. El movimiento —subir 1 px con
+ * sombra suave, hundirse a 0,96 al pulsar— es global, en `app.scss`
+ * («Realce y hundido»).
+ */
+@media (hover: hover) and (pointer: fine) {
+  .ficha__cerrar:hover {
+    border-color: var(--m-oro);
+    color: var(--m-oro);
+  }
+
+  .ficha__miniatura:hover {
+    border-color: var(--m-oro);
+  }
+
+  .ficha__miniatura--elegida:hover {
+    border-color: var(--m-oro-claro);
+  }
+
+  .ficha__anadir:hover {
+    background: var(--m-oro-claro);
+  }
+
+  .ficha__cerrar-pie:hover {
+    border-color: var(--m-oro);
   }
 }
 </style>

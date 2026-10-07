@@ -12,6 +12,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { CONSULTA_PANTALLA_BAJA } from 'src/stores/filters-store';
 
 const leer = (relativa: string) =>
   readFileSync(join(__dirname, '../../', relativa), 'utf8');
@@ -55,12 +56,114 @@ describe('paleta del mostrador', () => {
 });
 
 describe('armazón de la página de servicios', () => {
-  it('desplaza la página, no una caja de dentro', () => {
-    // D4: fuera el scroll interno y la altura calculada.
+  /**
+   * Mudada el 2026-10-07 (se revierte D4 a petición de Luis): antes fijaba «la
+   * página entera desplaza»; ahora fija lo contrario. Cabecera, barra y pie se
+   * quedan quietos y solo la lista desplaza, dentro de su caja. Lo que D4 quitó
+   * sigue fuera: ni `q-scroll-area` (D8, marcado llano) ni la altura calculada
+   * a mano; el alto lo da el `style-fn` de Quasar, que ya descuenta la cabecera.
+   */
+  it('solo desplaza la lista, con scroll nativo y sin cuentas a mano', () => {
     expect(PAGINA).not.toContain('q-scroll-area');
     expect(PAGINA).not.toContain('desktopScrollBodyPx');
     expect(PAGINA).not.toContain('thumbStyle');
     expect(PAGINA).not.toContain('windowHeight');
+
+    expect(PAGINA).toMatch(/<q-page[^>]*:style-fn="alturaDelMostrador"/);
+    expect(PAGINA).toMatch(/calc\(100vh - \$\{offset\}px\)/);
+    // El alto viaja en una variable, no en un `height` en línea (que le ganaría
+    // a la consulta de pantalla baja).
+    expect(PAGINA).toMatch(/return \{ '--mostrador-alto': altura \};/);
+    expect(PAGINA).toMatch(
+      /\.mostrador \{[^}]*height: var\(--mostrador-alto\);[^}]*min-height: var\(--mostrador-alto\);/
+    );
+  });
+
+  /**
+   * Teléfono tumbado (844×390): cabecera, barra y pie se comían el alto y a la
+   * lista le quedaban 80 px. Por debajo de 560 px de alto (el corte de la hoja
+   * de filtros) vuelve a desplazar la página entera: alto natural, y ni la
+   * lista ni el carril desplazan por su cuenta. En CSS, para que valga también
+   * en el HTML prerenderizado.
+   */
+  it('en una pantalla baja vuelve a desplazar la página entera', () => {
+    const estilos = PAGINA.slice(PAGINA.indexOf('<style'));
+    // El literal del SCSS sale de la constante del store: si el corte cambia
+    // allí y no aquí, esto falla en vez de dejar el SCSS desfasado.
+    const inicio = estilos.indexOf(`@media ${CONSULTA_PANTALLA_BAJA} {`);
+    expect(inicio).toBeGreaterThan(-1);
+    const bloque = estilos.slice(inicio, estilos.indexOf('\n}\n', inicio));
+
+    expect(bloque).toMatch(/\.mostrador \{\s*height: auto;/);
+    expect(bloque).toMatch(/\.mostrador__cuerpo \{\s*flex: 1 0 auto;/);
+    expect(bloque).toMatch(/\.mostrador__lista \{\s*overflow-y: visible;/);
+    const carril = leer('src/components/servicePage/ServiceFilterRail.vue');
+    const bloqueCarril = carril.slice(
+      carril.indexOf(`@media ${CONSULTA_PANTALLA_BAJA} {`)
+    );
+    expect(carril).toContain(`@media ${CONSULTA_PANTALLA_BAJA} {`);
+    expect(bloqueCarril).toMatch(
+      /^@media [^{]+\{\s*\.carril \{\s*overflow-y: visible;/
+    );
+  });
+
+  /**
+   * El lanzador del asistente flota abajo a la derecha (18 px del borde, 48 de
+   * alto) y el pie está siempre a la vista: sin despeje, «Siguiente» quedaba
+   * debajo de la píldora. El relleno inferior del mostrador es el token del
+   * despeje, a todos los anchos; nada de 40/28 px sueltos.
+   */
+  it('el pie termina por encima del lanzador del asistente', () => {
+    expect(PAGINA).toMatch(
+      /\.mostrador \{[^}]*padding: 0 var\(--m-banda-margen\) var\(--m-flotante-despeje\);/
+    );
+    expect(PAGINA).toMatch(
+      /padding: 0 var\(--m-banda-margen-movil\) var\(--m-flotante-despeje\);/
+    );
+    expect(PAGINA).not.toMatch(
+      /padding: 0 var\(--m-banda-margen(-movil)?\) \d+px;/
+    );
+  });
+
+  it('el armazón es una columna: barra y pie quietos, el cuerpo se come el resto', () => {
+    expect(PAGINA).toMatch(
+      /\.mostrador \{[^}]*display: flex;[^}]*flex-direction: column;/
+    );
+    expect(PAGINA).toMatch(
+      /\.mostrador__barra,\s*\n\.mostrador__pie \{\s*flex: none;/
+    );
+    expect(PAGINA).toMatch(/<ServiceToolbar\s+class="mostrador__barra"/);
+    expect(PAGINA).toMatch(/<ServicePagerBar\s+class="mostrador__pie"/);
+    // Sin `min-height: 0` un hijo flexible no encoge por debajo de su
+    // contenido y la lista empujaría el pie fuera de la pantalla.
+    expect(PAGINA).toMatch(
+      /\.mostrador__cuerpo \{[^}]*flex: 1 1 0;[^}]*min-height: 0;[^}]*align-items: stretch;/
+    );
+  });
+
+  it('la lista es el único contenedor del cuerpo que desplaza', () => {
+    const estilos = PAGINA.slice(PAGINA.indexOf('<style'));
+    expect(estilos.match(/overflow-y: auto;/g)).toHaveLength(1);
+    expect(PAGINA).toMatch(
+      /\.mostrador__lista \{[^}]*min-height: 0;[^}]*overflow-y: auto;[^}]*overscroll-behavior: contain;/
+    );
+    expect(estilos).not.toMatch(/overflow(-y)?: scroll;/);
+  });
+
+  it('la barra y el pie quedan fuera de la caja que desplaza', () => {
+    const plantilla = PAGINA.slice(0, PAGINA.indexOf('</template>\n\n<script'));
+    const inicioLista = plantilla.indexOf(
+      'class="mostrador__lista m-riel-oro"'
+    );
+    const finLista = plantilla.indexOf('</ServiceCardsGrid>');
+    const lista = plantilla.slice(inicioLista, finLista);
+
+    expect(inicioLista).toBeGreaterThan(-1);
+    expect(lista).not.toContain('ServiceToolbar');
+    expect(lista).not.toContain('ServicePagerBar');
+    expect(lista).not.toContain('ServiceFilterRail');
+    expect(plantilla.indexOf('<ServiceToolbar')).toBeLessThan(inicioLista);
+    expect(plantilla.indexOf('<ServicePagerBar')).toBeGreaterThan(finLista);
   });
 
   it('se quitó la caja gris con sombra lila', () => {
@@ -74,9 +177,19 @@ describe('armazón de la página de servicios', () => {
     expect(PAGINA).toContain('var(--m-banda-margen-movil)');
   });
 
-  it('enciende el riel dorado al entrar y lo apaga al salir', () => {
-    expect(PAGINA).toContain("classList.add('m-riel-oro')");
-    expect(PAGINA).toContain("classList.remove('m-riel-oro')");
+  /**
+   * Mudada el 2026-10-07: antes fijaba que la página encendía `html.m-riel-oro`
+   * al montarse y lo apagaba al desmontarse. Con el documento quieto, el riel
+   * es de quien desplaza: la lista y el carril llevan la clase de utilidad, y
+   * la página ya no toca el `<html>`.
+   */
+  it('el riel dorado va en la lista y en el carril, no en el documento', () => {
+    expect(PAGINA).toContain('class="mostrador__lista m-riel-oro"');
+    expect(leer('src/components/servicePage/ServiceFilterRail.vue')).toMatch(
+      /<aside[^>]*class="carril m-riel-oro"/
+    );
+    expect(PAGINA).not.toContain('classList');
+    expect(PAGINA).not.toContain('documentElement');
   });
 
   it('monta la cabecera y el pie, y ya no pagina con Quasar', () => {

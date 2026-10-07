@@ -1,10 +1,15 @@
 <template>
-  <article class="fila-servicio" data-test="fila">
+  <article class="fila-servicio m-tarjeta-pulsable" data-test="fila">
     <!--
       El marco mide 104 px de ancho y se estira con el renglón; la foto va en
       absoluto dentro para que su proporción no decida el alto (ver el CSS).
     -->
-    <div class="fila-servicio__marco" data-test="fila-marco">
+    <div
+      ref="marco"
+      class="fila-servicio__marco"
+      :class="{ 'm-foto-cargando': tieneFoto && cargando(foto) }"
+      data-test="fila-marco"
+    >
       <!--
         El orden de los atributos importa: la imagen empieza a bajar en cuanto
         recibe `src`. `loading` primero para que WebKit aplace la descarga, y
@@ -12,7 +17,8 @@
       -->
       <img
         v-if="tieneFoto"
-        class="fila-servicio__foto"
+        class="fila-servicio__foto m-foto-fundido"
+        :class="{ 'm-foto-fundido--esperando': cargando(foto) }"
         loading="lazy"
         decoding="async"
         width="104"
@@ -21,6 +27,7 @@
         sizes="104px"
         :alt="`Foto del servicio ${servicio.name}`"
         :src="foto"
+        @load="alCargar"
         @error="fotoRota = true"
       />
       <div
@@ -88,7 +95,7 @@
 
     <button
       type="button"
-      class="fila-servicio__enlace"
+      class="fila-servicio__enlace m-boton-estirado"
       data-test="fila-enlace"
       :aria-label="`Ver el detalle de ${servicio.name}`"
       @click="emit('detalle', servicio.id)"
@@ -113,6 +120,7 @@ import {
 } from 'src/helpers/service-promotion';
 import { etiquetaDeCategoria } from 'src/helpers/service-category';
 import { urlDeFotoPrincipal } from 'src/helpers/service-photo';
+import { useCargaImagen } from 'src/composables/shared/useCargaImagen';
 
 defineOptions({ name: 'ServiceRow' });
 
@@ -131,10 +139,24 @@ watch(urlOriginal, () => {
   fotoRota.value = false;
 });
 
-const tieneFoto = computed(() => Boolean(urlOriginal.value) && !fotoRota.value);
 const foto = computed(() => optimizeCloudinaryUrl(urlOriginal.value, ANCHO));
 const fotoSrcset = computed(() =>
   buildCloudinarySrcset(urlOriginal.value, ANCHOS_SRCSET)
+);
+
+/** El marco brilla hasta que la foto llega (ver `useCargaImagen`). */
+const marco = ref<HTMLElement | null>(null);
+const { cargando, fallida, alCargar } = useCargaImagen(marco, () => [
+  foto.value,
+]);
+
+/**
+ * Sin URL, con un `error` ya oído (`fotoRota`) o con una foto que había fallado
+ * antes de montar (`fallida`, del repaso de `useCargaImagen`): «Sin foto».
+ */
+const tieneFoto = computed(
+  () =>
+    Boolean(urlOriginal.value) && !fotoRota.value && !fallida(foto.value)
 );
 
 const categoria = computed(() => etiquetaDeCategoria(props.servicio));
@@ -175,6 +197,8 @@ const precioBase = computed(() =>
  * renglones crecían a medida que cargaban las fotos). En absoluto no aporta
  * alto: lo decide el texto, o las acciones apiladas. Los cuatro lados a mano,
  * no `inset`, que Safari 13.1 y 14.0 descartan.
+ *
+ * La foto se ve entera (`contain`), centrada; lo que sobra del marco es carbón.
  */
 .fila-servicio__marco {
   position: relative;
@@ -182,6 +206,7 @@ const precioBase = computed(() =>
   align-self: stretch;
   width: 104px;
   min-height: 104px;
+  background: var(--m-carbon);
 }
 
 .fila-servicio__foto {
@@ -192,7 +217,8 @@ const precioBase = computed(() =>
   left: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
 }
 
 .fila-servicio__sin-foto {

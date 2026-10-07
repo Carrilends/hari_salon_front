@@ -496,4 +496,20 @@ defineExpose({ limpiar, aplicar: sendFilter });
   width: var(--m-tactil-min);
   height: var(--m-tactil-min);
 }
+
+/**
+ * Realce al pasar (solo puntero fino): el COLOR. El movimiento —subir 1 px con
+ * sombra suave, hundirse a 0,96 al pulsar— es global, en `app.scss`
+ * («Realce y hundido»).
+ */
+@media (hover: hover) and (pointer: fine) {
+  .campos__chip:hover {
+    border-color: var(--m-oro);
+  }
+
+  .campos__chip--activo:hover {
+    border-color: var(--m-oro-claro);
+    background: var(--m-oro-claro);
+  }
+}
 </style>

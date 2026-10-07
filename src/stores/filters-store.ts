@@ -5,7 +5,9 @@ import { useOptionsStore } from './options-store';
 
 /**
  * Los extremos del control de precio. **Están en MILES**, no en pesos: el
- * control va de 5 a 200 y la etiqueta añade «.000» al pintarlos.
+ * control va de 5 a 300 y la etiqueta añade «.000» al pintarlos. El tope queda
+ * por encima del servicio más caro del catálogo (250.000): con 200, activar el
+ * filtro dejaba fuera para siempre los servicios de más de 200.000.
  *
  * El cuerpo de `/service/search` viaja también en MILES y el backend lo pasa a
  * pesos antes de comparar (`rangoEnPesos`, `PESOS_POR_UNIDAD_DE_FILTRO = 1000`,
@@ -15,7 +17,7 @@ import { useOptionsStore } from './options-store';
  * la Tarea 2 de `docs/superpowers/plans/2026-10-07-servicios-fase-c-filtros.md`).
  */
 export const PRECIO_ESCALA_MIN = 5;
-export const PRECIO_ESCALA_MAX = 200;
+export const PRECIO_ESCALA_MAX = 300;
 
 /**
  * Desde este ancho los filtros son un carril fijo a la izquierda de la lista
@@ -24,6 +26,22 @@ export const PRECIO_ESCALA_MAX = 200;
  * los dos a la vez.
  */
 export const ANCHO_CARRIL_PX = 1024;
+
+/**
+ * Por debajo de este alto de ventana (teléfono tumbado) no cabe un armazón con
+ * cabecera, barra y pie fijos: la hoja de filtros pasa a pantalla completa y la
+ * página de servicios vuelve a desplazar entera. Lo importan las dos; el SCSS
+ * de la página y del carril, que no puede importarlo, lo repite como
+ * `@media (max-height: 559px)`, y las pruebas construyen ese literal a partir
+ * de `CONSULTA_PANTALLA_BAJA` para que no se quede desfasado.
+ */
+export const ALTO_MINIMO_HOJA_PX = 560;
+
+/** El último alto que cuenta como pantalla baja: `max-height` es inclusivo. */
+const ALTO_ULTIMO_BAJO_PX = ALTO_MINIMO_HOJA_PX - 1;
+
+/** La consulta de pantalla baja, una sola para la hoja y la página. */
+export const CONSULTA_PANTALLA_BAJA = `(max-height: ${ALTO_ULTIMO_BAJO_PX}px)`;
 
 export const useFiltersStore = defineStore('filters', () => {
   const optionsStore = useOptionsStore();

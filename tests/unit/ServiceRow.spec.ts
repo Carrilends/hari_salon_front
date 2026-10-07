@@ -211,8 +211,13 @@ describe('ServiceRow', () => {
       /\.fila-servicio__marco \{[^}]*position:\s*relative;[^}]*align-self:\s*stretch;[^}]*width:\s*104px;[^}]*min-height:\s*104px;/
     );
     expect(ESTILOS).toMatch(
-      /\.fila-servicio__foto \{[^}]*position:\s*absolute;[^}]*top:\s*0;[^}]*right:\s*0;[^}]*bottom:\s*0;[^}]*left:\s*0;[^}]*width:\s*100%;[^}]*height:\s*100%;[^}]*object-fit:\s*cover;/
+      /\.fila-servicio__foto \{[^}]*position:\s*absolute;[^}]*top:\s*0;[^}]*right:\s*0;[^}]*bottom:\s*0;[^}]*left:\s*0;[^}]*width:\s*100%;[^}]*height:\s*100%;[^}]*object-fit:\s*contain;[^}]*object-position:\s*center;/
     );
+    // La foto entera, no recortada: lo que sobra del marco se ve carbón.
+    expect(ESTILOS).toMatch(
+      /\.fila-servicio__marco \{[^}]*background:\s*var\(--m-carbon\);/
+    );
+    expect(ESTILOS).not.toMatch(/object-fit:\s*cover/);
     expect(ESTILOS).not.toMatch(/\.fila-servicio__foto \{[^}]*[\s;]height:\s*auto;/);
   });
 

@@ -2,7 +2,7 @@
   <div class="mobile-bar">
     <button
       type="button"
-      class="mobile-bar__reservar"
+      class="mobile-bar__reservar m-boton--ancho"
       data-test="reservar"
       @click="emit('reservar')"
     >
@@ -10,7 +10,7 @@
     </button>
 
     <a
-      class="mobile-bar__whatsapp"
+      class="mobile-bar__whatsapp m-boton"
       data-test="whatsapp"
       :href="enlaceWhatsApp"
       target="_blank"
@@ -114,6 +114,21 @@ defineOptions({ name: 'MobileActionBar' });
 @media (min-width: 700px) {
   .mobile-bar {
     display: none;
+  }
+}
+
+/**
+ * Realce al pasar (solo puntero fino): el COLOR. El movimiento —subir 1 px con
+ * sombra suave, hundirse a 0,96 al pulsar— es global, en `app.scss`
+ * («Realce y hundido»).
+ */
+@media (hover: hover) and (pointer: fine) {
+  .mobile-bar__reservar:hover {
+    background: var(--m-oro-claro);
+  }
+
+  .mobile-bar__whatsapp:hover {
+    background: var(--m-whatsapp-realce);
   }
 }
 </style>

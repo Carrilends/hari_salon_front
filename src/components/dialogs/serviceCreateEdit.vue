@@ -174,7 +174,7 @@
               <div class="col-6">
                 <button
                   type="button"
-                  class="paso__boton-foto"
+                  class="paso__boton-foto m-boton--ancho"
                   data-test="tomar-foto"
                   :disabled="(files?.length || 0) >= 5"
                   @click="cameraInputRef?.click()"
@@ -193,7 +193,7 @@
               <div class="col-6">
                 <button
                   type="button"
-                  class="paso__boton-foto"
+                  class="paso__boton-foto m-boton--ancho"
                   data-test="seleccionar-foto"
                   :disabled="(files?.length || 0) >= 5"
                   @click="galleryInputRef?.click()"
@@ -255,7 +255,7 @@
           <div class="paso__navegacion">
             <button
               type="button"
-              class="paso__boton"
+              class="paso__boton m-boton--ancho"
               data-test="cancelar"
               @click="close"
             >
@@ -264,7 +264,7 @@
             <button
               v-if="step > 1"
               type="button"
-              class="paso__boton"
+              class="paso__boton m-boton--ancho"
               data-test="atras"
               @click="stepper.previous()"
             >
@@ -272,7 +272,7 @@
             </button>
             <button
               type="button"
-              class="paso__boton paso__boton--oro"
+              class="paso__boton paso__boton--oro m-boton--ancho"
               data-test="continuar"
               @click="controlStepper"
             >
@@ -786,5 +786,23 @@ const close = () => {
   flex-wrap: wrap;
   gap: 10px;
   padding-top: 8px;
+}
+
+/**
+ * Realce al pasar (solo puntero fino): el COLOR. El movimiento —subir 1 px con
+ * sombra suave, hundirse a 0,96 al pulsar— es global, en `app.scss`
+ * («Realce y hundido»).
+ */
+@media (hover: hover) and (pointer: fine) {
+  .paso__boton:hover,
+  .paso__boton-foto:hover:not(:disabled),
+  .paso__quitar-foto:hover {
+    border-color: var(--m-oro);
+  }
+
+  .paso__boton--oro:hover {
+    border-color: var(--m-oro-claro);
+    background: var(--m-oro-claro);
+  }
 }
 </style>

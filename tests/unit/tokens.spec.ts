@@ -5,8 +5,8 @@
  * botón de WhatsApp — justo en los teléfonos con área segura, que son los de
  * 390 px del diseño.
  */
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join, relative, sep } from 'node:path';
 
 const TOKENS = readFileSync(join(__dirname, '../../src/css/tokens.scss'), 'utf8');
 
@@ -38,6 +38,25 @@ describe('tokens visuales', () => {
   it('declara el canal del riel de desplazamiento, oscuro y claro', () => {
     expect(valorDe('m-riel-canal')).toBe('#2a251f');
     expect(valorDe('m-riel-canal-claro')).toBe('#e6ded3');
+  });
+
+  /**
+   * Lo que un pie fijo tiene que dejar libre abajo para que el lanzador del
+   * asistente no le tape los controles. Sale de la geometría del lanzador:
+   * si la píldora cambia de sitio o de alto, esto tiene que cambiar con ella.
+   */
+  it('el despeje del flotante cuenta el borde, el alto del lanzador y un hueco', () => {
+    const LANZADOR = readFileSync(
+      join(__dirname, '../../src/components/assistant/AssistantLauncher.vue'),
+      'utf8'
+    );
+    const fab = LANZADOR.slice(LANZADOR.indexOf('.assistant-launcher__fab {'));
+    const bajo = /bottom: (\d+)px;/.exec(fab)?.[1];
+    const alto = /height: (\d+)px;/.exec(fab)?.[1];
+
+    expect(valorDe('m-flotante-despeje')).toBe(
+      `calc(${bajo}px + ${alto}px + 8px)`
+    );
   });
 
   it('declara el fondo de los botones que se posan sobre una foto', () => {
@@ -74,36 +93,45 @@ describe('tokens visuales', () => {
 const APP = readFileSync(join(__dirname, '../../src/css/app.scss'), 'utf8');
 
 /**
- * El riel dorado es de la página de servicios, no del portal: en las bandas
- * claras del inicio un pulgar de oro sobre canal carbón sería una raya oscura
- * en medio del hueso. Por eso se declara sobre `html.m-riel-oro`, una clase
- * que `ServicePage.vue` pone al montarse y quita al desmontarse — el mismo
- * recurso que `html.m-panel-abierto` del asistente.
+ * El riel dorado es de quien desplaza en la página de servicios, no del portal:
+ * en las bandas claras del inicio un pulgar de oro sobre canal carbón sería una
+ * raya oscura en medio del hueso.
+ *
+ * Mudado el 2026-10-07: antes se declaraba sobre `html.m-riel-oro`, que
+ * `ServicePage.vue` ponía al montarse, porque desplazaba el documento (D4).
+ * Ahora el documento está quieto y desplazan la lista y el carril, así que el
+ * riel es una clase de utilidad, `.m-riel-oro`, que se pone en el elemento que
+ * desplaza. Las reglas son las mismas; cambia a quién se le ponen.
  */
 describe('riel dorado de la página de servicios', () => {
-  it('pinta el pulgar en oro sobre el canal del token', () => {
+  it('pinta el pulgar en oro sobre el canal del token, fino', () => {
     expect(APP).toMatch(
-      /html\.m-riel-oro\s*\{[^}]*scrollbar-color: var\(--m-oro\) var\(--m-riel-canal\);/
+      /^\.m-riel-oro\s*\{[^}]*scrollbar-width: thin;[^}]*scrollbar-color: var\(--m-oro\) var\(--m-riel-canal\);/m
     );
   });
 
   it('mide 6 px y el pulgar va redondo del todo', () => {
-    expect(APP).toMatch(/::-webkit-scrollbar\s*\{[^}]*width: 6px;/);
-    expect(APP).toMatch(/::-webkit-scrollbar\s*\{[^}]*height: 6px;/);
     expect(APP).toMatch(
-      /::-webkit-scrollbar-thumb\s*\{[^}]*border-radius: var\(--m-radio-pildora\);/
+      /^\.m-riel-oro::-webkit-scrollbar\s*\{[^}]*width: 6px;/m
+    );
+    expect(APP).toMatch(
+      /^\.m-riel-oro::-webkit-scrollbar\s*\{[^}]*height: 6px;/m
+    );
+    expect(APP).toMatch(
+      /^\.m-riel-oro::-webkit-scrollbar-thumb\s*\{[^}]*background: var\(--m-oro\);[^}]*border-radius: var\(--m-radio-pildora\);/m
     );
   });
 
   it('declara el canal, para que el riel se vea siempre y no solo al desplazar', () => {
     expect(APP).toMatch(
-      /::-webkit-scrollbar-track\s*\{[^}]*background: var\(--m-riel-canal\);/
+      /^\.m-riel-oro::-webkit-scrollbar-track\s*\{[^}]*background: var\(--m-riel-canal\);/m
     );
   });
 
   /**
    * Lo que de verdad se vigila: que no se escape al resto del portal. Toda
-   * regla de riel tiene que llevar la clase de la página en el selector.
+   * regla de riel tiene que colgar de la clase de utilidad, y ninguna del
+   * documento: un riel sobre `html` volvería a teñir el inicio.
    */
   it('no toca el riel de ninguna otra página', () => {
     // `[^\n{]` y no `[^{]`: una clase negada SÍ casa saltos de línea, y la
@@ -115,9 +143,34 @@ describe('riel dorado de la página de servicios', () => {
 
     expect(selectores).toHaveLength(3);
     for (const selector of selectores) {
-      expect(selector).toContain('html.m-riel-oro');
+      expect(selector).toMatch(/^\.m-riel-oro::-webkit-scrollbar/);
     }
     expect(APP.match(/scrollbar-color/g)).toHaveLength(1);
+    expect(APP).not.toMatch(/html\.m-riel-oro/);
+  });
+
+  /**
+   * Y que nadie más se la ponga: la clase existe en `app.scss` y solo la usan
+   * quienes desplazan en la página de servicios (la lista y el carril).
+   */
+  it('solo la usan la página de servicios y su carril', () => {
+    const SRC = join(__dirname, '../../src');
+    const recorrer = (dir: string): string[] =>
+      readdirSync(dir, { withFileTypes: true }).flatMap((entrada) =>
+        entrada.isDirectory()
+          ? recorrer(join(dir, entrada.name))
+          : [join(dir, entrada.name)]
+      );
+    const usuarios = recorrer(SRC)
+      .filter((ruta) => readFileSync(ruta, 'utf8').includes('m-riel-oro'))
+      .map((ruta) => relative(SRC, ruta).split(sep).join('/'))
+      .sort();
+
+    expect(usuarios).toEqual([
+      'components/servicePage/ServiceFilterRail.vue',
+      'css/app.scss',
+      'pages/ServicePage.vue',
+    ]);
   });
 });
 

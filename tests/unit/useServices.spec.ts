@@ -30,6 +30,7 @@ import { createPinia, setActivePinia } from 'pinia';
 import type { Ref } from 'vue';
 
 import { useServices } from 'src/composables/services/useServices';
+import { PRECIO_ESCALA_MAX, PRECIO_ESCALA_MIN } from 'src/stores/filters-store';
 import type Service from 'src/interfaces/service';
 
 const consulta = jest.requireMock('@tanstack/vue-query') as {
@@ -53,6 +54,20 @@ describe('useServices', () => {
     expect(totalServices.value).toBe(48);
     // 48 entre 10 por página: cinco páginas, la última con ocho.
     expect(totalPages.value).toBe(5);
+  });
+
+  /**
+   * El rango de partida de la consulta es la escala entera del control de
+   * precio, la del store. Con un 200 suelto aquí, al subir el tope a 300 la
+   * consulta arrancaba con un rango que el control ya no pintaba.
+   */
+  it('arranca con el rango de precio de la escala del store', () => {
+    const { filterService } = useServices();
+
+    expect(filterService.value.prices).toEqual({
+      min: PRECIO_ESCALA_MIN,
+      max: PRECIO_ESCALA_MAX,
+    });
   });
 
   it('mientras no hay respuesta no inventa un total', () => {

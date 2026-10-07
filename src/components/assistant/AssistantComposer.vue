@@ -200,4 +200,19 @@ function enviar() {
     height: 46px;
   }
 }
+
+/**
+ * Realce al pasar (solo puntero fino): el COLOR. El movimiento —subir 1 px con
+ * sombra suave, hundirse a 0,96 al pulsar— es global, en `app.scss`
+ * («Realce y hundido»).
+ */
+@media (hover: hover) and (pointer: fine) {
+  .assistant-composer__chip:hover:not(:disabled) {
+    border-color: var(--m-oro);
+  }
+
+  .assistant-composer__enviar:hover:not(:disabled) {
+    color: var(--m-oro);
+  }
+}
 </style>

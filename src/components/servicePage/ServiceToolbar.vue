@@ -165,20 +165,21 @@
               <circle cx="8" cy="17" r="2" />
             </svg>
             <span v-if="muestraEtiquetas">Filtros</span>
+            <!--
+                `aria-hidden` porque el número ya va en el nombre accesible del
+                botón: sin esto el lector de pantalla diría «Filtros (3 activos)
+                3». Va DENTRO del botón para subir y hundirse con él («Realce y
+                hundido», `app.scss`); como hermano se quedaba quieto.
+              -->
+            <span
+              v-if="filtrosActivos > 0"
+              class="barra__contador"
+              aria-hidden="true"
+              data-test="contador-filtros"
+            >
+              {{ filtrosActivos > 9 ? '9+' : filtrosActivos }}
+            </span>
           </button>
-          <!--
-              `aria-hidden` porque el número ya va en el nombre accesible del
-              botón: sin esto el lector de pantalla diría «Filtros (3 activos)
-              3».
-            -->
-          <span
-            v-if="filtrosActivos > 0"
-            class="barra__contador"
-            aria-hidden="true"
-            data-test="contador-filtros"
-          >
-            {{ filtrosActivos > 9 ? '9+' : filtrosActivos }}
-          </span>
         </div>
 
         <button
@@ -498,6 +499,8 @@ defineOptions({ name: 'ServiceToolbar' });
 }
 
 .barra__boton {
+  // Ancla el contador de filtros, que va dentro del botón.
+  position: relative;
   padding: 0 18px;
 }
 
@@ -554,6 +557,23 @@ defineOptions({ name: 'ServiceToolbar' });
 
   .barra__acciones {
     margin-left: auto;
+  }
+}
+
+/**
+ * Realce al pasar (solo puntero fino): el COLOR. El movimiento —subir 1 px con
+ * sombra suave, hundirse a 0,96 al pulsar— es global, en `app.scss`
+ * («Realce y hundido»).
+ */
+@media (hover: hover) and (pointer: fine) {
+  .barra__redondo:hover,
+  .barra__boton:hover {
+    border-color: var(--m-oro);
+  }
+
+  .barra__boton--oro:hover {
+    border-color: var(--m-oro-claro);
+    background: var(--m-oro-claro);
   }
 }
 </style>

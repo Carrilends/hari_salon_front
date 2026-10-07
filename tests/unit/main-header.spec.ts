@@ -5,6 +5,8 @@
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { createMemoryHistory, createRouter } from 'vue-router';
+import routes from 'src/router/routes';
 
 const LAYOUT = readFileSync(join(__dirname, '../../src/layouts/MainLayout.vue'), 'utf8');
 
@@ -29,10 +31,47 @@ describe('cabecera del portal', () => {
    * acordada es un solo flotante en pantalla: el del asistente. Dos burbujas
    * compiten y, en el inicio, tapaban el pie y la barra fija de móvil.
    */
-  it('el flotante verde de reseña no sale en el inicio', () => {
+  it('el flotante verde de reseña lo decide la ruta, por su `meta`', () => {
     const flotante = LAYOUT.slice(LAYOUT.indexOf('class="review-fab"') - 300);
     expect(flotante.slice(0, 300)).toContain('mostrarFabResena');
-    expect(LAYOUT).toContain("route.path !== '/'");
+
+    const regla = LAYOUT.slice(LAYOUT.indexOf('const mostrarFabResena'));
+    expect(regla.slice(0, 160)).toMatch(
+      /showReviewButton\.value && !route\.meta\.sinFabResena/
+    );
+    // Comparar `route.path` falla con la barra final: ver la prueba de abajo.
+    expect(LAYOUT).not.toContain('RUTAS_SIN_FAB_RESENA');
+  });
+
+  /**
+   * Tampoco en `/services`: allí el pie con el paginador está siempre a la
+   * vista y la burbuja, abajo a la izquierda, se le sentaba encima (sobre
+   * «Siguiente» a 390 px, sobre el resumen a 1280). Mismo criterio que en el
+   * inicio: un solo flotante por pantalla, el del asistente.
+   *
+   * Por `meta` y no por `route.path`: `build:ssg` publica
+   * `services/index.html` y Netlify sirve `/services/` (redirige la de sin
+   * barra), así que en una visita directa en producción `route.path` es
+   * `/services/` y una comparación de cadenas dejaba volver la burbuja. El
+   * router casa las dos formas con el mismo registro, y su `meta` con él.
+   */
+  describe('qué rutas llevan la marca de «sin flotante de reseña»', () => {
+    const router = createRouter({ history: createMemoryHistory(), routes });
+    const sinFab = (ruta: string) =>
+      Boolean(router.resolve(ruta).meta.sinFabResena);
+
+    it.each(['/', '/services', '/services/'])('%s la lleva', (ruta) => {
+      expect(sinFab(ruta)).toBe(true);
+    });
+
+    it.each([
+      '/testimonios',
+      '/testimonios/',
+      '/preguntas-frecuentes',
+      '/mi-cuenta',
+    ])('%s no la lleva: allí la burbuja sigue saliendo', (ruta) => {
+      expect(sinFab(ruta)).toBe(false);
+    });
   });
 
   /**

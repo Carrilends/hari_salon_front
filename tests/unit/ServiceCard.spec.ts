@@ -109,6 +109,21 @@ describe('ServiceCard', () => {
     );
   });
 
+  /**
+   * La foto se ve ENTERA, centrada, y lo que sobra del marco se pinta en
+   * carbón: es el equivalente cálido del fondo gris del diseño viejo. Recortar
+   * (`cover`) le quitaba la cabeza a un retrato en una tarjeta apaisada.
+   */
+  it('la foto se ve entera, centrada, sobre carbón y sin recortar', () => {
+    expect(ESTILOS).toMatch(
+      /\.tarjeta-servicio__foto \{[^}]*object-fit: contain;[^}]*object-position: center;[^}]*background: var\(--m-carbon\);/
+    );
+    expect(ESTILOS).toMatch(
+      /\.tarjeta-servicio \{[^}]*background: var\(--m-carbon\);/
+    );
+    expect(ESTILOS).not.toContain('object-fit: cover');
+  });
+
   it('con promoción pinta la píldora, el precio efectivo y el base tachado', () => {
     const tarjeta = montar({
       servicio: servicio({ havePromotion: true, porcentageDiscount: 20 }),

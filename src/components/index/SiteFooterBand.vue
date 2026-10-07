@@ -9,7 +9,7 @@
     <button
       v-if="mostrarAdmin"
       type="button"
-      class="footer-band__admin"
+      class="footer-band__admin m-boton-plano"
       data-test="admin"
       @click="emit('admin')"
     >
@@ -17,7 +17,7 @@
     </button>
 
     <a
-      class="footer-band__whatsapp"
+      class="footer-band__whatsapp m-boton"
       data-test="whatsapp"
       :href="enlaceWhatsApp"
       target="_blank"
@@ -126,6 +126,22 @@ defineOptions({ name: 'SiteFooterBand' });
     gap: 12px;
     padding: 20px var(--m-banda-margen-movil);
     text-align: center;
+  }
+}
+
+/**
+ * Realce al pasar (solo puntero fino): el COLOR. El movimiento —subir 1 px con
+ * sombra suave, hundirse a 0,96 al pulsar— es global, en `app.scss`
+ * («Realce y hundido»).
+ */
+@media (hover: hover) and (pointer: fine) {
+  .footer-band__admin:hover {
+    border-bottom-color: var(--m-oro);
+    color: var(--m-oro);
+  }
+
+  .footer-band__whatsapp:hover {
+    background: var(--m-whatsapp-realce);
   }
 }
 </style>

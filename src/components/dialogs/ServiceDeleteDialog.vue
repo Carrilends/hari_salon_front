@@ -38,7 +38,7 @@
         </button>
         <button
           type="button"
-          class="borrado__boton borrado__boton--peligro"
+          class="borrado__boton borrado__boton--peligro m-boton--ancho"
           data-test="eliminar"
           :disabled="borrando"
           @click="confirmar"
@@ -105,6 +105,9 @@ defineOptions({ name: 'ServiceDeleteDialog' });
 
 <style lang="scss" scoped>
 .borrado {
+  /* Quasar quita los clics a `.q-dialog__inner` y solo los devuelve a sus
+     hijos `<div>`: sin esto, cada clic atraviesa la raíz y cae en el velo. */
+  pointer-events: all;
   width: min(420px, calc(100vw - 32px));
   padding: 26px 24px 20px;
   border: var(--m-filete-grosor) solid var(--m-filete);
@@ -178,10 +181,6 @@ defineOptions({ name: 'ServiceDeleteDialog' });
   cursor: pointer;
 }
 
-.borrado__boton:hover {
-  border-color: var(--m-filete);
-}
-
 .borrado__boton:focus-visible {
   outline: 2px solid var(--m-oro);
   outline-offset: 2px;
@@ -197,5 +196,22 @@ defineOptions({ name: 'ServiceDeleteDialog' });
 .borrado__boton--peligro:disabled {
   opacity: 0.6;
   cursor: progress;
+}
+
+/**
+ * Realce al pasar (solo puntero fino): el COLOR. El movimiento —subir 1 px con
+ * sombra suave, hundirse a 0,96 al pulsar— es global, en `app.scss`
+ * («Realce y hundido»).
+ */
+@media (hover: hover) and (pointer: fine) {
+  .borrado__boton:hover:not(:disabled) {
+    border-color: var(--m-oro);
+  }
+
+  // El borrado no se aclara (no es una acción que invitar): se le enciende un
+  // filete de oro alrededor. Ni el fondo ni el rótulo cambian.
+  .borrado__boton--peligro:hover:not(:disabled) {
+    border-color: var(--m-oro);
+  }
 }
 </style>

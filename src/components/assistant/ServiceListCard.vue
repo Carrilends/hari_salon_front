@@ -1,21 +1,30 @@
 <template>
-  <ul class="service-card">
+  <ul ref="lista" class="service-card">
     <li
       v-for="s in servicios"
       :key="s.id"
       class="service-card__fila"
       data-test="fila"
     >
-      <img
-        class="service-card__foto"
-        :src="miniatura(s)"
-        :srcset="miniaturaSrcset(s)"
-        alt=""
-        width="58"
-        height="58"
-        loading="lazy"
-        decoding="async"
-      />
+      <span
+        class="service-card__marco"
+        :class="{ 'm-foto-cargando': cargando(miniatura(s)) }"
+        data-test="foto-marco"
+      >
+        <img
+          class="service-card__foto m-foto-fundido"
+          :class="{ 'm-foto-fundido--esperando': cargando(miniatura(s)) }"
+          :src="miniatura(s)"
+          :srcset="fallida(pedida(s)) ? undefined : miniaturaSrcset(s)"
+          alt=""
+          width="58"
+          height="58"
+          loading="lazy"
+          decoding="async"
+          @load="alCargar"
+          @error="alFallar"
+        />
+      </span>
 
       <span class="service-card__texto">
         <span class="service-card__nombre">{{ s.nombre }}</span>
@@ -74,10 +83,11 @@ import {
 import { formatCopDisplay } from 'src/helpers/price-display';
 import { formatDurationMinutes } from 'src/helpers/duration';
 import { PLACEHOLDER_IMAGE } from 'src/constants/placeholder-image';
+import { useCargaImagen } from 'src/composables/shared/useCargaImagen';
 
 defineOptions({ name: 'ServiceListCard' });
 
-defineProps<{ servicios: PresentedService[] }>();
+const props = defineProps<{ servicios: PresentedService[] }>();
 
 const { añadirServicio } = useAddToBag();
 
@@ -128,8 +138,22 @@ async function anadir(servicio: PresentedService) {
 const ANCHO_MINIATURA = 96;
 const ANCHOS_SRCSET = [48, 96, 144];
 
-function miniatura(s: PresentedService): string {
+function pedida(s: PresentedService): string {
   return optimizeCloudinaryUrl(s.imagen, ANCHO_MINIATURA) || PLACEHOLDER_IMAGE;
+}
+
+/**
+ * Cada miniatura brilla hasta que llega la suya (ver `useCargaImagen`); si
+ * falla, el sustituto en línea, que no puede fallar.
+ */
+const lista = ref<HTMLElement | null>(null);
+const { cargando, fallida, alCargar, alFallar } = useCargaImagen(lista, () =>
+  props.servicios.map(pedida)
+);
+
+function miniatura(s: PresentedService): string {
+  const url = pedida(s);
+  return fallida(url) ? PLACEHOLDER_IMAGE : url;
 }
 
 function miniaturaSrcset(s: PresentedService): string {
@@ -167,10 +191,28 @@ function miniaturaSrcset(s: PresentedService): string {
   padding: 10px 12px;
 }
 
-.service-card__foto {
+/**
+ * El marco de la miniatura: ancla el brillo de carga (`.m-foto-cargando`, en
+ * `app.scss`), que aquí corre sobre hueso con un brillo de nieve, no sobre el
+ * carbón por defecto — la tarjeta del asistente es clara.
+ */
+.service-card__marco {
+  position: relative;
   flex: 0 0 auto;
+  display: block;
   width: 58px;
   height: 58px;
+  overflow: hidden;
+  border-radius: var(--m-radio-foto);
+  background: var(--m-hueso);
+  --m-foto-fondo: var(--m-hueso);
+  --m-foto-brillo: var(--m-nieve);
+}
+
+.service-card__foto {
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   border-radius: var(--m-radio-foto);
   background: var(--m-hueso);
@@ -258,7 +300,7 @@ function miniaturaSrcset(s: PresentedService): string {
 }
 
 @media (max-width: 699px) {
-  .service-card__foto {
+  .service-card__marco {
     width: 52px;
     height: 52px;
   }
@@ -279,6 +321,17 @@ function miniaturaSrcset(s: PresentedService): string {
 
   .service-card__mas {
     display: block;
+  }
+}
+
+/**
+ * Realce al pasar (solo puntero fino): el COLOR. El movimiento —subir 1 px con
+ * sombra suave, hundirse a 0,96 al pulsar— es global, en `app.scss`
+ * («Realce y hundido»).
+ */
+@media (hover: hover) and (pointer: fine) {
+  .service-card__anadir:hover:not(:disabled) {
+    color: var(--m-oro);
   }
 }
 </style>

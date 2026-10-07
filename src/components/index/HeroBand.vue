@@ -8,7 +8,7 @@
       </p>
       <button
         type="button"
-        class="hero-band__enlace"
+        class="hero-band__enlace m-boton-plano"
         data-test="ver-servicios"
         @click="emit('ver-servicios')"
       >
@@ -155,6 +155,18 @@ defineOptions({ name: 'HeroBand' });
     position: static;
     width: 100%;
     height: 186px;
+  }
+}
+
+/**
+ * Realce al pasar (solo puntero fino): el COLOR. El movimiento —subir 1 px con
+ * sombra suave, hundirse a 0,96 al pulsar— es global, en `app.scss`
+ * («Realce y hundido»).
+ */
+@media (hover: hover) and (pointer: fine) {
+  // Sobre hueso, el dorado legible es el profundo.
+  .hero-band__enlace:hover {
+    color: var(--m-oro-profundo);
   }
 }
 </style>

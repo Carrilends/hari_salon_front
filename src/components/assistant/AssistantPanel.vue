@@ -13,7 +13,7 @@
       <header class="assistant-panel__cabecera">
         <button
           type="button"
-          class="assistant-panel__volver"
+          class="assistant-panel__volver m-boton-plano"
           data-test="cerrar"
           aria-label="Cerrar el asistente"
           @click="cerrar()"
@@ -548,6 +548,17 @@ function atraparFoco(evento: KeyboardEvent) {
   .assistant-panel-enter-active .assistant-panel__caja,
   .assistant-panel-leave-active .assistant-panel__caja {
     transition: none;
+  }
+}
+
+/**
+ * Realce al pasar (solo puntero fino): el COLOR. El movimiento —subir 1 px con
+ * sombra suave, hundirse a 0,96 al pulsar— es global, en `app.scss`
+ * («Realce y hundido»).
+ */
+@media (hover: hover) and (pointer: fine) {
+  .assistant-panel__volver:hover {
+    color: var(--m-oro);
   }
 }
 </style>

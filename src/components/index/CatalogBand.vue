@@ -4,7 +4,7 @@
       <h2 class="catalog-band__titulo">La carta</h2>
       <button
         type="button"
-        class="catalog-band__ver-todo"
+        class="catalog-band__ver-todo m-boton-plano"
         data-test="ver-todo"
         @click="emit('ver-todo')"
       >
@@ -22,7 +22,7 @@
         v-for="seccion in secciones"
         :key="seccion.title"
         type="button"
-        class="catalog-band__seccion"
+        class="catalog-band__seccion m-tarjeta-pulsable"
         data-test="seccion"
         @click="emit('abrir', seccion)"
       >
@@ -174,6 +174,23 @@ defineOptions({ name: 'CatalogBand' });
   .catalog-band__nombre {
     margin-top: 8px;
     font-size: 14px;
+  }
+}
+
+/**
+ * Realce al pasar (solo puntero fino): el COLOR. El movimiento —subir 1 px con
+ * sombra suave, hundirse a 0,96 al pulsar— es global, en `app.scss`
+ * («Realce y hundido»).
+ */
+@media (hover: hover) and (pointer: fine) {
+  .catalog-band__ver-todo:hover {
+    color: var(--m-oro-claro);
+  }
+
+  // La sección es una tarjeta (`m-tarjeta-pulsable`): no sube, se hunde a 0,99.
+  // El realce es su nombre en oro, que sobre tinta da 5,8:1.
+  .catalog-band__seccion:hover {
+    color: var(--m-oro);
   }
 }
 </style>

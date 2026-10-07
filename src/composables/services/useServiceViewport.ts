@@ -15,8 +15,10 @@ import {
  * columnas, es nuevo (decisión D9 de la hoja de ruta) y lo consume la rejilla
  * de la fase B.
  *
- * `desktopScrollBodyPx` NO está aquí: murió con el scroll interno (D4). La
- * página entera desplaza y el riel es el del documento.
+ * `desktopScrollBodyPx` NO está aquí y no vuelve: la lista desplaza dentro de
+ * su caja, pero el alto de la página lo da el `style-fn` de Quasar en
+ * `ServicePage.vue`, no una cuenta a mano. El riel dorado es una clase de
+ * utilidad que llevan la lista y el carril, no el documento.
  */
 
 /** Por debajo de esto los botones de la barra pierden la etiqueta. */

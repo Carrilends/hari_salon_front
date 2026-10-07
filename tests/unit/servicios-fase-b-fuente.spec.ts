@@ -108,10 +108,15 @@ describe('la página de servicios', () => {
     expect(SERVICE_PAGE).toContain('useServiceAdminActions({');
   });
 
-  /** D4: la página entera desplaza; fuera el scroll dentro de la lista. */
-  it('no deja ningún scroll interno en la lista', () => {
+  /**
+   * Mudada el 2026-10-07: antes «D4: la página entera desplaza; fuera el scroll
+   * dentro de la lista». Ahora la lista es la que desplaza, pero con scroll
+   * nativo: ni `q-scroll-area` ni la altura calculada a mano vuelven.
+   */
+  it('la lista desplaza por dentro con scroll nativo, sin q-scroll-area', () => {
     expect(SERVICE_PAGE).not.toContain('q-scroll-area');
     expect(SERVICE_PAGE).not.toContain('desktopScrollBodyPx');
+    expect(SERVICE_PAGE).toMatch(/\.mostrador__lista \{[^}]*overflow-y: auto;/);
   });
 
   /**

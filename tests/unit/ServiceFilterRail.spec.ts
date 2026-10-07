@@ -14,7 +14,10 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
-import { useFiltersStore } from 'src/stores/filters-store';
+import {
+  CONSULTA_PANTALLA_BAJA,
+  useFiltersStore,
+} from 'src/stores/filters-store';
 import ServiceFilterRail from 'src/components/servicePage/ServiceFilterRail.vue';
 import { fijarViewport } from '../viewportMock';
 
@@ -157,5 +160,54 @@ describe('ServiceFilterRail', () => {
   it('mide 226 px y se separa de la lista con un filete, no con una caja', () => {
     expect(FUENTE).toContain('226px');
     expect(FUENTE).toMatch(/border-right:\s*var\(--m-filete-grosor\)/);
+  });
+
+  /**
+   * La página ya no desplaza: el carril se queda quieto junto a la lista. Si
+   * sus filtros no caben en el hueco, desplaza él solo, por su cuenta y con el
+   * mismo riel dorado que la lista, sin arrastrar a la lista ni al documento.
+   */
+  it('si no cabe, desplaza por su cuenta con el riel dorado', () => {
+    fijarViewport({ ancho: 1280 });
+    const carril = montar().get('[data-test="carril-filtros"]');
+
+    expect(carril.classes()).toContain('m-riel-oro');
+    expect(FUENTE).toMatch(
+      /\.carril \{[^}]*align-self: stretch;[^}]*min-height: 0;[^}]*overflow-y: auto;[^}]*overscroll-behavior: contain;/
+    );
+  });
+
+  /**
+   * Con `overflow-y: auto` el carril también recorta en horizontal, y sus
+   * controles dibujan el foco 2 px por fuera (2 de grosor + 2 de separación):
+   * con relleno izquierdo 0 el anillo de oro salía cortado por la izquierda.
+   * Cuatro píxeles de relleno, devueltos con un margen negativo para que el
+   * contenido siga alineado con la barra, y el ancho crece en lo mismo para
+   * que la columna de los filtros siga midiendo 226.
+   */
+  it('deja sitio al anillo de foco de sus controles', () => {
+    const carril = /\.carril \{([^}]*)\}/.exec(FUENTE)?.[1] ?? '';
+
+    expect(carril).toMatch(
+      /padding: 4px 20px 24px var\(--carril-holgura-foco\);/
+    );
+    expect(carril).toMatch(
+      /margin-left: calc\(-1 \* var\(--carril-holgura-foco\)\);/
+    );
+    expect(carril).toMatch(/--carril-holgura-foco: 4px;/);
+    expect(carril).toMatch(
+      /width: calc\(226px \+ var\(--carril-holgura-foco\)\);/
+    );
+  });
+
+  /** En pantalla baja desplaza la página entera, y el carril va con ella. */
+  it('en una pantalla baja deja de desplazar por su cuenta', () => {
+    const bloque = FUENTE.slice(
+      FUENTE.indexOf(`@media ${CONSULTA_PANTALLA_BAJA} {`)
+    );
+    expect(FUENTE).toContain(`@media ${CONSULTA_PANTALLA_BAJA} {`);
+    expect(bloque).toMatch(
+      /^@media [^{]+\{\s*\.carril \{\s*overflow-y: visible;/
+    );
   });
 });

@@ -59,7 +59,7 @@
         <button
           v-if="esQuitar"
           type="button"
-          class="promo__boton promo__boton--oro"
+          class="promo__boton promo__boton--oro m-boton--ancho"
           data-test="quitar"
           @click="quitar"
         >
@@ -68,7 +68,7 @@
         <button
           v-else
           type="button"
-          class="promo__boton promo__boton--oro"
+          class="promo__boton promo__boton--oro m-boton--ancho"
           data-test="aplicar"
           :disabled="!valido"
           @click="aplicar"
@@ -181,6 +181,9 @@ defineOptions({ name: 'ServicePromotionDialog' });
 
 <style lang="scss" scoped>
 .promo {
+  /* Quasar quita los clics a `.q-dialog__inner` y solo los devuelve a sus
+     hijos `<div>`: sin esto, cada clic atraviesa la raíz y cae en el velo. */
+  pointer-events: all;
   width: min(420px, calc(100vw - 32px));
   padding: 26px 24px 20px;
   border: var(--m-filete-grosor) solid var(--m-filete);
@@ -280,10 +283,6 @@ defineOptions({ name: 'ServicePromotionDialog' });
   cursor: pointer;
 }
 
-.promo__boton:hover {
-  border-color: var(--m-filete);
-}
-
 .promo__boton:focus-visible {
   outline: 2px solid var(--m-oro);
   outline-offset: 2px;
@@ -300,5 +299,21 @@ defineOptions({ name: 'ServicePromotionDialog' });
   background: var(--m-filete);
   color: var(--m-piedra);
   cursor: not-allowed;
+}
+
+/**
+ * Realce al pasar (solo puntero fino): el COLOR. El movimiento —subir 1 px con
+ * sombra suave, hundirse a 0,96 al pulsar— es global, en `app.scss`
+ * («Realce y hundido»).
+ */
+@media (hover: hover) and (pointer: fine) {
+  .promo__boton:hover:not(:disabled) {
+    border-color: var(--m-oro);
+  }
+
+  .promo__boton--oro:hover:not(:disabled) {
+    border-color: var(--m-oro-claro);
+    background: var(--m-oro-claro);
+  }
 }
 </style>

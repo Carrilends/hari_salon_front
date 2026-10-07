@@ -1,6 +1,7 @@
 <template>
-  <q-page class="mostrador">
+  <q-page class="mostrador" :style-fn="alturaDelMostrador">
     <ServiceToolbar
+      class="mostrador__barra"
       :total="totalConocido"
       :mostrados="services.length"
       :busqueda="filterService.name"
@@ -21,7 +22,15 @@
         @aplicar="fetchServices"
         @update:amount="externalAmountOfFilters = $event"
       />
-      <div class="mostrador__lista">
+      <!--
+        La única caja que desplaza: barra, pie y carril se quedan quietos. Lleva
+        el riel dorado de `app.scss` porque el riel lo pinta quien desplaza.
+      -->
+      <div
+        ref="listaRef"
+        class="mostrador__lista m-riel-oro"
+        data-test="lista-servicios"
+      >
         <!--
           La rejilla reexpone una sola ranura `acciones` con `{ servicio,
           compacto }`: `compacto` es `true` en el renglón de móvil y `false` en
@@ -54,6 +63,7 @@
     </div>
 
     <ServicePagerBar
+      class="mostrador__pie"
       :pagina="filterService.page"
       :total-paginas="totalPages"
       :mostrados="services.length"
@@ -72,7 +82,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useServices } from 'src/composables/services/useServices';
 import { useServiceViewport } from 'src/composables/services/useServiceViewport';
 import { useService } from 'src/composables/services/useService';
@@ -88,7 +98,11 @@ import ServiceFilterDialog from 'src/components/dialogs/serviceFilterDialog.vue'
 import ServiceFilterRail from 'src/components/servicePage/ServiceFilterRail.vue';
 import { FilterService } from 'src/composables/dialogs/useServiceFilter';
 import { useDialogMaximizedBelow } from 'src/composables/dialogs/useDialogMaximizedBelow';
-import { ANCHO_CARRIL_PX, useFiltersStore } from 'src/stores/filters-store';
+import {
+  ANCHO_CARRIL_PX,
+  CONSULTA_PANTALLA_BAJA,
+  useFiltersStore,
+} from 'src/stores/filters-store';
 import serviceCreateEdit from 'src/components/dialogs/serviceCreateEdit.vue';
 
 import type { IndexSection } from 'src/constants/index-sections';
@@ -263,13 +277,46 @@ const alBuscar = (texto: string) => {
 };
 
 /**
- * Desde que la página entera desplaza (D4), el pie queda al final de la lista:
- * cambiar de página sin subir deja a la visitante mirando el pie de la página
- * nueva. Detrás de la guarda porque `build:ssg` prerenderiza sin `window`.
+ * La caja que desplaza. Es lo único de la página que desplaza: la ventana no
+ * tiene nada que subir.
+ */
+const listaRef = ref<HTMLElement | null>(null);
+
+/**
+ * Cabecera, barra y pie quietos; solo la lista desplaza (se revirtió D4). Para
+ * eso la página mide EXACTAMENTE lo que deja la cabecera del portal: con el
+ * `min-height` que pone Quasar por defecto crecería con la lista y desplazaría
+ * el documento. Quasar llama a esto con lo que ocupa la cabecera (`offset`) y
+ * el alto de la pantalla, así que no hay cuentas a mano ni escucha de `resize`.
+ * Mientras no conoce la pantalla (alto 0, el prerender de `build:ssg`) se
+ * descuenta la cabecera de `100vh`, que es lo mismo que hace Quasar.
+ *
+ * Va en una variable CSS y no en un `height` en línea: un estilo en línea le
+ * gana a cualquier hoja de estilos, y en pantalla baja el SCSS tiene que poder
+ * devolverle a la página su alto natural.
+ */
+const alturaDelMostrador = (offset: number, alto: number) => {
+  const altura = alto > 0 ? `${alto - offset}px` : `calc(100vh - ${offset}px)`;
+  return { '--mostrador-alto': altura };
+};
+
+/**
+ * Con el pie siempre a la vista, cambiar de página sin subir la lista deja a
+ * la visitante a media página nueva. Sube la lista; en pantalla baja
+ * (`CONSULTA_PANTALLA_BAJA` del store, el corte de la hoja de filtros), donde
+ * desplaza la página entera, sube también la ventana. Sin DOM (`build:ssg`) la
+ * referencia es nula y no se toca nada: esa es la guarda.
  */
 const alCambiarPagina = (pagina: number) => {
   filterService.value.page = pagina;
-  if (typeof window !== 'undefined') window.scrollTo({ top: 0 });
+  if (!listaRef.value) return;
+  listaRef.value.scrollTop = 0;
+  if (
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia(CONSULTA_PANTALLA_BAJA).matches
+  ) {
+    window.scrollTo({ top: 0 });
+  }
 };
 
 type HistoryStateWithService = { service?: IndexSection };
@@ -332,22 +379,6 @@ const fetchServices = (e: FilterService) => {
   filterService.value.page = 1;
 };
 
-/**
- * El riel dorado es del documento, no de un `<div>`: desde que la página dejó
- * su scroll interno (D4), el que desplaza es `html`. Se enciende al entrar y se
- * apaga al salir para que el oro no se cuele en las bandas claras del inicio.
- * La regla vive en `app.scss` (`html.m-riel-oro`).
- */
-onMounted(() => {
-  if (typeof document === 'undefined') return;
-  document.documentElement.classList.add('m-riel-oro');
-});
-
-onUnmounted(() => {
-  if (typeof document === 'undefined') return;
-  document.documentElement.classList.remove('m-riel-oro');
-});
-
 defineOptions({
   name: 'ServicePage',
 });
@@ -362,26 +393,46 @@ defineOptions({
  * Columna, y no fila dentro de una caja: la caja gris con sombra lila era lo que
  * hacía que la página pareciera un formulario dentro de otra página. El fondo
  * tinta se declara aquí porque el `q-layout` lleva una foto de fondo.
+ *
+ * El alto lo fija `alturaDelMostrador` (el `style-fn`, en `--mostrador-alto`):
+ * barra y pie no encogen, el cuerpo se come lo que sobra y, dentro de él, la
+ * lista desplaza.
+ *
+ * El relleno inferior es el despeje del lanzador del asistente, que flota abajo
+ * a la derecha: con el pie siempre a la vista, sin él la píldora tapaba
+ * «Siguiente». Cuesta 34 px de lista en escritorio y 46 en móvil (frente a
+ * los 40 y 28 de antes), y no hay forma más barata de no taparlo a todos los
+ * anchos.
  */
 .mostrador {
   display: flex;
   flex-direction: column;
-  padding: 0 var(--m-banda-margen) 40px;
+  height: var(--mostrador-alto);
+  min-height: var(--mostrador-alto);
+  padding: 0 var(--m-banda-margen) var(--m-flotante-despeje);
   background: var(--m-tinta);
   color: var(--m-hueso);
   font-family: var(--m-font-sans);
 }
 
+.mostrador__barra,
+.mostrador__pie {
+  flex: none;
+}
+
 .mostrador__cuerpo {
-  // Se come el alto sobrante para que el pie quede al final y no flotando a
-  // media pantalla: `q-page` recibe un `min-height` de Quasar.
-  flex: 1 0 auto;
+  // Se come el alto que dejan la barra y el pie. Sin `min-height: 0` un hijo
+  // flexible no encoge por debajo de su contenido: la lista entera empujaría
+  // el pie fuera de la pantalla en vez de desplazar.
+  flex: 1 1 0;
+  min-height: 0;
   min-width: 0;
   padding: 22px 0 10px;
   // Carril a la izquierda y lista al lado (D1). Sin carril, el `v-if` del
-  // carril no deja ningún elemento y la lista ocupa la fila entera.
+  // carril no deja ningún elemento y la lista ocupa la fila entera. Los dos se
+  // estiran al alto del cuerpo para que cada uno desplace dentro de él.
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 24px;
 }
 
@@ -390,15 +441,43 @@ defineOptions({
   // Sin esto la rejilla no encoge por debajo de su contenido y empuja la
   // página hacia la derecha.
   min-width: 0;
+  min-height: 0;
+  // La única caja que desplaza. `contain`: al llegar al final no le pasa el
+  // gesto al documento (donde lo soporta; Safari 13.1 lo ignora sin daño).
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 @media (max-width: 699px) {
   .mostrador {
-    padding: 0 var(--m-banda-margen-movil) 28px;
+    padding: 0 var(--m-banda-margen-movil) var(--m-flotante-despeje);
   }
 
   .mostrador__cuerpo {
     padding: 16px 0 8px;
+  }
+}
+
+/**
+ * Teléfono tumbado (844×390): cabecera, barra y pie se comían el alto y a la
+ * lista le quedaban 80 px. Por debajo de 560 px de alto —`ALTO_MINIMO_HOJA_PX`
+ * del store, el mismo corte en que la hoja de filtros pasa a pantalla
+ * completa— vuelve a desplazar la página entera: alto natural (al menos la
+ * pantalla) y la lista sin caja propia. En CSS y no en JS para que valga ya en
+ * el HTML prerenderizado.
+ */
+@media (max-height: 559px) {
+  .mostrador {
+    height: auto;
+  }
+
+  .mostrador__cuerpo {
+    flex: 1 0 auto;
+  }
+
+  .mostrador__lista {
+    overflow-y: visible;
   }
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
   <aside
     v-if="hayCarril"
-    class="carril"
+    class="carril m-riel-oro"
     data-test="carril-filtros"
     aria-label="Filtros de servicios"
   >
@@ -26,7 +26,7 @@
       </h2>
       <button
         type="button"
-        class="carril__limpiar"
+        class="carril__limpiar m-boton-plano"
         data-test="limpiar"
         @click="limpiar"
       >
@@ -92,14 +92,41 @@ const limpiar = () => camposRef.value?.limpiar();
 /**
  * 226 px fijos. No es una caja: es una columna separada de la lista por un
  * filete vertical, como las bandas del resto del portal.
+ *
+ * Se queda quieto junto a la lista, a todo el alto del cuerpo de la página. Si
+ * sus filtros no caben en ese hueco desplaza él solo, independiente de la
+ * lista, con el riel dorado de `app.scss` (`m-riel-oro` en el `<aside>`).
  */
 .carril {
-  flex: 0 0 226px;
-  width: 226px;
+  /*
+   * Con `overflow-y: auto` el carril recorta también en horizontal, y el foco
+   * de sus controles se dibuja 2 px por fuera: con relleno izquierdo 0 el
+   * anillo de oro salía cortado. Esta holgura de relleno se devuelve con un
+   * margen negativo (el contenido sigue alineado con la barra) y se suma al
+   * ancho (la columna de los filtros sigue midiendo 226).
+   */
+  --carril-holgura-foco: 4px;
+  flex: 0 0 auto;
+  width: calc(226px + var(--carril-holgura-foco));
+  margin-left: calc(-1 * var(--carril-holgura-foco));
   align-self: stretch;
-  padding: 4px 20px 24px 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 20px 24px var(--carril-holgura-foco);
   border-right: var(--m-filete-grosor) solid var(--m-filete-oscuro);
   font-family: var(--m-font-sans);
+}
+
+/**
+ * Pantalla baja (menos de 560 px de alto, `ALTO_MINIMO_HOJA_PX` del store):
+ * desplaza la página entera, y el carril va con ella.
+ */
+@media (max-height: 559px) {
+  .carril {
+    overflow-y: visible;
+  }
 }
 
 .carril__cabecera {
@@ -150,5 +177,16 @@ const limpiar = () => camposRef.value?.limpiar();
 .carril__limpiar:focus-visible {
   outline: 2px solid var(--m-oro);
   outline-offset: 2px;
+}
+
+/**
+ * Realce al pasar (solo puntero fino): el COLOR. El movimiento —subir 1 px con
+ * sombra suave, hundirse a 0,96 al pulsar— es global, en `app.scss`
+ * («Realce y hundido»).
+ */
+@media (hover: hover) and (pointer: fine) {
+  .carril__limpiar:hover {
+    color: var(--m-oro-claro);
+  }
 }
 </style>

@@ -36,7 +36,7 @@
     <button
       v-if="propuesta.lineas.length > 0"
       type="button"
-      class="package-card__anadir"
+      class="package-card__anadir m-boton--ancho"
       data-test="anadir-paquete"
       :disabled="ocupado"
       :aria-busy="ocupado ? 'true' : undefined"
@@ -236,5 +236,16 @@ const omitidasLabel = computed(() =>
   margin: 8px 0 0;
   font-size: 11.5px;
   color: var(--m-rosa-profundo);
+}
+
+/**
+ * Realce al pasar (solo puntero fino): el COLOR. El movimiento —subir 1 px con
+ * sombra suave, hundirse a 0,96 al pulsar— es global, en `app.scss`
+ * («Realce y hundido»).
+ */
+@media (hover: hover) and (pointer: fine) {
+  .package-card__anadir:hover:not(:disabled) {
+    color: var(--m-oro);
+  }
 }
 </style>

@@ -218,7 +218,7 @@ describe('ServiceFilterFields · precio y promociones', () => {
     const { wrapper } = montar();
     await marcar(wrapper, 'precio-activo', true);
 
-    expect(wrapper.get('[data-test="precio-valor"]').text()).toBe('5.000 $ ― 200.000 $');
+    expect(wrapper.get('[data-test="precio-valor"]').text()).toBe('5.000 $ ― 300.000 $');
   });
 
   it('el mínimo no puede pasarse del máximo', async () => {
@@ -299,12 +299,12 @@ describe('ServiceFilterFields · precio y promociones', () => {
     expect(aplicado.prices).toEqual({ min: 60, max: 60 });
   });
 
-  it('las perillas van de 5 a 200, la escala de hoy', async () => {
+  it('las perillas van de 5 a 300, la escala de hoy', async () => {
     const { wrapper } = montar();
     await marcar(wrapper, 'precio-activo', true);
 
     expect(wrapper.get('[data-test="precio-min"]').attributes('min')).toBe('5');
-    expect(wrapper.get('[data-test="precio-max"]').attributes('max')).toBe('200');
+    expect(wrapper.get('[data-test="precio-max"]').attributes('max')).toBe('300');
   });
 
   it('cada casilla tiene su rótulo, no un texto suelto al lado', () => {

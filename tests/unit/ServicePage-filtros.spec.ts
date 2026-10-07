@@ -22,6 +22,8 @@ import ServiceCardAdminActions from 'src/components/servicePage/ServiceCardAdmin
 import type Service from 'src/interfaces/service';
 import type { MotivoRefresco } from 'src/composables/services/useServiceAdminActions';
 import {
+  ALTO_MINIMO_HOJA_PX,
+  CONSULTA_PANTALLA_BAJA,
   PRECIO_ESCALA_MAX,
   PRECIO_ESCALA_MIN,
   useFiltersStore,
@@ -202,12 +204,29 @@ const GENEROS = [
 
 let pinia: Pinia;
 
-const montar = ({ ancho = 1280 } = {}) => {
-  fijarViewport({ ancho });
+/**
+ * El doble de `q-page` hace lo que hace el de verdad con `style-fn`: lo llama
+ * con lo que ocupa la cabecera (`offset`) y el alto de la pantalla, y pone en
+ * su raíz el estilo que le devuelven. Quasar pasa alto 0 mientras no conoce la
+ * pantalla, que es lo que pasa al prerenderizar con `build:ssg`.
+ */
+const CABECERA_PX = 50;
+let altoPantalla = 800;
+const QPageDoble = {
+  props: ['styleFn'],
+  data: () => ({ alto: altoPantalla }),
+  template:
+    '<div data-test="pagina" :style="styleFn ? styleFn(' +
+    CABECERA_PX +
+    ', alto) : undefined"><slot /></div>',
+};
+
+const montar = ({ ancho = 1280, alto = 900 } = {}) => {
+  fijarViewport({ ancho, alto });
   return mount(ServicePage, {
     global: {
       plugins: [pinia],
-      stubs: { 'q-page': { template: '<div><slot /></div>' } },
+      stubs: { 'q-page': QPageDoble },
     },
   });
 };
@@ -244,6 +263,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  altoPantalla = 800;
   scrollTo.mockRestore();
   history.replaceState(null, '');
 });
@@ -478,17 +498,66 @@ describe('ServicePage · limpiar filtros', () => {
 
 describe('ServicePage · paginar', () => {
   /**
-   * Desde que la página entera desplaza (D4), el pie queda al final de una
-   * lista larga: cambiar de página sin subir deja a la visitante mirando el pie
-   * de la página nueva.
+   * La lista desplaza dentro de su caja y el pie está siempre a la vista:
+   * cambiar de página sin subir la lista deja a la visitante a media página
+   * nueva. Lo que sube es la lista; la ventana no tiene nada que subir.
    */
-  it('cambiar de página la pone y sube al principio', async () => {
+  it('cambiar de página la pone y sube la lista al principio', async () => {
     const wrapper = montar();
+    const lista = wrapper.get('[data-test="lista-servicios"]').element;
+    lista.scrollTop = 300;
 
     await wrapper.getComponent({ name: 'ServicePagerBar' }).vm.$emit('update:pagina', 2);
 
     expect(servicios().filterService.value.page).toBe(2);
+    expect(lista.scrollTop).toBe(0);
+    expect(scrollTo).not.toHaveBeenCalled();
+  });
+
+  /**
+   * Con menos de 560 px de alto (teléfono tumbado) la lista deja de desplazar
+   * y desplaza la página entera: entonces sí es la ventana lo que hay que subir,
+   * o la visitante se queda mirando el pie de la página nueva.
+   */
+  it('en una pantalla baja, cambiar de página sube la ventana', async () => {
+    const wrapper = montar({ ancho: 844, alto: 390 });
+
+    await wrapper
+      .getComponent({ name: 'ServicePagerBar' })
+      .vm.$emit('update:pagina', 2);
+
+    expect(servicios().filterService.value.page).toBe(2);
     expect(scrollTo).toHaveBeenCalledWith({ top: 0 });
+  });
+});
+
+/**
+ * Cabecera del portal, barra y pie fijos; solo la lista desplaza. Para eso la
+ * página tiene que medir EXACTAMENTE lo que deja la cabecera: con el
+ * `min-height` de Quasar crecería con la lista y desplazaría el documento.
+ */
+describe('ServicePage · el alto del mostrador', () => {
+  /**
+   * El alto va en una variable y NO en un `height` en línea: un estilo en línea
+   * le gana a cualquier hoja de estilos, y la consulta de pantalla baja tiene
+   * que poder devolverle a la página su alto natural.
+   */
+  it('mide el alto de la pantalla menos la cabecera, ni más ni menos', () => {
+    altoPantalla = 800;
+    const pagina = montar().get('[data-test="pagina"]').element as HTMLElement;
+
+    expect(pagina.style.getPropertyValue('--mostrador-alto')).toBe('750px');
+    expect(pagina.style.height).toBe('');
+    expect(pagina.style.minHeight).toBe('');
+  });
+
+  it('sin pantalla conocida (prerender) descuenta la cabecera de 100vh', () => {
+    altoPantalla = 0;
+    const pagina = montar().get('[data-test="pagina"]').element as HTMLElement;
+
+    expect(pagina.style.getPropertyValue('--mostrador-alto')).toBe(
+      `calc(100vh - ${CABECERA_PX}px)`
+    );
   });
 });
 
@@ -672,10 +741,50 @@ describe('ServicePage · lo que se lee de la fuente', () => {
     expect(PAGINA).not.toMatch(/\b1024\b/);
   });
 
-  it('el desplazamiento al cambiar de página va detrás de la guarda de SSG', () => {
-    expect(PAGINA).toMatch(
-      /typeof window !== 'undefined'[\s\S]{0,80}window\.scrollTo\(\{ top: 0 \}\)/
+  /**
+   * Sube la lista y no la ventana. La guarda de SSG es la referencia: sin DOM
+   * (`build:ssg`) `listaRef` es nula y no se toca nada.
+   */
+  it('el desplazamiento al cambiar de página sube la lista, detrás de la guarda de SSG', () => {
+    const alCambiar = PAGINA.slice(
+      PAGINA.indexOf('const alCambiarPagina'),
+      PAGINA.indexOf('};', PAGINA.indexOf('const alCambiarPagina'))
     );
+    expect(alCambiar).toMatch(/if \(!listaRef\.value\) return;/);
+    expect(alCambiar).toMatch(/listaRef\.value\.scrollTop = 0;/);
+    // La ventana solo se sube en pantalla baja, que es cuando desplaza ella.
+    expect(PAGINA.match(/window\.scrollTo/g)).toHaveLength(1);
+    expect(alCambiar).toMatch(
+      /window\.matchMedia\(CONSULTA_PANTALLA_BAJA\)\.matches[\s\S]{0,40}window\.scrollTo\(\{ top: 0 \}\)/
+    );
+  });
+
+  /**
+   * El corte de pantalla baja es el de la hoja de filtros (560 px de alto):
+   * importado del store para la cuenta en JS, y repetido en el SCSS —que no
+   * puede importarlo— como `max-height` de ese valor menos uno.
+   */
+  it('el corte de pantalla baja es el de la hoja de filtros', () => {
+    // Una sola consulta, exportada del store, para la página y la hoja.
+    expect(PAGINA).toMatch(
+      /import \{[^}]*\bCONSULTA_PANTALLA_BAJA\b[^}]*\} from 'src\/stores\/filters-store';/
+    );
+    expect(PAGINA).not.toMatch(/const CONSULTA_PANTALLA_BAJA\b/);
+    expect(CONSULTA_PANTALLA_BAJA).toBe(
+      `(max-height: ${ALTO_MINIMO_HOJA_PX - 1}px)`
+    );
+    expect(PAGINA).toContain(`@media ${CONSULTA_PANTALLA_BAJA} {`);
+    expect(ALTO_MINIMO_HOJA_PX).toBe(560);
+
+    const HOJA = readFileSync(
+      join(__dirname, '../../src/components/dialogs/serviceFilterDialog.vue'),
+      'utf8'
+    );
+    expect(HOJA).toMatch(
+      /import \{[^}]*\bCONSULTA_PANTALLA_BAJA\b[^}]*\} from 'src\/stores\/filters-store';/
+    );
+    expect(HOJA).toContain('window.matchMedia(CONSULTA_PANTALLA_BAJA)');
+    expect(HOJA).not.toContain('CONSULTA_ALTO');
   });
 
   it('la correspondencia store→consulta se escribe en un solo sitio', () => {

@@ -11,7 +11,7 @@
       <button
         v-if="ventana[0] > 1"
         type="button"
-        class="pie__numero"
+        class="pie__numero m-boton-plano"
         aria-label="Ir a la página 1"
         data-test="pagina"
         @click="ir(1)"
@@ -30,7 +30,7 @@
         v-for="numero in ventana"
         :key="numero"
         type="button"
-        class="pie__numero"
+        class="pie__numero m-boton-plano"
         :class="{ 'pie__numero--activa': numero === paginaActual }"
         :aria-current="numero === paginaActual ? 'page' : undefined"
         :aria-label="`Ir a la página ${numero}`"
@@ -50,7 +50,7 @@
       <button
         v-if="ultimaDeLaVentana < totalPaginasReal"
         type="button"
-        class="pie__numero"
+        class="pie__numero m-boton-plano"
         :aria-label="`Ir a la página ${totalPaginasReal}`"
         data-test="pagina"
         @click="ir(totalPaginasReal)"
@@ -244,6 +244,26 @@ defineOptions({ name: 'ServicePagerBar' });
 
   .pie__siguiente {
     margin-left: 4px;
+  }
+}
+
+/**
+ * Realce al pasar (solo puntero fino): el COLOR. El movimiento —subir 1 px con
+ * sombra suave, hundirse a 0,96 al pulsar— es global, en `app.scss`
+ * («Realce y hundido»).
+ */
+@media (hover: hover) and (pointer: fine) {
+  .pie__numero:hover {
+    color: var(--m-oro);
+  }
+
+  .pie__numero--activa:hover {
+    border-bottom-color: var(--m-oro-claro);
+    color: var(--m-oro-claro);
+  }
+
+  .pie__siguiente:hover:not(:disabled) {
+    border-color: var(--m-oro);
   }
 }
 </style>

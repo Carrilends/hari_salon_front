@@ -47,7 +47,7 @@
 
       <button
         type="button"
-        class="review-band__dejar"
+        class="review-band__dejar m-boton-plano"
         data-test="dejar-resena"
         @click="pedirResena()"
       >
@@ -370,6 +370,28 @@ defineOptions({ name: 'ReviewAssistantBand' });
 
   .review-band__invitacion {
     font-size: 16px;
+  }
+}
+
+/**
+ * Realce al pasar (solo puntero fino): el COLOR. El movimiento —subir 1 px con
+ * sombra suave, hundirse a 0,96 al pulsar— es global, en `app.scss`
+ * («Realce y hundido»).
+ */
+@media (hover: hover) and (pointer: fine) {
+  // El único enlace rosa: su filete se oscurece al tono del rótulo. El oro aquí
+  // rompería «un acento por pantalla».
+  .review-band__dejar:hover {
+    border-bottom-color: var(--m-rosa-profundo);
+  }
+
+  .review-band__chip:hover {
+    border-color: var(--m-oro);
+  }
+
+  .review-band__chip--solido:hover {
+    border-color: var(--m-tinta);
+    color: var(--m-oro);
   }
 }
 </style>
