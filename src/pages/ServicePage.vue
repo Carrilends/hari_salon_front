@@ -85,12 +85,7 @@ import ServiceFilterDialog from 'src/components/dialogs/serviceFilterDialog.vue'
 import ServiceFilterRail from 'src/components/servicePage/ServiceFilterRail.vue';
 import { FilterService } from 'src/composables/dialogs/useServiceFilter';
 import { useDialogMaximizedBelow } from 'src/composables/dialogs/useDialogMaximizedBelow';
-import {
-  ANCHO_CARRIL_PX,
-  PRECIO_ESCALA_MAX,
-  PRECIO_ESCALA_MIN,
-  useFiltersStore,
-} from 'src/stores/filters-store';
+import { ANCHO_CARRIL_PX, useFiltersStore } from 'src/stores/filters-store';
 import serviceCreateEdit from 'src/components/dialogs/serviceCreateEdit.vue';
 
 import type { IndexSection } from 'src/constants/index-sections';
@@ -186,15 +181,26 @@ const hayCarril = computed(() => !esHojaFiltros.value);
  * sin filtrar, y la barra diría cero filtros. Se copia el store una sola vez,
  * al arrancar; el atajo del inicio, si lo hay, lo pisa después.
  */
+const filtroDelStore = (): FilterService => ({
+  selectedGenres: filtersStore.selectedGenres.map((g) => g.id),
+  selectedServicesIDs: [...filtersStore.selectedServicesIDs],
+  includePriceRange: filtersStore.includePriceRange,
+  includePromotionsOnly: filtersStore.includePromotionsOnly,
+  prices: { ...filtersStore.prices },
+});
+
+/** El único sitio que escribe estos cinco campos en la consulta de la lista. */
+const aplicarAlFiltro = (filtro: FilterService) => {
+  filterService.value.selectedGenres = filtro.selectedGenres;
+  filterService.value.selectedServicesIDs = filtro.selectedServicesIDs;
+  filterService.value.includePriceRange = filtro.includePriceRange;
+  filterService.value.includePromotionsOnly = filtro.includePromotionsOnly;
+  filterService.value.prices.min = filtro.prices.min;
+  filterService.value.prices.max = filtro.prices.max;
+};
+
 const copiarFiltroDelStore = () => {
-  filterService.value.selectedGenres = filtersStore.selectedGenres.map(
-    (g) => g.id
-  );
-  filterService.value.selectedServicesIDs = [...filtersStore.selectedServicesIDs];
-  filterService.value.includePriceRange = filtersStore.includePriceRange;
-  filterService.value.includePromotionsOnly = filtersStore.includePromotionsOnly;
-  filterService.value.prices.min = filtersStore.prices.min;
-  filterService.value.prices.max = filtersStore.prices.max;
+  aplicarAlFiltro(filtroDelStore());
   externalAmountOfFilters.value = filtersStore.cantidadFiltros;
 };
 if (filtersStore.cantidadFiltros > 0) copiarFiltroDelStore();
@@ -230,12 +236,7 @@ const hayFiltrosActivos = computed(
 const limpiarFiltros = () => {
   filtersStore.limpiarFiltros();
   filterService.value.name = '';
-  filterService.value.selectedGenres = [];
-  filterService.value.selectedServicesIDs = [];
-  filterService.value.includePriceRange = false;
-  filterService.value.includePromotionsOnly = false;
-  filterService.value.prices.min = PRECIO_ESCALA_MIN;
-  filterService.value.prices.max = PRECIO_ESCALA_MAX;
+  aplicarAlFiltro(filtroDelStore());
   filterService.value.page = 1;
   externalAmountOfFilters.value = 0;
 };
@@ -288,12 +289,7 @@ function applyShortcutFromIndex(card: IndexSection) {
       genreIds
     );
   }
-  filterService.value.selectedGenres = filtersStore.selectedGenres.map(
-    (g) => g.id
-  );
-  filterService.value.selectedServicesIDs = serviceIds;
-  filterService.value.includePriceRange = false;
-  filterService.value.includePromotionsOnly = false;
+  aplicarAlFiltro(filtroDelStore());
   filterService.value.page = 1;
   externalAmountOfFilters.value = filtersStore.cantidadFiltros;
   /**
@@ -324,12 +320,7 @@ const fetchServices = (e: FilterService | string) => {
   if (typeof e === 'string') {
     refetch.value++;
   } else {
-    filterService.value.selectedGenres = e.selectedGenres;
-    filterService.value.selectedServicesIDs = e.selectedServicesIDs;
-    filterService.value.includePriceRange = e.includePriceRange;
-    filterService.value.includePromotionsOnly = e.includePromotionsOnly;
-    filterService.value.prices.min = e.prices.min;
-    filterService.value.prices.max = e.prices.max;
+    aplicarAlFiltro(e);
     /**
      * Con aplicación instantánea esto pasa a cada clic del carril: sin volver a
      * la página 1, filtrar estando en la 3 deja la lista vacía y parece que el

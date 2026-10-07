@@ -450,6 +450,11 @@ describe('ServicePage · el atajo del inicio', () => {
       min: PRECIO_ESCALA_MIN,
       max: PRECIO_ESCALA_MAX,
     });
+    // Y la consulta de la lista no se queda con el 40–120 que copió al arrancar.
+    expect(servicios().filterService.value.prices).toEqual({
+      min: PRECIO_ESCALA_MIN,
+      max: PRECIO_ESCALA_MAX,
+    });
   });
 });
 
@@ -468,6 +473,11 @@ describe('ServicePage · lo que se lee de la fuente', () => {
     expect(PAGINA).toMatch(
       /typeof window !== 'undefined'[\s\S]{0,80}window\.scrollTo\(\{ top: 0 \}\)/
     );
+  });
+
+  it('la correspondencia store→consulta se escribe en un solo sitio', () => {
+    expect(PAGINA.match(/filterService\.value\.includePriceRange =/g)).toHaveLength(1);
+    expect(PAGINA.match(/filterService\.value\.prices\.min =/g)).toHaveLength(1);
   });
 
   it('el atajo sigue avisando de los IDs de género que no encuentra', () => {
