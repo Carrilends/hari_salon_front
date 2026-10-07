@@ -107,6 +107,13 @@ export const useServices = () => {
     return Math.ceil(logs.value / filterService.value.limit);
   });
 
+  /**
+   * El número de registros que casan con el filtro, tal como lo devuelve
+   * `POST /service/search`. Lo piden la barra («48 servicios») y el pie («12 de
+   * 48 servicios»): deducirlo de `totalPages × limit` diría 50 donde hay 48.
+   */
+  const totalServices = computed(() => logs.value);
+
   return {
     isLoading,
     isFetching, // isFetching es útil para mostrar un spinner mientras se carga la siguiente página
@@ -116,5 +123,6 @@ export const useServices = () => {
     setPage, // Función para cambiar la página
     setLimit, // Función para cambiar el límite
     totalPages, // Total de páginas calculadas
+    totalServices, // Total de registros, para los conteos de la barra y el pie
   };
 };
