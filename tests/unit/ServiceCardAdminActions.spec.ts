@@ -180,6 +180,20 @@ describe('ServiceCardAdminActions · estilos', () => {
     expect(estilos).not.toMatch(/position:\s*absolute/);
   });
 
+  /**
+   * En el renglón de 390 px tres botones de 44 en fila se comían ~150 px y el
+   * nombre del servicio se quedaba en una columna de 90. Apilados ocupan 44 de
+   * ancho y el texto conserva más de 150; el renglón crece hacia abajo.
+   */
+  it('en el renglón (compacto) apila los botones en columna, a 44 px', () => {
+    expect(estilos).toMatch(
+      /\.acciones-admin--compacto \{[^}]*flex-direction:\s*column;/
+    );
+    expect(estilos).toMatch(
+      /\.acciones-admin__boton \{[^}]*width:\s*var\(--m-tactil-min\);[^}]*height:\s*var\(--m-tactil-min\);/
+    );
+  });
+
   it('el disparador de borrar no usa el color de peligro', () => {
     expect(fuente).not.toContain('var(--m-peligro');
   });

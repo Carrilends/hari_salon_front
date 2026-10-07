@@ -150,11 +150,18 @@ const precioBase = computed(() =>
   border-color: var(--m-oro);
 }
 
-/** A canto vivo: la esquina la recorta el radio del renglón. */
+/**
+ * A canto vivo: la esquina la recorta el radio del renglón. Se estira con el
+ * renglón (`align-self: stretch` con el alto en `auto`): con las acciones de la
+ * dueña apiladas el renglón pasa de 104 px, y una foto fija dejaría un hueco
+ * debajo. Nunca menos de 104.
+ */
 .fila-servicio__foto {
   flex: 0 0 auto;
+  align-self: stretch;
   width: 104px;
-  height: 104px;
+  height: auto;
+  min-height: 104px;
   object-fit: cover;
 }
 

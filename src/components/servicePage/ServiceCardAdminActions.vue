@@ -57,7 +57,7 @@ import type Service from 'src/interfaces/service';
  *
  * No dependen del `hover` (D5). En la tarjeta viven sobre el velo, que con
  * puntero grueso está siempre visible; en el renglón de móvil (`compacto`) van
- * en la misma fila y sin velo. Solo emiten: quien decide qué hacer es
+ * apilados en columna y sin velo. Solo emiten: quien decide qué hacer es
  * `useServiceAdminActions`.
  *
  * El guardia de `isAdmin` es cosmético —el backend protege cada endpoint con
@@ -67,7 +67,7 @@ import type Service from 'src/interfaces/service';
 const props = withDefaults(
   defineProps<{
     servicio: Service;
-    /** Versión del renglón de móvil: misma fila, 44 px, sin velo. */
+    /** Versión del renglón de móvil: en columna, 44 px, sin velo. */
     compacto?: boolean;
   }>(),
   { compacto: false }
@@ -139,8 +139,14 @@ defineOptions({ name: 'ServiceCardAdminActions' });
   line-height: 1;
 }
 
-/* Renglón de móvil: fila oscura (carbón), así que borde oro y trazo hueso, sin velo. */
+/*
+ * Renglón de móvil: fila oscura (carbón), así que borde oro y trazo hueso, sin
+ * velo. En columna: tres botones de 44 px en fila se comían ~150 px de los 350
+ * del renglón a 390 y el nombre quedaba en una tira de 90. Apilados ocupan 44
+ * de ancho; el renglón crece hacia abajo y la foto se estira con él.
+ */
 .acciones-admin--compacto {
+  flex-direction: column;
   gap: 6px;
 }
 

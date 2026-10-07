@@ -168,4 +168,16 @@ describe('ServiceRow', () => {
   it('no pinta con hexadecimales sueltos', () => {
     expect(ESTILOS).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
   });
+
+  /**
+   * Con las acciones de la dueña apiladas (3 × 44 px) el renglón crece por
+   * encima de los 104 px de la foto: la foto se estira con él en vez de dejar un
+   * hueco debajo, y nunca baja de 104.
+   */
+  it('la foto se estira con el renglón y no baja de 104 px', () => {
+    expect(ESTILOS).toMatch(
+      /\.fila-servicio__foto \{[^}]*align-self:\s*stretch;[^}]*min-height:\s*104px;/
+    );
+    expect(ESTILOS).not.toMatch(/\.fila-servicio__foto \{[^}]*[\s;]height:\s*104px;/);
+  });
 });
