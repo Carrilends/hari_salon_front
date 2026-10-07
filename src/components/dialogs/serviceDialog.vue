@@ -156,9 +156,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useDialogPluginComponent } from 'quasar';
 import { useDialogMaximizedBelow } from 'src/composables/dialogs/useDialogMaximizedBelow';
+import { escucharConsulta } from 'src/helpers/escuchar-consulta';
 import { formatDurationMinutes } from 'src/helpers/duration';
 import {
   etiquetaDeCategoria,
@@ -188,8 +189,44 @@ const props = defineProps<{
 defineEmits([...useDialogPluginComponent.emits]);
 
 const { dialogRef, onDialogOK, onDialogHide } = useDialogPluginComponent();
-const { maximized } = useDialogMaximizedBelow(500);
+const { maximized: estrecha } = useDialogMaximizedBelow(500);
 const bookStore = useBookStore();
+
+/**
+ * Teléfono tumbado o ventana bajita. La ficha es persistente (solo cierra con la
+ * X o con «Cerrar»): si con 640 px de alto esos dos botones se salen de la
+ * pantalla, no hay manera de salir. Por debajo de 600 px de alto se maximiza
+ * aunque sobre ancho, y entonces la columna única desplaza su descripción.
+ *
+ * La ficha solo se abre en el cliente (la pide `$q.dialog`), pero la guarda de
+ * SSG va igual: `build:ssg` evalúa el módulo sin `window`, y jsdom no siempre
+ * trae `matchMedia`. El respaldo de Safari 13.1 lo pone `escucharConsulta`.
+ */
+const ALTO_MINIMO_FICHA_PX = 600;
+const CONSULTA_ALTO = `(max-height: ${ALTO_MINIMO_FICHA_PX - 1}px)`;
+
+const hayMatchMedia = () =>
+  typeof window !== 'undefined' && typeof window.matchMedia === 'function';
+
+const bajita = ref(
+  hayMatchMedia() ? window.matchMedia(CONSULTA_ALTO).matches : false
+);
+
+let dejarDeEscuchar: (() => void) | null = null;
+
+onMounted(() => {
+  if (!hayMatchMedia()) return;
+  const consulta = window.matchMedia(CONSULTA_ALTO);
+  const sincronizar = () => {
+    bajita.value = consulta.matches;
+  };
+  sincronizar();
+  dejarDeEscuchar = escucharConsulta(consulta, sincronizar);
+});
+
+onUnmounted(() => dejarDeEscuchar?.());
+
+const maximized = computed(() => estrecha.value || bajita.value);
 
 /**
  * `'cancel'` es el contrato con `useService.ts`: es lo que limpia `serviceIdRef`
@@ -361,9 +398,14 @@ const rostros = computed<string[]>(() =>
 <style scoped lang="scss">
 /**
  * La ficha del servicio: 880×640 sobre el velo, foto a sangre a la izquierda y
- * la lectura a la derecha. Por debajo de 500 px el diálogo va maximizado
- * (`useDialogMaximizedBelow(500)`, la misma decisión de siempre) y la rejilla se
- * vuelve una columna: foto arriba, pie abajo.
+ * la lectura a la derecha. Por debajo de 500 px de ancho o de 600 de alto el
+ * diálogo va maximizado (`useDialogMaximizedBelow(500)` más la consulta de alto)
+ * y la rejilla se vuelve una columna: foto arriba, pie abajo.
+ *
+ * El alto es `min(640px, ventana − 32px)` y no 640 fijos: entre 600 y 672 px de
+ * alto la ficha flotante se encoge en vez de sacar la X y el pie de la pantalla.
+ * `100vh` primero porque Safari 13.1 no sabe de `100dvh` y descarta esa segunda
+ * línea; donde sí la entiende, gana, y no cuenta la barra del navegador.
  *
  * La columna de la foto es `clamp(220px, 48%, 420px)` y no 420 px fijos: entre
  * los 500 px donde el diálogo se maximiza y los 912 de la ventana que da la
@@ -379,7 +421,8 @@ const rostros = computed<string[]>(() =>
     'foto pie';
   width: 880px;
   max-width: 100%;
-  height: 640px;
+  height: min(640px, calc(100vh - 32px));
+  height: min(640px, calc(100dvh - 32px));
   overflow: hidden;
   background: var(--m-carbon);
   border: var(--m-filete-grosor) solid var(--m-oro);
@@ -690,8 +733,10 @@ const rostros = computed<string[]>(() =>
   border: 0;
   border-radius: 0;
 
+  // 240 px en un teléfono de pie; tumbado (390 px de alto) la foto cede hasta
+  // un tercio de la ventana para que el nombre y el precio sigan a la vista.
   .ficha__galeria {
-    height: 240px;
+    height: min(240px, 34vh);
   }
 
   // Sobre una foto de 240 px la tira cabe mejor tumbada.

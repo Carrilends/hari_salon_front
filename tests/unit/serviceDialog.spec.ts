@@ -27,6 +27,8 @@ import type { Image } from 'src/interfaces/service';
 
 /** Ancho de ventana que ve `useDialogMaximizedBelow`. jsdom no trae matchMedia. */
 let anchoVentana = 1280;
+/** Alto de ventana que ve la consulta de alto de la ficha. */
+let altoVentana = 900;
 
 /** Veces que el diálogo se ha cerrado de verdad (el plugin llama a `hide()`). */
 const cerrado = { veces: 0 };
@@ -113,11 +115,17 @@ enableAutoUnmount(afterEach);
 
 beforeEach(() => {
   anchoVentana = 1280;
+  altoVentana = 900;
   cerrado.veces = 0;
   window.matchMedia = ((consulta: string) => {
-    const tope = Number(consulta.match(/max-width:\s*(\d+)px/)?.[1] ?? 0);
+    const topeAncho = consulta.match(/max-width:\s*(\d+)px/)?.[1];
+    const topeAlto = consulta.match(/max-height:\s*(\d+)px/)?.[1];
     return {
-      matches: anchoVentana <= tope,
+      matches: topeAncho
+        ? anchoVentana <= Number(topeAncho)
+        : topeAlto
+        ? altoVentana <= Number(topeAlto)
+        : false,
       media: consulta,
       addEventListener: () => undefined,
       removeEventListener: () => undefined,
@@ -333,6 +341,62 @@ describe('ficha del servicio · la conducta del diálogo', () => {
 
     expect(wrapper.findComponent({ name: 'QDialog' }).props('maximized')).toBe(
       false
+    );
+  });
+
+  /**
+   * Teléfono tumbado o ventana bajita: la ficha es persistente, así que si la X
+   * y el pie se salen de la pantalla no hay forma de cerrarla. Por debajo de
+   * 600 px de alto va a pantalla completa, aunque sobre ancho.
+   */
+  it('por debajo de 600 px de alto va a pantalla completa aunque sobre ancho', () => {
+    anchoVentana = 844;
+    altoVentana = 390;
+
+    const { wrapper } = montar();
+
+    expect(wrapper.findComponent({ name: 'QDialog' }).props('maximized')).toBe(
+      true
+    );
+    expect(wrapper.get('[data-test="ficha"]').classes()).toContain(
+      'ficha--amplia'
+    );
+  });
+
+  it('a 600 px de alto justos sigue siendo la ficha flotante', () => {
+    altoVentana = 600;
+
+    const { wrapper } = montar();
+
+    expect(wrapper.findComponent({ name: 'QDialog' }).props('maximized')).toBe(
+      false
+    );
+  });
+
+  /** NF06: en Safari 13.1 la consulta solo trae `addListener`. */
+  it('sigue el alto también en Safari 13.1, con addListener', async () => {
+    const escuchas: Array<() => void> = [];
+    window.matchMedia = ((consulta: string) => ({
+      get matches() {
+        const topeAlto = consulta.match(/max-height:\s*(\d+)px/)?.[1];
+        return topeAlto ? altoVentana <= Number(topeAlto) : false;
+      },
+      media: consulta,
+      addListener: (fn: () => void) => escuchas.push(fn),
+      removeListener: () => undefined,
+    })) as unknown as typeof window.matchMedia;
+
+    const { wrapper } = montar();
+    expect(wrapper.findComponent({ name: 'QDialog' }).props('maximized')).toBe(
+      false
+    );
+
+    altoVentana = 420;
+    escuchas.forEach((fn) => fn());
+    await nextTick();
+
+    expect(wrapper.findComponent({ name: 'QDialog' }).props('maximized')).toBe(
+      true
     );
   });
 
@@ -701,9 +765,30 @@ describe('ficha del servicio · el contrato visual', () => {
     expect(ESTILOS).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
   });
 
-  it('la ficha mide 880 px de ancho y 640 de alto', () => {
+  /**
+   * 640 de alto como techo, nunca más que la ventana menos un margen: con una
+   * altura fija, en una ventana de 620 px la X y el pie quedaban fuera y la
+   * ficha, que es persistente, no se podía cerrar. `100vh` primero y `100dvh`
+   * después: Safari 13.1 descarta la segunda y se queda con la primera.
+   */
+  it('la ficha mide 880 px de ancho y como mucho 640 de alto, sin pasarse de la ventana', () => {
     expect(ESTILOS).toContain('width: 880px');
-    expect(ESTILOS).toContain('height: 640px');
+    expect(ESTILOS).toMatch(
+      /\.ficha \{[^}]*height: min\(640px, calc\(100vh - 32px\)\);\s*height: min\(640px, calc\(100dvh - 32px\)\);/
+    );
+    expect(ESTILOS).not.toMatch(/\bheight: 640px/);
+  });
+
+  it('maximizada en una ventana bajita, la foto cede alto a la lectura', () => {
+    expect(ESTILOS).toMatch(
+      /\.ficha--amplia \{[\s\S]*?\.ficha__galeria \{\s*height: min\(240px, 34vh\);/
+    );
+  });
+
+  it('la consulta de alto va detrás de la guarda de SSG', () => {
+    expect(FUENTE).toContain("typeof window !== 'undefined'");
+    expect(FUENTE).toContain("typeof window.matchMedia === 'function'");
+    expect(FUENTE).toContain('escucharConsulta(');
   });
 
   it('todo el color y el ritmo salen de los tokens', () => {
