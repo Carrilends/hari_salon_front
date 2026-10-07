@@ -18,6 +18,9 @@ import { createPinia, setActivePinia, type Pinia } from 'pinia';
 import { nextTick, ref } from 'vue';
 
 import ServicePage from 'src/pages/ServicePage.vue';
+import ServiceCardAdminActions from 'src/components/servicePage/ServiceCardAdminActions.vue';
+import type Service from 'src/interfaces/service';
+import type { MotivoRefresco } from 'src/composables/services/useServiceAdminActions';
 import {
   PRECIO_ESCALA_MAX,
   PRECIO_ESCALA_MIN,
@@ -38,8 +41,10 @@ jest.mock('src/composables/shared/useOptions', () => ({
 }));
 jest.mock('src/composables/seo/useSeo', () => ({ useSeo: () => undefined }));
 jest.mock('quasar', () => ({ useQuasar: () => ({}) }));
+/** Mutable: las pruebas de las acciones de la dueña entran como admin. */
+const mockAuth = { isAdmin: false, isLoggedIn: false };
 jest.mock('src/stores/auth-store', () => ({
-  useAuthStore: () => ({ isAdmin: false, isLoggedIn: false }),
+  useAuthStore: () => mockAuth,
 }));
 jest.mock('src/stores/book-store', () => ({
   useBookStore: () => ({ syncBookingWithService: jest.fn() }),
@@ -56,7 +61,7 @@ jest.mock('src/composables/services/useService', () => {
 
 /** Los refs que devolvería `useServices`, recreados en cada caso. */
 const crearServicios = () => ({
-  services: ref([]),
+  services: ref([] as Service[]),
   filterService: ref({
     name: '',
     selectedGenres: [] as string[],
@@ -104,13 +109,63 @@ jest.mock('src/components/servicePage/ServicePagerBar.vue', () => ({
     template: '<nav />',
   },
 }));
+/**
+ * La rejilla de verdad reexpone UNA ranura `acciones` con `{ servicio,
+ * compacto }`: `true` dentro del renglón de móvil, `false` en la tarjeta. El
+ * doble la pide con los dos valores para el primer servicio, y dice si la
+ * página la rellenó.
+ */
 jest.mock('src/components/servicePage/ServiceCardsGrid.vue', () => ({
   __esModule: true,
   default: {
     name: 'ServiceCardsGrid',
     props: ['servicios', 'columnas', 'renglones', 'cargando', 'recargando', 'error', 'hayFiltros'],
     emits: ['detalle', 'limpiar-filtros', 'reintentar'],
-    template: '<div />',
+    template: `<div>
+      <span data-test="hay-acciones">{{ $slots.acciones ? 'si' : 'no' }}</span>
+      <template v-if="servicios.length">
+        <slot name="acciones" :servicio="servicios[0]" :compacto="true" />
+        <slot name="acciones" :servicio="servicios[0]" :compacto="false" />
+      </template>
+    </div>`,
+  },
+}));
+
+// Los arrastra el módulo real del composable (de él sale `paginaTrasBorrado`)
+// y leen `useDialogPluginComponent.emits`, que el doble de `quasar` no trae.
+jest.mock('src/components/dialogs/ServiceDeleteDialog.vue', () => ({
+  __esModule: true,
+  default: { name: 'ServiceDeleteDialog', template: '<div />' },
+}));
+jest.mock('src/components/dialogs/ServicePromotionDialog.vue', () => ({
+  __esModule: true,
+  default: { name: 'ServicePromotionDialog', template: '<div />' },
+}));
+
+/**
+ * El composable de administración se dobla para quedarse con el `refrescar`
+ * que le pasa la página; `paginaTrasBorrado` es la de verdad, que es la regla
+ * que la página tiene que aplicar.
+ */
+const mockAdmin = {
+  refrescar: null as ((motivo: MotivoRefresco) => void) | null,
+  editar: jest.fn(),
+  promocionar: jest.fn(),
+  eliminar: jest.fn(),
+};
+jest.mock('src/composables/services/useServiceAdminActions', () => ({
+  paginaTrasBorrado: jest.requireActual(
+    'src/composables/services/useServiceAdminActions'
+  ).paginaTrasBorrado,
+  useServiceAdminActions: (opciones: {
+    refrescar: (motivo: MotivoRefresco) => void;
+  }) => {
+    mockAdmin.refrescar = opciones.refrescar;
+    return {
+      editar: mockAdmin.editar,
+      promocionar: mockAdmin.promocionar,
+      eliminar: mockAdmin.eliminar,
+    };
   },
 }));
 jest.mock('src/components/servicePage/ServiceFilterRail.vue', () => ({
@@ -178,6 +233,12 @@ beforeEach(() => {
   setActivePinia(pinia);
   useOptionsStore().setGenres(GENEROS);
   mockServicios.actual = crearServicios();
+  mockAuth.isAdmin = false;
+  mockAuth.isLoggedIn = false;
+  mockAdmin.refrescar = null;
+  mockAdmin.editar.mockClear();
+  mockAdmin.promocionar.mockClear();
+  mockAdmin.eliminar.mockClear();
   // jsdom no implementa `scrollTo` y lo dice por consola.
   scrollTo = jest.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
 });
@@ -372,6 +433,92 @@ describe('ServicePage · paginar', () => {
 
     expect(servicios().filterService.value.page).toBe(2);
     expect(scrollTo).toHaveBeenCalledWith({ top: 0 });
+  });
+});
+
+describe('ServicePage · las acciones de la dueña', () => {
+  const SERVICIO = {
+    id: 's1',
+    name: 'Bob clásico',
+    price: 50000,
+    images: [],
+    tags: [],
+  } as unknown as Service;
+  const OTRO = { ...SERVICIO, id: 's2', name: 'Fade' } as Service;
+
+  const comoDuena = () => {
+    mockAuth.isAdmin = true;
+    mockAuth.isLoggedIn = true;
+  };
+
+  it('a una clienta no le rellena la ranura: ni un contenedor vacío', () => {
+    servicios().services.value = [SERVICIO];
+    const wrapper = montar();
+
+    expect(wrapper.get('[data-test="hay-acciones"]').text()).toBe('no');
+    expect(wrapper.findAllComponents(ServiceCardAdminActions)).toHaveLength(0);
+  });
+
+  it('a la dueña le pone los controles en el renglón (compacto) y en la tarjeta', () => {
+    comoDuena();
+    servicios().services.value = [SERVICIO];
+    const wrapper = montar();
+
+    const acciones = wrapper.findAllComponents(ServiceCardAdminActions);
+    expect(acciones.map((a) => a.props('compacto'))).toEqual([true, false]);
+    expect(acciones.map((a) => (a.props('servicio') as Service).id)).toEqual([
+      's1',
+      's1',
+    ]);
+  });
+
+  it('los tres controles llaman al composable con lo que emiten', async () => {
+    comoDuena();
+    servicios().services.value = [SERVICIO];
+    const wrapper = montar();
+    const [renglon, tarjeta] = wrapper.findAllComponents(ServiceCardAdminActions);
+
+    await renglon.get('[data-test="editar"]').trigger('click');
+    await tarjeta.get('[data-test="promocion"]').trigger('click');
+    await tarjeta.get('[data-test="eliminar"]').trigger('click');
+
+    expect(mockAdmin.editar).toHaveBeenCalledWith('s1');
+    expect(mockAdmin.promocionar).toHaveBeenCalledWith(SERVICIO);
+    expect(mockAdmin.eliminar).toHaveBeenCalledWith('s1');
+  });
+
+  /** Review Focus 1: borrar el último de la última página no la deja en blanco. */
+  it('tras borrar el único servicio de una página que no es la primera, retrocede una', () => {
+    servicios().services.value = [SERVICIO];
+    servicios().filterService.value.page = 3;
+    montar();
+
+    mockAdmin.refrescar?.('borrado');
+
+    expect(servicios().filterService.value.page).toBe(2);
+    expect(servicios().refetch.value).toBe(1);
+  });
+
+  it('tras borrar con más servicios en la página, se queda en ella y recarga', () => {
+    servicios().services.value = [SERVICIO, OTRO];
+    servicios().filterService.value.page = 3;
+    montar();
+
+    mockAdmin.refrescar?.('borrado');
+
+    expect(servicios().filterService.value.page).toBe(3);
+    expect(servicios().refetch.value).toBe(1);
+  });
+
+  it('tras cambiar una promoción, recarga sin moverse de página', () => {
+    servicios().services.value = [SERVICIO];
+    servicios().filterService.value.page = 3;
+    montar();
+
+    mockAdmin.refrescar?.('promocion');
+
+    expect(servicios().filterService.value.page).toBe(3);
+    expect(servicios().refetch.value).toBe(1);
   });
 });
 

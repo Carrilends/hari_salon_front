@@ -23,8 +23,10 @@
       />
       <div class="mostrador__lista">
         <!--
-          La ranura `acciones` se queda vacía hasta la fase E (D-B6): allí van
-          los tres botones de administración (`ServiceCardAdminActions`).
+          La rejilla reexpone una sola ranura `acciones` con `{ servicio,
+          compacto }`: `compacto` es `true` en el renglón de móvil y `false` en
+          la tarjeta. Solo se rellena para la dueña: sin ranura, ni la tarjeta
+          ni el renglón pintan el contenedor de las acciones.
         -->
         <ServiceCardsGrid
           :servicios="services"
@@ -37,7 +39,17 @@
           @detalle="openServiceDetail"
           @limpiar-filtros="limpiarFiltros"
           @reintentar="reintentar"
-        />
+        >
+          <template v-if="authStore.isAdmin" #acciones="{ servicio, compacto }">
+            <ServiceCardAdminActions
+              :servicio="servicio"
+              :compacto="compacto"
+              @editar="admin.editar"
+              @promocion="admin.promocionar"
+              @eliminar="admin.eliminar"
+            />
+          </template>
+        </ServiceCardsGrid>
       </div>
     </div>
 
@@ -60,27 +72,18 @@
 </template>
 
 <script setup lang="ts">
-import {
-  computed,
-  nextTick,
-  onMounted,
-  onUnmounted,
-  ref,
-  watch,
-} from 'vue';
-import { useQuasar } from 'quasar';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useServices } from 'src/composables/services/useServices';
 import { useServiceViewport } from 'src/composables/services/useServiceViewport';
+import { useService } from 'src/composables/services/useService';
 import {
-  deleteService,
-  getService,
-  useService,
-  useServiceForEdition,
-} from 'src/composables/services/useService';
+  paginaTrasBorrado,
+  useServiceAdminActions,
+} from 'src/composables/services/useServiceAdminActions';
 import ServiceCardsGrid from 'src/components/servicePage/ServiceCardsGrid.vue';
+import ServiceCardAdminActions from 'src/components/servicePage/ServiceCardAdminActions.vue';
 import ServiceToolbar from 'src/components/servicePage/ServiceToolbar.vue';
 import ServicePagerBar from 'src/components/servicePage/ServicePagerBar.vue';
-import type Service from 'src/interfaces/service';
 import ServiceFilterDialog from 'src/components/dialogs/serviceFilterDialog.vue';
 import ServiceFilterRail from 'src/components/servicePage/ServiceFilterRail.vue';
 import { FilterService } from 'src/composables/dialogs/useServiceFilter';
@@ -90,9 +93,6 @@ import serviceCreateEdit from 'src/components/dialogs/serviceCreateEdit.vue';
 
 import type { IndexSection } from 'src/constants/index-sections';
 import { useAuthStore } from 'src/stores/auth-store';
-import { useBookStore } from 'src/stores/book-store';
-import { adminServiceApi } from 'src/api/services-api';
-import { serviceIsOnPromotion } from 'src/helpers/service-promotion';
 import { useOptions } from 'src/composables/shared/useOptions';
 import { useOptionsStore } from 'src/stores/options-store';
 import { useSeo } from 'src/composables/seo/useSeo';
@@ -103,7 +103,6 @@ const optionsStore = useOptionsStore();
 
 const filtersStore = useFiltersStore();
 const authStore = useAuthStore();
-const bookStore = useBookStore();
 
 const {
   services,
@@ -115,6 +114,25 @@ const {
   isFetching,
   error,
 } = useServices();
+
+/**
+ * Editar, promocionar y borrar viven en su composable; la página solo decide
+ * cómo refrescar. Cada motivo recarga la lista (`refetch` es parte de la clave
+ * de la consulta). Tras un borrado, además, puede hacer falta retroceder de
+ * página: si se borró el único servicio de la última, el paginador apuntaría a
+ * una página que ya no existe y la lista se quedaría en blanco.
+ */
+const admin = useServiceAdminActions({
+  refrescar: (motivo) => {
+    if (motivo === 'borrado') {
+      filterService.value.page = paginaTrasBorrado(
+        services.value.length,
+        filterService.value.page
+      );
+    }
+    refetch.value++;
+  },
+});
 
 // D9: los cortes de ancho son del composable. Renglones solo por debajo de
 // 501 px; entre 501 y 759 px, una columna de tarjetas.
@@ -136,32 +154,7 @@ useSeo({
   ),
 });
 const { serviceIdRef } = useService();
-const { serviceIdEditRef } = useServiceForEdition();
 const dialogCreation = ref(false);
-
-/**
- * ATENCIÓN · deuda de la fase B. Estos manejadores se quedan **sin consumidor**
- * hasta la fase E, que pinta los botones de administración dentro de la ranura
- * `acciones` de la rejilla: `openEditService`, `confirmDeleteService` y
- * `handlePromotionAction` (con `askPromotionPercentage`, `askPromotionRemoval`,
- * `applyPromotionToService`, `buildPromotionPayload` y `normalizeServiceTags`).
- *
- * No se borran por una razón concreta: `applyPromotionToService` es quien llama
- * a `bookStore.syncBookingWithService(fresh)` (§6.1 de la hoja de ruta), y
- * perder esa llamada deja una reserva en curso con el precio viejo.
- *
- * En este repo `@typescript-eslint/no-unused-vars` es un **error**, no un aviso:
- * por eso los tres que se quedan sin uso llevan su `eslint-disable-next-line`,
- * que la fase E retira al volver a consumirlos.
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- lo retira la fase E (D-B6)
-const openEditService = (id: string) => {
-  if (!authStore.isAdmin) return;
-  serviceIdEditRef.value = '';
-  void nextTick(() => {
-    serviceIdEditRef.value = id;
-  });
-};
 
 const showFilterDialog = ref(false);
 const externalAmountOfFilters = ref(0);
@@ -204,8 +197,6 @@ const copiarFiltroDelStore = () => {
   externalAmountOfFilters.value = filtersStore.cantidadFiltros;
 };
 if (filtersStore.cantidadFiltros > 0) copiarFiltroDelStore();
-
-const $q = useQuasar();
 
 const openServiceDetail = (id: string) => {
   serviceIdRef.value = id;
@@ -330,153 +321,6 @@ const fetchServices = (e: FilterService | string) => {
   }
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- lo retira la fase E (D-B6)
-const confirmDeleteService = (id: string) => {
-  if (!authStore.isAdmin) return;
-  $q.dialog({
-    title: 'Eliminar servicio',
-    message: '¿Está seguro de que desea eliminar este servicio?',
-    cancel: true,
-    persistent: true,
-  }).onOk(async () => {
-    try {
-      await deleteService(id);
-      $q.notify({
-        type: 'positive',
-        message: 'Servicio eliminado correctamente',
-      });
-    } catch {
-      $q.notify({
-        type: 'negative',
-        message: 'Error al eliminar el servicio',
-      });
-      return;
-    }
-    fetchServices('delete_service');
-  });
-};
-
-type ServiceTagInput = string | { id?: string };
-
-const normalizeServiceTags = (service: Service): string[] =>
-  ((service.tags as unknown as ServiceTagInput[]) || [])
-    .map((tag) => (typeof tag === 'string' ? tag : tag?.id || ''))
-    .filter((id) => Boolean(id));
-
-const buildPromotionPayload = (
-  service: Service,
-  havePromotion: boolean,
-  porcentageDiscount: number
-) => ({
-  name: service.name,
-  detail: {
-    id: service.detail?.id,
-    description: service.detail?.description,
-    specifications: service.detail?.specifications,
-  },
-  price: Number(service.price || 0),
-  images: service.images || [],
-  tags: normalizeServiceTags(service),
-  havePromotion,
-  porcentageDiscount,
-});
-
-const applyPromotionToService = async (
-  service: Service,
-  havePromotion: boolean,
-  porcentageDiscount: number
-) => {
-  $q.loading.show({
-    message: havePromotion ? 'Aplicando promoción...' : 'Quitando promoción...',
-    spinnerColor: 'negative',
-  });
-  try {
-    const payload = buildPromotionPayload(service, havePromotion, porcentageDiscount);
-    await adminServiceApi.patch(`/service/${service.id}`, payload);
-    const fresh = await getService(service.id);
-    bookStore.syncBookingWithService(fresh);
-    fetchServices('promotion_update');
-    $q.notify({
-      type: 'positive',
-      message: havePromotion
-        ? `Promoción ${porcentageDiscount}% aplicada`
-        : 'Promoción retirada',
-      position: 'top',
-    });
-  } catch {
-    $q.notify({
-      type: 'negative',
-      message: 'No se pudo actualizar la promoción del servicio',
-      position: 'top',
-    });
-  } finally {
-    $q.loading.hide();
-  }
-};
-
-const askPromotionPercentage = (service: Service) => {
-  const defaultValue = Math.min(
-    100,
-    Math.max(1, Math.round(Number(service.porcentageDiscount || 10)))
-  );
-  $q.dialog({
-    title: 'Activar promoción',
-    message: 'Ingresa el porcentaje de descuento (1-100)',
-    prompt: {
-      model: String(defaultValue),
-      type: 'number',
-      isValid: (val) => {
-        const pct = Number(val);
-        return Number.isFinite(pct) && pct >= 1 && pct <= 100;
-      },
-    },
-    ok: {
-      label: 'Aplicar',
-      color: 'negative',
-      unelevated: true,
-    },
-    cancel: true,
-    persistent: true,
-  }).onOk((value) => {
-    const pct = Math.round(Number(value));
-    if (!Number.isFinite(pct) || pct < 1 || pct > 100) {
-      $q.notify({
-        type: 'warning',
-        message: 'Ingresa un porcentaje válido entre 1 y 100',
-        position: 'top',
-      });
-      return;
-    }
-    void applyPromotionToService(service, true, pct);
-  });
-};
-
-const askPromotionRemoval = (service: Service) => {
-  $q.dialog({
-    title: 'Quitar promoción',
-    message: '¿Deseas quitar la promoción de este servicio?',
-    ok: {
-      label: 'Quitar',
-      color: 'negative',
-      unelevated: true,
-    },
-    cancel: true,
-    persistent: true,
-  }).onOk(() => {
-    void applyPromotionToService(service, false, 0);
-  });
-};
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- lo retira la fase E (D-B6)
-const handlePromotionAction = (service: Service) => {
-  if (!(authStore.isLoggedIn && authStore.isAdmin)) return;
-  if (serviceIsOnPromotion(service)) {
-    askPromotionRemoval(service);
-    return;
-  }
-  askPromotionPercentage(service);
-};
-
 /**
  * El riel dorado es del documento, no de un `<div>`: desde que la página dejó
  * su scroll interno (D4), el que desplaza es `html`. Se enciende al entrar y se
@@ -492,7 +336,6 @@ onUnmounted(() => {
   if (typeof document === 'undefined') return;
   document.documentElement.classList.remove('m-riel-oro');
 });
-
 
 defineOptions({
   name: 'ServicePage',

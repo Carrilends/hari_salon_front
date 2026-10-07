@@ -147,7 +147,6 @@ export function useServiceAdminActions(opciones: {
     $q.dialog({
       component: ServicePromotionDialog,
       componentProps: { service },
-      persistent: true,
     }).onOk((porcentaje: number) => {
       const pct = Math.round(Number(porcentaje) || 0);
       void aplicarPromocion(service, pct > 0, pct);
@@ -172,7 +171,6 @@ export function useServiceAdminActions(opciones: {
     $q.dialog({
       component: ServiceDeleteDialog,
       componentProps: { service },
-      persistent: true,
     }).onOk(async () => {
       try {
         await deleteService(id);

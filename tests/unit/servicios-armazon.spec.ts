@@ -32,6 +32,12 @@ const HEXADECIMAL = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})\b/;
 
 const PAGINA = leer('src/pages/ServicePage.vue');
 
+/**
+ * Desde la fase E (Tarea 7) la administración no vive en la página sino en su
+ * composable; las guardias que apuntaban a la página se mudaron aquí.
+ */
+const ADMIN = leer('src/composables/services/useServiceAdminActions.ts');
+
 /** Quienes pintan las fotos de la lista desde la fase B. */
 const FOTOS_DE_LA_LISTA = [
   'src/components/servicePage/ServiceCard.vue',
@@ -92,8 +98,18 @@ describe('armazón de la página de servicios', () => {
  * delante. Cada aserción es un fallo que nos ha costado encontrar una vez.
  */
 describe('lo que la fase A no puede romper', () => {
+  /**
+   * Mudada en la fase E: la llamada vivía en la página y ahora la hace el
+   * composable de administración tras una promoción, y el formulario de
+   * edición tras guardar. La página tiene que seguir cableando ambos.
+   */
   it('sigue sincronizando la bolsa cuando un servicio cambia', () => {
-    expect(PAGINA).toContain('bookStore.syncBookingWithService(fresh)');
+    expect(ADMIN).toContain('bookStore.syncBookingWithService(fresh)');
+    expect(leer('src/components/dialogs/serviceCreateEdit.vue')).toContain(
+      'bookStore.syncBookingWithService(fresh)'
+    );
+    expect(PAGINA).toContain('useServiceAdminActions({');
+    expect(PAGINA).toContain('<service-create-edit');
   });
 
   /**
@@ -171,9 +187,15 @@ describe('lo que la fase A no puede romper', () => {
     );
   });
 
+  /**
+   * Mudada en la fase E: `openEditService`, `confirmDeleteService` y
+   * `handlePromotionAction` son ahora `editar`, `eliminar` y `promocionar` del
+   * composable, y la página los cablea a los controles de la dueña.
+   */
   it('conserva los manejadores de administración', () => {
-    expect(PAGINA).toContain('openEditService');
-    expect(PAGINA).toContain('confirmDeleteService');
-    expect(PAGINA).toContain('handlePromotionAction');
+    expect(ADMIN).toContain('return { editar, promocionar, eliminar };');
+    expect(PAGINA).toContain('@editar="admin.editar"');
+    expect(PAGINA).toContain('@promocion="admin.promocionar"');
+    expect(PAGINA).toContain('@eliminar="admin.eliminar"');
   });
 });

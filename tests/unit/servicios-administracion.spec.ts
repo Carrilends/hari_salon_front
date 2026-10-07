@@ -6,11 +6,22 @@
  * de hexadecimales, foco visible, área táctil— y los invariantes que una
  * remodelación descuidada se lleva por delante.
  */
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const RAIZ = join(__dirname, '../..');
 const leer = (ruta: string) => readFileSync(join(RAIZ, ruta), 'utf8');
+
+/** Todo el código fuente, concatenado. */
+function fuentes(dir: string, acumulado: string[] = []): string[] {
+  for (const entrada of readdirSync(dir, { withFileTypes: true })) {
+    const ruta = join(dir, entrada.name);
+    if (entrada.isDirectory()) fuentes(ruta, acumulado);
+    else if (/\.(vue|ts|js|scss)$/.test(entrada.name))
+      acumulado.push(readFileSync(ruta, 'utf8'));
+  }
+  return acumulado;
+}
 
 const TOKENS = leer('src/css/tokens.scss');
 const ICONOS = leer('src/components/shared/StrokeIcon.vue');
@@ -94,5 +105,105 @@ describe('el botón que borra se lee como tal', () => {
     expect(
       leer('src/components/servicePage/ServiceCardAdminActions.vue')
     ).not.toContain('var(--m-peligro');
+  });
+});
+
+describe('ServicePage ya no administra por su cuenta', () => {
+  const PAGINA = leer('src/pages/ServicePage.vue');
+
+  it('delega en el composable de administración', () => {
+    expect(PAGINA).toContain(
+      "from 'src/composables/services/useServiceAdminActions'"
+    );
+    expect(PAGINA).toContain('useServiceAdminActions({');
+  });
+
+  it('se ha quedado sin los manejadores que tenía dentro', () => {
+    for (const resto of [
+      'askPromotionPercentage',
+      'askPromotionRemoval',
+      'handlePromotionAction',
+      'applyPromotionToService',
+      'buildPromotionPayload',
+      'normalizeServiceTags',
+      'confirmDeleteService',
+      'openEditService',
+    ]) {
+      expect(PAGINA).not.toContain(resto);
+    }
+  });
+
+  it('ya no abre diálogos ni avisa con los colores de Quasar', () => {
+    expect(PAGINA).not.toContain('$q.dialog');
+    expect(PAGINA).not.toContain('$q.notify');
+    expect(PAGINA).not.toContain('$q.loading');
+  });
+
+  /** La deuda D-B6 de la fase B se salda aquí: sin manejadores huérfanos. */
+  it('ya no silencia al linter ni arrastra la nota de la deuda', () => {
+    expect(PAGINA).not.toContain('eslint-disable');
+    expect(PAGINA).not.toContain('D-B6');
+  });
+
+  /**
+   * La rejilla reexpone una sola ranura `acciones` con `{ servicio, compacto }`:
+   * `compacto` es `true` dentro del renglón de móvil y `false` en la tarjeta.
+   * La página la rellena una vez y deja que la rejilla diga cuál de las dos es.
+   */
+  it('rellena la ranura de acciones de la rejilla con los controles de la dueña', () => {
+    const rejilla = PAGINA.slice(PAGINA.indexOf('<ServiceCardsGrid'));
+
+    expect(rejilla.slice(0, 900)).toContain(
+      '#acciones="{ servicio, compacto }"'
+    );
+    expect(rejilla.slice(0, 900)).toContain('<ServiceCardAdminActions');
+  });
+
+  /** La vista que faltaba: la lista de móvil en modo administración. */
+  it('pasa a los controles si van en un renglón (compacto) o en una tarjeta', () => {
+    const rejilla = PAGINA.slice(PAGINA.indexOf('<ServiceCardsGrid'));
+
+    expect(rejilla.slice(0, 900)).toMatch(
+      /<ServiceCardAdminActions[\s\S]{0,260}:compacto="compacto"/
+    );
+    // Y la rejilla manda los dos valores: renglón y tarjeta.
+    const GRID = leer('src/components/servicePage/ServiceCardsGrid.vue');
+    expect(GRID).toMatch(
+      /<ServiceRow[\s\S]*?name="acciones"[^>]*:compacto="true"[\s\S]*?<\/ServiceRow>/
+    );
+    expect(GRID).toMatch(
+      /<ServiceCard\b[\s\S]*?name="acciones"[^>]*:compacto="false"[\s\S]*?<\/ServiceCard>/
+    );
+  });
+
+  /** Review Focus 1: borrar el último de la página no puede dejarla en blanco. */
+  it('al borrar retrocede de página si hacía falta', () => {
+    expect(PAGINA).toContain('paginaTrasBorrado');
+    expect(PAGINA).toContain("motivo === 'borrado'");
+  });
+});
+
+describe('ServicePromoButton', () => {
+  it('ya no existe: la píldora la pinta la tarjeta y el control es el de la dueña', () => {
+    expect(() => leer('src/components/servicePage/ServicePromoButton.vue')).toThrow();
+  });
+
+  it('y nadie lo nombra', () => {
+    const codigo = fuentes(join(RAIZ, 'src')).join('\n');
+
+    expect(codigo).not.toContain('ServicePromoButton');
+  });
+});
+
+/**
+ * Los diálogos propios ya declaran `persistent` en su `q-dialog`. Un
+ * `persistent` suelto en las opciones de `$q.dialog({ component })` no llega a
+ * ninguna parte: el plugin lo ignora cuando hay componente.
+ */
+describe('useServiceAdminActions no pasa opciones muertas al plugin', () => {
+  it('no repite `persistent` junto al componente', () => {
+    const fuente = leer('src/composables/services/useServiceAdminActions.ts');
+
+    expect(fuente).not.toMatch(/component:[\s\S]{0,120}persistent: true/);
   });
 });

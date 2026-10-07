@@ -76,7 +76,15 @@ describe('la página de servicios', () => {
    * curso se queda con el precio viejo.
    */
   it('sigue sincronizando la bolsa cuando cambia un servicio', () => {
-    expect(SERVICE_PAGE).toContain('bookStore.syncBookingWithService(');
+    // Mudada en la fase E: la llamada se fue con los manejadores al composable
+    // de administración, y la página lo sigue usando.
+    expect(
+      readFileSync(
+        join(RAIZ, 'src/composables/services/useServiceAdminActions.ts'),
+        'utf8'
+      )
+    ).toContain('bookStore.syncBookingWithService(');
+    expect(SERVICE_PAGE).toContain('useServiceAdminActions({');
   });
 
   /** D4: la página entera desplaza; fuera el scroll dentro de la lista. */
