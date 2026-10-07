@@ -103,6 +103,38 @@
           <p class="ficha__texto">{{ descripcion }}</p>
         </div>
       </div>
+      <footer
+        v-if="!props.isFromBooking"
+        class="ficha__pie"
+        data-test="pie-acciones"
+      >
+        <p
+          class="ficha__resumen"
+          data-test="resumen-bolsa"
+          role="status"
+          aria-live="polite"
+        >
+          {{ resumenBolsa }}
+        </p>
+        <div class="ficha__botones">
+          <button
+            type="button"
+            class="ficha__anadir"
+            data-test="anadir-reserva"
+            @click="anadir"
+          >
+            Añadir a la reserva
+          </button>
+          <button
+            type="button"
+            class="ficha__cerrar-pie"
+            data-test="cerrar-pie"
+            @click="cerrar"
+          >
+            Cerrar
+          </button>
+        </div>
+      </footer>
     </article>
   </q-dialog>
 </template>
@@ -121,6 +153,7 @@ import {
   promotionPercentDisplay,
   serviceIsOnPromotion,
 } from 'src/helpers/service-promotion';
+import { useBookStore } from 'src/stores/book-store';
 import type Service from 'src/interfaces/service';
 import type { Image } from 'src/interfaces/service';
 
@@ -135,6 +168,7 @@ defineEmits([...useDialogPluginComponent.emits]);
 
 const { dialogRef, onDialogOK, onDialogHide } = useDialogPluginComponent();
 const { maximized } = useDialogMaximizedBelow(500);
+const bookStore = useBookStore();
 
 /**
  * `'cancel'` es el contrato con `useService.ts`: es lo que limpia `serviceIdRef`
@@ -231,4 +265,29 @@ const precioBase = computed(() =>
 );
 
 const descuento = computed(() => promotionPercentDisplay(props.service));
+
+/**
+ * Añade, **no** reserva: el único «Reservar» del portal es el de la cabecera.
+ * Por eso no toca `bookStore.showDialog` y la ficha se queda abierta — el
+ * resumen de aquí abajo es la confirmación de que el servicio entró en la bolsa.
+ */
+const anadir = () => bookStore.addBooking(props.service);
+
+/**
+ * Sale del store, no de las props: la bolsa puede traer servicios que esta ficha
+ * no conoce, y el total es el de la reserva entera.
+ */
+const resumenBolsa = computed(() => {
+  const cantidad = bookStore.totalBookingQuantity;
+  if (cantidad === 0) return 'Tu reserva está vacía.';
+
+  const partes = [cantidad === 1 ? '1 servicio' : `${cantidad} servicios`];
+  // Una bolsa sin duración no dice «0 min»: eso es un dato que falta.
+  if (bookStore.bookingsDuration > 0) {
+    partes.push(formatDurationMinutes(bookStore.bookingsDuration));
+  }
+  partes.push(`$${formatCopDisplay(bookStore.bookingsCost)}`);
+
+  return `En tu reserva: ${partes.join(' · ')}`;
+});
 </script>

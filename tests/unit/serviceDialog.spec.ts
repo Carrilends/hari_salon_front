@@ -17,8 +17,6 @@
  */
 import { enableAutoUnmount, mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
-// `nextTick` lo consumen las tareas 3–6 de la fase D.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { defineComponent, nextTick } from 'vue';
 import ServiceDialog from 'src/components/dialogs/serviceDialog.vue';
 import { useBookStore } from 'src/stores/book-store';
@@ -423,5 +421,115 @@ describe('ficha del servicio · el precio (D3)', () => {
     expect(wrapper.get('[data-test="precio"]').text()).toBe('$36.000');
     expect(wrapper.get('[data-test="precio-base"]').text()).toBe('$45.000');
     expect(wrapper.get('[data-test="promo-pildora"]').text()).toBe('-20 %');
+  });
+});
+
+describe('ficha del servicio · el pie y la bolsa', () => {
+  it('«Añadir a la reserva» mete el servicio en la bolsa', async () => {
+    const { wrapper, bolsa } = montar();
+
+    await wrapper.get('[data-test="anadir-reserva"]').trigger('click');
+
+    expect(bolsa.bookings).toHaveLength(1);
+    expect(bolsa.bookings[0].service.id).toBe('s1');
+    expect(bolsa.bookings[0].quantity).toBe(1);
+  });
+
+  /**
+   * Regla de producto: el único «Reservar» del portal es el de la cabecera. Este
+   * botón **añade**, y la ficha se queda abierta para que el resumen de abajo
+   * sea la confirmación de que el servicio entró.
+   */
+  it('añadir no abre el diálogo de reserva ni cierra la ficha', async () => {
+    const { wrapper, bolsa } = montar();
+
+    await wrapper.get('[data-test="anadir-reserva"]').trigger('click');
+
+    expect(bolsa.showDialog).toBe(false);
+    expect(wrapper.emitted('ok')).toBeUndefined();
+    expect(cerrado.veces).toBe(0);
+  });
+
+  it('el resumen sale de la bolsa, no de las props', async () => {
+    const { wrapper, bolsa } = montar();
+
+    await wrapper.get('[data-test="anadir-reserva"]').trigger('click');
+    expect(wrapper.get('[data-test="resumen-bolsa"]').text()).toBe(
+      'En tu reserva: 1 servicio · 1 h · $45.000'
+    );
+
+    // Un servicio que la ficha no conoce: si el resumen saliera de las props,
+    // esta línea no cambiaría.
+    bolsa.addBooking(
+      hacerServicio({ id: 's2', name: 'Barba', price: 20000, duration: 30 })
+    );
+    await nextTick();
+
+    expect(wrapper.get('[data-test="resumen-bolsa"]').text()).toBe(
+      'En tu reserva: 2 servicios · 1 h 30 min · $65.000'
+    );
+  });
+
+  it('con la bolsa vacía el resumen lo dice', () => {
+    const { wrapper } = montar();
+
+    expect(wrapper.get('[data-test="resumen-bolsa"]').text()).toBe(
+      'Tu reserva está vacía.'
+    );
+  });
+
+  /** Enfoque de revisión 3: «0 min» no es una duración. */
+  it('una bolsa sin duración no dice «0 min»', async () => {
+    const { wrapper } = montar({ servicio: hacerServicio({ duration: 0 }) });
+
+    await wrapper.get('[data-test="anadir-reserva"]').trigger('click');
+
+    const resumen = wrapper.get('[data-test="resumen-bolsa"]').text();
+    expect(resumen).toBe('En tu reserva: 1 servicio · $45.000');
+    expect(resumen).not.toContain('0 min');
+  });
+
+  it('el resumen se anuncia al lector de pantalla cuando cambia', () => {
+    const { wrapper } = montar();
+
+    expect(
+      wrapper.get('[data-test="resumen-bolsa"]').attributes('aria-live')
+    ).toBe('polite');
+  });
+
+  /**
+   * La ficha se abre desde dentro del flujo de reserva: allí la bolsa ya está a
+   * la vista y un segundo «añadir» sobraría. La X sigue, que es la única salida.
+   */
+  it('con isFromBooking no hay pie de acciones ni botón de añadir', () => {
+    const { wrapper } = montar({ isFromBooking: true });
+
+    expect(wrapper.find('[data-test="pie-acciones"]').exists()).toBe(false);
+    expect(wrapper.find('[data-test="anadir-reserva"]').exists()).toBe(false);
+    expect(wrapper.find('[data-test="resumen-bolsa"]').exists()).toBe(false);
+    expect(wrapper.find('[data-test="cerrar"]').exists()).toBe(true);
+  });
+
+  it('«Cerrar» del pie devuelve «cancel» igual que la X', async () => {
+    const { wrapper } = montar();
+
+    await wrapper.get('[data-test="cerrar-pie"]').trigger('click');
+
+    expect(wrapper.emitted('ok')?.[0]).toEqual(['cancel']);
+    expect(cerrado.veces).toBe(1);
+  });
+
+  it('los dos botones del pie son botones de verdad', () => {
+    const { wrapper } = montar();
+
+    expect(wrapper.get('[data-test="anadir-reserva"]').element.tagName).toBe(
+      'BUTTON'
+    );
+    expect(wrapper.get('[data-test="cerrar-pie"]').element.tagName).toBe(
+      'BUTTON'
+    );
+    expect(wrapper.get('[data-test="anadir-reserva"]').text()).toBe(
+      'Añadir a la reserva'
+    );
   });
 });
