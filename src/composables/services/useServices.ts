@@ -54,7 +54,7 @@ export const useServices = () => {
 
   const logs = ref(0);
 
-  const { isLoading, data, isFetching } = useQuery<ApiDataWithCount>({
+  const { isLoading, data, isFetching, error } = useQuery<ApiDataWithCount>({
     queryKey: ['services', filterService, refetch],
     queryFn: ({ queryKey }) => {
       const [, filterService] = queryKey;
@@ -115,8 +115,12 @@ export const useServices = () => {
   const totalServices = computed(() => logs.value);
 
   return {
-    isLoading,
-    isFetching, // isFetching es útil para mostrar un spinner mientras se carga la siguiente página
+    isLoading, // primera carga: la página pinta el esqueleto
+    isFetching, // recarga (p. ej. otra página): señal discreta, nunca esqueleto
+    // `error` faltaba, y sin él no había forma de distinguir «no hay servicios»
+    // de «no se pudo preguntar». La página lo convierte en el panel de error con
+    // su botón de reintentar (que sube `refetch`).
+    error,
     services,
     filterService,
     refetch,
