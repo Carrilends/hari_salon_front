@@ -149,3 +149,120 @@ describe('ServiceFilterFields · género', () => {
     expect(wrapper.emitted('aplicar')?.length).toBe(antes + 1);
   });
 });
+
+describe('ServiceFilterFields · precio y promociones', () => {
+  const marcar = (campo: ReturnType<typeof montar>['wrapper'], test: string, valor: boolean) => {
+    const casilla = campo.get(`[data-test="${test}"]`);
+    (casilla.element as HTMLInputElement).checked = valor;
+    return casilla.trigger('change');
+  };
+
+  it('el rango solo aparece cuando se activa el precio', async () => {
+    const { wrapper } = montar();
+    expect(wrapper.find('[data-test="precio-min"]').exists()).toBe(false);
+
+    await marcar(wrapper, 'precio-activo', true);
+
+    expect(wrapper.find('[data-test="precio-min"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="precio-max"]').exists()).toBe(true);
+  });
+
+  it('activar el precio lo escribe en el store y dispara la aplicación', async () => {
+    const { wrapper, pinia } = montar();
+
+    await marcar(wrapper, 'precio-activo', true);
+
+    expect(useFiltersStore(pinia).includePriceRange).toBe(true);
+    const aplicado = wrapper.emitted('aplicar')?.at(-1)?.[0] as {
+      includePriceRange: boolean;
+    };
+    expect(aplicado.includePriceRange).toBe(true);
+  });
+
+  it('precio y promociones se deshabilitan mutuamente', async () => {
+    const { wrapper } = montar();
+
+    await marcar(wrapper, 'precio-activo', true);
+    expect(wrapper.get('[data-test="promos-activo"]').attributes('disabled')).toBeDefined();
+
+    await marcar(wrapper, 'precio-activo', false);
+    await marcar(wrapper, 'promos-activo', true);
+    expect(wrapper.get('[data-test="precio-activo"]').attributes('disabled')).toBeDefined();
+  });
+
+  it('activar uno apaga el otro en el mismo cuerpo, no en el siguiente', async () => {
+    // El backend los trata como excluyentes (§6.8): mandar los dos a true sería
+    // un cuerpo que no significa nada.
+    //
+    // El estado de partida se pone en el store, no con un clic, porque así es
+    // como llega de verdad: lo dejó la OTRA superficie (la hoja, antes de
+    // ensanchar la ventana) y aquí la casilla ya nace deshabilitada. Lo que se
+    // comprueba es que el apagado sea síncrono, no que el `watch` lo arregle
+    // en el ciclo siguiente — cuando `sendFilter` ya habría salido.
+    const { wrapper, pinia } = montar();
+    useFiltersStore(pinia).includePromotionsOnly = true;
+
+    await marcar(wrapper, 'precio-activo', true);
+
+    const aplicado = wrapper.emitted('aplicar')?.at(-1)?.[0] as {
+      includePriceRange: boolean;
+      includePromotionsOnly: boolean;
+    };
+    expect(aplicado.includePriceRange).toBe(true);
+    expect(aplicado.includePromotionsOnly).toBe(false);
+  });
+
+  it('pinta el rango en pesos, con los tres ceros que el control no tiene', async () => {
+    const { wrapper } = montar();
+    await marcar(wrapper, 'precio-activo', true);
+
+    expect(wrapper.get('[data-test="precio-valor"]').text()).toBe('5.000 $ ― 200.000 $');
+  });
+
+  it('el mínimo no puede pasarse del máximo', async () => {
+    const { wrapper, pinia } = montar();
+    await marcar(wrapper, 'precio-activo', true);
+    const maximo = wrapper.get('[data-test="precio-max"]');
+    (maximo.element as HTMLInputElement).value = '60';
+    await maximo.trigger('input');
+
+    const minimo = wrapper.get('[data-test="precio-min"]');
+    (minimo.element as HTMLInputElement).value = '120';
+    await minimo.trigger('input');
+
+    expect(useFiltersStore(pinia).prices).toEqual({ min: 60, max: 60 });
+    const aplicado = wrapper.emitted('aplicar')?.at(-1)?.[0] as {
+      prices: { min: number; max: number };
+    };
+    expect(aplicado.prices.min).toBeLessThanOrEqual(aplicado.prices.max);
+  });
+
+  it('el máximo no puede caer por debajo del mínimo', async () => {
+    const { wrapper, pinia } = montar();
+    await marcar(wrapper, 'precio-activo', true);
+    const minimo = wrapper.get('[data-test="precio-min"]');
+    (minimo.element as HTMLInputElement).value = '80';
+    await minimo.trigger('input');
+
+    const maximo = wrapper.get('[data-test="precio-max"]');
+    (maximo.element as HTMLInputElement).value = '20';
+    await maximo.trigger('input');
+
+    expect(useFiltersStore(pinia).prices).toEqual({ min: 80, max: 80 });
+  });
+
+  it('las perillas van de 5 a 200, la escala de hoy', async () => {
+    const { wrapper } = montar();
+    await marcar(wrapper, 'precio-activo', true);
+
+    expect(wrapper.get('[data-test="precio-min"]').attributes('min')).toBe('5');
+    expect(wrapper.get('[data-test="precio-max"]').attributes('max')).toBe('200');
+  });
+
+  it('cada casilla tiene su rótulo, no un texto suelto al lado', () => {
+    const { wrapper } = montar();
+
+    expect(wrapper.get('[data-test="precio-activo"]').element.closest('label')).not.toBeNull();
+    expect(wrapper.get('[data-test="promos-activo"]').element.closest('label')).not.toBeNull();
+  });
+});

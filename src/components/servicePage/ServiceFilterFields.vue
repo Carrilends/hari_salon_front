@@ -22,6 +22,71 @@
         </button>
       </div>
     </fieldset>
+
+    <hr class="campos__filete" />
+
+    <!-- PRECIO ------------------------------------------------------------ -->
+    <fieldset class="campos__grupo" data-test="precio">
+      <legend class="campos__etiqueta">Precio</legend>
+      <label class="campos__casilla">
+        <input
+          type="checkbox"
+          class="campos__tick"
+          data-test="precio-activo"
+          :checked="includePriceRange"
+          :disabled="includePromotionsOnly"
+          @change="alternarPrecio"
+        />
+        <span>Filtrar por precio</span>
+      </label>
+      <div v-if="includePriceRange" class="campos__rango">
+        <p class="campos__rango-valor" data-test="precio-valor">
+          {{ etiquetaPrecio }}
+        </p>
+        <label class="campos__perilla">
+          <span class="campos__perilla-rotulo">Desde</span>
+          <input
+            type="range"
+            data-test="precio-min"
+            :min="PRECIO_ESCALA_MIN"
+            :max="PRECIO_ESCALA_MAX"
+            step="1"
+            :value="prices.min"
+            @input="alMoverMinimo"
+          />
+        </label>
+        <label class="campos__perilla">
+          <span class="campos__perilla-rotulo">Hasta</span>
+          <input
+            type="range"
+            data-test="precio-max"
+            :min="PRECIO_ESCALA_MIN"
+            :max="PRECIO_ESCALA_MAX"
+            step="1"
+            :value="prices.max"
+            @input="alMoverMaximo"
+          />
+        </label>
+      </div>
+    </fieldset>
+
+    <hr class="campos__filete" />
+
+    <!-- SOLO PROMOCIONES -------------------------------------------------- -->
+    <fieldset class="campos__grupo" data-test="solo-promos">
+      <legend class="campos__etiqueta">Promociones</legend>
+      <label class="campos__casilla">
+        <input
+          type="checkbox"
+          class="campos__tick"
+          data-test="promos-activo"
+          :checked="includePromotionsOnly"
+          :disabled="includePriceRange"
+          @change="alternarPromos"
+        />
+        <span>Solo promociones</span>
+      </label>
+    </fieldset>
   </div>
 </template>
 
@@ -59,7 +124,7 @@ const filtersStore = useFiltersStore();
  */
 const puente = ((evento: string, valor: unknown) => {
   if (evento === 'update:amount') emit('cuenta', valor as number);
-  else emit('aplicar', valor as FilterService);
+  else if (evento === 'update:services') emit('aplicar', valor as FilterService);
 }) as unknown as FiltersEmits;
 
 const {
@@ -97,6 +162,43 @@ function alternarGenero(id: string) {
   // `Array.from`, no `[...activos]`: ts-jest compila a ES5 sin `downlevelIteration`
   // y el spread de un `Set` sale vacío.
   filtersStore.setGenres(Array.from(activos));
+  sendFilter();
+}
+
+/**
+ * El apagado del otro interruptor se hace AQUÍ, a mano, aunque
+ * `useFilterService` tenga un `watch` que hace lo mismo: el `watch` corre en el
+ * siguiente ciclo y `sendFilter` se llama ahora, así que el cuerpo saldría con
+ * los dos en `true`. El backend los trata como excluyentes (§6.8).
+ */
+function alternarPrecio(evento: Event) {
+  const activo = (evento.target as HTMLInputElement).checked;
+  includePriceRange.value = activo;
+  if (activo) includePromotionsOnly.value = false;
+  sendFilter();
+}
+
+function alternarPromos(evento: Event) {
+  const activo = (evento.target as HTMLInputElement).checked;
+  includePromotionsOnly.value = activo;
+  if (activo) includePriceRange.value = false;
+  sendFilter();
+}
+
+/**
+ * Pinza en las dos perillas: son dos `input[type=range]` independientes y sin
+ * esto el cuerpo saldría con `min > max`. El backend haría `BETWEEN` al revés y
+ * no devolvería nada, sin decir por qué.
+ */
+function alMoverMinimo(evento: Event) {
+  const valor = Number((evento.target as HTMLInputElement).value);
+  prices.value.min = Math.min(valor, prices.value.max);
+  sendFilter();
+}
+
+function alMoverMaximo(evento: Event) {
+  const valor = Number((evento.target as HTMLInputElement).value);
+  prices.value.max = Math.max(valor, prices.value.min);
   sendFilter();
 }
 
