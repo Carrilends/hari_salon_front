@@ -58,6 +58,7 @@ import { PLACEHOLDER_IMAGE } from 'src/constants/placeholder-image';
 // Puro a propósito: `cloudinaryHelpers` arrastra Axios y `import.meta.env`.
 import { optimizeCloudinaryUrl } from 'src/helpers/cloudinaryUrl';
 import { effectiveServiceUnitPrice } from 'src/helpers/service-promotion';
+import { urlDeFotoPrincipal } from 'src/helpers/service-photo';
 import type Service from 'src/interfaces/service';
 
 /**
@@ -79,10 +80,14 @@ const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } =
 
 const borrando = ref(false);
 
-/** 56 px en pantalla, 112 pedidos: la ficha se ve nítida en pantalla densa. */
+/**
+ * 56 px en pantalla, 112 pedidos: la ficha se ve nítida en pantalla densa. La
+ * foto es la principal (`urlDeFotoPrincipal`), la misma que la tarjeta y la
+ * ficha: la dueña confirma el borrado viendo lo que ve en la lista.
+ */
 const foto = computed(
   () =>
-    optimizeCloudinaryUrl(props.service.images?.[0]?.url, 112) ||
+    optimizeCloudinaryUrl(urlDeFotoPrincipal(props.service), 112) ||
     PLACEHOLDER_IMAGE
 );
 

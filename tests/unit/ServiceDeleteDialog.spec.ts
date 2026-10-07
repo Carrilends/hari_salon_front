@@ -100,6 +100,37 @@ describe('ServiceDeleteDialog', () => {
     expect(img.attributes('src')).toContain('/upload/f_auto,q_auto,w_112');
   });
 
+  /**
+   * La misma foto que la tarjeta y la ficha: la principal, aunque no vaya
+   * primera. Con `images[0]` la dueña confirmaba el borrado viendo otra foto.
+   */
+  it('enseña la foto principal aunque no sea la primera', () => {
+    const conPrincipalSegunda = {
+      ...SERVICIO,
+      images: [
+        {
+          id: 'i0',
+          url: 'https://res.cloudinary.com/demo/image/upload/v1/otra.jpg',
+          isPrincipal: false,
+          publicId: 'otra',
+          version: '1',
+        },
+        {
+          id: 'i1',
+          url: CLOUDINARY,
+          isPrincipal: true,
+          publicId: 'bob',
+          version: '1',
+        },
+      ],
+    } as unknown as Service;
+
+    const src = montar(conPrincipalSegunda).get('img').attributes('src');
+
+    expect(src).toContain('bob.jpg');
+    expect(src).not.toContain('otra.jpg');
+  });
+
   it('sin foto no deja un hueco roto: usa el marcador de posición', () => {
     expect(montar(SIN_FOTO).get('img').attributes('src')).toMatch(
       /^data:image\/svg\+xml/
