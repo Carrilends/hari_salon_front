@@ -165,6 +165,34 @@ describe('ServiceCard', () => {
     expect(img.attributes('alt')).toContain('Bob clásico');
   });
 
+  /** Misma regla que la bolsa y el WhatsApp: la principal, no la primera. */
+  it('pinta la foto principal aunque no sea la primera', () => {
+    const otra = FOTO_CLOUDINARY.replace('bob.jpg', 'otra.jpg');
+    const tarjeta = montar({
+      servicio: servicio({
+        images: [
+          {
+            id: 'i0',
+            url: otra,
+            isPrincipal: false,
+            publicId: 'm/o',
+            version: '1',
+          },
+          {
+            id: 'i1',
+            url: FOTO_CLOUDINARY,
+            isPrincipal: true,
+            publicId: 'm/b',
+            version: '1',
+          },
+        ],
+      }),
+    });
+
+    expect(tarjeta.get('img').attributes('src')).toContain('bob.jpg');
+    expect(tarjeta.get('img').attributes('src')).not.toContain('otra.jpg');
+  });
+
   it('sin foto no pide nada a Cloudinary: lo dice', () => {
     const tarjeta = montar({ servicio: servicio({ images: [] }) });
 

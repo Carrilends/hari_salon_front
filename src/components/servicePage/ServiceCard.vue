@@ -101,6 +101,7 @@ import {
   serviceIsOnPromotion,
 } from 'src/helpers/service-promotion';
 import { etiquetaDeCategoria } from 'src/helpers/service-category';
+import { urlDeFotoPrincipal } from 'src/helpers/service-photo';
 
 defineOptions({ name: 'ServiceCard' });
 
@@ -129,7 +130,7 @@ const MEDIDAS =
 /** Una foto borrada en Cloudinary responde 404: mejor «Sin foto» que un hueco roto. */
 const fotoRota = ref(false);
 
-const urlOriginal = computed(() => props.servicio.images?.[0]?.url ?? '');
+const urlOriginal = computed(() => urlDeFotoPrincipal(props.servicio));
 
 // La rejilla reutiliza instancias al cambiar de página: si no se reinicia, una
 // tarjeta que tuvo una foto rota se quedaría sin foto para el servicio siguiente.
