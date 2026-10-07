@@ -15,6 +15,8 @@
  * El CSS no existe en las pruebas (está mockeado): el contrato visual se
  * comprueba leyendo la fuente, al final del archivo.
  */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { enableAutoUnmount, mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { defineComponent, nextTick } from 'vue';
@@ -680,5 +682,84 @@ describe('ficha del servicio · etiquetas y rostros', () => {
     expect(wrapper.get('[data-test="rostros"]').text()).toContain(
       'Ovalado · Redondo · Diamante · Cuadrado · Corazón · Largo'
     );
+  });
+});
+
+/**
+ * El CSS no existe en las pruebas (`\.(css|scss|sass)$` está mapeado a
+ * `tests/styleMock.js`): un color NO se puede afirmar montando. El contrato
+ * visual se lee de la fuente, como en `tests/unit/main-header.spec.ts`.
+ */
+describe('ficha del servicio · el contrato visual', () => {
+  const FUENTE = readFileSync(
+    join(__dirname, '../../src/components/dialogs/serviceDialog.vue'),
+    'utf8'
+  );
+  const ESTILOS = FUENTE.slice(FUENTE.indexOf('<style'));
+
+  it('no pinta con hexadecimales sueltos', () => {
+    expect(ESTILOS).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+  });
+
+  it('la ficha mide 880 px de ancho y 640 de alto', () => {
+    expect(ESTILOS).toContain('width: 880px');
+    expect(ESTILOS).toContain('height: 640px');
+  });
+
+  it('todo el color y el ritmo salen de los tokens', () => {
+    for (const token of [
+      '--m-carbon',
+      '--m-oro',
+      '--m-hueso',
+      '--m-tinta',
+      '--m-piedra-clara',
+      '--m-filete-oscuro',
+      '--m-radio-panel',
+      '--m-font-display',
+      '--m-font-sans',
+      '--m-tracking-etiqueta',
+      '--m-tactil-min',
+    ]) {
+      expect(ESTILOS).toContain(`var(${token})`);
+    }
+  });
+
+  /**
+   * El velo y el ancho los pinta QDialog, cuyos nodos renderiza Quasar y no
+   * llevan el atributo de ámbito de este componente: esas dos reglas tienen que
+   * vivir FUERA de `scoped`, acotadas por la clase que la ficha le pasa.
+   */
+  it('tiñe el velo del diálogo con el token, fuera de «scoped»', () => {
+    const global = FUENTE.slice(FUENTE.lastIndexOf('<style lang="scss">'));
+
+    expect(FUENTE.indexOf('<style scoped lang="scss">')).toBeLessThan(
+      FUENTE.lastIndexOf('<style lang="scss">')
+    );
+    expect(global).toContain('.ficha-servicio .q-dialog__backdrop');
+    expect(global).toContain('var(--m-velo)');
+    expect(global).toContain('.q-dialog__inner--minimized');
+  });
+
+  /** Decisión D8: menos CSS peleado con las tripas de Quasar. */
+  it('ya no monta el carrusel ni el área de scroll de Quasar', () => {
+    expect(FUENTE).not.toContain('q-carousel');
+    expect(FUENTE).not.toContain('q-scroll-area');
+    expect(FUENTE).not.toContain('q-card');
+    expect(FUENTE).not.toContain('q-btn');
+  });
+
+  /** El riel de la descripción es dorado y de 6 px, el suyo propio. */
+  it('la descripción trae su propio riel dorado de 6 px', () => {
+    expect(ESTILOS).toContain('scrollbar-color: var(--m-oro)');
+    expect(ESTILOS).toContain('::-webkit-scrollbar');
+    expect(ESTILOS).toContain('width: 6px');
+  });
+
+  /** Nadie puede quedarse sin ver dónde está el foco. */
+  it('todo control enfocable dibuja su foco con el oro', () => {
+    const focos = ESTILOS.match(/:focus-visible/g) ?? [];
+
+    expect(focos.length).toBeGreaterThanOrEqual(4);
+    expect(ESTILOS).toContain('outline: 2px solid var(--m-oro)');
   });
 });

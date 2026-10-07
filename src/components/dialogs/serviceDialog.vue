@@ -357,3 +357,385 @@ const rostros = computed<string[]>(() =>
   )
 );
 </script>
+
+<style scoped lang="scss">
+/**
+ * La ficha del servicio: 880×640 sobre el velo, foto a sangre a la izquierda y
+ * la lectura a la derecha. Por debajo de 500 px el diálogo va maximizado
+ * (`useDialogMaximizedBelow(500)`, la misma decisión de siempre) y la rejilla se
+ * vuelve una columna: foto arriba, pie abajo.
+ *
+ * La columna de la foto es `clamp(220px, 48%, 420px)` y no 420 px fijos: entre
+ * los 500 px donde el diálogo se maximiza y los 912 de la ventana que da la
+ * ficha entera, 420 px de foto dejarían la lectura en 140 px. 420/880 = 48 %.
+ */
+.ficha {
+  position: relative;
+  display: grid;
+  grid-template-columns: clamp(220px, 48%, 420px) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'foto cuerpo'
+    'foto pie';
+  width: 880px;
+  max-width: 100%;
+  height: 640px;
+  overflow: hidden;
+  background: var(--m-carbon);
+  border: var(--m-filete-grosor) solid var(--m-oro);
+  border-radius: var(--m-radio-panel);
+  font-family: var(--m-font-sans);
+  color: var(--m-hueso);
+}
+
+/* --- La columna de la foto ------------------------------------------------ */
+
+.ficha__galeria {
+  grid-area: foto;
+  position: relative;
+  min-width: 0;
+  background: var(--m-tinta);
+}
+
+.ficha__foto {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ficha__miniaturas {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ficha__miniatura {
+  display: block;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--m-tinta);
+  border: var(--m-filete-grosor) solid var(--m-filete-oscuro);
+  border-radius: var(--m-radio-foto);
+}
+
+.ficha__miniatura--elegida {
+  border-color: var(--m-oro);
+}
+
+.ficha__miniatura img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ficha__miniatura:focus-visible {
+  outline: 2px solid var(--m-oro);
+  outline-offset: 2px;
+}
+
+/* --- La X de la esquina --------------------------------------------------- */
+
+.ficha__cerrar {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--m-tactil-min);
+  height: var(--m-tactil-min);
+  padding: 0;
+  cursor: pointer;
+  color: var(--m-hueso);
+  background: var(--m-tinta);
+  border: var(--m-filete-grosor) solid var(--m-filete-oscuro);
+  border-radius: var(--m-radio-pildora);
+}
+
+.ficha__cerrar:focus-visible {
+  outline: 2px solid var(--m-oro);
+  outline-offset: 2px;
+}
+
+/* --- La columna de la lectura -------------------------------------------- */
+
+.ficha__cuerpo {
+  grid-area: cuerpo;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  padding: 28px 28px 14px;
+  overflow: hidden;
+}
+
+.ficha__categoria {
+  margin: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: var(--m-tracking-etiqueta);
+  color: var(--m-oro);
+}
+
+.ficha__nombre {
+  margin: 0;
+  font-family: var(--m-font-display);
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.15;
+  color: var(--m-hueso);
+  overflow-wrap: anywhere;
+}
+
+.ficha__cifras {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0;
+}
+
+.ficha__precio {
+  font-family: var(--m-font-display);
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+  color: var(--m-oro);
+}
+
+.ficha__precio-base {
+  font-size: 14px;
+  color: var(--m-piedra-clara);
+  text-decoration: line-through;
+}
+
+/* Píldora de filete, no de relleno: el oro macizo es del botón de añadir y dos
+   bloques dorados en la misma pantalla se pelean. */
+.ficha__promo {
+  padding: 2px 10px;
+  font-size: 11px;
+  letter-spacing: var(--m-tracking-nav);
+  color: var(--m-oro);
+  border: var(--m-filete-grosor) solid var(--m-oro);
+  border-radius: var(--m-radio-pildora);
+}
+
+.ficha__duracion {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--m-piedra-clara);
+}
+
+.ficha__filete {
+  flex: 0 0 auto;
+  width: 100%;
+  height: 0;
+  margin: 4px 0;
+  border: 0;
+  border-top: var(--m-filete-grosor) solid var(--m-filete-oscuro);
+}
+
+.ficha__rotulo {
+  margin: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: var(--m-tracking-etiqueta);
+  color: var(--m-piedra-clara);
+}
+
+/**
+ * Riel propio, dorado y de 6 px: la descripción es lo único que desplaza dentro
+ * de la ficha. `--m-riel-canal` lo añade la fase A; mientras no esté, cae en
+ * `--m-carbon`, que es el mismo valor, así que esta fase no espera a la A.
+ */
+.ficha__descripcion {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding-right: 10px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--m-oro) var(--m-riel-canal, var(--m-carbon));
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--m-riel-canal, var(--m-carbon));
+    border-radius: var(--m-radio-pildora);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--m-oro);
+    border-radius: var(--m-radio-pildora);
+  }
+}
+
+.ficha__descripcion:focus-visible {
+  outline: 2px solid var(--m-oro);
+  outline-offset: 2px;
+}
+
+.ficha__texto {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--m-piedra-clara);
+  // La descripción del sembrado trae saltos de línea a propósito.
+  white-space: pre-wrap;
+}
+
+.ficha__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ficha__tag {
+  padding: 4px 10px;
+  font-size: 11.5px;
+  color: var(--m-hueso);
+  border: var(--m-filete-grosor) solid var(--m-filete-oscuro);
+  border-radius: var(--m-radio-pildora);
+}
+
+.ficha__rostros {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--m-piedra-clara);
+}
+
+/* --- El pie -------------------------------------------------------------- */
+
+.ficha__pie {
+  grid-area: pie;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 28px 22px;
+  border-top: var(--m-filete-grosor) solid var(--m-filete-oscuro);
+}
+
+.ficha__resumen {
+  margin: 0;
+  font-size: 13px;
+  color: var(--m-piedra-clara);
+}
+
+.ficha__botones {
+  display: flex;
+  gap: 12px;
+}
+
+.ficha__anadir,
+.ficha__cerrar-pie {
+  height: 52px;
+  cursor: pointer;
+  font-family: var(--m-font-sans);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: var(--m-tracking-nav);
+  border-radius: var(--m-radio-pildora);
+}
+
+.ficha__anadir {
+  flex: 1 1 auto;
+  color: var(--m-tinta);
+  background: var(--m-oro);
+  border: 0;
+}
+
+.ficha__cerrar-pie {
+  flex: 0 0 auto;
+  min-width: 120px;
+  color: var(--m-hueso);
+  background: transparent;
+  border: var(--m-filete-grosor) solid var(--m-filete-oscuro);
+}
+
+.ficha__anadir:focus-visible,
+.ficha__cerrar-pie:focus-visible {
+  outline: 2px solid var(--m-oro);
+  outline-offset: 2px;
+}
+
+/* --- Pantalla completa por debajo de 500 px ------------------------------- */
+
+.ficha--amplia {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'foto'
+    'cuerpo'
+    'pie';
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+
+  .ficha__galeria {
+    height: 240px;
+  }
+
+  // Sobre una foto de 240 px la tira cabe mejor tumbada.
+  .ficha__miniaturas {
+    flex-direction: row;
+  }
+
+  .ficha__cuerpo {
+    padding: 18px var(--m-banda-margen-movil) 10px;
+  }
+
+  .ficha__pie {
+    padding: 12px var(--m-banda-margen-movil) 18px;
+  }
+
+  .ficha__nombre {
+    font-size: 23px;
+  }
+
+  .ficha__precio {
+    font-size: 22px;
+  }
+}
+</style>
+
+<style lang="scss">
+/**
+ * Fuera de `scoped` a propósito: el velo y el ancho los pinta QDialog, cuyos
+ * nodos (`.q-dialog__backdrop`, `.q-dialog__inner`) los renderiza Quasar y no
+ * llevan el atributo de ámbito de este componente, así que ninguna regla
+ * `scoped` los alcanzaría. La clase `ficha-servicio` viaja al div raíz del
+ * diálogo —QDialog mete `attrs.class` en sus `rootClasses`—, de modo que estas
+ * dos reglas no se escapan a ningún otro diálogo del portal.
+ */
+.ficha-servicio .q-dialog__backdrop {
+  background: var(--m-velo);
+}
+
+/**
+ * Quasar limita el contenido minimizado a 560 px con `.q-dialog__inner--minimized
+ * > div`, que gana en especificidad a cualquier regla con ámbito: la ficha mide
+ * 880. El `min()` es lo que evita que se desborde en una ventana estrecha.
+ */
+.ficha-servicio .q-dialog__inner--minimized > div {
+  max-width: min(880px, 100%);
+}
+</style>
