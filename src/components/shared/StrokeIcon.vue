@@ -88,6 +88,17 @@ const TRAZOS: Record<string, string[]> = {
     'M16.5 15.5 20 12l-3.5-3.5',
     'M20 12h-9.7',
   ],
+  lapiz: ['M12 20h9', 'M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z'],
+  etiqueta: [
+    'M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z',
+    'M7 7h.01',
+  ],
+  papelera: [
+    'M3 6h18',
+    'M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6',
+    'M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2',
+    'M10 11v6M14 11v6',
+  ],
 };
 
 const props = withDefaults(defineProps<{ nombre: string; tamano?: number }>(), {
