@@ -26,7 +26,7 @@ const DOS = [
 
 type Props = {
   servicios?: Service[];
-  columnas?: number;
+  columnas?: 1 | 2 | 3;
   cargando?: boolean;
   error?: boolean;
   hayFiltros?: boolean;
@@ -67,7 +67,7 @@ describe('ServiceCardsGrid', () => {
   it('pinta una tarjeta por servicio', () => {
     const rejilla = montar();
 
-    expect(rejilla.get('[data-test="rejilla"]').exists()).toBe(true);
+    expect(rejilla.find('[data-test="rejilla"]').exists()).toBe(true);
     expect(rejilla.findAll('[data-test="tarjeta"]')).toHaveLength(2);
     expect(rejilla.text()).toContain('Pixie cut');
   });
@@ -112,7 +112,7 @@ describe('ServiceCardsGrid', () => {
   it('en la primera carga pinta el esqueleto', () => {
     const rejilla = montar({ servicios: [], cargando: true });
 
-    expect(rejilla.get('[data-test="esqueleto"]').exists()).toBe(true);
+    expect(rejilla.find('[data-test="esqueleto"]').exists()).toBe(true);
     expect(rejilla.find('[data-test="rejilla"]').exists()).toBe(false);
     expect(rejilla.find('[data-test="vacio"]').exists()).toBe(false);
   });
@@ -129,7 +129,7 @@ describe('ServiceCardsGrid', () => {
     expect(rejilla.get('[data-test="rejilla"]').attributes('aria-busy')).toBe(
       'true'
     );
-    expect(rejilla.get('[data-test="recarga"]').exists()).toBe(true);
+    expect(rejilla.find('[data-test="recarga"]').exists()).toBe(true);
   });
 
   it('sin recarga no deja puesto el aviso ni el aria-busy', () => {
@@ -168,7 +168,7 @@ describe('ServiceCardsGrid', () => {
   it('con un fallo de red y sin filas pinta el error y reintenta', async () => {
     const rejilla = montar({ servicios: [], error: true });
 
-    expect(rejilla.get('[data-test="error"]').exists()).toBe(true);
+    expect(rejilla.find('[data-test="error"]').exists()).toBe(true);
     expect(rejilla.find('[data-test="esqueleto"]').exists()).toBe(false);
     expect(rejilla.find('[data-test="vacio"]').exists()).toBe(false);
     await rejilla.get('[data-test="reintentar"]').trigger('click');
@@ -179,7 +179,7 @@ describe('ServiceCardsGrid', () => {
   it('el error manda sobre el esqueleto: no se pintan los dos', () => {
     const rejilla = montar({ servicios: [], cargando: true, error: true });
 
-    expect(rejilla.get('[data-test="error"]').exists()).toBe(true);
+    expect(rejilla.find('[data-test="error"]').exists()).toBe(true);
     expect(rejilla.find('[data-test="esqueleto"]').exists()).toBe(false);
   });
 
@@ -213,8 +213,8 @@ describe('ServiceCardsGrid', () => {
     );
 
     expect(rejilla.findAll('[data-test="acciones"]')).toHaveLength(2);
-    expect(rejilla.get('[data-test="editar-s1"]').exists()).toBe(true);
-    expect(rejilla.get('[data-test="editar-s2"]').exists()).toBe(true);
+    expect(rejilla.find('[data-test="editar-s1"]').exists()).toBe(true);
+    expect(rejilla.find('[data-test="editar-s2"]').exists()).toBe(true);
   });
 
   it('la ranura de acciones dice si va en un renglón (compacto) o en una tarjeta', () => {

@@ -210,7 +210,7 @@ describe('ServiceCard', () => {
     await tarjeta.get('img').trigger('error');
 
     expect(tarjeta.find('img').exists()).toBe(false);
-    expect(tarjeta.get('[data-test="sin-foto"]').exists()).toBe(true);
+    expect(tarjeta.find('[data-test="sin-foto"]').exists()).toBe(true);
   });
 
   /**
@@ -243,8 +243,8 @@ describe('ServiceCard', () => {
       { acciones: '<button data-test="editar">Editar</button>' }
     );
 
-    expect(tarjeta.get('[data-test="acciones"]').exists()).toBe(true);
-    expect(tarjeta.get('[data-test="editar"]').exists()).toBe(true);
+    expect(tarjeta.find('[data-test="acciones"]').exists()).toBe(true);
+    expect(tarjeta.find('[data-test="editar"]').exists()).toBe(true);
   });
 
   it('sin ranura no deja una caja de acciones vacía encima de la foto', () => {

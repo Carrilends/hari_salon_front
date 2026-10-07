@@ -20,7 +20,7 @@ describe('ServiceListSkeleton', () => {
   it('pinta seis huecos en la rejilla de tres columnas', () => {
     const esqueleto = mount(ServiceListSkeleton, { props: { columnas: 3 } });
 
-    expect(esqueleto.get('[data-test="esqueleto"]').exists()).toBe(true);
+    expect(esqueleto.find('[data-test="esqueleto"]').exists()).toBe(true);
     expect(esqueleto.findAll('[data-test="hueco"]')).toHaveLength(6);
   });
 
@@ -102,7 +102,7 @@ describe('ServiceListError', () => {
     expect(error.get('[data-test="error"]').classes()).toContain(
       'error-lista--compacto'
     );
-    expect(error.get('[data-test="reintentar"]').exists()).toBe(true);
+    expect(error.find('[data-test="reintentar"]').exists()).toBe(true);
   });
 });
 

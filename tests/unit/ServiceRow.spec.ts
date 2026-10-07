@@ -138,7 +138,7 @@ describe('ServiceRow', () => {
     await fila.get('img').trigger('error');
 
     expect(fila.find('img').exists()).toBe(false);
-    expect(fila.get('[data-test="fila-sin-foto"]').exists()).toBe(true);
+    expect(fila.find('[data-test="fila-sin-foto"]').exists()).toBe(true);
   });
 
   /** Punto 1 del enfoque de revisión: `numeric` de Postgres llega como cadena. */
@@ -157,8 +157,8 @@ describe('ServiceRow', () => {
       { acciones: '<button data-test="editar">Editar</button>' }
     );
 
-    expect(fila.get('[data-test="acciones"]').exists()).toBe(true);
-    expect(fila.get('[data-test="editar"]').exists()).toBe(true);
+    expect(fila.find('[data-test="acciones"]').exists()).toBe(true);
+    expect(fila.find('[data-test="editar"]').exists()).toBe(true);
   });
 
   it('sin ranura no deja una columna de acciones vacía', () => {
