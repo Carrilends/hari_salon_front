@@ -31,6 +31,8 @@ describe('PriceDisplayPill', () => {
 
     expect(pildora.get('[data-test="precio"]').text()).toContain('36.000');
     expect(pildora.get('[data-test="precio-base"]').text()).toContain('45.000');
+    // Tachado solo se ve: el lector de pantalla tiene que oír que es el de antes.
+    expect(pildora.get('[data-test="precio-base"] .sr').text()).toBe('antes');
   });
 
   it('sin precio base no pinta una segunda cifra', () => {

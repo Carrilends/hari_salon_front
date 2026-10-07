@@ -111,9 +111,10 @@ describe('ServiceRow', () => {
     });
 
     expect(fila.get('[data-test="fila-precio"]').text()).toContain('$36.000');
-    expect(fila.get('[data-test="fila-precio-base"]').text()).toContain(
-      '$45.000'
+    expect(fila.get('[data-test="fila-precio-base"]').text()).toBe(
+      'antes $45.000'
     );
+    expect(fila.get('[data-test="fila-precio-base"] .sr').text()).toBe('antes');
   });
 
   it('sin promoción pinta un solo precio', () => {

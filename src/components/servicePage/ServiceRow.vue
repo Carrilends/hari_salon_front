@@ -59,6 +59,8 @@
           class="fila-servicio__precio-base"
           data-test="fila-precio-base"
         >
+          <!-- El tachado solo se ve: el lector de pantalla oye «antes». -->
+          <span class="sr">antes</span>
           ${{ precioBase }}
         </span>
         <span class="fila-servicio__detalle">Detalle</span>

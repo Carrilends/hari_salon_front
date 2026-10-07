@@ -449,8 +449,12 @@ describe('ficha del servicio · el precio (D3)', () => {
     });
 
     expect(wrapper.get('[data-test="precio"]').text()).toBe('$36.000');
-    expect(wrapper.get('[data-test="precio-base"]').text()).toBe('$45.000');
+    expect(wrapper.get('[data-test="precio-base"]').text()).toBe(
+      'antes $45.000'
+    );
     expect(wrapper.get('[data-test="promo-pildora"]').text()).toBe('-20 %');
+    // El tachado no se oye: «antes» se lo dice al lector de pantalla.
+    expect(wrapper.get('[data-test="precio-base"] .sr').text()).toBe('antes');
   });
 
   it('sin promoción pinta una sola cifra', () => {
@@ -485,7 +489,9 @@ describe('ficha del servicio · el precio (D3)', () => {
     });
 
     expect(wrapper.get('[data-test="precio"]').text()).toBe('$36.000');
-    expect(wrapper.get('[data-test="precio-base"]').text()).toBe('$45.000');
+    expect(wrapper.get('[data-test="precio-base"]').text()).toBe(
+      'antes $45.000'
+    );
     expect(wrapper.get('[data-test="promo-pildora"]').text()).toBe('-20 %');
   });
 });

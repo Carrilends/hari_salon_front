@@ -11,6 +11,8 @@
       class="cop-price-pill__base"
       data-test="precio-base"
     >
+      <!-- El tachado solo se ve: el lector de pantalla oye «antes». -->
+      <span class="sr">antes</span>
       {{ formattedBase }}
     </span>
     <span class="cop-price-pill__suffix">COP</span>

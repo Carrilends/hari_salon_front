@@ -71,6 +71,8 @@
           class="tarjeta-servicio__precio-base"
           data-test="precio-base"
         >
+          <!-- El tachado solo se ve: el lector de pantalla oye «antes». -->
+          <span class="sr">antes</span>
           ${{ precioBase }}
         </span>
         <span class="tarjeta-servicio__detalle">Detalle</span>

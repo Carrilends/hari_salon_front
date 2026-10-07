@@ -81,6 +81,8 @@
           <span class="ficha__precio" data-test="precio">${{ precio }}</span>
           <template v-if="enPromocion">
             <span class="ficha__precio-base" data-test="precio-base">
+              <!-- El tachado solo se ve: el lector de pantalla oye «antes». -->
+              <span class="sr">antes</span>
               ${{ precioBase }}
             </span>
             <span class="ficha__promo" data-test="promo-pildora">

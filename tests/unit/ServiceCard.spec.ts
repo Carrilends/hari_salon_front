@@ -116,9 +116,11 @@ describe('ServiceCard', () => {
 
     expect(tarjeta.get('[data-test="promo-pildora"]').text()).toContain('20 %');
     expect(tarjeta.get('[data-test="precio"]').text()).toContain('$36.000');
-    expect(tarjeta.get('[data-test="precio-base"]').text()).toContain(
-      '$45.000'
+    expect(tarjeta.get('[data-test="precio-base"]').text()).toBe(
+      'antes $45.000'
     );
+    // El tachado no se oye: «antes» lo dice al lector de pantalla y no se ve.
+    expect(tarjeta.get('[data-test="precio-base"] .sr').text()).toBe('antes');
     expect(ESTILOS).toMatch(
       /\.tarjeta-servicio__precio-base \{[^}]*text-decoration: line-through/
     );
