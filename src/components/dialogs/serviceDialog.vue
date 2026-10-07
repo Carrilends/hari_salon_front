@@ -35,6 +35,39 @@
         </svg>
       </button>
 
+      <div class="ficha__galeria" data-test="galeria">
+        <img
+          class="ficha__foto"
+          data-test="foto"
+          :src="fotoGrande"
+          :alt="props.service.name"
+          decoding="async"
+        />
+
+        <ul v-if="fotos.length > 1" class="ficha__miniaturas">
+          <li v-for="(imagen, i) in fotos" :key="imagen.id ?? i">
+            <button
+              type="button"
+              class="ficha__miniatura"
+              :class="{ 'ficha__miniatura--elegida': i === elegida }"
+              data-test="miniatura"
+              :aria-label="`Ver foto ${i + 1} de ${fotos.length}`"
+              :aria-current="i === elegida ? 'true' : undefined"
+              @click="elegida = i"
+            >
+              <img
+                :src="miniatura(imagen.url)"
+                alt=""
+                width="56"
+                height="56"
+                loading="lazy"
+                decoding="async"
+              />
+            </button>
+          </li>
+        </ul>
+      </div>
+
       <div class="ficha__cuerpo">
         <p v-if="categoria" class="ficha__categoria" data-test="categoria">
           {{ categoria }}
@@ -45,11 +78,7 @@
         </h2>
 
         <p class="ficha__cifras">
-          <span
-            v-if="duracion"
-            class="ficha__duracion"
-            data-test="duracion"
-          >
+          <span v-if="duracion" class="ficha__duracion" data-test="duracion">
             {{ duracion }}
           </span>
         </p>
@@ -70,12 +99,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useDialogPluginComponent } from 'quasar';
 import { useDialogMaximizedBelow } from 'src/composables/dialogs/useDialogMaximizedBelow';
 import { formatDurationMinutes } from 'src/helpers/duration';
 import { etiquetaDeCategoria } from 'src/helpers/service-category';
+import { optimizeCloudinaryUrl } from 'src/helpers/cloudinaryUrl';
+import { PLACEHOLDER_IMAGE } from 'src/constants/placeholder-image';
 import type Service from 'src/interfaces/service';
+import type { Image } from 'src/interfaces/service';
 
 defineOptions({ name: 'serviceDialog' });
 
@@ -120,4 +152,46 @@ const duracion = computed(() => {
 const descripcion = computed(
   () => props.service.detail?.description?.trim() || 'Sin descripción.'
 );
+
+/**
+ * El carrusel de Quasar se fue (decisión D8): el aspecto aprobado cambia de foto
+ * con la tira de miniaturas, así que de él solo quedaba la maquinaria de
+ * diapositivas para hacer un fundido — y a cambio arrastraba cuarenta y cinco
+ * líneas de `:deep(...)` peleando con sus tripas.
+ */
+const SUSTITUTO: Image = {
+  id: 'sustituto',
+  url: PLACEHOLDER_IMAGE,
+  isPrincipal: true,
+  publicId: '',
+  version: '',
+};
+
+/** La columna mide 420 px y la miniatura 56: el doble, para pantallas densas. */
+const ANCHO_FOTO = 840;
+const ANCHO_MINIATURA = 112;
+
+/**
+ * La galería abre en la foto principal, como la tarjeta, la fila y la bolsa
+ * (`urlDeFotoPrincipal`): la principal va primera; sin marca, el orden dado.
+ */
+const fotos = computed<Image[]>(() => {
+  const imagenes = props.service.images ?? [];
+  if (!imagenes.length) return [SUSTITUTO];
+  const principal = imagenes.find((imagen) => imagen.isPrincipal);
+  return principal
+    ? [principal].concat(imagenes.filter((imagen) => imagen !== principal))
+    : imagenes;
+});
+
+const elegida = ref(0);
+
+const fotoGrande = computed(
+  () =>
+    optimizeCloudinaryUrl(fotos.value[elegida.value]?.url, ANCHO_FOTO) ||
+    PLACEHOLDER_IMAGE
+);
+
+const miniatura = (url: string) =>
+  optimizeCloudinaryUrl(url, ANCHO_MINIATURA) || PLACEHOLDER_IMAGE;
 </script>

@@ -17,7 +17,7 @@
  */
 import { enableAutoUnmount, mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
-// `nextTick` y `foto` los consumen las tareas 2–6 de la fase D.
+// `nextTick` lo consumen las tareas 3–6 de la fase D.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { defineComponent, nextTick } from 'vue';
 import ServiceDialog from 'src/components/dialogs/serviceDialog.vue';
@@ -64,7 +64,6 @@ const QDialogFalso = defineComponent({
     '<div role="dialog" class="q-dialog"><div class="q-dialog__inner"><slot /></div></div>',
 });
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const foto = (nombre: string): Image => ({
   id: nombre,
   url: `https://res.cloudinary.com/demo/image/upload/v1/${nombre}.jpg`,
@@ -93,7 +92,7 @@ const hacerServicio = (cambios: Partial<Service> = {}): Service =>
       specifications: {},
     },
     ...cambios,
-  }) as Service;
+  } as Service);
 
 function montar(
   opciones: { servicio?: Service; isFromBooking?: boolean } = {}
@@ -130,7 +129,9 @@ describe('ficha del servicio · lo que se lee', () => {
   it('pinta el nombre, la categoría, la duración y la descripción del servicio', () => {
     const { wrapper } = montar();
 
-    expect(wrapper.get('[data-test="nombre"]').text()).toBe('Fade bajo clásico');
+    expect(wrapper.get('[data-test="nombre"]').text()).toBe(
+      'Fade bajo clásico'
+    );
     // La categoría la traduce el ayudante de la fase B: `hair-men` → «Barbería».
     // Con el valor crudo, la ficha pintaría «hair-men» donde la tarjeta pinta la
     // versalita en español (hoja de ruta §8.1).
@@ -182,6 +183,110 @@ describe('ficha del servicio · lo que se lee', () => {
     const { wrapper } = montar({ servicio: hacerServicio({ duration: 90 }) });
 
     expect(wrapper.get('[data-test="duracion"]').text()).toBe('1 h 30 min');
+  });
+});
+
+describe('ficha del servicio · la galería', () => {
+  it('pide a Cloudinary la foto grande a 840 px, no la URL cruda', () => {
+    const { wrapper } = montar({
+      servicio: hacerServicio({ images: [foto('a')] }),
+    });
+
+    // La columna de la foto mide 420 px: 840 cubre las pantallas densas.
+    expect(wrapper.get('[data-test="foto"]').attributes('src')).toContain(
+      '/upload/f_auto,q_auto,w_840,c_limit/'
+    );
+  });
+
+  it('el alt de la foto grande nombra el servicio', () => {
+    const { wrapper } = montar({
+      servicio: hacerServicio({ images: [foto('a')] }),
+    });
+
+    expect(wrapper.get('[data-test="foto"]').attributes('alt')).toBe(
+      'Fade bajo clásico'
+    );
+  });
+
+  /** Enfoque de revisión 2: sin fotos, el sustituto; nunca un hueco roto. */
+  it('sin imágenes usa el sustituto, no un hueco roto', () => {
+    const { wrapper } = montar({
+      servicio: hacerServicio({
+        images: undefined as unknown as Service['images'],
+      }),
+    });
+
+    expect(wrapper.get('[data-test="foto"]').attributes('src')).toMatch(
+      /^data:image\/svg\+xml/
+    );
+    expect(wrapper.findAll('[data-test="miniatura"]')).toHaveLength(0);
+  });
+
+  it('las miniaturas son botones de verdad y dicen qué foto abren', () => {
+    const { wrapper } = montar({
+      servicio: hacerServicio({ images: [foto('a'), foto('b'), foto('c')] }),
+    });
+    const miniaturas = wrapper.findAll('[data-test="miniatura"]');
+
+    expect(miniaturas).toHaveLength(3);
+    expect(miniaturas[0].element.tagName).toBe('BUTTON');
+    expect(miniaturas[0].attributes('aria-label')).toBe('Ver foto 1 de 3');
+    expect(miniaturas[2].attributes('aria-label')).toBe('Ver foto 3 de 3');
+  });
+
+  it('tocar una miniatura cambia la foto grande y marca la elegida', async () => {
+    const { wrapper } = montar({
+      servicio: hacerServicio({ images: [foto('a'), foto('b'), foto('c')] }),
+    });
+    const miniaturas = wrapper.findAll('[data-test="miniatura"]');
+
+    expect(miniaturas[0].attributes('aria-current')).toBe('true');
+
+    await miniaturas[1].trigger('click');
+
+    expect(wrapper.get('[data-test="foto"]').attributes('src')).toContain(
+      '/b.jpg'
+    );
+    const tras = wrapper.findAll('[data-test="miniatura"]');
+    expect(tras[1].attributes('aria-current')).toBe('true');
+    expect(tras[0].attributes('aria-current')).toBeUndefined();
+  });
+
+  it('con una sola foto no pinta la tira de miniaturas', () => {
+    const { wrapper } = montar({
+      servicio: hacerServicio({ images: [foto('a')] }),
+    });
+
+    expect(wrapper.find('[data-test="galeria"]').exists()).toBe(true);
+    expect(wrapper.findAll('[data-test="miniatura"]')).toHaveLength(0);
+  });
+
+  it('las miniaturas se piden a 112 px, que es el doble de los 56 que miden', () => {
+    const { wrapper } = montar({
+      servicio: hacerServicio({ images: [foto('a'), foto('b')] }),
+    });
+
+    const img = wrapper.findAll('[data-test="miniatura"]')[0].get('img');
+    expect(img.attributes('src')).toContain(
+      '/upload/f_auto,q_auto,w_112,c_limit/'
+    );
+    // El nombre ya lo dice el `aria-label` del botón: repetirlo haría que el
+    // lector de pantalla lo diga dos veces por miniatura.
+    expect(img.attributes('alt')).toBe('');
+  });
+
+  /** Misma regla que la tarjeta, la fila y la bolsa: abre en la principal. */
+  it('abre en la foto principal aunque no sea la primera de la lista', () => {
+    const { wrapper } = montar({
+      servicio: hacerServicio({ images: [foto('b'), foto('a'), foto('c')] }),
+    });
+
+    expect(wrapper.get('[data-test="foto"]').attributes('src')).toContain(
+      '/a.jpg'
+    );
+    const miniaturas = wrapper.findAll('[data-test="miniatura"]');
+    expect(miniaturas[0].get('img').attributes('src')).toContain('/a.jpg');
+    expect(miniaturas[0].attributes('aria-current')).toBe('true');
   });
 });
 
