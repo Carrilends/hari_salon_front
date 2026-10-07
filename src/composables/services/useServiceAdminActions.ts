@@ -1,5 +1,6 @@
 import { nextTick } from 'vue';
 import { useQuasar } from 'quasar';
+import { useQueryClient } from '@tanstack/vue-query';
 
 import { adminServiceApi } from 'src/api/services-api';
 import ServiceDeleteDialog from 'src/components/dialogs/ServiceDeleteDialog.vue';
@@ -89,6 +90,7 @@ export function useServiceAdminActions(opciones: {
   const authStore = useAuthStore();
   const bookStore = useBookStore();
   const storeServices = useServicesStore();
+  const queryClient = useQueryClient();
   const { serviceIdEditRef } = useServiceForEdition();
 
   const esAdmin = () => authStore.isLoggedIn && authStore.isAdmin;
@@ -117,21 +119,42 @@ export function useServiceAdminActions(opciones: {
         : 'Quitando promoción...',
     });
     try {
-      await adminServiceApi.patch(
-        `/service/${service.id}`,
-        buildPromotionPayload(service, havePromotion, porcentageDiscount)
-      );
-      // Sin esto, la bolsa de quien ya tenía el servicio cobra el precio viejo.
-      const fresh = await getService(service.id);
-      bookStore.syncBookingWithService(fresh);
+      try {
+        await adminServiceApi.patch(
+          `/service/${service.id}`,
+          buildPromotionPayload(service, havePromotion, porcentageDiscount)
+        );
+      } catch {
+        aviso.fallo('No se pudo actualizar la promoción del servicio');
+        return;
+      }
+
+      // El PATCH ya cambió el precio en el servidor: la lista se recarga pase
+      // lo que pase con la lectura de abajo.
       opciones.refrescar('promocion');
+
+      let fresh: Service;
+      try {
+        fresh = await getService(service.id);
+      } catch {
+        // La promoción SÍ se guardó; lo que falta es el precio nuevo en la
+        // bolsa y en la ficha. Decir «no se pudo actualizar la promoción»
+        // invitaría a repetirla.
+        aviso.atencion(
+          'La promoción se guardó, pero no se pudo recargar el servicio. Recarga la página para ver el precio nuevo.'
+        );
+        return;
+      }
+      // Sin esto, la bolsa de quien ya tenía el servicio cobra el precio viejo.
+      bookStore.syncBookingWithService(fresh);
+      // La ficha guarda su consulta tres minutos (`staleTime` de `useService`):
+      // sin sembrarla, el detalle abierto justo después enseñaría el precio viejo.
+      queryClient.setQueryData(['service', service.id], fresh);
       aviso.logro(
         havePromotion
           ? `Promoción ${porcentageDiscount}% aplicada`
           : 'Promoción retirada'
       );
-    } catch {
-      aviso.fallo('No se pudo actualizar la promoción del servicio');
     } finally {
       $q.loading.hide();
     }

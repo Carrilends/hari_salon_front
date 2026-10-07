@@ -16,6 +16,8 @@ const deleteServiceMock = jest.fn();
 const syncBookingWithService = jest.fn();
 const logro = jest.fn();
 const fallo = jest.fn();
+const atencion = jest.fn();
+const setQueryData = jest.fn();
 const refrescar = jest.fn();
 const serviceIdEditRef = { value: '' };
 const authState = { isAdmin: true, isLoggedIn: true };
@@ -44,7 +46,12 @@ jest.mock('src/stores/service-store', () => ({
   useServicesStore: () => storeState,
 }));
 jest.mock('src/composables/shared/useAviso', () => ({
-  useAviso: () => ({ logro, fallo, atencion: jest.fn() }),
+  useAviso: () => ({ logro, fallo, atencion }),
+}));
+// Fuera de un `setup` no hay cliente de Vue Query: se dobla para ver qué se
+// siembra en la caché de la ficha.
+jest.mock('@tanstack/vue-query', () => ({
+  useQueryClient: () => ({ setQueryData }),
 }));
 // Los diálogos solo se identifican: su conducta ya tiene sus propias suites.
 jest.mock('src/components/dialogs/ServicePromotionDialog.vue', () => ({
@@ -283,6 +290,48 @@ describe('useServiceAdminActions · promocionar', () => {
     );
     expect(refrescar).toHaveBeenCalledWith('promocion');
     expect(logro).toHaveBeenCalledWith('Promoción retirada');
+  });
+
+  /**
+   * La ficha guarda su consulta tres minutos (`staleTime`): sin sembrar la
+   * respuesta nueva, abrir el detalle justo después enseñaría el precio viejo.
+   */
+  it('siembra el servicio recién leído en la caché de la ficha', async () => {
+    const admin = useServiceAdminActions({ refrescar });
+    admin.promocionar(SERVICIO);
+
+    confirmar?.(20);
+    await flushPromises();
+
+    expect(setQueryData).toHaveBeenCalledWith(
+      ['service', 's1'],
+      expect.objectContaining({ id: 's1', price: 40000 })
+    );
+  });
+
+  /**
+   * El PATCH ya cambió el precio en el servidor: aunque la lectura de después
+   * falle, la lista tiene que recargarse, y el aviso no puede decir que la
+   * promoción no se guardó.
+   */
+  it('si el PATCH entra pero la lectura de después falla, refresca igual y lo dice aparte', async () => {
+    getServiceMock.mockRejectedValueOnce(new Error('red'));
+    const admin = useServiceAdminActions({ refrescar });
+    admin.promocionar(SERVICIO);
+
+    confirmar?.(20);
+    await flushPromises();
+
+    expect(refrescar).toHaveBeenCalledWith('promocion');
+    expect(fallo).not.toHaveBeenCalledWith(
+      'No se pudo actualizar la promoción del servicio'
+    );
+    expect(atencion).toHaveBeenCalledWith(
+      expect.stringContaining('no se pudo recargar')
+    );
+    expect(syncBookingWithService).not.toHaveBeenCalled();
+    expect(setQueryData).not.toHaveBeenCalled();
+    expect(loadingHide).toHaveBeenCalled();
   });
 
   /** Review Focus 3: el PATCH falla. */
