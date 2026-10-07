@@ -197,6 +197,37 @@ describe('serviceFilterDialog como hoja inferior', () => {
     expect(FUENTE).toContain('::-webkit-scrollbar-thumb');
   });
 
+  /**
+   * NF06: en Safari 13.1 `MediaQueryList` solo trae `addListener`. Llamar a
+   * `addEventListener` a pelo hacía reventar el montaje de la hoja y, con ella,
+   * los filtros en ese teléfono.
+   */
+  it('en Safari 13.1 (sin addEventListener) monta y sigue el alto con addListener', async () => {
+    const escuchas: Array<() => void> = [];
+    const estado = { alto: 844 };
+    window.matchMedia = ((consulta: string) => ({
+      get matches() {
+        const maxAncho = /\(max-width:\s*(\d+)px\)/.exec(consulta);
+        if (maxAncho) return 390 <= Number(maxAncho[1]);
+        const maxAlto = /\(max-height:\s*(\d+)px\)/.exec(consulta);
+        if (maxAlto) return estado.alto <= Number(maxAlto[1]);
+        return false;
+      },
+      media: consulta,
+      addListener: (fn: () => void) => escuchas.push(fn),
+      removeListener: () => undefined,
+    })) as unknown as typeof window.matchMedia;
+
+    const wrapper = montar();
+    expect(wrapper.getComponent({ name: 'QDialog' }).props('maximized')).toBe(false);
+
+    estado.alto = 420;
+    escuchas.forEach((fn) => fn());
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.getComponent({ name: 'QDialog' }).props('maximized')).toBe(true);
+  });
+
   it('todo lo que toca a matchMedia va detrás de la guarda de SSG', () => {
     expect(FUENTE).toContain("typeof window !== 'undefined'");
     expect(FUENTE).toContain("typeof window.matchMedia === 'function'");

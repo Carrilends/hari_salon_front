@@ -1,5 +1,6 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import type { ComputedRef } from 'vue';
+import { escucharConsulta } from 'src/helpers/escuchar-consulta';
 
 /**
  * ¿El puntero de esta pantalla puede posarse encima de algo?
@@ -39,15 +40,8 @@ export function useCoarsePointer(): ComputedRef<boolean> {
       grueso.value = consulta.matches;
     };
     sincronizar();
-
-    if (typeof consulta.addEventListener === 'function') {
-      consulta.addEventListener('change', sincronizar);
-      soltar = () => consulta.removeEventListener('change', sincronizar);
-    } else if (typeof consulta.addListener === 'function') {
-      // Safari 13.1 (NF06): MediaQueryList todavía no es un EventTarget.
-      consulta.addListener(sincronizar);
-      soltar = () => consulta.removeListener(sincronizar);
-    }
+    // Safari 13.1 (NF06): el respaldo a `addListener` vive en el helper.
+    soltar = escucharConsulta(consulta, sincronizar);
   });
 
   onUnmounted(() => {

@@ -78,6 +78,7 @@ import ServiceFilterFields from 'src/components/servicePage/ServiceFilterFields.
 import { useDialog } from 'src/composables/dialogs/useDialogService';
 import { useDialogMaximizedBelow } from 'src/composables/dialogs/useDialogMaximizedBelow';
 import { ANCHO_CARRIL_PX } from 'src/stores/filters-store';
+import { escucharConsulta } from 'src/helpers/escuchar-consulta';
 import type { FilterService } from 'src/composables/dialogs/useServiceFilter';
 
 defineOptions({ name: 'ServiceFilterDialog' });
@@ -131,8 +132,8 @@ onMounted(() => {
     pantallaCompleta.value = consulta.matches;
   };
   sincronizar();
-  consulta.addEventListener('change', sincronizar);
-  dejarDeEscuchar = () => consulta.removeEventListener('change', sincronizar);
+  // Con respaldo para Safari 13.1, donde la consulta no tiene addEventListener.
+  dejarDeEscuchar = escucharConsulta(consulta, sincronizar);
 });
 
 onUnmounted(() => dejarDeEscuchar?.());
