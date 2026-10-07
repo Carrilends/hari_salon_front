@@ -23,8 +23,14 @@ export function useDialogMaximizedBelow(
       maximized.value = mq.matches;
     };
     sync();
-    mq.addEventListener('change', sync);
-    removeMqListener = () => mq.removeEventListener('change', sync);
+    if (typeof mq.addEventListener === 'function') {
+      mq.addEventListener('change', sync);
+      removeMqListener = () => mq.removeEventListener('change', sync);
+    } else if (typeof mq.addListener === 'function') {
+      // Safari 13.1 (NF06): MediaQueryList todavía no es un EventTarget.
+      mq.addListener(sync);
+      removeMqListener = () => mq.removeListener(sync);
+    }
   });
 
   onUnmounted(() => {
