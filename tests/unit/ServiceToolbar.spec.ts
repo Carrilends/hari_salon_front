@@ -253,4 +253,35 @@ describe('ServiceToolbar', () => {
     expect(wrapper.emitted('abrir-filtros')).toHaveLength(1);
     expect(wrapper.emitted('crear-servicio')).toHaveLength(1);
   });
+
+  it('con el cambio de encabezado a overlay sin atajos, el campo recibe el foco', async () => {
+    fijarAncho(400);
+    const pinia = createPinia();
+    const wrapper = mount(ServiceToolbar, {
+      attachTo: document.body,
+      props: PROPS_BASE,
+      global: { plugins: [pinia], stubs: { transition: false } },
+    });
+
+    await wrapper.get('[data-test="buscador-compacto"]').trigger('click');
+    jest.advanceTimersByTime(500);
+    await nextTick();
+
+    expect(document.activeElement).toBe(
+      wrapper.get('[data-test="buscador"]').element
+    );
+  });
+
+  it('Enter en el overlay entrega lo escrito ya y lo cierra', async () => {
+    const wrapper = montar({}, { ancho: 400 });
+    await wrapper.get('[data-test="buscador-compacto"]').trigger('click');
+
+    await escribir(wrapper, 'tinte');
+    await wrapper.get('[data-test="buscador"]').trigger('keyup.enter');
+
+    expect(wrapper.emitted('update:busqueda')).toEqual([['tinte']]);
+    expect(wrapper.find('[data-test="buscador-overlay"]').exists()).toBe(false);
+    jest.advanceTimersByTime(2000);
+    expect(wrapper.emitted('update:busqueda')).toHaveLength(1);
+  });
 });

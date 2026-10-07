@@ -1,17 +1,81 @@
 <template>
   <header class="barra" data-test="toolbar">
-    <transition name="barra-fundido" mode="out-in">
-      <!--
-        Por debajo de 550 px el campo de 330 px no cabe al lado del título: el
-        buscador se convierte en un botón y, al pulsarlo, ocupa la barra entera.
-      -->
-      <div
-        v-if="esBusquedaCompacta && overlayAbierto"
-        key="overlay"
-        class="barra__overlay"
-        data-test="buscador-overlay"
+    <!--
+      Por debajo de 550 px el campo de 330 px no cabe al lado del título: el
+      buscador se convierte en un botón y, al pulsarlo, ocupa la barra entera.
+      El cambio es seco, sin `<transition>`: con `mode="out-in"` el campo no
+      existe hasta que acaba el fundido de salida y el foco del `nextTick` caía
+      en el vacío; y en iOS un foco fuera del gesto del toque no levanta el
+      teclado.
+    -->
+    <div
+      v-if="esBusquedaCompacta && overlayAbierto"
+      key="overlay"
+      class="barra__overlay"
+      data-test="buscador-overlay"
+    >
+      <div class="barra__buscador barra__buscador--ancho">
+        <label class="sr" for="buscador-servicio">Buscar servicio</label>
+        <span class="barra__lupa" aria-hidden="true">
+          <svg
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <circle cx="11" cy="11" r="6.4" />
+            <path d="M15.8 15.8 20.5 20.5" />
+          </svg>
+        </span>
+        <input
+          id="buscador-servicio"
+          ref="campo"
+          type="search"
+          class="barra__campo"
+          placeholder="Buscar servicio"
+          autocomplete="off"
+          :value="texto"
+          data-test="buscador"
+          @input="alEscribir"
+          @keyup.enter="alEnter"
+        />
+      </div>
+      <button
+        type="button"
+        class="barra__redondo"
+        aria-label="Cerrar la búsqueda"
+        data-test="cerrar-buscador"
+        @click="overlayAbierto = false"
       >
-        <div class="barra__buscador barra__buscador--ancho">
+        <svg
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="M6 6 18 18M18 6 6 18" />
+        </svg>
+      </button>
+    </div>
+
+    <div v-else key="encabezado" class="barra__encabezado">
+      <div class="barra__titulo">
+        <p class="barra__conteo" data-test="conteo">{{ conteo }}</p>
+        <h1 class="barra__h1">Servicios</h1>
+      </div>
+
+      <div class="barra__acciones">
+        <div v-if="!esBusquedaCompacta" class="barra__buscador">
           <label class="sr" for="buscador-servicio">Buscar servicio</label>
           <span class="barra__lupa" aria-hidden="true">
             <svg
@@ -31,7 +95,6 @@
           </span>
           <input
             id="buscador-servicio"
-            ref="campo"
             type="search"
             class="barra__campo"
             placeholder="Buscar servicio"
@@ -39,15 +102,15 @@
             :value="texto"
             data-test="buscador"
             @input="alEscribir"
-            @keyup.enter="overlayAbierto = false"
           />
         </div>
         <button
+          v-else
           type="button"
           class="barra__redondo"
-          aria-label="Cerrar la búsqueda"
-          data-test="cerrar-buscador"
-          @click="overlayAbierto = false"
+          aria-label="Buscar servicio"
+          data-test="buscador-compacto"
+          @click="abrirOverlay"
         >
           <svg
             viewBox="0 0 24 24"
@@ -60,128 +123,24 @@
             aria-hidden="true"
             focusable="false"
           >
-            <path d="M6 6 18 18M18 6 6 18" />
+            <circle cx="11" cy="11" r="6.4" />
+            <path d="M15.8 15.8 20.5 20.5" />
           </svg>
         </button>
-      </div>
 
-      <div v-else key="encabezado" class="barra__encabezado">
-        <div class="barra__titulo">
-          <p class="barra__conteo" data-test="conteo">{{ conteo }}</p>
-          <h1 class="barra__h1">Servicios</h1>
-        </div>
-
-        <div class="barra__acciones">
-          <div v-if="!esBusquedaCompacta" class="barra__buscador">
-            <label class="sr" for="buscador-servicio">Buscar servicio</label>
-            <span class="barra__lupa" aria-hidden="true">
-              <svg
-                viewBox="0 0 24 24"
-                width="18"
-                height="18"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                aria-hidden="true"
-                focusable="false"
-              >
-                <circle cx="11" cy="11" r="6.4" />
-                <path d="M15.8 15.8 20.5 20.5" />
-              </svg>
-            </span>
-            <input
-              id="buscador-servicio"
-              type="search"
-              class="barra__campo"
-              placeholder="Buscar servicio"
-              autocomplete="off"
-              :value="texto"
-              data-test="buscador"
-              @input="alEscribir"
-            />
-          </div>
-          <button
-            v-else
-            type="button"
-            class="barra__redondo"
-            aria-label="Buscar servicio"
-            data-test="buscador-compacto"
-            @click="abrirOverlay"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              width="20"
-              height="20"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              aria-hidden="true"
-              focusable="false"
-            >
-              <circle cx="11" cy="11" r="6.4" />
-              <path d="M15.8 15.8 20.5 20.5" />
-            </svg>
-          </button>
-
-          <div class="barra__filtros">
-            <!--
+        <div class="barra__filtros">
+          <!--
               Reguladores, no embudo: tres líneas con sus perillas. El embudo de
               Line Awesome que había antes es un icono relleno y desentona con
               el resto del portal, que es todo trazo fino.
             -->
-            <button
-              type="button"
-              class="barra__boton"
-              :class="{ 'barra__boton--redondo': !muestraEtiquetas }"
-              :aria-label="etiquetaFiltros"
-              data-test="boton-filtros"
-              @click="emit('abrir-filtros')"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="18"
-                height="18"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                aria-hidden="true"
-                focusable="false"
-              >
-                <path d="M3 7h5M12 7h9" />
-                <path d="M3 12h11M18 12h3" />
-                <path d="M3 17h3M10 17h11" />
-                <circle cx="10" cy="7" r="2" />
-                <circle cx="16" cy="12" r="2" />
-                <circle cx="8" cy="17" r="2" />
-              </svg>
-              <span v-if="muestraEtiquetas">Filtros</span>
-            </button>
-            <!--
-              `aria-hidden` porque el número ya va en el nombre accesible del
-              botón: sin esto el lector de pantalla diría «Filtros (3 activos)
-              3».
-            -->
-            <span
-              v-if="filtrosActivos > 0"
-              class="barra__contador"
-              aria-hidden="true"
-              data-test="contador-filtros"
-            >
-              {{ filtrosActivos > 9 ? '9+' : filtrosActivos }}
-            </span>
-          </div>
-
           <button
-            v-if="esAdmin"
             type="button"
-            class="barra__boton barra__boton--oro"
+            class="barra__boton"
             :class="{ 'barra__boton--redondo': !muestraEtiquetas }"
-            aria-label="Crear servicio"
-            data-test="crear-servicio"
-            @click="emit('crear-servicio')"
+            :aria-label="etiquetaFiltros"
+            data-test="boton-filtros"
+            @click="emit('abrir-filtros')"
           >
             <svg
               viewBox="0 0 24 24"
@@ -194,13 +153,56 @@
               aria-hidden="true"
               focusable="false"
             >
-              <path d="M12 5v14M5 12h14" />
+              <path d="M3 7h5M12 7h9" />
+              <path d="M3 12h11M18 12h3" />
+              <path d="M3 17h3M10 17h11" />
+              <circle cx="10" cy="7" r="2" />
+              <circle cx="16" cy="12" r="2" />
+              <circle cx="8" cy="17" r="2" />
             </svg>
-            <span v-if="muestraEtiquetas">Crear servicio</span>
+            <span v-if="muestraEtiquetas">Filtros</span>
           </button>
+          <!--
+              `aria-hidden` porque el número ya va en el nombre accesible del
+              botón: sin esto el lector de pantalla diría «Filtros (3 activos)
+              3».
+            -->
+          <span
+            v-if="filtrosActivos > 0"
+            class="barra__contador"
+            aria-hidden="true"
+            data-test="contador-filtros"
+          >
+            {{ filtrosActivos > 9 ? '9+' : filtrosActivos }}
+          </span>
         </div>
+
+        <button
+          v-if="esAdmin"
+          type="button"
+          class="barra__boton barra__boton--oro"
+          :class="{ 'barra__boton--redondo': !muestraEtiquetas }"
+          aria-label="Crear servicio"
+          data-test="crear-servicio"
+          @click="emit('crear-servicio')"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          <span v-if="muestraEtiquetas">Crear servicio</span>
+        </button>
       </div>
-    </transition>
+    </div>
   </header>
 </template>
 
@@ -299,6 +301,15 @@ const alEscribir = (evento: Event) => {
     // falta y la barra vuelve a su sitio.
     overlayAbierto.value = false;
   }, RETARDO_MS);
+};
+
+/** Enter entrega ya lo escrito, en vez de dejarlo caer desde un overlay cerrado. */
+const alEnter = () => {
+  if (temporizador !== null) {
+    cancelar();
+    emit('update:busqueda', texto.value);
+  }
+  overlayAbierto.value = false;
 };
 
 onUnmounted(cancelar);
@@ -502,16 +513,6 @@ defineOptions({ name: 'ServiceToolbar' });
   color: var(--m-tinta);
   font-size: 11px;
   line-height: 1;
-}
-
-.barra-fundido-enter-active,
-.barra-fundido-leave-active {
-  transition: opacity 0.2s ease;
-}
-
-.barra-fundido-enter-from,
-.barra-fundido-leave-to {
-  opacity: 0;
 }
 
 @media (max-width: 699px) {
