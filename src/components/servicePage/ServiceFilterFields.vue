@@ -25,7 +25,31 @@
 
     <hr class="campos__filete" />
 
-    <!-- PRECIO ------------------------------------------------------------ -->
+    <!-- CATEGORÍA --------------------------------------------------------- -->
+    <fieldset class="campos__grupo" data-test="categoria">
+      <legend class="campos__etiqueta">
+        Categoría
+        <span
+          v-if="cuentaCategorias > 0"
+          class="campos__cuenta"
+          data-test="categoria-cuenta"
+        >
+          {{ cuentaCategorias }}
+        </span>
+      </legend>
+      <services-box
+        :initial-selected-ids="filtersStore.selectedServicesIDs"
+        :is-edit-mode="true"
+        variante="oscuro"
+        section-title=""
+        :contained-scroll="false"
+        @selected-services="alCambiarCategoria"
+      />
+    </fieldset>
+
+    <hr class="campos__filete" />
+
+    <!-- PRECIO------------------------------------------------------------ -->
     <fieldset class="campos__grupo" data-test="precio">
       <legend class="campos__etiqueta">Precio</legend>
       <label class="campos__casilla">
@@ -94,6 +118,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import ServicesBox from 'src/components/shared/ServicesBox.vue';
 import {
   useFilterService,
   type FilterService,
@@ -164,6 +189,18 @@ function alternarGenero(id: string) {
   // `Array.from`, no `[...activos]`: ts-jest compila a ES5 sin `downlevelIteration`
   // y el spread de un `Set` sale vacío.
   filtersStore.setGenres(Array.from(activos));
+  sendFilter();
+}
+
+/**
+ * `ServicesBox` emite también al hidratarse (`hydrateFromIds` → `syncEmit`).
+ * Comparar antes de escribir es lo que evita una búsqueda redundante en cada
+ * montaje del carril: con `placeholderData: previousData` se vería como un
+ * parpadeo de la lista entera.
+ */
+function alCambiarCategoria(ids: string[]) {
+  if (filtersStore.selectedServicesIDs.join(',') === ids.join(',')) return;
+  filtersStore.setSelectedServiceIds(ids);
   sendFilter();
 }
 

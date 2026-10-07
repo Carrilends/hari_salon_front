@@ -312,3 +312,77 @@ describe('ServiceFilterFields · precio y promociones', () => {
     expect(wrapper.get('[data-test="promos-activo"]').element.closest('label')).not.toBeNull();
   });
 });
+
+describe('ServiceFilterFields · categoría', () => {
+  const caja = (wrapper: ReturnType<typeof montar>['wrapper']) =>
+    wrapper.getComponent({ name: 'ServicesBox' });
+
+  it('le pasa al árbol la selección que hay en el store, no una copia local', async () => {
+    const { wrapper, pinia } = montar();
+    useFiltersStore(pinia).setSelectedServiceIds(['t1', 't2']);
+    await nextTick();
+
+    expect(caja(wrapper).props('initialSelectedIds')).toEqual(['t1', 't2']);
+    expect(caja(wrapper).props('isEditMode')).toBe(true);
+  });
+
+  it('le pide el aspecto oscuro: el filtro vive sobre tinta', () => {
+    const { wrapper } = montar();
+
+    expect(caja(wrapper).props('variante')).toBe('oscuro');
+  });
+
+  it('elegir una categoría la escribe en el store y dispara la aplicación', async () => {
+    const { wrapper, pinia } = montar();
+
+    caja(wrapper).vm.$emit('selectedServices', ['raiz', 'hija']);
+    await nextTick();
+
+    expect(useFiltersStore(pinia).selectedServicesIDs).toEqual(['raiz', 'hija']);
+    const aplicado = wrapper.emitted('aplicar')?.at(-1)?.[0] as {
+      selectedServicesIDs: string[];
+    };
+    expect(aplicado.selectedServicesIDs).toEqual(['raiz', 'hija']);
+  });
+
+  /**
+   * `ServicesBox.hydrateFromIds` acaba en `syncEmit`, así que al montar el
+   * carril el árbol emite la selección que YA estaba. Sin esta guarda eso es una
+   * búsqueda idéntica a la anterior en cada visita, y con
+   * `placeholderData: previousData` no se ve como «cargando»: se ve como un
+   * parpadeo de la lista entera.
+   */
+  it('el emit de hidratación no dispara una búsqueda redundante', async () => {
+    const { wrapper, pinia } = montar();
+    useFiltersStore(pinia).setSelectedServiceIds(['t1']);
+    await nextTick();
+    const antes = wrapper.emitted('aplicar')?.length ?? 0;
+
+    caja(wrapper).vm.$emit('selectedServices', ['t1']);
+    await nextTick();
+
+    expect(wrapper.emitted('aplicar')?.length ?? 0).toBe(antes);
+  });
+
+  it('cuenta las categorías elegidas junto al rótulo del grupo', async () => {
+    const { wrapper } = montar();
+    expect(wrapper.find('[data-test="categoria-cuenta"]').exists()).toBe(false);
+
+    caja(wrapper).vm.$emit('selectedServices', ['raiz', 'hija']);
+    await nextTick();
+
+    expect(wrapper.get('[data-test="categoria-cuenta"]').text()).toBe('2');
+  });
+
+  it('limpiar también vacía las categorías del store', async () => {
+    const { wrapper, pinia } = montar();
+    caja(wrapper).vm.$emit('selectedServices', ['raiz']);
+    await nextTick();
+
+    (wrapper.vm as unknown as { limpiar: () => void }).limpiar();
+    await nextTick();
+
+    expect(useFiltersStore(pinia).selectedServicesIDs).toEqual([]);
+    expect(wrapper.find('[data-test="categoria-cuenta"]').exists()).toBe(false);
+  });
+});
