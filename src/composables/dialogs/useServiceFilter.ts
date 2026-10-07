@@ -132,13 +132,7 @@ export const useFilterService = (emit: FiltersEmits) => {
   };
 
   // ---------------- Computed ----------------
-  const amountOfFilters = computed(() => {
-    const genres = filtersStore.selectedGenres.length;
-    const services = filtersStore.selectedServicesIDs.length;
-    const havePrice = includePriceRange.value;
-    const havePromotionsOnly = includePromotionsOnly.value;
-    return genres + services + (havePrice ? 1 : 0) + (havePromotionsOnly ? 1 : 0);
-  });
+  const amountOfFilters = computed(() => filtersStore.cantidadFiltros);
 
   watch(
     () => amountOfFilters.value,

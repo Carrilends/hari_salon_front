@@ -80,11 +80,7 @@ const alContar = (cantidad: number) => emit('update:amount', cantidad);
 const filtersStore = useFiltersStore();
 onMounted(() => {
   if (!hayCarril.value) return;
-  const cantidad =
-    filtersStore.selectedGenres.length +
-    filtersStore.selectedServicesIDs.length +
-    (filtersStore.includePriceRange ? 1 : 0) +
-    (filtersStore.includePromotionsOnly ? 1 : 0);
+  const cantidad = filtersStore.cantidadFiltros;
   if (cantidad > 0) emit('update:amount', cantidad);
 });
 
