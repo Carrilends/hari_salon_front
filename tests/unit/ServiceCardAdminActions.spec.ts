@@ -163,7 +163,7 @@ describe('ServiceCardAdminActions', () => {
 
 /**
  * Lo que no se puede ver montando (el SCSS está mapeado a un mock): se lee la
- * fuente. `--m-peligro` solo en «eliminar»; nada posicionado en absoluto, porque
+ * fuente. `--m-peligro` ni rastro (vive solo en la confirmación de borrado); nada posicionado en absoluto, porque
  * la ranura de la tarjeta ya lo está; ni un color suelto.
  */
 describe('ServiceCardAdminActions · estilos', () => {
@@ -180,25 +180,18 @@ describe('ServiceCardAdminActions · estilos', () => {
     expect(estilos).not.toMatch(/position:\s*absolute/);
   });
 
-  it('el peligro solo tiñe el botón de eliminar', () => {
-    const reglas = estilos.split('}').filter((r) => /--m-peligro/.test(r));
-    expect(reglas.length).toBeGreaterThan(0);
-    for (const regla of reglas) {
-      expect(regla).toMatch(/__boton--peligro/);
-    }
+  it('el disparador de borrar no usa el color de peligro', () => {
+    expect(fuente).not.toContain('var(--m-peligro');
   });
 
   it('no escribe colores sueltos', () => {
     expect(estilos).not.toMatch(/#[0-9a-fA-F]{3,8}\b|rgba?\(/);
   });
 
-  it('el botón de eliminar lleva la clase de peligro y los demás no', async () => {
+  it('el botón de eliminar no lleva clase de peligro', async () => {
     const wrapper = montar();
     await wrapper.vm.$nextTick();
-    expect(wrapper.get('[data-test="eliminar"]').classes()).toContain(
-      'acciones-admin__boton--peligro'
-    );
-    expect(wrapper.get('[data-test="editar"]').classes()).not.toContain(
+    expect(wrapper.get('[data-test="eliminar"]').classes()).not.toContain(
       'acciones-admin__boton--peligro'
     );
   });

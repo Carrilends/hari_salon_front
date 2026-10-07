@@ -90,24 +90,9 @@ describe('el botón que borra se lee como tal', () => {
     expect(regla.slice(0, 320)).toContain('var(--m-peligro-texto)');
   });
 
-  /**
-   * El brief decía «ni rastro» en las acciones de la tarjeta, pero la tarea 3
-   * ya pinta el disparador de borrar (la papelera) con ese color, con
-   * contraste medido. Lo que sí se vigila: que editar y promoción no lo usen.
-   */
-  it('en la tarjeta solo lo lleva el disparador de borrar', () => {
-    const fuente = leer(
-      'src/components/servicePage/ServiceCardAdminActions.vue'
-    );
-    const estilos = fuente.slice(fuente.indexOf('<style'));
-    const reglas = estilos.match(/[^{}]+\{[^{}]*\}/g) ?? [];
-    const conPeligro = reglas.filter((regla) =>
-      regla.includes('var(--m-peligro')
-    );
-
-    expect(conPeligro.length).toBeGreaterThan(0);
-    conPeligro.forEach((regla) =>
-      expect(regla.split('{')[0]).toContain('--peligro')
-    );
+  it('y es el único sitio de la fase donde aparece ese color', () => {
+    expect(
+      leer('src/components/servicePage/ServiceCardAdminActions.vue')
+    ).not.toContain('var(--m-peligro');
   });
 });

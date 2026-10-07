@@ -31,7 +31,7 @@
 
     <button
       type="button"
-      class="acciones-admin__boton acciones-admin__boton--peligro"
+      class="acciones-admin__boton"
       data-test="eliminar"
       :aria-label="`Eliminar ${servicio.name}`"
       :title="`Eliminar ${servicio.name}`"
@@ -133,18 +133,6 @@ defineOptions({ name: 'ServiceCardAdminActions' });
   color: var(--m-tinta);
 }
 
-/* Lo único que lleva el color de peligro: la acción sin vuelta. */
-.acciones-admin__boton--peligro,
-.acciones-admin__boton--peligro:hover {
-  border-color: var(--m-peligro-texto);
-  background: var(--m-peligro);
-  color: var(--m-peligro-texto);
-}
-
-.acciones-admin__boton--peligro:focus-visible {
-  outline-color: var(--m-peligro-texto);
-}
-
 .acciones-admin__pct {
   font-family: var(--m-font-display);
   font-size: 0.8125rem;
@@ -169,11 +157,5 @@ defineOptions({ name: 'ServiceCardAdminActions' });
 .acciones-admin--compacto .acciones-admin__boton--oro:hover {
   background: var(--m-oro);
   color: var(--m-tinta);
-}
-
-.acciones-admin--compacto .acciones-admin__boton--peligro,
-.acciones-admin--compacto .acciones-admin__boton--peligro:hover {
-  background: var(--m-peligro);
-  color: var(--m-peligro-texto);
 }
 </style>
