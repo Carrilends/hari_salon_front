@@ -185,7 +185,9 @@ describe('ServicePage ya no administra por su cuenta', () => {
 
 describe('ServicePromoButton', () => {
   it('ya no existe: la píldora la pinta la tarjeta y el control es el de la dueña', () => {
-    expect(() => leer('src/components/servicePage/ServicePromoButton.vue')).toThrow();
+    expect(() =>
+      leer('src/components/servicePage/ServicePromoButton.vue')
+    ).toThrow();
   });
 
   it('y nadie lo nombra', () => {
@@ -205,5 +207,85 @@ describe('useServiceAdminActions no pasa opciones muertas al plugin', () => {
     const fuente = leer('src/composables/services/useServiceAdminActions.ts');
 
     expect(fuente).not.toMatch(/component:[\s\S]{0,120}persistent: true/);
+  });
+});
+
+describe('el formulario de crear y editar, restilado', () => {
+  const FORM = leer('src/components/dialogs/serviceCreateEdit.vue');
+  const ESTILOS = FORM.slice(FORM.indexOf('<style'));
+  /** Toda la plantilla: del primer `<template>` al ÚLTIMO `</template>`. */
+  const PLANTILLA = FORM.slice(
+    FORM.indexOf('<template>'),
+    FORM.lastIndexOf('</template>')
+  );
+
+  it('los tres pasos se llaman como se llaman, con sus tildes', () => {
+    expect(FORM).toContain('title="Información general"');
+    expect(FORM).toContain('title="Selección de imágenes"');
+    expect(FORM).toContain('title="Listado de servicios"');
+  });
+
+  it('la cabecera del stepper va en versalitas y los números en círculo de oro', () => {
+    expect(ESTILOS).toContain('var(--m-tracking-etiqueta)');
+    expect(ESTILOS).toContain('.q-stepper__dot');
+    expect(ESTILOS).toContain('var(--m-oro)');
+  });
+
+  /** El precio inválido se lee junto al campo, por las reglas del q-input. */
+  it('el precio conserva sus reglas en el campo', () => {
+    const campo = FORM.slice(FORM.indexOf('data-test="precio"') - 400);
+
+    expect(campo.slice(0, 700)).toContain(':rules="priceRules"');
+    expect(FORM).toContain('const priceRules');
+  });
+
+  /** El del paso 2 ya no es solo un aviso flotante. */
+  it('el error de las imágenes se pinta junto al campo', () => {
+    expect(FORM).toContain('data-test="error-imagenes"');
+    expect(FORM).toContain('validarPasoImagenes');
+    expect(FORM).toContain('ERROR_SIN_IMAGENES');
+  });
+
+  it('los avisos pasan por el envoltorio de la paleta, no por Quasar directo', () => {
+    expect(FORM).toContain("from 'src/composables/shared/useAviso'");
+    expect(FORM).not.toContain("type: 'negative'");
+  });
+
+  it('la navegación del stepper son botones de verdad', () => {
+    for (const gancho of ['cancelar', 'continuar', 'atras']) {
+      expect(FORM).toContain(`data-test="${gancho}"`);
+    }
+    expect(FORM).not.toContain('<q-stepper-navigation');
+  });
+
+  /** §6.1: si se pierde esta llamada, la bolsa se queda con el precio viejo. */
+  it('tras editar sigue sincronizando la bolsa', () => {
+    expect(FORM).toContain('bookStore.syncBookingWithService(fresh)');
+  });
+
+  /** El reparto nuevas / existentes es lo que no se puede romper al restilar. */
+  it('conserva el reparto de imágenes nuevas y existentes', () => {
+    expect(FORM).toContain('files.value.filter((f) => f instanceof File)');
+    expect(FORM).toContain('prepareImagesForUpload');
+  });
+
+  it('el formulario no pinta con colores escritos a mano', () => {
+    expect(ESTILOS).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+    expect(ESTILOS).not.toMatch(/\brgba?\(/);
+  });
+
+  it('y tampoco en los atributos de estilo de la plantilla', () => {
+    expect(PLANTILLA.length).toBeGreaterThan(FORM.indexOf('</q-stepper>'));
+    expect(PLANTILLA).not.toMatch(/#[0-9a-fA-F]{3,6}\b/);
+    expect(PLANTILLA).not.toContain('bg-grey-3');
+    expect(PLANTILLA).not.toContain('bg-white');
+    expect(PLANTILLA).not.toContain('light-blue-1');
+    expect(PLANTILLA).not.toContain('color="red"');
+  });
+
+  /** `--m-peligro` es solo del botón que borra el servicio (R13'). */
+  it('el error y quitar foto no usan el token de peligro', () => {
+    expect(ESTILOS).toContain('var(--m-rosa-profundo)');
+    expect(ESTILOS).not.toContain('--m-peligro');
   });
 });

@@ -15,8 +15,7 @@
       <q-stepper
         v-model="step"
         ref="stepper"
-        class="service-create-edit-stepper bg-white"
-        color="primary"
+        class="service-create-edit-stepper"
         animated
         :contracted="isCompactLayout"
         :class="{ 'service-create-edit-stepper--fill': isCompactLayout }"
@@ -65,25 +64,16 @@
           <!-- Precio y Genero -->
           <div class="col-12 q-py-sm">
             <div class="row" style="justify-content: space-between">
-              <div
-                class="col-6 q-pb-md"
-                style="text-align: center; font-size: medium; color: #5e5e62"
-              >
-                Géneros:
-              </div>
-              <div
-                class="col-6 q-pb-md"
-                style="text-align: center; font-size: medium; color: #5e5e62"
-              >
-                Precio:
-              </div>
+              <div class="col-6 q-pb-md paso__rotulo">Géneros</div>
+              <div class="col-6 q-pb-md paso__rotulo">Precio</div>
               <div class="col-6">
                 <q-chip
                   v-for="(genre, index) in internGenres"
                   v-model:selected="genre.selected"
                   :key="index"
                   :icon="genre.icon"
-                  :color="genre.selected ? 'indigo-4' : 'indigo-2'"
+                  class="paso__genero"
+                  :class="{ 'paso__genero--elegido': genre.selected }"
                   clickable
                 >
                   {{ genre.name }}
@@ -93,6 +83,7 @@
                 <q-input
                   :model-value="priceDisplay"
                   ref="priceRef"
+                  data-test="precio"
                   outlined
                   prefix="$"
                   label="Precio del servicio"
@@ -124,15 +115,14 @@
         </q-step>
         <q-step
           :name="2"
-          title="Seleccion de imagenes"
+          title="Selección de imágenes"
           icon="image"
           :done="step > 2"
         >
           <div class="q-pa-md">
             <div
               v-if="!files || files.length === 0"
-              class="flex flex-center"
-              style="height: 300px; border: gray dashed 2px"
+              class="flex flex-center paso__sin-fotos"
             >
               No hay imágenes seleccionadas
             </div>
@@ -155,30 +145,42 @@
                     class="row q-pa-md"
                     style="justify-content: space-between"
                   >
-                    <q-btn
-                      round
-                      color="red"
-                      icon="delete"
+                    <button
+                      type="button"
+                      class="paso__quitar-foto"
+                      data-test="quitar-foto"
+                      :aria-label="`Quitar la imagen ${index + 1}`"
                       @click="removeImage(file)"
-                    />
+                    >
+                      <StrokeIcon nombre="papelera" :tamano="20" />
+                    </button>
                   </div>
                 </div>
               </q-carousel-slide>
             </q-carousel>
+
+            <p
+              v-if="errorImagenes"
+              class="paso__error"
+              data-test="error-imagenes"
+              role="alert"
+            >
+              {{ errorImagenes }}
+            </p>
           </div>
           <div class="q-pa-md">
             <!-- Mobile: dos botones lado a lado (cámara nativa + galería). -->
             <div v-if="isCompactLayout" class="row q-col-gutter-sm">
               <div class="col-6">
-                <q-btn
-                  outline
-                  color="primary"
-                  icon="photo_camera"
-                  label="Tomar foto"
-                  class="full-width"
-                  :disable="(files?.length || 0) >= 5"
+                <button
+                  type="button"
+                  class="paso__boton-foto"
+                  data-test="tomar-foto"
+                  :disabled="(files?.length || 0) >= 5"
                   @click="cameraInputRef?.click()"
-                />
+                >
+                  Tomar foto
+                </button>
                 <input
                   ref="cameraInputRef"
                   type="file"
@@ -189,15 +191,15 @@
                 />
               </div>
               <div class="col-6">
-                <q-btn
-                  outline
-                  color="primary"
-                  icon="photo_library"
-                  label="Seleccionar"
-                  class="full-width"
-                  :disable="(files?.length || 0) >= 5"
+                <button
+                  type="button"
+                  class="paso__boton-foto"
+                  data-test="seleccionar-foto"
+                  :disabled="(files?.length || 0) >= 5"
                   @click="galleryInputRef?.click()"
-                />
+                >
+                  Seleccionar
+                </button>
                 <input
                   ref="galleryInputRef"
                   type="file"
@@ -207,25 +209,23 @@
                   @change="onGalleryPick"
                 />
               </div>
-              <div
-                class="col-12 text-caption text-grey-7 q-mt-xs text-center"
-              >
-                {{ (files?.length || 0) }}/5 archivos seleccionados
+              <div class="col-12 paso__cuenta">
+                {{ files?.length || 0 }}/5 archivos seleccionados
               </div>
             </div>
 
-            <!-- Desktop: q-file original. -->
+            <!-- Desktop: q-file original (arrastrar y soltar). -->
             <q-file
               v-else
               v-model="files"
               @update:model-value="onFilesSelected"
               accept="image/*"
+              class="paso__archivo"
               :display-value="
                 (files?.length || 0) + `/${5}` + ' archivos seleccionados'
               "
               :max-files="5"
               :disable="files?.length >= 5"
-              bg-color="light-blue-1"
               multiple
               outlined
               append
@@ -252,28 +252,39 @@
           />
         </q-step>
         <template v-slot:navigation>
-          <q-stepper-navigation>
-            <q-btn class="q-mr-sm" flat @click="close" label="Cancelar" />
-            <q-btn
+          <div class="paso__navegacion">
+            <button
+              type="button"
+              class="paso__boton"
+              data-test="cancelar"
+              @click="close"
+            >
+              Cancelar
+            </button>
+            <button
+              v-if="step > 1"
+              type="button"
+              class="paso__boton"
+              data-test="atras"
+              @click="stepper.previous()"
+            >
+              Atrás
+            </button>
+            <button
+              type="button"
+              class="paso__boton paso__boton--oro"
+              data-test="continuar"
               @click="controlStepper"
-              color="primary"
-              :label="
+            >
+              {{
                 step === 3
                   ? isEditMode
                     ? 'Editar servicio'
                     : 'Crear servicio'
                   : 'Continuar'
-              "
-            />
-            <q-btn
-              v-if="step > 1"
-              flat
-              color="primary"
-              @click="stepper.previous()"
-              label="Atras"
-              class="q-ml-sm"
-            />
-          </q-stepper-navigation>
+              }}
+            </button>
+          </div>
         </template>
       </q-stepper>
     </div>
@@ -298,6 +309,12 @@ import {
 import { getService } from 'src/composables/services/useService';
 import { useBookStore } from 'src/stores/book-store';
 import ServicesBox from '../shared/ServicesBox.vue';
+import StrokeIcon from '../shared/StrokeIcon.vue';
+import { useAviso } from 'src/composables/shared/useAviso';
+import {
+  ERROR_SIN_IMAGENES,
+  validarPasoImagenes,
+} from 'src/helpers/service-form-validation';
 // import { Image } from 'src/interfaces/service';
 
 const props = defineProps({
@@ -379,13 +396,27 @@ watch(
 // Problematic variables
 const dialog = defineModel({ default: false });
 const $q = useQuasar();
+const aviso = useAviso();
+
+/**
+ * El error del paso 2, junto al campo. El aviso flotante sigue saliendo —la
+ * dueña puede estar mirando los botones de abajo—, pero ya no es el único
+ * sitio donde se lee: se iba a los tres segundos y dejaba el paso mudo.
+ */
+const errorImagenes = ref('');
+
+watch(files, () => {
+  errorImagenes.value = '';
+});
 const queryClient = useQueryClient();
 
 /** ≤700px: diálogo maximizado, stepper `contracted` (solo iconos en cabecera). Ver https://quasar.dev/vue-components/stepper#example--contracted */
 const isCompactLayout = computed(() => $q.screen.width <= 700);
 
 const dialogShellClass = computed(() =>
-  isCompactLayout.value ? ['fit', 'bg-grey-3'] : ['row', 'bg-white']
+  isCompactLayout.value
+    ? ['fit', 'service-create-edit-dialog__shell--movil']
+    : ['row', 'service-create-edit-dialog__shell--ancho']
 );
 
 /** Desenfoque del velo detrás del modal en desktop (móvil va maximizado). */
@@ -424,9 +455,9 @@ const galleryInputRef = ref(null);
 function appendFiles(newFiles) {
   const remaining = 5 - (files.value?.length || 0);
   if (remaining <= 0) return;
-  const accepted = newFiles.slice(0, remaining).map((f) =>
-    Object.assign(f, { url: URL.createObjectURL(f) })
-  );
+  const accepted = newFiles
+    .slice(0, remaining)
+    .map((f) => Object.assign(f, { url: URL.createObjectURL(f) }));
   files.value = [...(files.value || []), ...accepted];
 }
 
@@ -481,35 +512,29 @@ const controlStepper = async () => {
     const isDurationValid = durationRef.value.validate();
     const genres = internGenres.value.filter((g) => g.selected).length;
     if (genres === 0) {
-      $q.notify({
-        type: 'negative',
-        message: 'Debes seleccionar al menos un género',
-        position: 'bottom',
-      });
+      aviso.atencion('Debes seleccionar al menos un género');
     }
-    if (isNameValid && isDescriptionValid && isPriceValid && isDurationValid && genres > 0)
+    if (
+      isNameValid &&
+      isDescriptionValid &&
+      isPriceValid &&
+      isDurationValid &&
+      genres > 0
+    )
       stepper.value.next();
   } else if (step.value === 2) {
-    if (files.value.length === 0) {
-      $q.notify({
-        type: 'negative',
-        message: 'Debes seleccionar al menos una imagen',
-        position: 'bottom',
-      });
+    errorImagenes.value = validarPasoImagenes(files.value);
+    if (errorImagenes.value) {
+      aviso.atencion(ERROR_SIN_IMAGENES);
     } else stepper.value.next();
   } else if (step.value === 3) {
     if (selectedServicesIDs.value.length === 0) {
-      $q.notify({
-        type: 'negative',
-        message: 'Debes seleccionar al menos un servicio',
-        position: 'bottom',
-      });
+      aviso.atencion('Debes seleccionar al menos un servicio');
     } else {
       $q.loading.show({
         message: props.isEditMode
           ? 'Guardando servicio...'
           : 'Creando servicio...',
-        spinnerColor: 'primary',
       });
       try {
         await prepareFormData();
@@ -577,11 +602,9 @@ const close = () => {
 </script>
 
 <style lang="scss" scoped>
-.custom-caption {
-  text-align: center;
-  padding: 12px;
-  color: white;
-  background-color: rgba(0, 0, 0, 0.3);
+.service-create-edit-dialog__shell--movil,
+.service-create-edit-dialog__shell--ancho {
+  background: var(--m-hueso);
 }
 
 .service-create-edit-stepper--fill {
@@ -590,15 +613,22 @@ const close = () => {
   align-self: stretch;
 }
 
-/* Desktop: panel interior opaco (el wrapper de Quasar es transparente por defecto). */
+/* Desktop: panel interior opaco (el wrapper de Quasar es transparente). */
 .service-create-edit-dialog :deep(.q-dialog__inner--minimized > div) {
-  background-color: #fff;
+  background-color: var(--m-hueso);
 }
 
-/* Cabecera del stepper: una sola fila; fondo blanco; recorta líneas conectoras (100vw) que filtraban el fondo. */
+.service-create-edit-stepper {
+  background: var(--m-hueso);
+  color: var(--m-tinta);
+  font-family: var(--m-font-sans);
+}
+
+/* Cabecera: una sola fila; recorta las líneas conectoras de 100vw. */
 .service-create-edit-stepper :deep(.q-stepper__header.row) {
   flex-wrap: nowrap !important;
-  background-color: #fff;
+  background: var(--m-hueso);
+  border-bottom: var(--m-filete-grosor) solid var(--m-filete);
   overflow: hidden;
 }
 
@@ -607,12 +637,154 @@ const close = () => {
   flex: 1 1 0;
   padding-left: 10px;
   padding-right: 10px;
+  color: var(--m-piedra);
+}
+
+.service-create-edit-stepper :deep(.q-stepper__tab--active),
+.service-create-edit-stepper :deep(.q-stepper__tab--done) {
+  color: var(--m-tinta);
 }
 
 .service-create-edit-stepper :deep(.q-stepper__title) {
-  font-size: 0.8rem;
+  font-family: var(--m-font-sans);
+  font-size: 0.68rem;
   line-height: 1.25;
   text-align: center;
+  text-transform: uppercase;
+  letter-spacing: var(--m-tracking-etiqueta);
   overflow-wrap: anywhere;
+}
+
+/*
+ * Los números, en círculo de oro. El `!important` es por Quasar, que pone
+ * `background: currentColor` en el punto y gana por orden de carga.
+ */
+.service-create-edit-stepper :deep(.q-stepper__dot) {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  background: transparent !important;
+  border: var(--m-filete-grosor) solid var(--m-oro);
+  color: var(--m-oro-profundo);
+  font-family: var(--m-font-display);
+}
+
+.service-create-edit-stepper :deep(.q-stepper__tab--active .q-stepper__dot),
+.service-create-edit-stepper :deep(.q-stepper__tab--done .q-stepper__dot) {
+  background: var(--m-oro) !important;
+  color: var(--m-tinta);
+}
+
+/* Campos de Quasar, con el filete del portal. */
+.service-create-edit-stepper :deep(.q-field__control) {
+  background: var(--m-nieve);
+}
+
+.service-create-edit-stepper :deep(.q-field__label) {
+  color: var(--m-piedra);
+}
+
+.paso__rotulo {
+  color: var(--m-piedra);
+  font-size: 0.68rem;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: var(--m-tracking-etiqueta);
+}
+
+.paso__genero {
+  background: var(--m-nieve);
+  color: var(--m-tinta);
+  border: var(--m-filete-grosor) solid var(--m-filete);
+  font-family: var(--m-font-sans);
+}
+
+.paso__genero--elegido {
+  background: var(--m-oro);
+  color: var(--m-tinta);
+  border-color: var(--m-oro);
+}
+
+.paso__sin-fotos {
+  height: 300px;
+  border: var(--m-filete-grosor) dashed var(--m-filete);
+  border-radius: var(--m-radio-tarjeta);
+  color: var(--m-piedra);
+}
+
+/* Neutro: quitar una foto no es el borrado del servicio. */
+.paso__quitar-foto {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--m-tactil-min);
+  height: var(--m-tactil-min);
+  padding: 0;
+  border: var(--m-filete-grosor) solid var(--m-filete);
+  border-radius: var(--m-radio-pildora);
+  background: var(--m-hueso);
+  color: var(--m-tinta);
+  cursor: pointer;
+}
+
+.paso__quitar-foto:focus-visible {
+  outline: 2px solid var(--m-oro);
+  outline-offset: 2px;
+}
+
+.paso__error {
+  margin: 10px 0 0;
+  color: var(--m-rosa-profundo);
+  font-size: 0.85rem;
+}
+
+.paso__cuenta {
+  margin-top: 4px;
+  color: var(--m-piedra);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.paso__boton-foto,
+.paso__boton {
+  min-height: var(--m-tactil-min);
+  padding: 0 18px;
+  border: var(--m-filete-grosor) solid var(--m-filete);
+  border-radius: var(--m-radio-pildora);
+  background: transparent;
+  color: var(--m-tinta);
+  font-family: var(--m-font-sans);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: var(--m-tracking-nav);
+  cursor: pointer;
+}
+
+.paso__boton-foto {
+  width: 100%;
+}
+
+.paso__boton-foto:disabled {
+  color: var(--m-piedra);
+  cursor: not-allowed;
+}
+
+.paso__boton-foto:focus-visible,
+.paso__boton:focus-visible {
+  outline: 2px solid var(--m-oro);
+  outline-offset: 2px;
+}
+
+.paso__boton--oro {
+  border-color: var(--m-oro);
+  background: var(--m-oro);
+  color: var(--m-tinta);
+}
+
+.paso__navegacion {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 8px;
 }
 </style>
