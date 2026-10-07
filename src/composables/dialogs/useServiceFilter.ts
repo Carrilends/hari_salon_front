@@ -25,12 +25,25 @@ export const useFilterService = (emit: FiltersEmits) => {
   const filtersStore = useFiltersStore();
   const optionsStore = useOptionsStore();
 
-  const includePriceRange = ref(false);
-  const includePromotionsOnly = ref(false);
-  const prices = ref({
-    min: 5,
-    max: 200,
+  /**
+   * Store, no refs locales: el carril y la hoja son dos instancias de este
+   * composable y no pueden tener cada una su propia idea de lo que está
+   * activo. Ver §6.2 de la hoja de ruta.
+   */
+  const includePriceRange = computed({
+    get: () => filtersStore.includePriceRange,
+    set: (valor: boolean) => {
+      filtersStore.includePriceRange = valor;
+    },
   });
+  const includePromotionsOnly = computed({
+    get: () => filtersStore.includePromotionsOnly,
+    set: (valor: boolean) => {
+      filtersStore.includePromotionsOnly = valor;
+    },
+  });
+  /** El objeto del store: mutar `.min`/`.max` escribe en el estado compartido. */
+  const prices = computed(() => filtersStore.prices);
 
   const buildFilterGenres = (): FilterGenreChip[] =>
     optionsStore.genres.map((genre) => ({
