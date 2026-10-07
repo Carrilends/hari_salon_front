@@ -102,6 +102,22 @@
         <div class="ficha__descripcion" data-test="descripcion" tabindex="0">
           <p class="ficha__texto">{{ descripcion }}</p>
         </div>
+
+        <ul v-if="chips.length" class="ficha__tags" data-test="tags">
+          <li
+            v-for="chip in chips"
+            :key="chip"
+            class="ficha__tag"
+            data-test="tag"
+          >
+            {{ chip }}
+          </li>
+        </ul>
+
+        <p v-if="rostros.length" class="ficha__rostros" data-test="rostros">
+          <StrokeIcon nombre="rostro" :tamano="18" />
+          <span>Favorece a rostros: {{ rostros.join(' · ') }}</span>
+        </p>
       </div>
       <footer
         v-if="!props.isFromBooking"
@@ -144,7 +160,10 @@ import { computed, ref } from 'vue';
 import { useDialogPluginComponent } from 'quasar';
 import { useDialogMaximizedBelow } from 'src/composables/dialogs/useDialogMaximizedBelow';
 import { formatDurationMinutes } from 'src/helpers/duration';
-import { etiquetaDeCategoria } from 'src/helpers/service-category';
+import {
+  etiquetaDeCategoria,
+  etiquetasDeServicio,
+} from 'src/helpers/service-category';
 import { optimizeCloudinaryUrl } from 'src/helpers/cloudinaryUrl';
 import { PLACEHOLDER_IMAGE } from 'src/constants/placeholder-image';
 import { formatCopDisplay } from 'src/helpers/price-display';
@@ -154,6 +173,8 @@ import {
   serviceIsOnPromotion,
 } from 'src/helpers/service-promotion';
 import { useBookStore } from 'src/stores/book-store';
+import StrokeIcon from 'src/components/shared/StrokeIcon.vue';
+import type { faceTypes } from 'src/interfaces/service';
 import type Service from 'src/interfaces/service';
 import type { Image } from 'src/interfaces/service';
 
@@ -290,4 +311,49 @@ const resumenBolsa = computed(() => {
 
   return `En tu reserva: ${partes.join(' · ')}`;
 });
+
+/**
+ * Las etiquetas también salen del ayudante de la fase B, no de aquí: es él quien
+ * sabe que `tags` llega del API como objetos con `name` (`leftJoinAndSelect`)
+ * aunque la interfaz del front los tenga tipados como `string[]`, y que
+ * `normalizeServiceTags` de `ServicePage.vue` los reenvía como identificadores
+ * al aplicar una promoción —un uuid no es una etiqueta y no se pinta—.
+ *
+ * Tiene que ser el mismo criterio que usa `etiquetaDeCategoria` para elegir su
+ * respaldo, porque es lo que hace que la comparación de abajo descarte de verdad
+ * el chip que ya se está diciendo arriba. Con una copia local, bastaba una coma
+ * de diferencia para que la etiqueta saliera dos veces.
+ */
+const etiquetas = computed(() => etiquetasDeServicio(props.service));
+
+/**
+ * Lo que ya se dice arriba como categoría no se repite abajo como chip. Cuando
+ * la categoría es un `type` traducido («Barbería»), no coincide con ninguna
+ * etiqueta y no se descarta nada; cuando el ayudante cayó en el respaldo, se
+ * descarta esa.
+ */
+const chips = computed(() =>
+  etiquetas.value.filter((etiqueta) => etiqueta !== categoria.value)
+);
+
+/**
+ * El mapa de siempre, sin los iconos de Material que traía al lado: el portal
+ * solo carga la variante rellena y desentonaban con el resto, que es todo trazo
+ * fino. En el sembrado este campo viene vacío, así que la línea no sale casi
+ * nunca — y cuando no hay dato, no se pinta.
+ */
+const NOMBRE_ROSTRO: Record<faceTypes, string> = {
+  Oval: 'Ovalado',
+  Round: 'Redondo',
+  Diamond: 'Diamante',
+  Square: 'Cuadrado',
+  Heart: 'Corazón',
+  Long: 'Largo',
+};
+
+const rostros = computed<string[]>(() =>
+  (props.service.detail?.specifications?.faceTypes ?? []).map(
+    (tipo) => NOMBRE_ROSTRO[tipo] ?? tipo
+  )
+);
 </script>

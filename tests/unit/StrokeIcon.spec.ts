@@ -60,4 +60,12 @@ describe('StrokeIcon', () => {
       expect(montar(nombre).findAll('path').length).toBeGreaterThan(0);
     }
   });
+
+  /** La ficha del servicio marca con una elipse la línea de los rostros. */
+  it('trae la elipse de rostro que usa la ficha del servicio', () => {
+    const trazos = montar('rostro').findAll('path');
+
+    expect(trazos).toHaveLength(1);
+    expect(trazos[0].attributes('d')).toContain('a6.4 8.6');
+  });
 });

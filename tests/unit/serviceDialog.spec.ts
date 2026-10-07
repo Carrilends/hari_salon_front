@@ -533,3 +533,152 @@ describe('ficha del servicio · el pie y la bolsa', () => {
     );
   });
 });
+
+describe('ficha del servicio · etiquetas y rostros', () => {
+  /**
+   * El API devuelve los tags con `leftJoinAndSelect`, o sea objetos con nombre,
+   * aunque la interfaz del front los tenga tipados como `string[]`.
+   */
+  const tags = (...nombres: string[]) =>
+    nombres.map((name, i) => ({ id: `t${i}`, name })) as unknown as string[];
+
+  it('pinta las etiquetas del servicio como chips', () => {
+    const { wrapper } = montar({
+      servicio: hacerServicio({
+        // Con `type` reconocido la categoría es «Barbería», que no es ninguna
+        // etiqueta: las tres salen enteras.
+        type: 'hair-men',
+        tags: tags('Fade/Degradado', 'Universal', 'Adulto'),
+      }),
+    });
+
+    const chips = wrapper.findAll('[data-test="tag"]');
+    expect(wrapper.find('[data-test="tags"]').exists()).toBe(true);
+    expect(chips).toHaveLength(3);
+    expect(chips.map((c) => c.text())).toEqual([
+      'Fade/Degradado',
+      'Universal',
+      'Adulto',
+    ]);
+  });
+
+  it('sin etiquetas no deja una tira vacía', () => {
+    const { wrapper } = montar({ servicio: hacerServicio({ tags: [] }) });
+
+    expect(wrapper.find('[data-test="tags"]').exists()).toBe(false);
+  });
+
+  /**
+   * Enfoque de revisión 4. `normalizeServiceTags` de `ServicePage.vue` reenvía
+   * los tags como identificadores al aplicar una promoción: un uuid no es una
+   * etiqueta y no se puede pintar como tal. El descarte lo hace
+   * `etiquetasDeServicio` (fase B) y tiene su propia prueba allí; esta comprueba
+   * que la ficha lo consume y no arma la tira por su cuenta.
+   */
+  it('no pinta como etiqueta un identificador', () => {
+    const { wrapper } = montar({
+      servicio: hacerServicio({
+        type: 'hair-men',
+        tags: [
+          '9f1c2d3e-4a5b-6c7d-8e9f-0a1b2c3d4e5f',
+          ...tags('Universal'),
+        ] as unknown as string[],
+      }),
+    });
+
+    const chips = wrapper.findAll('[data-test="tag"]');
+    expect(chips).toHaveLength(1);
+    expect(chips[0].text()).toBe('Universal');
+  });
+
+  /**
+   * El respaldo por etiqueta vive en `etiquetaDeCategoria` (fase B), no aquí:
+   * `type` es una columna que el sembrado deja vacía y el DTO del backend tiene
+   * comentada, así que la primera etiqueta es lo más parecido a una categoría
+   * que trae el servicio de verdad. Lo que SÍ decide la ficha es que entonces no
+   * se diga dos veces, arriba y abajo.
+   */
+  it('cuando la categoría sale de una etiqueta, esa no se repite como chip', () => {
+    const { wrapper } = montar({
+      servicio: hacerServicio({
+        type: '',
+        tags: tags('Fade/Degradado', 'Universal', 'Adulto'),
+      }),
+    });
+
+    expect(wrapper.get('[data-test="categoria"]').text()).toBe(
+      'Fade/Degradado'
+    );
+    expect(wrapper.findAll('[data-test="tag"]').map((c) => c.text())).toEqual([
+      'Universal',
+      'Adulto',
+    ]);
+  });
+
+  it('sin «type» y sin etiquetas no pinta la línea de categoría', () => {
+    const { wrapper } = montar({
+      servicio: hacerServicio({ type: '', tags: [] }),
+    });
+
+    expect(wrapper.find('[data-test="categoria"]').exists()).toBe(false);
+  });
+
+  /**
+   * Un servicio creado desde el formulario de administración llega con un `type`
+   * que la tabla no reconoce (o sin ninguno). El ayudante lo manda a la etiqueta;
+   * lo que no puede pasar es que la ficha pinte la clave cruda.
+   */
+  it('un «type» que no está en la tabla no sale a pantalla', () => {
+    const { wrapper } = montar({
+      servicio: hacerServicio({ type: 'spa', tags: tags('Universal') }),
+    });
+
+    expect(wrapper.get('[data-test="categoria"]').text()).toBe('Universal');
+    expect(wrapper.text()).not.toContain('spa');
+  });
+
+  /** En el sembrado `faceTypes` viene vacío: es el caso normal, no el raro. */
+  it('sin faceTypes no pinta la línea de rostros', () => {
+    const { wrapper } = montar();
+
+    expect(wrapper.find('[data-test="rostros"]').exists()).toBe(false);
+  });
+
+  it('con dos faceTypes los pinta traducidos, sin iconos de Material', () => {
+    const { wrapper } = montar({
+      servicio: hacerServicio({
+        detail: {
+          id: 'd1',
+          description: 'Lo de siempre.',
+          specifications: { faceTypes: ['Oval', 'Round'] },
+        } as Service['detail'],
+      }),
+    });
+
+    const rostros = wrapper.get('[data-test="rostros"]');
+    expect(rostros.text()).toContain('Favorece a rostros');
+    expect(rostros.text()).toContain('Ovalado');
+    expect(rostros.text()).toContain('Redondo');
+    // El mapa viejo arrastraba nombres de iconos de Material («exposure_zero»,
+    // «radio_button_unchecked»): ahora solo quedan los nombres en texto.
+    expect(rostros.text()).not.toMatch(/exposure_zero|radio_button_unchecked/);
+  });
+
+  it('traduce los seis tipos de rostro', () => {
+    const { wrapper } = montar({
+      servicio: hacerServicio({
+        detail: {
+          id: 'd1',
+          description: 'Lo de siempre.',
+          specifications: {
+            faceTypes: ['Oval', 'Round', 'Diamond', 'Square', 'Heart', 'Long'],
+          },
+        } as Service['detail'],
+      }),
+    });
+
+    expect(wrapper.get('[data-test="rostros"]').text()).toContain(
+      'Ovalado · Redondo · Diamante · Cuadrado · Corazón · Largo'
+    );
+  });
+});

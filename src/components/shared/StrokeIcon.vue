@@ -76,6 +76,8 @@ const TRAZOS: Record<string, string[]> = {
     'M12 9v3.6',
     'M11.95 15.7h.1',
   ],
+  /** Elipse de trazo: la línea «Favorece a rostros …» de la ficha del servicio. */
+  rostro: ['M12 3.4a6.4 8.6 0 1 1 0 17.2 6.4 8.6 0 1 1 0-17.2'],
   entrar: [
     'M13.8 4.5h4.4A1.8 1.8 0 0 1 20 6.3v11.4a1.8 1.8 0 0 1-1.8 1.8h-4.4',
     'M10.2 15.5 13.7 12l-3.5-3.5',
@@ -88,10 +90,9 @@ const TRAZOS: Record<string, string[]> = {
   ],
 };
 
-const props = withDefaults(
-  defineProps<{ nombre: string; tamano?: number }>(),
-  { tamano: 20 }
-);
+const props = withDefaults(defineProps<{ nombre: string; tamano?: number }>(), {
+  tamano: 20,
+});
 
 defineOptions({ name: 'StrokeIcon' });
 
