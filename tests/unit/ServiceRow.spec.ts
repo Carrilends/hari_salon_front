@@ -77,6 +77,28 @@ describe('ServiceRow', () => {
     expect(img.attributes('alt')).toContain('Bob clásico');
   });
 
+  /**
+   * El orden de los atributos no es cosmético (medido en WebKit para
+   * `FotoResponsiva`): un `<img>` arranca la descarga en cuanto recibe `src`.
+   * Con `loading="lazy"` detrás, la foto de una tarjeta fuera de pantalla ya
+   * estaba bajando. `loading` y `decoding` primero, luego `srcset`/`sizes`, y
+   * `src` el último.
+   */
+  it('pone loading, decoding, srcset y sizes antes del src', () => {
+    const html = montar().get('img').html();
+    const src = html.search(/\ssrc="/);
+
+    expect(src).toBeGreaterThan(-1);
+    for (const atributo of ['loading=', 'decoding=', 'srcset=', 'sizes=']) {
+      const donde = html.indexOf(atributo);
+
+      expect({ atributo, antes: donde > -1 && donde < src }).toEqual({
+        atributo,
+        antes: true,
+      });
+    }
+  });
+
   /** Misma regla que la bolsa y el WhatsApp: la principal, no la primera. */
   it('pinta la foto principal aunque no sea la primera', () => {
     const otra = FOTO_CLOUDINARY.replace('bob.jpg', 'otra.jpg');

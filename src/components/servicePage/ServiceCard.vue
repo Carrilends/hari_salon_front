@@ -1,14 +1,19 @@
 <template>
   <article class="tarjeta-servicio" data-test="tarjeta">
+    <!--
+      El orden de los atributos importa: la imagen empieza a bajar en cuanto
+      recibe `src`. `loading` primero para que WebKit aplace la descarga, y `src`
+      el último (lo midió FotoResponsiva; lo vigila ServiceCard.spec).
+    -->
     <img
       v-if="tieneFoto"
       class="tarjeta-servicio__foto"
-      :src="foto"
+      loading="lazy"
+      decoding="async"
       :srcset="fotoSrcset || undefined"
       :sizes="MEDIDAS"
       :alt="`Foto del servicio ${servicio.name}`"
-      loading="lazy"
-      decoding="async"
+      :src="foto"
       @error="fotoRota = true"
     />
     <div v-else class="tarjeta-servicio__sin-foto" data-test="sin-foto">

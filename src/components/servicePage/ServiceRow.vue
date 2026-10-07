@@ -1,16 +1,21 @@
 <template>
   <article class="fila-servicio" data-test="fila">
+    <!--
+      El orden de los atributos importa: la imagen empieza a bajar en cuanto
+      recibe `src`. `loading` primero para que WebKit aplace la descarga, y `src`
+      el último (lo midió FotoResponsiva; lo vigila ServiceRow.spec).
+    -->
     <img
       v-if="tieneFoto"
       class="fila-servicio__foto"
-      :src="foto"
-      :srcset="fotoSrcset || undefined"
-      sizes="104px"
-      :alt="`Foto del servicio ${servicio.name}`"
       loading="lazy"
       decoding="async"
       width="104"
       height="104"
+      :srcset="fotoSrcset || undefined"
+      sizes="104px"
+      :alt="`Foto del servicio ${servicio.name}`"
+      :src="foto"
       @error="fotoRota = true"
     />
     <div
