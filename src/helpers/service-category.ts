@@ -37,8 +37,8 @@ const ETIQUETAS: Record<string, string> = {
 };
 
 /**
- * `normalizeServiceTags` de `ServicePage.vue` reenvía las etiquetas como
- * identificadores al aplicar una promoción. Un uuid no es una etiqueta: se
+ * `normalizeServiceTags` (en `src/composables/services/useServiceAdminActions.ts`)
+ * reenvía las etiquetas como identificadores al aplicar una promoción. Un uuid no es una etiqueta: se
  * descarta antes de que llegue a pantalla.
  */
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

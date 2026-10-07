@@ -133,6 +133,29 @@ describe('ServicePage ya no administra por su cuenta', () => {
     }
   });
 
+  /**
+   * `fetchServices` solo recibe el filtro del carril y de la hoja. La rama de
+   * texto (un `refetch` disfrazado) no la llamaba nadie desde la fase E.
+   */
+  it('fetchServices solo recibe un filtro, sin la rama muerta de texto', () => {
+    expect(PAGINA).toMatch(/const fetchServices = \(e: FilterService\) =>/);
+    expect(PAGINA).not.toMatch(/typeof e === 'string'/);
+  });
+
+  /**
+   * Los comentarios que mandaban a buscar `normalizeServiceTags` en la página
+   * apuntaban a un sitio donde ya no está: vive en el composable.
+   */
+  it('nadie dice ya que normalizeServiceTags está en ServicePage.vue', () => {
+    const codigo = fuentes(join(RAIZ, 'src'))
+      .concat(fuentes(join(RAIZ, 'tests/unit')))
+      .join('\n');
+
+    expect(codigo).not.toMatch(
+      /`normalizeServiceTags`\s+de\s+(\*\s+)?`ServicePage\.vue`/
+    );
+  });
+
   it('ya no abre diálogos ni avisa con los colores de Quasar', () => {
     expect(PAGINA).not.toContain('$q.dialog');
     expect(PAGINA).not.toContain('$q.notify');

@@ -355,8 +355,9 @@ const resumenBolsa = computed(() => {
  * Las etiquetas también salen del ayudante de la fase B, no de aquí: es él quien
  * sabe que `tags` llega del API como objetos con `name` (`leftJoinAndSelect`)
  * aunque la interfaz del front los tenga tipados como `string[]`, y que
- * `normalizeServiceTags` de `ServicePage.vue` los reenvía como identificadores
- * al aplicar una promoción —un uuid no es una etiqueta y no se pinta—.
+ * `normalizeServiceTags` (en `src/composables/services/useServiceAdminActions.ts`)
+ * los reenvía como identificadores al aplicar una promoción —un uuid no es una
+ * etiqueta y no se pinta—.
  *
  * Tiene que ser el mismo criterio que usa `etiquetaDeCategoria` para elegir su
  * respaldo, porque es lo que hace que la comparación de abajo descarte de verdad

@@ -31,8 +31,8 @@ describe('etiquetasDeServicio', () => {
   });
 
   /**
-   * `normalizeServiceTags` de `ServicePage.vue` reenvía las etiquetas como
-   * identificadores al aplicar una promoción: un uuid no es una etiqueta y no
+   * `normalizeServiceTags` (en `useServiceAdminActions.ts`) reenvía las
+   * etiquetas como identificadores al aplicar una promoción: un uuid no es una etiqueta y no
    * puede acabar pintado como categoría.
    */
   it('descarta identificadores, vacíos y espacios', () => {

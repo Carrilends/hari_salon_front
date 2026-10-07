@@ -318,18 +318,14 @@ watch(
  * cada toque (D1), y cerrarla aquí la bajaría con cada chip. La cierran su pie
  * («Ver N servicios») y su aspa.
  */
-const fetchServices = (e: FilterService | string) => {
-  if (typeof e === 'string') {
-    refetch.value++;
-  } else {
-    aplicarAlFiltro(e);
-    /**
-     * Con aplicación instantánea esto pasa a cada clic del carril: sin volver a
-     * la página 1, filtrar estando en la 3 deja la lista vacía y parece que el
-     * filtro no encontró nada.
-     */
-    filterService.value.page = 1;
-  }
+const fetchServices = (e: FilterService) => {
+  aplicarAlFiltro(e);
+  /**
+   * Con aplicación instantánea esto pasa a cada clic del carril: sin volver a
+   * la página 1, filtrar estando en la 3 deja la lista vacía y parece que el
+   * filtro no encontró nada.
+   */
+  filterService.value.page = 1;
 };
 
 /**

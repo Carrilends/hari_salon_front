@@ -641,8 +641,8 @@ describe('ficha del servicio · etiquetas y rostros', () => {
   });
 
   /**
-   * Enfoque de revisión 4. `normalizeServiceTags` de `ServicePage.vue` reenvía
-   * los tags como identificadores al aplicar una promoción: un uuid no es una
+   * Enfoque de revisión 4. `normalizeServiceTags` (en
+   * `useServiceAdminActions.ts`) reenvía los tags como identificadores al aplicar una promoción: un uuid no es una
    * etiqueta y no se puede pintar como tal. El descarte lo hace
    * `etiquetasDeServicio` (fase B) y tiene su propia prueba allí; esta comprueba
    * que la ficha lo consume y no arma la tira por su cuenta.
