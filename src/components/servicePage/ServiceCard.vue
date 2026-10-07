@@ -192,7 +192,10 @@ const precioBase = computed(() =>
  */
 .tarjeta-servicio__sin-foto {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -244,7 +247,10 @@ const precioBase = computed(() =>
  */
 .tarjeta-servicio__velo {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 1;
   box-sizing: border-box;
   display: flex;
@@ -351,7 +357,10 @@ const precioBase = computed(() =>
  */
 .tarjeta-servicio__enlace {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 3;
   width: 100%;
   border: 0;

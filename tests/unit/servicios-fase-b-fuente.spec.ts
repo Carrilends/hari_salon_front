@@ -49,6 +49,27 @@ describe('los componentes nuevos de la lista de servicios', () => {
     }
   });
 
+  /**
+   * NF06: Safari 13.1 y 14.0 no conocen `inset` (llegó en 14.1). Ahí la regla
+   * se descarta entera y el velo, el «Sin foto» y el botón estirado se quedan
+   * sin tamaño: la tarjeta deja de abrir el detalle. Los cuatro lados, a mano.
+   */
+  it('ninguno usa `inset`, que Safari 13.1 y 14.0 descartan', () => {
+    const dir = join(RAIZ, 'src/components/servicePage');
+    const vues = readdirSync(dir).filter((nombre) => nombre.endsWith('.vue'));
+
+    expect(vues.length).toBeGreaterThan(0);
+    for (const nombre of vues) {
+      const texto = readFileSync(join(dir, nombre), 'utf8');
+      const estilos = texto.slice(texto.indexOf('<style'));
+
+      expect({ nombre, inset: estilos.match(/\binset\s*:/g) }).toEqual({
+        nombre,
+        inset: null,
+      });
+    }
+  });
+
   it('todos existen: la rejilla no apunta a un componente que no está', () => {
     for (const archivo of NUEVOS) {
       expect(existsSync(join(RAIZ, archivo))).toBe(true);
