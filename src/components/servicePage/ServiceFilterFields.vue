@@ -482,4 +482,18 @@ defineExpose({ limpiar, aplicar: sendFilter });
 .campos--compacto .campos__etiqueta {
   font-size: 12px;
 }
+
+/// La categoría la pinta `ServicesBox`, que trae chips y opciones de 32 px y
+/// una X de 28: medidas de ratón, que comparte con crear/editar. En la hoja
+/// suben a 44 desde aquí, con `:deep`, para no tocar la caja en los otros dos
+/// sitios donde se usa (el carril de escritorio y el formulario).
+.campos--compacto :deep(.caja__chip),
+.campos--compacto :deep(.caja__radio) {
+  min-height: var(--m-tactil-min);
+}
+
+.campos--compacto :deep(.caja__limpiar) {
+  width: var(--m-tactil-min);
+  height: var(--m-tactil-min);
+}
 </style>

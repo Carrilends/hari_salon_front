@@ -14,6 +14,8 @@ jest.mock('src/helpers/service.helpers', () => ({
   getChildrenServicesHelper: jest.fn().mockResolvedValue([]),
 }));
 
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { mount } from '@vue/test-utils';
 import { createPinia } from 'pinia';
 import { nextTick } from 'vue';
@@ -384,5 +386,37 @@ describe('ServiceFilterFields · categoría', () => {
 
     expect(useFiltersStore(pinia).selectedServicesIDs).toEqual([]);
     expect(wrapper.find('[data-test="categoria-cuenta"]').exists()).toBe(false);
+  });
+});
+
+/**
+ * En la hoja (móvil) se toca con el pulgar: los chips, las opciones de la
+ * categoría y la X de quitarla, que vienen de `ServicesBox` con 32 y 28 px,
+ * suben a 44. Solo en la hoja: el carril de escritorio, con ratón, se queda
+ * como está. El SCSS está mockeado, así que se lee la fuente.
+ */
+describe('ServiceFilterFields · áreas táctiles en la hoja', () => {
+  const FUENTE = readFileSync(
+    join(__dirname, '../../src/components/servicePage/ServiceFilterFields.vue'),
+    'utf8'
+  );
+  const ESTILOS = FUENTE.slice(FUENTE.indexOf('<style'));
+
+  it('los chips y las opciones de la categoría llegan a 44 px', () => {
+    expect(ESTILOS).toMatch(
+      /\.campos--compacto :deep\(\.caja__chip\),\s*\.campos--compacto :deep\(\.caja__radio\) \{\s*min-height: var\(--m-tactil-min\);/
+    );
+  });
+
+  it('la X de quitar la categoría mide 44 × 44', () => {
+    expect(ESTILOS).toMatch(
+      /\.campos--compacto :deep\(\.caja__limpiar\) \{[^}]*width: var\(--m-tactil-min\);[^}]*height: var\(--m-tactil-min\);/
+    );
+  });
+
+  it('fuera de la hoja no toca la caja: el carril de escritorio no cambia', () => {
+    const sinCompacto = ESTILOS.replace(/\.campos--compacto[^{]*\{[^}]*\}/g, '');
+
+    expect(sinCompacto).not.toContain(':deep(.caja__');
   });
 });
