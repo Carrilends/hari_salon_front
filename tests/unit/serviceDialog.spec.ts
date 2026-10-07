@@ -368,3 +368,60 @@ describe('ficha del servicio · la conducta del diálogo', () => {
     expect(x.attributes('aria-label')).toMatch(/cerrar/i);
   });
 });
+
+describe('ficha del servicio · el precio (D3)', () => {
+  /**
+   * Hoy la tarjeta pinta el precio base y la bolsa cobra el efectivo: la clienta
+   * ve dos cifras distintas para el mismo servicio. D3 pone el efectivo en todas
+   * las superficies, con el base tachado al lado.
+   */
+  it('con promoción pinta el precio efectivo, el base tachado y el porcentaje', () => {
+    const { wrapper } = montar({
+      servicio: hacerServicio({
+        price: 45000,
+        havePromotion: true,
+        porcentageDiscount: 20,
+      }),
+    });
+
+    expect(wrapper.get('[data-test="precio"]').text()).toBe('$36.000');
+    expect(wrapper.get('[data-test="precio-base"]').text()).toBe('$45.000');
+    expect(wrapper.get('[data-test="promo-pildora"]').text()).toBe('-20 %');
+  });
+
+  it('sin promoción pinta una sola cifra', () => {
+    const { wrapper } = montar({ servicio: hacerServicio({ price: 45000 }) });
+
+    expect(wrapper.get('[data-test="precio"]').text()).toBe('$45.000');
+    expect(wrapper.find('[data-test="precio-base"]').exists()).toBe(false);
+    expect(wrapper.find('[data-test="promo-pildora"]').exists()).toBe(false);
+  });
+
+  it('una promoción marcada con cero por ciento no es una promoción', () => {
+    const { wrapper } = montar({
+      servicio: hacerServicio({ havePromotion: true, porcentageDiscount: 0 }),
+    });
+
+    expect(wrapper.find('[data-test="precio-base"]').exists()).toBe(false);
+  });
+
+  /**
+   * Enfoque de revisión 1. `price` y `porcentage_disscount` son columnas
+   * `numeric` de Postgres y TypeORM las devuelve en TEXTO: con aritmética
+   * directa, `'45000' * 0.8` cuela pero `'45000' + algo` concatena. Por eso todo
+   * pasa por los ayudantes, que hacen `Number(...)`.
+   */
+  it('un precio que llega como cadena se pinta igual', () => {
+    const { wrapper } = montar({
+      servicio: hacerServicio({
+        price: '45000' as unknown as number,
+        havePromotion: true,
+        porcentageDiscount: '20' as unknown as number,
+      }),
+    });
+
+    expect(wrapper.get('[data-test="precio"]').text()).toBe('$36.000');
+    expect(wrapper.get('[data-test="precio-base"]').text()).toBe('$45.000');
+    expect(wrapper.get('[data-test="promo-pildora"]').text()).toBe('-20 %');
+  });
+});

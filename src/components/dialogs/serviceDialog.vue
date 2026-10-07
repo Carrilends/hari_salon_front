@@ -78,6 +78,15 @@
         </h2>
 
         <p class="ficha__cifras">
+          <span class="ficha__precio" data-test="precio">${{ precio }}</span>
+          <template v-if="enPromocion">
+            <span class="ficha__precio-base" data-test="precio-base">
+              ${{ precioBase }}
+            </span>
+            <span class="ficha__promo" data-test="promo-pildora">
+              -{{ descuento }} %
+            </span>
+          </template>
           <span v-if="duracion" class="ficha__duracion" data-test="duracion">
             {{ duracion }}
           </span>
@@ -106,6 +115,12 @@ import { formatDurationMinutes } from 'src/helpers/duration';
 import { etiquetaDeCategoria } from 'src/helpers/service-category';
 import { optimizeCloudinaryUrl } from 'src/helpers/cloudinaryUrl';
 import { PLACEHOLDER_IMAGE } from 'src/constants/placeholder-image';
+import { formatCopDisplay } from 'src/helpers/price-display';
+import {
+  effectiveServiceUnitPrice,
+  promotionPercentDisplay,
+  serviceIsOnPromotion,
+} from 'src/helpers/service-promotion';
 import type Service from 'src/interfaces/service';
 import type { Image } from 'src/interfaces/service';
 
@@ -194,4 +209,26 @@ const fotoGrande = computed(
 
 const miniatura = (url: string) =>
   optimizeCloudinaryUrl(url, ANCHO_MINIATURA) || PLACEHOLDER_IMAGE;
+
+/**
+ * D3: la cifra grande es el precio que de verdad se va a cobrar. `price` llega
+ * como cadena desde Postgres (`numeric`), así que ni una operación aritmética
+ * fuera de los ayudantes, que ya hacen `Number(...)`.
+ *
+ * No se usa `PriceDisplayPill`: esa píldora es blanca y escarchada para posarse
+ * sobre una foto, y la ficha quiere Marcellus en oro sobre carbón. Depender
+ * además de la `amountBase` que la fase B le va a añadir dejaría esta fase sin
+ * poder correr en paralelo.
+ */
+const enPromocion = computed(() => serviceIsOnPromotion(props.service));
+
+const precio = computed(() =>
+  formatCopDisplay(effectiveServiceUnitPrice(props.service))
+);
+
+const precioBase = computed(() =>
+  formatCopDisplay(Number(props.service.price || 0))
+);
+
+const descuento = computed(() => promotionPercentDisplay(props.service));
 </script>
