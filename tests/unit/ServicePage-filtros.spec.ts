@@ -316,6 +316,27 @@ describe('ServicePage · el total antes de la primera respuesta', () => {
     expect(wrapper.getComponent({ name: 'ServicePagerBar' }).props('total')).toBe(37);
   });
 
+  /**
+   * Si la PRIMERA carga falla, `totalServices` sigue en 0: al lado del panel de
+   * error, «0 servicios» diría que el catálogo está vacío, que no es lo que pasó.
+   */
+  it('si la primera carga falla, tampoco dice una cifra junto al error', () => {
+    servicios().error.value = new Error('red') as unknown as null;
+    servicios().totalServices.value = 0;
+    const wrapper = montar();
+
+    expect(wrapper.getComponent({ name: 'ServiceToolbar' }).props('total')).toBeNull();
+    expect(wrapper.getComponent({ name: 'ServicePagerBar' }).props('total')).toBeNull();
+  });
+
+  it('un error con filas ya puestas conserva la cifra que se conocía', () => {
+    servicios().error.value = new Error('red') as unknown as null;
+    servicios().services.value = [{ id: 's1', name: 'Corte' } as Service];
+    const wrapper = montar();
+
+    expect(wrapper.getComponent({ name: 'ServiceToolbar' }).props('total')).toBe(37);
+  });
+
   it('una recarga con filas ya puestas no vuelve a esconder la cifra', () => {
     servicios().isLoading.value = true;
     servicios().services.value = [{ id: 's1', name: 'Corte' } as Service];

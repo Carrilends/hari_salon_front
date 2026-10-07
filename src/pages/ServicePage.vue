@@ -213,11 +213,15 @@ const recargandoLista = computed(() => isFetching.value && !isLoading.value);
  * El total no se sabe hasta la primera respuesta. `/services` se prerenderiza y
  * Vue Query no resuelve durante `build:ssg`, así que lo que se pinta mientras
  * carga es el HTML publicado: con `totalServices` en 0, la barra diría
- * «0 servicios» y el pie «0 de 0 servicios». `null` hace que no digan nada. Una
- * recarga con filas ya puestas sí conoce el total y lo sigue diciendo.
+ * «0 servicios» y el pie «0 de 0 servicios». `null` hace que no digan nada. Lo
+ * mismo si la primera carga falla: al lado del panel de error, «0 servicios»
+ * diría que el catálogo está vacío. Una recarga (o un error) con filas ya
+ * puestas sí conoce el total y lo sigue diciendo.
  */
 const totalConocido = computed<number | null>(() =>
-  isLoading.value && services.value.length === 0 ? null : totalServices.value
+  services.value.length === 0 && (isLoading.value || Boolean(error.value))
+    ? null
+    : totalServices.value
 );
 
 /** Para decidir si el vacío ofrece «Limpiar filtros» o solo explica. */
