@@ -276,6 +276,12 @@ describe('useServiceAdminActions · promocionar', () => {
       havePromotion: false,
       porcentageDiscount: 0,
     });
+    // Quitar la promoción también cambia el precio: la bolsa y la lista se
+    // enteran igual que al ponerla.
+    expect(syncBookingWithService).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 's1' })
+    );
+    expect(refrescar).toHaveBeenCalledWith('promocion');
     expect(logro).toHaveBeenCalledWith('Promoción retirada');
   });
 
@@ -330,6 +336,24 @@ describe('useServiceAdminActions · eliminar', () => {
 
     expect(getServiceMock).toHaveBeenCalledWith('s1');
     expect(dialogo).toHaveBeenCalled();
+  });
+
+  /**
+   * Sin ficha no hay confirmación: un diálogo de borrado que no dice qué se
+   * borra es la ruleta que la remodelación quitó.
+   */
+  it('si no está en la lista y el API tampoco lo da, avisa y no abre nada', async () => {
+    storeState.services = [];
+    getServiceMock.mockRejectedValueOnce(new Error('404'));
+    const admin = useServiceAdminActions({ refrescar });
+
+    await admin.eliminar('s1');
+
+    expect(fallo).toHaveBeenCalledWith(
+      'No se pudo cargar el servicio que se va a eliminar'
+    );
+    expect(dialogo).not.toHaveBeenCalled();
+    expect(refrescar).not.toHaveBeenCalled();
   });
 
   it('al confirmar borra, avisa y manda refrescar', async () => {
