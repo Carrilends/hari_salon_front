@@ -194,13 +194,33 @@ describe('ServiceRow', () => {
 
   /**
    * Con las acciones de la dueña apiladas (3 × 44 px) el renglón crece por
-   * encima de los 104 px de la foto: la foto se estira con él en vez de dejar un
-   * hueco debajo, y nunca baja de 104.
+   * encima de 104 px, y la foto tiene que estirarse con él. Pero la foto NO
+   * puede decidir el alto del renglón: Cloudinary (`c_limit`) conserva la
+   * proporción, y un `<img>` con alto `auto` en la fila flexible aporta su alto
+   * natural — un retrato de 2:3 dejaba el renglón en 158 px para todo el mundo,
+   * y los renglones crecían a medida que cargaban las fotos. Por eso la foto va
+   * en un marco de 104 px que se estira (y nunca baja de 104), y la imagen se
+   * posiciona en absoluto dentro: no aporta alto a nadie.
    */
-  it('la foto se estira con el renglón y no baja de 104 px', () => {
+  it('la foto va en un marco que se estira, y la imagen no aporta alto al renglón', () => {
+    const fila = montar();
+    const marco = fila.get('[data-test="fila-marco"]');
+
+    expect(marco.find('img').exists()).toBe(true);
     expect(ESTILOS).toMatch(
-      /\.fila-servicio__foto \{[^}]*align-self:\s*stretch;[^}]*min-height:\s*104px;/
+      /\.fila-servicio__marco \{[^}]*position:\s*relative;[^}]*align-self:\s*stretch;[^}]*width:\s*104px;[^}]*min-height:\s*104px;/
     );
-    expect(ESTILOS).not.toMatch(/\.fila-servicio__foto \{[^}]*[\s;]height:\s*104px;/);
+    expect(ESTILOS).toMatch(
+      /\.fila-servicio__foto \{[^}]*position:\s*absolute;[^}]*top:\s*0;[^}]*right:\s*0;[^}]*bottom:\s*0;[^}]*left:\s*0;[^}]*width:\s*100%;[^}]*height:\s*100%;[^}]*object-fit:\s*cover;/
+    );
+    expect(ESTILOS).not.toMatch(/\.fila-servicio__foto \{[^}]*[\s;]height:\s*auto;/);
+  });
+
+  it('el «Sin foto» vive en el mismo marco', () => {
+    const fila = montar({ servicio: servicio({ images: [] }) });
+
+    expect(
+      fila.get('[data-test="fila-marco"]').find('[data-test="fila-sin-foto"]').exists()
+    ).toBe(true);
   });
 });

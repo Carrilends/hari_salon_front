@@ -1,45 +1,51 @@
 <template>
   <article class="fila-servicio" data-test="fila">
     <!--
-      El orden de los atributos importa: la imagen empieza a bajar en cuanto
-      recibe `src`. `loading` primero para que WebKit aplace la descarga, y `src`
-      el último (lo midió FotoResponsiva; lo vigila ServiceRow.spec).
+      El marco mide 104 px de ancho y se estira con el renglón; la foto va en
+      absoluto dentro para que su proporción no decida el alto (ver el CSS).
     -->
-    <img
-      v-if="tieneFoto"
-      class="fila-servicio__foto"
-      loading="lazy"
-      decoding="async"
-      width="104"
-      height="104"
-      :srcset="fotoSrcset || undefined"
-      sizes="104px"
-      :alt="`Foto del servicio ${servicio.name}`"
-      :src="foto"
-      @error="fotoRota = true"
-    />
-    <div
-      v-else
-      class="fila-servicio__foto fila-servicio__sin-foto"
-      data-test="fila-sin-foto"
-    >
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.4"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
-        focusable="false"
+    <div class="fila-servicio__marco" data-test="fila-marco">
+      <!--
+        El orden de los atributos importa: la imagen empieza a bajar en cuanto
+        recibe `src`. `loading` primero para que WebKit aplace la descarga, y
+        `src` el último (lo midió FotoResponsiva; lo vigila ServiceRow.spec).
+      -->
+      <img
+        v-if="tieneFoto"
+        class="fila-servicio__foto"
+        loading="lazy"
+        decoding="async"
+        width="104"
+        height="104"
+        :srcset="fotoSrcset || undefined"
+        sizes="104px"
+        :alt="`Foto del servicio ${servicio.name}`"
+        :src="foto"
+        @error="fotoRota = true"
+      />
+      <div
+        v-else
+        class="fila-servicio__foto fila-servicio__sin-foto"
+        data-test="fila-sin-foto"
       >
-        <path d="M3 5h18v14H3z" />
-        <path d="M3 16l5-5 4 4 3-3 6 6" />
-        <circle cx="8.5" cy="9.5" r="1.4" />
-      </svg>
-      <span class="fila-servicio__sin-foto-rotulo">Sin foto</span>
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.4"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="M3 5h18v14H3z" />
+          <path d="M3 16l5-5 4 4 3-3 6 6" />
+          <circle cx="8.5" cy="9.5" r="1.4" />
+        </svg>
+        <span class="fila-servicio__sin-foto-rotulo">Sin foto</span>
+      </div>
     </div>
 
     <div class="fila-servicio__texto">
@@ -158,17 +164,34 @@ const precioBase = computed(() =>
 }
 
 /**
- * A canto vivo: la esquina la recorta el radio del renglón. Se estira con el
- * renglón (`align-self: stretch` con el alto en `auto`): con las acciones de la
- * dueña apiladas el renglón pasa de 104 px, y una foto fija dejaría un hueco
- * debajo. Nunca menos de 104.
+ * El marco de la foto, a canto vivo: la esquina la recorta el radio del
+ * renglón. Se estira con el renglón (`align-self: stretch`) porque con las
+ * acciones de la dueña apiladas el renglón pasa de 104 px y una foto fija
+ * dejaría un hueco debajo; nunca baja de 104.
+ *
+ * La foto va en absoluto dentro, y no como hija flexible con alto `auto`:
+ * Cloudinary (`c_limit`) conserva la proporción, así que un retrato aportaba
+ * su alto natural a la fila (2:3 → renglón de 158 px para todo el mundo, y los
+ * renglones crecían a medida que cargaban las fotos). En absoluto no aporta
+ * alto: lo decide el texto, o las acciones apiladas. Los cuatro lados a mano,
+ * no `inset`, que Safari 13.1 y 14.0 descartan.
  */
-.fila-servicio__foto {
+.fila-servicio__marco {
+  position: relative;
   flex: 0 0 auto;
   align-self: stretch;
   width: 104px;
-  height: auto;
   min-height: 104px;
+}
+
+.fila-servicio__foto {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 
