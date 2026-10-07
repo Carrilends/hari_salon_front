@@ -1,7 +1,7 @@
 <template>
   <div
     class="esqueleto-servicios"
-    :class="{ 'esqueleto-servicios--lista': columnas === 1 }"
+    :class="{ 'esqueleto-servicios--lista': esLista }"
     :style="{ '--columnas': String(columnas) }"
     role="status"
     aria-label="Cargando servicios"
@@ -27,10 +27,17 @@ defineOptions({ name: 'ServiceListSkeleton' });
  * siguen en pantalla (`placeholderData: previousData`) y cambiarlas por cajas
  * grises haría parpadear la lista entera en cada página (§6.3).
  */
-const props = defineProps<{ columnas: 1 | 2 | 3 }>();
+const props = withDefaults(
+  defineProps<{ columnas: 1 | 2 | 3; renglones?: boolean }>(),
+  // Sin esto Vue convierte el booleano ausente en `false`, no en `undefined`.
+  { renglones: undefined }
+);
+
+/** Renglones si lo dice quien lo monta; sin decirlo, una columna es una lista. */
+const esLista = computed(() => props.renglones ?? props.columnas === 1);
 
 /** Dos filas de la rejilla, o cuatro renglones en móvil: ni una pantalla vacía ni una falsa. */
-const cuantos = computed(() => (props.columnas === 1 ? 4 : props.columnas * 2));
+const cuantos = computed(() => (esLista.value ? 4 : props.columnas * 2));
 </script>
 
 <style scoped lang="scss">
