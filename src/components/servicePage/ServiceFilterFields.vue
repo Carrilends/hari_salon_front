@@ -36,8 +36,32 @@
         >
           {{ cuentaCategorias }}
         </span>
+        <button
+          v-if="cuentaCategorias > 0"
+          type="button"
+          class="campos__limpiar"
+          data-test="limpiar-categoria"
+          aria-label="Quitar la categoría elegida"
+          @click="quitarCategoria"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
       </legend>
       <services-box
+        ref="cajaRef"
+        :con-limpiar="false"
         :initial-selected-ids="filtersStore.selectedServicesIDs"
         :is-edit-mode="true"
         variante="oscuro"
@@ -117,7 +141,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import ServicesBox from 'src/components/shared/ServicesBox.vue';
 import {
   useFilterService,
@@ -198,6 +222,16 @@ function alternarGenero(id: string) {
  * montaje del carril: con `placeholderData: previousData` se vería como un
  * parpadeo de la lista entera.
  */
+/**
+ * La X del rótulo pide al árbol que suelte su selección: el árbol emite la
+ * lista vacía y `alCambiarCategoria` escribe el store y busca, igual que si se
+ * hubiera desmarcado a mano.
+ */
+const cajaRef = ref<{ clear: () => void } | null>(null);
+function quitarCategoria() {
+  cajaRef.value?.clear();
+}
+
 function alCambiarCategoria(ids: string[]) {
   if (filtersStore.selectedServicesIDs.join(',') === ids.join(',')) return;
   filtersStore.setSelectedServiceIds(ids);
@@ -307,6 +341,24 @@ defineExpose({ limpiar, aplicar: sendFilter });
   letter-spacing: 0;
 }
 
+/// La X de quitar la categoría, en la misma línea que el rótulo y su cuenta.
+/// 28 px con ratón (la medida que traía la del árbol); 44 en la hoja.
+.campos__limpiar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-left: 6px;
+  padding: 0;
+  vertical-align: middle;
+  border: var(--m-filete-grosor) solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--m-piedra-clara);
+  cursor: pointer;
+}
+
 /// Un filete de oro al 35 % entre grupos: separa sin gritar.
 .campos__filete {
   height: 0;
@@ -343,6 +395,7 @@ defineExpose({ limpiar, aplicar: sendFilter });
 }
 
 .campos__chip:focus-visible,
+.campos__limpiar:focus-visible,
 .campos__casilla input:focus-visible,
 .campos__perilla input:focus-visible {
   outline: 2px solid var(--m-oro);
@@ -483,8 +536,8 @@ defineExpose({ limpiar, aplicar: sendFilter });
   font-size: 12px;
 }
 
-/// La categoría la pinta `ServicesBox`, que trae chips y opciones de 32 px y
-/// una X de 28: medidas de ratón, que comparte con crear/editar. En la hoja
+/// La categoría la pinta `ServicesBox`, que trae chips y opciones de 32 px:
+/// medidas de ratón, que comparte con crear/editar. En la hoja
 /// suben a 44 desde aquí, con `:deep`, para no tocar la caja en los otros dos
 /// sitios donde se usa (el carril de escritorio y el formulario).
 .campos--compacto :deep(.caja__chip),
@@ -492,7 +545,7 @@ defineExpose({ limpiar, aplicar: sendFilter });
   min-height: var(--m-tactil-min);
 }
 
-.campos--compacto :deep(.caja__limpiar) {
+.campos--compacto .campos__limpiar {
   width: var(--m-tactil-min);
   height: var(--m-tactil-min);
 }
@@ -505,6 +558,11 @@ defineExpose({ limpiar, aplicar: sendFilter });
 @media (hover: hover) and (pointer: fine) {
   .campos__chip:hover {
     border-color: var(--m-oro);
+  }
+
+  .campos__limpiar:hover {
+    border-color: var(--m-oro);
+    color: var(--m-oro);
   }
 
   .campos__chip--activo:hover {

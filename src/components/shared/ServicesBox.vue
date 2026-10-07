@@ -3,10 +3,13 @@
     class="caja col-12"
     :class="[`caja--${variante}`, { 'caja--contenida': containedScroll }]"
   >
-    <div v-if="sectionTitle || haySeleccion" class="caja__cabecera">
+    <div
+      v-if="sectionTitle || (conLimpiar && haySeleccion)"
+      class="caja__cabecera"
+    >
       <p v-if="sectionTitle" class="caja__titulo">{{ sectionTitle }}</p>
       <button
-        v-if="haySeleccion"
+        v-if="conLimpiar && haySeleccion"
         type="button"
         class="caja__limpiar m-boton-plano"
         data-test="limpiar-categoria"
@@ -113,6 +116,15 @@ const props = defineProps({
   variante: {
     type: String,
     default: 'claro',
+  },
+  /**
+   * Pinta su propia X de «quitar la categoría». Los filtros la apagan y la
+   * ponen en la línea de su rótulo «Categoría»: sin título de cabecera, la X
+   * del árbol quedaba sola en una fila, debajo del rótulo.
+   */
+  conLimpiar: {
+    type: Boolean,
+    default: true,
   },
 });
 

@@ -132,6 +132,17 @@ describe('ServicesBox · regresión de su API', () => {
     expect(wrapper.findAll('[data-test="categoria-chip"]')[0].attributes('aria-pressed')).toBe('true');
   });
 
+  it('con conLimpiar en false no pinta su X ni una cabecera vacía', async () => {
+    // Dentro de los filtros la X vive en la línea del rótulo «Categoría».
+    const wrapper = montar({ sectionTitle: '', conLimpiar: false });
+    await flushPromises();
+    await wrapper.findAll('[data-test="principal"]')[0].trigger('change');
+    await flushPromises();
+
+    expect(wrapper.find('[data-test="limpiar-categoria"]').exists()).toBe(false);
+    expect(wrapper.find('.caja__cabecera').exists()).toBe(false);
+  });
+
   it('el botón de quitar solo aparece cuando hay algo elegido, y tiene nombre', async () => {
     const wrapper = montar();
     await flushPromises();

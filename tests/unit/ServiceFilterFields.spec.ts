@@ -37,8 +37,21 @@ const GENEROS = [
 const stubs = {
   ServicesBox: {
     name: 'ServicesBox',
-    props: ['initialSelectedIds', 'isEditMode', 'variante', 'sectionTitle', 'containedScroll'],
+    props: [
+      'initialSelectedIds',
+      'isEditMode',
+      'variante',
+      'sectionTitle',
+      'containedScroll',
+      'conLimpiar',
+    ],
     emits: ['selectedServices'],
+    methods: {
+      // Lo que hace el árbol de verdad: soltar la selección y emitirla vacía.
+      clear(this: { $emit: (e: string, v: string[]) => void }) {
+        this.$emit('selectedServices', []);
+      },
+    },
     template: '<div class="caja-doble" />',
   },
 };
@@ -376,6 +389,37 @@ describe('ServiceFilterFields · categoría', () => {
     expect(wrapper.get('[data-test="categoria-cuenta"]').text()).toBe('2');
   });
 
+  it('la X de quitar la categoría va en la línea del rótulo, no debajo', async () => {
+    const { wrapper } = montar();
+    expect(wrapper.find('[data-test="limpiar-categoria"]').exists()).toBe(false);
+
+    caja(wrapper).vm.$emit('selectedServices', ['raiz']);
+    await nextTick();
+
+    const x = wrapper.get('legend [data-test="limpiar-categoria"]');
+    expect(x.element.tagName).toBe('BUTTON');
+    expect(x.attributes('aria-label')).toMatch(/categoría/i);
+  });
+
+  it('el árbol no pinta su propia X dentro de los filtros', () => {
+    const { wrapper } = montar();
+    expect(caja(wrapper).props('conLimpiar')).toBe(false);
+  });
+
+  it('la X del rótulo suelta la categoría y vuelve a buscar', async () => {
+    const { wrapper, pinia } = montar();
+    caja(wrapper).vm.$emit('selectedServices', ['raiz']);
+    await nextTick();
+    const antes = wrapper.emitted('aplicar')?.length ?? 0;
+
+    await wrapper.get('[data-test="limpiar-categoria"]').trigger('click');
+    await nextTick();
+
+    expect(useFiltersStore(pinia).selectedServicesIDs).toEqual([]);
+    expect(wrapper.emitted('aplicar')?.length ?? 0).toBe(antes + 1);
+    expect(wrapper.find('[data-test="limpiar-categoria"]').exists()).toBe(false);
+  });
+
   it('limpiar también vacía las categorías del store', async () => {
     const { wrapper, pinia } = montar();
     caja(wrapper).vm.$emit('selectedServices', ['raiz']);
@@ -410,7 +454,7 @@ describe('ServiceFilterFields · áreas táctiles en la hoja', () => {
 
   it('la X de quitar la categoría mide 44 × 44', () => {
     expect(ESTILOS).toMatch(
-      /\.campos--compacto :deep\(\.caja__limpiar\) \{[^}]*width: var\(--m-tactil-min\);[^}]*height: var\(--m-tactil-min\);/
+      /\.campos--compacto \.campos__limpiar \{[^}]*width: var\(--m-tactil-min\);[^}]*height: var\(--m-tactil-min\);/
     );
   });
 
