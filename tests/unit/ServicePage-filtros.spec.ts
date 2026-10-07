@@ -290,6 +290,41 @@ describe('ServicePage · el carril y la barra', () => {
   });
 });
 
+/**
+ * `/services` se prerenderiza y Vue Query no resuelve durante `build:ssg`: lo
+ * que la página pinta mientras carga es el HTML que se publica. «0 servicios» y
+ * «0 de 0 servicios» serían una mentira en el archivo que se indexa.
+ */
+describe('ServicePage · el total antes de la primera respuesta', () => {
+  it('mientras carga por primera vez la barra y el pie reciben un total desconocido', () => {
+    servicios().isLoading.value = true;
+    servicios().totalServices.value = 0;
+    const wrapper = montar();
+
+    expect(wrapper.getComponent({ name: 'ServiceToolbar' }).props('total')).toBeNull();
+    expect(wrapper.getComponent({ name: 'ServicePagerBar' }).props('total')).toBeNull();
+  });
+
+  it('en cuanto llega la respuesta pasan la cifra de verdad', async () => {
+    servicios().isLoading.value = true;
+    const wrapper = montar();
+
+    servicios().isLoading.value = false;
+    await nextTick();
+
+    expect(wrapper.getComponent({ name: 'ServiceToolbar' }).props('total')).toBe(37);
+    expect(wrapper.getComponent({ name: 'ServicePagerBar' }).props('total')).toBe(37);
+  });
+
+  it('una recarga con filas ya puestas no vuelve a esconder la cifra', () => {
+    servicios().isLoading.value = true;
+    servicios().services.value = [{ id: 's1', name: 'Corte' } as Service];
+    const wrapper = montar();
+
+    expect(wrapper.getComponent({ name: 'ServiceToolbar' }).props('total')).toBe(37);
+  });
+});
+
 describe('ServicePage · aplicar un filtro', () => {
   it('lo que aplica el carril llega a la consulta', async () => {
     const wrapper = montar();

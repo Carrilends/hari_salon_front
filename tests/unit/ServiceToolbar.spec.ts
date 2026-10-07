@@ -41,7 +41,9 @@ const fijarAncho = (px: number) => {
 };
 
 const montar = (
-  props: Partial<typeof PROPS_BASE & { conCarril: boolean }> = {},
+  props: Partial<
+    Omit<typeof PROPS_BASE, 'total'> & { total: number | null; conCarril: boolean }
+  > = {},
   { ancho = 1280, cuantasCategorias = 6 } = {}
 ) => {
   fijarAncho(ancho);
@@ -90,6 +92,17 @@ describe('ServiceToolbar', () => {
     const wrapper = montar({}, { cuantasCategorias: 0 });
 
     expect(wrapper.get('[data-test="conteo"]').text()).toBe('48 servicios');
+  });
+
+  /**
+   * `/services` se prerenderiza antes de que la lista conteste: un total
+   * desconocido (`null`) no se dice, ni siquiera como cero.
+   */
+  it('con el total desconocido no dice «0 servicios» ni ninguna cifra', () => {
+    const wrapper = montar({ total: null });
+
+    expect(wrapper.get('[data-test="conteo"]').text()).not.toMatch(/\d/);
+    expect(wrapper.text()).not.toContain('0 servicios');
   });
 
   it('un solo servicio y una sola categoría se dicen en singular', () => {

@@ -226,7 +226,12 @@ import { useOptionsStore } from 'src/stores/options-store';
  */
 const props = withDefaults(
   defineProps<{
-    total: number;
+    /**
+     * `null` mientras la primera respuesta no ha llegado: `/services` se
+     * prerenderiza con la lista aún vacía, y «0 servicios» sería una cifra
+     * falsa en el HTML que se publica e indexa.
+     */
+    total: number | null;
     mostrados: number;
     busqueda: string;
     filtrosActivos: number;
@@ -257,7 +262,13 @@ const { esBusquedaCompacta, muestraEtiquetas } = useServiceViewport();
 const optionsStore = useOptionsStore();
 const categorias = computed(() => optionsStore.principalServices.length);
 
+/** Espacio duro: la línea conserva su alto y el título no salta al llegar la cifra. */
+const SIN_CIFRA = '\u00a0';
+
 const conteo = computed(() => {
+  // Total desconocido: no se dice nada, tampoco las categorías (una cifra sola
+  // a medias se lee como el total).
+  if (props.total === null) return SIN_CIFRA;
   const servicios = `${props.total} ${
     props.total === 1 ? 'servicio' : 'servicios'
   }`;

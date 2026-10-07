@@ -89,7 +89,11 @@ const props = defineProps<{
   pagina: number;
   totalPaginas: number;
   mostrados: number;
-  total: number;
+  /**
+   * `null` mientras la primera respuesta no ha llegado: el HTML prerenderizado
+   * no puede decir «0 de 0 servicios».
+   */
+  total: number | null;
 }>();
 
 const emit = defineEmits<{
@@ -130,11 +134,13 @@ const ultimaDeLaVentana = computed(
   () => ventana.value[ventana.value.length - 1]
 );
 
-const resumen = computed(
-  () =>
-    `${props.mostrados} de ${props.total} ${
-      props.total === 1 ? 'servicio' : 'servicios'
-    }`
+// Espacio duro: el pie conserva su alto y no salta al llegar la cifra.
+const resumen = computed(() =>
+  props.total === null
+    ? '\u00a0'
+    : `${props.mostrados} de ${props.total} ${
+        props.total === 1 ? 'servicio' : 'servicios'
+      }`
 );
 
 const ir = (destino: number) => {

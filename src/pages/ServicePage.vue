@@ -1,7 +1,7 @@
 <template>
   <q-page class="mostrador">
     <ServiceToolbar
-      :total="totalServices"
+      :total="totalConocido"
       :mostrados="services.length"
       :busqueda="filterService.name"
       :filtros-activos="externalAmountOfFilters"
@@ -57,7 +57,7 @@
       :pagina="filterService.page"
       :total-paginas="totalPages"
       :mostrados="services.length"
-      :total="totalServices"
+      :total="totalConocido"
       @update:pagina="alCambiarPagina"
     />
 
@@ -208,6 +208,17 @@ const openServiceDetail = (id: string) => {
  * se avisa con una línea discreta y **no** con el esqueleto (§6.3).
  */
 const recargandoLista = computed(() => isFetching.value && !isLoading.value);
+
+/**
+ * El total no se sabe hasta la primera respuesta. `/services` se prerenderiza y
+ * Vue Query no resuelve durante `build:ssg`, así que lo que se pinta mientras
+ * carga es el HTML publicado: con `totalServices` en 0, la barra diría
+ * «0 servicios» y el pie «0 de 0 servicios». `null` hace que no digan nada. Una
+ * recarga con filas ya puestas sí conoce el total y lo sigue diciendo.
+ */
+const totalConocido = computed<number | null>(() =>
+  isLoading.value && services.value.length === 0 ? null : totalServices.value
+);
 
 /** Para decidir si el vacío ofrece «Limpiar filtros» o solo explica. */
 const hayFiltrosActivos = computed(

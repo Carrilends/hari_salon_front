@@ -15,7 +15,7 @@ const montar = (props: {
   pagina: number;
   totalPaginas: number;
   mostrados?: number;
-  total?: number;
+  total?: number | null;
 }) =>
   mount(ServicePagerBar, {
     props: { mostrados: 10, total: 48, ...props },
@@ -32,6 +32,19 @@ describe('ServicePagerBar', () => {
     expect(wrapper.get('[data-test="resumen"]').text()).toBe(
       '12 de 48 servicios'
     );
+  });
+
+  /** El HTML prerenderizado no puede decir «0 de 0 servicios» mientras carga. */
+  it('con el total desconocido no resume nada', () => {
+    const wrapper = montar({
+      pagina: 1,
+      totalPaginas: 1,
+      mostrados: 0,
+      total: null,
+    });
+
+    expect(wrapper.get('[data-test="resumen"]').text()).not.toMatch(/\d/);
+    expect(wrapper.text()).not.toContain('0 de 0');
   });
 
   it('un solo servicio se dice en singular', () => {
