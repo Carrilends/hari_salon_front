@@ -7,12 +7,12 @@ import { useOptionsStore } from './options-store';
  * Los extremos del control de precio. **Están en MILES**, no en pesos: el
  * control va de 5 a 200 y la etiqueta añade «.000» al pintarlos.
  *
- * ### El backend los usa TAL CUAL (`s.price BETWEEN :min AND :max`,
- * `service.service.ts`), y los precios reales van de 15.000 a 250.000: con la
- * escala en miles, activar el filtro de precio no devuelve nada. Diagnosticado
- * en la Tarea 2 de `docs/superpowers/plans/2026-10-07-servicios-fase-c-filtros.md`
- * y pendiente de que Luis decida si el control muestra miles o pesos completos.
- * Esta fase NO cambia la escala.
+ * El cuerpo de `/service/search` viaja también en MILES y el backend lo pasa a
+ * pesos antes de comparar (`rangoEnPesos`, `PESOS_POR_UNIDAD_DE_FILTRO = 1000`,
+ * en `hair_salon_back/src/service/precio-filtro.ts`). Cambiar esta escala
+ * obliga a cambiar aquella constante en el mismo cambio, o el filtro vuelve a
+ * comparar miles contra pesos y deja la lista vacía (el fallo diagnosticado en
+ * la Tarea 2 de `docs/superpowers/plans/2026-10-07-servicios-fase-c-filtros.md`).
  */
 export const PRECIO_ESCALA_MIN = 5;
 export const PRECIO_ESCALA_MAX = 200;
