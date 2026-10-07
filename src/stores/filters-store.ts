@@ -1,4 +1,4 @@
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { defineStore } from 'pinia';
 import { GenresI } from 'src/interfaces/tag';
 import { useOptionsStore } from './options-store';
@@ -63,12 +63,44 @@ export const useFiltersStore = defineStore('filters', () => {
     setSelectedServiceIds(services);
   };
 
+  /**
+   * Cuántos filtros hay activos: la misma suma que hacen los campos
+   * (`amountOfFilters`), para quien no los tiene montados — la página al
+   * volver a ella, con la hoja cerrada, y el atajo del inicio.
+   */
+  const cantidadFiltros = computed(
+    () =>
+      selectedGenres.value.length +
+      selectedServicesIDs.value.length +
+      (includePriceRange.value ? 1 : 0) +
+      (includePromotionsOnly.value ? 1 : 0)
+  );
+
+  /**
+   * Vacía el filtro entero, el rango incluido: si el rango se quedara en
+   * 40–120 con el interruptor apagado, el carril lo seguiría pintando y
+   * encenderlo filtraría con un rango que nadie eligió. Lo usan «Limpiar» del
+   * carril y de la hoja (`cleanFilters`) y «Limpiar filtros» de la lista.
+   * Se mutan `min`/`max` en vez de cambiar el objeto: los campos lo leen por
+   * referencia.
+   */
+  const limpiarFiltros = () => {
+    selectedGenres.value = [];
+    selectedServicesIDs.value = [];
+    includePriceRange.value = false;
+    includePromotionsOnly.value = false;
+    prices.value.min = PRECIO_ESCALA_MIN;
+    prices.value.max = PRECIO_ESCALA_MAX;
+  };
+
   return {
     selectedGenres,
     selectedServicesIDs,
     includePriceRange,
     includePromotionsOnly,
     prices,
+    cantidadFiltros,
+    limpiarFiltros,
     setGenres,
     setSelectedServiceIds,
     setServicesExternal,

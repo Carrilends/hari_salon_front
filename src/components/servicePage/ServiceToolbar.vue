@@ -128,7 +128,11 @@
           </svg>
         </button>
 
-        <div class="barra__filtros">
+        <!--
+            Con carril (D1) los filtros ya se ven a la izquierda de la lista, y
+            la hoja que abriría este botón no existe a ese ancho.
+          -->
+        <div v-if="!conCarril" class="barra__filtros">
           <!--
               Reguladores, no embudo: tres líneas con sus perillas. El embudo de
               Line Awesome que había antes es un icono relleno y desentona con
@@ -220,13 +224,22 @@ import { useOptionsStore } from 'src/stores/options-store';
  * página visible es del pie («12 de 48 servicios»). Se declara para no romper
  * el contrato, porque es la barra quien podría necesitarlo si el conteo cambia.
  */
-const props = defineProps<{
-  total: number;
-  mostrados: number;
-  busqueda: string;
-  filtrosActivos: number;
-  esAdmin: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    total: number;
+    mostrados: number;
+    busqueda: string;
+    filtrosActivos: number;
+    esAdmin: boolean;
+    /**
+     * Fuera del contrato de §5, y opcional a propósito: la pone la página
+     * cuando el carril de filtros está a la vista (fase C). Sin ella la barra es
+     * la de siempre, con su botón de filtros.
+     */
+    conCarril?: boolean;
+  }>(),
+  { conCarril: false }
+);
 
 const emit = defineEmits<{
   (e: 'update:busqueda', valor: string): void;

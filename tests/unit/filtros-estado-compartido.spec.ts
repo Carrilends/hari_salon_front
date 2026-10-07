@@ -74,6 +74,64 @@ describe('filters-store como estado compartido del filtro', () => {
     expect(filtros.selectedGenres).toEqual([]);
   });
 
+  /**
+   * «Limpiar» del carril o de la hoja: si el rango se quedara en 40–120 con el
+   * interruptor apagado, al volver a encenderlo filtraría con un rango que ya
+   * nadie ve elegido.
+   */
+  it('limpiar devuelve el rango a la escala completa', async () => {
+    const filtros = useFiltersStore();
+    const campos = useFilterService(emitirANingunSitio as never);
+    filtros.prices.min = 40;
+    filtros.prices.max = 120;
+
+    campos.cleanFilters();
+    await nextTick();
+
+    expect(filtros.prices).toEqual({
+      min: PRECIO_ESCALA_MIN,
+      max: PRECIO_ESCALA_MAX,
+    });
+  });
+
+  /** Lo que usa «Limpiar filtros» de la página: el mismo vaciado, un sitio. */
+  it('limpiarFiltros vacía las cinco cosas del filtro', () => {
+    const filtros = useFiltersStore();
+    useOptionsStore().setGenres([{ id: 'g1', name: 'Unisex', selected: false }]);
+    filtros.setGenres(['g1']);
+    filtros.setSelectedServiceIds(['s1']);
+    filtros.includePriceRange = true;
+    filtros.prices.min = 40;
+    filtros.prices.max = 120;
+
+    filtros.limpiarFiltros();
+
+    expect(filtros.selectedGenres).toEqual([]);
+    expect(filtros.selectedServicesIDs).toEqual([]);
+    expect(filtros.includePriceRange).toBe(false);
+    expect(filtros.includePromotionsOnly).toBe(false);
+    expect(filtros.prices).toEqual({
+      min: PRECIO_ESCALA_MIN,
+      max: PRECIO_ESCALA_MAX,
+    });
+  });
+
+  /** La misma suma que hacen los campos, para quien no los tiene montados. */
+  it('cuenta los filtros activos como los cuentan los campos', () => {
+    const filtros = useFiltersStore();
+    useOptionsStore().setGenres([
+      { id: 'g1', name: 'Unisex', selected: false },
+      { id: 'g2', name: 'Niños', selected: false },
+    ]);
+    expect(filtros.cantidadFiltros).toBe(0);
+
+    filtros.setGenres(['g1', 'g2']);
+    filtros.setSelectedServiceIds(['s1']);
+    filtros.includePromotionsOnly = true;
+
+    expect(filtros.cantidadFiltros).toBe(4);
+  });
+
   it('el ancho del carril es 1024 y vive en un solo sitio', () => {
     // El carril y la hoja lo importan de aquí: dos literales distintos
     // dejarían un ancho sin carril y sin hoja, o con los dos a la vez.

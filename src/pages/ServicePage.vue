@@ -6,6 +6,7 @@
       :busqueda="filterService.name"
       :filtros-activos="externalAmountOfFilters"
       :es-admin="authStore.isAdmin"
+      :con-carril="hayCarril"
       @update:busqueda="alBuscar"
       @abrir-filtros="showFilterDialog = true"
       @crear-servicio="dialogCreation = true"
@@ -13,21 +14,31 @@
 
     <div class="mostrador__cuerpo">
       <!--
-        La ranura `acciones` se queda vacía hasta la fase E (D-B6): allí van
-        los tres botones de administración (`ServiceCardAdminActions`).
+        El carril decide por sí mismo si le toca pintarse (D1): por debajo de su
+        ancho no pinta nada y la lista se queda con toda la fila.
       -->
-      <ServiceCardsGrid
-        :servicios="services"
-        :columnas="columnas"
-        :renglones="esListaMovil"
-        :cargando="isLoading"
-        :recargando="recargandoLista"
-        :error="Boolean(error)"
-        :hay-filtros="hayFiltrosActivos"
-        @detalle="openServiceDetail"
-        @limpiar-filtros="limpiarFiltros"
-        @reintentar="reintentar"
+      <ServiceFilterRail
+        @aplicar="fetchServices"
+        @update:amount="externalAmountOfFilters = $event"
       />
+      <div class="mostrador__lista">
+        <!--
+          La ranura `acciones` se queda vacía hasta la fase E (D-B6): allí van
+          los tres botones de administración (`ServiceCardAdminActions`).
+        -->
+        <ServiceCardsGrid
+          :servicios="services"
+          :columnas="columnas"
+          :renglones="esListaMovil"
+          :cargando="isLoading"
+          :recargando="recargandoLista"
+          :error="Boolean(error)"
+          :hay-filtros="hayFiltrosActivos"
+          @detalle="openServiceDetail"
+          @limpiar-filtros="limpiarFiltros"
+          @reintentar="reintentar"
+        />
+      </div>
     </div>
 
     <ServicePagerBar
@@ -35,11 +46,12 @@
       :total-paginas="totalPages"
       :mostrados="services.length"
       :total="totalServices"
-      @update:pagina="filterService.page = $event"
+      @update:pagina="alCambiarPagina"
     />
 
     <ServiceFilterDialog
       v-model:dialog="showFilterDialog"
+      :total="totalServices"
       @update:amount="externalAmountOfFilters = $event"
       @update:services="fetchServices"
     />
@@ -70,8 +82,15 @@ import ServiceToolbar from 'src/components/servicePage/ServiceToolbar.vue';
 import ServicePagerBar from 'src/components/servicePage/ServicePagerBar.vue';
 import type Service from 'src/interfaces/service';
 import ServiceFilterDialog from 'src/components/dialogs/serviceFilterDialog.vue';
+import ServiceFilterRail from 'src/components/servicePage/ServiceFilterRail.vue';
 import { FilterService } from 'src/composables/dialogs/useServiceFilter';
-import { useFiltersStore } from 'src/stores/filters-store';
+import { useDialogMaximizedBelow } from 'src/composables/dialogs/useDialogMaximizedBelow';
+import {
+  ANCHO_CARRIL_PX,
+  PRECIO_ESCALA_MAX,
+  PRECIO_ESCALA_MIN,
+  useFiltersStore,
+} from 'src/stores/filters-store';
 import serviceCreateEdit from 'src/components/dialogs/serviceCreateEdit.vue';
 
 import type { IndexSection } from 'src/constants/index-sections';
@@ -152,6 +171,34 @@ const openEditService = (id: string) => {
 const showFilterDialog = ref(false);
 const externalAmountOfFilters = ref(0);
 
+/**
+ * Desde el ancho del carril los filtros son el carril (D1) y la barra pierde su
+ * botón: la hoja no se pinta por encima de ese ancho. El carril y la hoja
+ * deciden cada uno si les toca; esto solo sirve para la barra y para el atajo
+ * del inicio. Mismo corte y misma consulta que ellos, importados del store.
+ */
+const { maximized: esHojaFiltros } = useDialogMaximizedBelow(ANCHO_CARRIL_PX);
+const hayCarril = computed(() => !esHojaFiltros.value);
+
+/**
+ * Ir a otra ruta y volver conserva `filters-store`, pero `useServices` arranca
+ * con su filtro en blanco: el carril pintaría un género elegido sobre una lista
+ * sin filtrar, y la barra diría cero filtros. Se copia el store una sola vez,
+ * al arrancar; el atajo del inicio, si lo hay, lo pisa después.
+ */
+const copiarFiltroDelStore = () => {
+  filterService.value.selectedGenres = filtersStore.selectedGenres.map(
+    (g) => g.id
+  );
+  filterService.value.selectedServicesIDs = [...filtersStore.selectedServicesIDs];
+  filterService.value.includePriceRange = filtersStore.includePriceRange;
+  filterService.value.includePromotionsOnly = filtersStore.includePromotionsOnly;
+  filterService.value.prices.min = filtersStore.prices.min;
+  filterService.value.prices.max = filtersStore.prices.max;
+  externalAmountOfFilters.value = filtersStore.cantidadFiltros;
+};
+if (filtersStore.cantidadFiltros > 0) copiarFiltroDelStore();
+
 const $q = useQuasar();
 
 const openServiceDetail = (id: string) => {
@@ -175,18 +222,20 @@ const hayFiltrosActivos = computed(
 );
 
 /**
- * Limpiar escribe en `filters-store`, que es el estado compartido y persistido
- * (§6.2), y no en una copia local: el carril de la fase C y la hoja de móvil
- * leen de ahí.
+ * Limpiar escribe en `filters-store`, que es el estado compartido (§6.2), y no
+ * en una copia local: el carril y la hoja leen de ahí. El vaciado es el mismo
+ * que hace «Limpiar» del carril y de la hoja —rango incluido, de vuelta a la
+ * escala completa—, así que los tres coinciden después.
  */
 const limpiarFiltros = () => {
-  filtersStore.clearGenders();
-  filtersStore.clearSelectedServices();
+  filtersStore.limpiarFiltros();
   filterService.value.name = '';
   filterService.value.selectedGenres = [];
   filterService.value.selectedServicesIDs = [];
   filterService.value.includePriceRange = false;
   filterService.value.includePromotionsOnly = false;
+  filterService.value.prices.min = PRECIO_ESCALA_MIN;
+  filterService.value.prices.max = PRECIO_ESCALA_MAX;
   filterService.value.page = 1;
   externalAmountOfFilters.value = 0;
 };
@@ -206,6 +255,16 @@ const alBuscar = (texto: string) => {
   filterService.value.page = 1;
 };
 
+/**
+ * Desde que la página entera desplaza (D4), el pie queda al final de la lista:
+ * cambiar de página sin subir deja a la visitante mirando el pie de la página
+ * nueva. Detrás de la guarda porque `build:ssg` prerenderiza sin `window`.
+ */
+const alCambiarPagina = (pagina: number) => {
+  filterService.value.page = pagina;
+  if (typeof window !== 'undefined') window.scrollTo({ top: 0 });
+};
+
 type HistoryStateWithService = { service?: IndexSection };
 const indexShortcutCard =
   typeof history !== 'undefined'
@@ -220,6 +279,10 @@ function applyShortcutFromIndex(card: IndexSection) {
   const serviceIds = card.filterFormat?.services ?? [];
   filtersStore.setGenres(genreIds);
   filtersStore.setServicesExternal(serviceIds);
+  // El atajo es un filtro nuevo: un interruptor que se quedara encendido en el
+  // store saldría marcado en el carril sin estar aplicado a la lista.
+  filtersStore.includePriceRange = false;
+  filtersStore.includePromotionsOnly = false;
   if (genreIds.length > 0 && filtersStore.selectedGenres.length === 0) {
     console.warn(
       '[ServicePage] Atajo del inicio con IDs de género no encontrados en optionsStore.genres:',
@@ -233,10 +296,12 @@ function applyShortcutFromIndex(card: IndexSection) {
   filterService.value.includePriceRange = false;
   filterService.value.includePromotionsOnly = false;
   filterService.value.page = 1;
-  externalAmountOfFilters.value =
-    filtersStore.selectedGenres.length +
-    filtersStore.selectedServicesIDs.length;
-  showFilterDialog.value = true;
+  externalAmountOfFilters.value = filtersStore.cantidadFiltros;
+  /**
+   * Con el carril (D1) no hay nada que abrir en escritorio: los filtros ya se
+   * ven. Por debajo de su ancho se abre la hoja, como hasta ahora.
+   */
+  showFilterDialog.value = !hayCarril.value;
 }
 
 watch(
@@ -251,17 +316,27 @@ watch(
   { immediate: true }
 );
 
+/**
+ * Recibe el filtro del carril y de la hoja. Ya NO cierra la hoja: aplica en
+ * cada toque (D1), y cerrarla aquí la bajaría con cada chip. La cierran su pie
+ * («Ver N servicios») y su aspa.
+ */
 const fetchServices = (e: FilterService | string) => {
   if (typeof e === 'string') {
     refetch.value++;
   } else {
-    showFilterDialog.value = false;
     filterService.value.selectedGenres = e.selectedGenres;
     filterService.value.selectedServicesIDs = e.selectedServicesIDs;
     filterService.value.includePriceRange = e.includePriceRange;
     filterService.value.includePromotionsOnly = e.includePromotionsOnly;
     filterService.value.prices.min = e.prices.min;
     filterService.value.prices.max = e.prices.max;
+    /**
+     * Con aplicación instantánea esto pasa a cada clic del carril: sin volver a
+     * la página 1, filtrar estando en la 3 deja la lista vacía y parece que el
+     * filtro no encontró nada.
+     */
+    filterService.value.page = 1;
   }
 };
 
@@ -459,6 +534,18 @@ defineOptions({
   flex: 1 0 auto;
   min-width: 0;
   padding: 22px 0 10px;
+  // Carril a la izquierda y lista al lado (D1). Sin carril, el `v-if` del
+  // carril no deja ningún elemento y la lista ocupa la fila entera.
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.mostrador__lista {
+  flex: 1 1 auto;
+  // Sin esto la rejilla no encoge por debajo de su contenido y empuja la
+  // página hacia la derecha.
+  min-width: 0;
 }
 
 @media (max-width: 699px) {

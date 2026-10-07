@@ -41,7 +41,7 @@ const fijarAncho = (px: number) => {
 };
 
 const montar = (
-  props: Partial<typeof PROPS_BASE> = {},
+  props: Partial<typeof PROPS_BASE & { conCarril: boolean }> = {},
   { ancho = 1280, cuantasCategorias = 6 } = {}
 ) => {
   fijarAncho(ancho);
@@ -242,6 +242,24 @@ describe('ServiceToolbar', () => {
         .get('[data-test="contador-filtros"]')
         .text()
     ).toBe('9+');
+  });
+
+  /**
+   * Desde 1024 px los filtros son el carril (D1): un botón que abre una hoja que
+   * a ese ancho no existe sería un botón muerto. Sin la prop, la barra es la de
+   * siempre.
+   */
+  it('con carril no hay botón de filtros ni su contador', () => {
+    const conCarril = montar({ conCarril: true, filtrosActivos: 3 });
+
+    expect(conCarril.find('[data-test="boton-filtros"]').exists()).toBe(false);
+    expect(conCarril.find('[data-test="contador-filtros"]').exists()).toBe(
+      false
+    );
+
+    const sinCarril = montar({ filtrosActivos: 3 });
+    expect(sinCarril.find('[data-test="boton-filtros"]').exists()).toBe(true);
+    expect(sinCarril.get('[data-test="contador-filtros"]').text()).toBe('3');
   });
 
   it('pedir filtros y pedir crear llegan al padre', async () => {

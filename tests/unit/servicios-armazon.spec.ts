@@ -96,19 +96,29 @@ describe('lo que la fase A no puede romper', () => {
     expect(PAGINA).toContain('bookStore.syncBookingWithService(fresh)');
   });
 
-  it('sigue atendiendo el atajo del inicio, y sigue abriendo el diálogo', () => {
-    // El carril de la fase C es quien deja de abrirlo en escritorio.
+  /**
+   * Desde la fase C el atajo abre la hoja solo cuando no hay carril (D1): en
+   * escritorio los filtros ya se ven y no hay nada que abrir. La guardia se
+   * mudó de «abre siempre» a «abre solo sin carril»; la conducta por anchos la
+   * prueba `ServicePage-filtros.spec.ts` montando la página.
+   */
+  it('sigue atendiendo el atajo del inicio, y abre la hoja solo sin carril', () => {
     expect(PAGINA).toContain('applyShortcutFromIndex');
-    expect(PAGINA).toMatch(
-      /function applyShortcutFromIndex[\s\S]*?showFilterDialog\.value = true;/
+    const atajo = PAGINA.slice(
+      PAGINA.indexOf('function applyShortcutFromIndex'),
+      PAGINA.indexOf('watch(', PAGINA.indexOf('function applyShortcutFromIndex'))
     );
+    expect(atajo).toMatch(/showFilterDialog\.value = !hayCarril\.value;/);
+    expect(atajo).not.toMatch(/showFilterDialog\.value = true;/);
   });
 
-  it('ya no usa la tarjeta vieja, y sigue con el diálogo de filtros', () => {
-    // La tarjeta la sustituyó la fase B (ServiceCardsGrid); el diálogo de
-    // filtros lo sustituye la fase C, así que ese sigue donde estaba.
+  it('ya no usa la tarjeta vieja, y sigue con la hoja de filtros', () => {
+    // La tarjeta la sustituyó la fase B (ServiceCardsGrid). El diálogo de
+    // filtros la fase C lo convirtió en la hoja de móvil, y en escritorio lo
+    // releva el carril: los dos siguen montados, cada uno decide su ancho.
     expect(PAGINA).not.toContain('TabsByEachService');
-    expect(PAGINA).toContain('ServiceFilterDialog');
+    expect(PAGINA).toContain('<ServiceFilterDialog');
+    expect(PAGINA).toContain('<ServiceFilterRail');
   });
 
   it('sigue publicando su SEO y sus datos estructurados', () => {

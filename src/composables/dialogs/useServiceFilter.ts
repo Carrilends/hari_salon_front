@@ -108,11 +108,9 @@ export const useFilterService = (emit: FiltersEmits) => {
 
   // ---------------- Functions ----------------
 
+  /** El vaciado es del store (rango incluido): el mismo que usa la página. */
   const cleanFilters = () => {
-    filtersStore.clearGenders();
-    includePriceRange.value = false;
-    includePromotionsOnly.value = false;
-    clearServices();
+    filtersStore.limpiarFiltros();
     sendFilter();
   };
 
