@@ -431,6 +431,26 @@ describe('ServicePage · el atajo del inicio', () => {
     expect(filtros.includePriceRange).toBe(false);
     expect(servicios().filterService.value.includePriceRange).toBe(false);
   });
+
+  /**
+   * Apagar el interruptor no basta: un rango de 40 a 120 que sobreviviera en el
+   * store reaparecería en el carril el día que alguien encendiera «Precio».
+   * El atajo parte de cero: `limpiarFiltros()`, no dos asignaciones sueltas.
+   */
+  it('devuelve el rango de precio a la escala completa en el store', async () => {
+    const filtros = useFiltersStore();
+    filtros.includePriceRange = true;
+    filtros.prices.min = 40;
+    filtros.prices.max = 120;
+    llegarDesdeElInicio();
+    montar();
+    await nextTick();
+
+    expect(filtros.prices).toEqual({
+      min: PRECIO_ESCALA_MIN,
+      max: PRECIO_ESCALA_MAX,
+    });
+  });
 });
 
 describe('ServicePage · lo que se lee de la fuente', () => {

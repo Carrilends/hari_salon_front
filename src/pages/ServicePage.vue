@@ -277,12 +277,11 @@ const indexShortcutPending = ref(!!indexShortcutCard);
 function applyShortcutFromIndex(card: IndexSection) {
   const genreIds = card.filterFormat?.genres ?? [];
   const serviceIds = card.filterFormat?.services ?? [];
+  // El atajo es un filtro nuevo: un interruptor o un rango que se quedara en el
+  // store saldría marcado en el carril sin estar aplicado a la lista.
+  filtersStore.limpiarFiltros();
   filtersStore.setGenres(genreIds);
   filtersStore.setServicesExternal(serviceIds);
-  // El atajo es un filtro nuevo: un interruptor que se quedara encendido en el
-  // store saldría marcado en el carril sin estar aplicado a la lista.
-  filtersStore.includePriceRange = false;
-  filtersStore.includePromotionsOnly = false;
   if (genreIds.length > 0 && filtersStore.selectedGenres.length === 0) {
     console.warn(
       '[ServicePage] Atajo del inicio con IDs de género no encontrados en optionsStore.genres:',
