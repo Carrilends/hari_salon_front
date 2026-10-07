@@ -17,22 +17,70 @@ const fuente = (archivo: string) =>
   );
 
 describe('ServiceListSkeleton', () => {
-  it('pinta seis huecos en la rejilla de tres columnas', () => {
-    const esqueleto = mount(ServiceListSkeleton, { props: { columnas: 3 } });
+  /**
+   * `/services` se prerenderiza a 1280 px (`ANCHO_SSG`) y en un teléfono el
+   * primer render del cliente mide 390: si la forma del esqueleto saliera de
+   * clases o estilos atados a ese ancho, la hidratación no los repara y el
+   * esqueleto se quedaba en tres columnas en el móvil. La forma la decide el
+   * CSS con los cortes de D9; el marcado es el mismo para cualquier ancho.
+   */
+  const ESTILOS = fuente('ServiceListSkeleton.vue').slice(
+    fuente('ServiceListSkeleton.vue').indexOf('<style')
+  );
+  const PLANTILLA = fuente('ServiceListSkeleton.vue').slice(
+    0,
+    fuente('ServiceListSkeleton.vue').indexOf('<script')
+  );
+
+  it('pinta siempre seis huecos, los de la rejilla de tres columnas', () => {
+    const esqueleto = mount(ServiceListSkeleton);
 
     expect(esqueleto.find('[data-test="esqueleto"]').exists()).toBe(true);
     expect(esqueleto.findAll('[data-test="hueco"]')).toHaveLength(6);
   });
 
-  it('en una columna pinta cuatro renglones', () => {
-    const esqueleto = mount(ServiceListSkeleton, { props: { columnas: 1 } });
+  it('no ata clases ni estilos al ancho medido en JavaScript', () => {
+    const raiz = mount(ServiceListSkeleton).get('[data-test="esqueleto"]');
 
-    expect(esqueleto.findAll('[data-test="hueco"]')).toHaveLength(4);
+    expect(PLANTILLA).not.toMatch(/:class|:style|v-bind:class|v-bind:style/);
+    expect(raiz.attributes('style')).toBeUndefined();
+    expect(raiz.classes()).toEqual(['esqueleto-servicios']);
+  });
+
+  it('desde 1240 px: tres columnas y los seis huecos', () => {
+    expect(ESTILOS).toMatch(
+      /\.esqueleto-servicios \{[^}]*grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/
+    );
+  });
+
+  it('entre 760 y 1239 px: dos columnas y cuatro huecos (dos filas)', () => {
+    expect(ESTILOS).toMatch(
+      /@media \(max-width: 1239px\) \{[^@]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)[^@]*__hueco:nth-child\(n \+ 5\) \{\s*display: none;/
+    );
+  });
+
+  it('entre 501 y 759 px: una columna de tarjetas, no de renglones, y dos huecos', () => {
+    const tramo = ESTILOS.slice(ESTILOS.indexOf('@media (max-width: 759px)'));
+    const bloque = tramo.slice(0, tramo.indexOf('@media', 1));
+
+    expect(bloque).toMatch(/grid-template-columns:\s*minmax\(0, 1fr\)/);
+    expect(bloque).toMatch(/__hueco:nth-child\(n \+ 3\) \{\s*display: none;/);
+    // La forma de renglón (104 px) es solo de la franja estrecha.
+    expect(bloque).not.toContain('104px');
+  });
+
+  it('por debajo de 501 px: cuatro renglones de 104 px', () => {
+    const tramo = ESTILOS.slice(ESTILOS.indexOf('@media (max-width: 500px)'));
+    const bloque = tramo.slice(0, tramo.indexOf('@media', 1));
+
+    expect(bloque).toMatch(/__hueco \{\s*height: 104px;/);
+    expect(bloque).toMatch(/__hueco:nth-child\(n \+ 3\) \{\s*display: block;/);
+    expect(bloque).toMatch(/__hueco:nth-child\(n \+ 5\) \{\s*display: none;/);
   });
 
   /** Un lector de pantalla tiene que oír que algo está cargando, no seis cajas. */
   it('se anuncia como estado y no lee los huecos', () => {
-    const esqueleto = mount(ServiceListSkeleton, { props: { columnas: 3 } });
+    const esqueleto = mount(ServiceListSkeleton);
     const raiz = esqueleto.get('[data-test="esqueleto"]');
 
     expect(raiz.attributes('role')).toBe('status');

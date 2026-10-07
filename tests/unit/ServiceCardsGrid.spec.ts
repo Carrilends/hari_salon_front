@@ -232,17 +232,34 @@ describe('ServiceCardsGrid', () => {
     expect(enRenglones.get('[data-test="modo-s1"]').text()).toBe('true');
   });
 
-  it('el esqueleto sigue a renglones: con una columna y sin renglones no es lista', () => {
-    expect(
-      montar({ servicios: [], cargando: true, columnas: 1 })
-        .get('[data-test="esqueleto"]')
-        .classes()
-    ).not.toContain('esqueleto-servicios--lista');
-    expect(
-      montar({ servicios: [], cargando: true, columnas: 1, renglones: true })
-        .get('[data-test="esqueleto"]')
-        .classes()
-    ).toContain('esqueleto-servicios--lista');
+  /**
+   * Antes el esqueleto seguía a `columnas`/`renglones` con clases y estilos, y
+   * eso rompía con SSG: `/services` se prerenderiza a 1280 px y en el teléfono
+   * la hidratación no repara clases, así que se quedaba en tres columnas. Ahora
+   * su forma es CSS con los mismos cortes de D9 (lo vigila
+   * `ServiceListStates.spec.ts`, incluido que entre 501 y 759 px es una columna
+   * de tarjetas y no de renglones): el marcado tiene que ser el mismo a
+   * cualquier ancho.
+   */
+  it('el esqueleto pinta el mismo marcado a cualquier ancho: su forma es del CSS', () => {
+    const ancho = montar({ servicios: [], cargando: true, columnas: 3 })
+      .get('[data-test="esqueleto"]')
+      .html();
+    const tarjetasEnUna = montar({ servicios: [], cargando: true, columnas: 1 })
+      .get('[data-test="esqueleto"]')
+      .html();
+    const renglones = montar({
+      servicios: [],
+      cargando: true,
+      columnas: 1,
+      renglones: true,
+    })
+      .get('[data-test="esqueleto"]')
+      .html();
+
+    expect(tarjetasEnUna).toBe(ancho);
+    expect(renglones).toBe(ancho);
+    expect(FUENTE).not.toMatch(/<ServiceListSkeleton[^>]*:(columnas|renglones)/);
   });
 
   /**

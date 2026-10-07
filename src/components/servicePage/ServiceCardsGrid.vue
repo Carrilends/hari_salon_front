@@ -6,11 +6,11 @@
       @reintentar="emit('reintentar')"
     />
 
-    <ServiceListSkeleton
-      v-if="muestraEsqueleto"
-      :columnas="columnas"
-      :renglones="renglones"
-    />
+    <!--
+      Sin columnas ni renglones: el esqueleto viaja en el HTML prerenderizado a
+      1280 px y su forma la decide el CSS (ver ServiceListSkeleton.vue).
+    -->
+    <ServiceListSkeleton v-if="muestraEsqueleto" />
 
     <ServiceListEmpty
       v-if="muestraVacio"
