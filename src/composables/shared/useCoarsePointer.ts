@@ -9,7 +9,9 @@ import type { ComputedRef } from 'vue';
  * que la tarjeta de servicio muestre su velo **siempre** en vez de solo al pasar
  * el ratón (D5): sin ello, en una tableta la lista se queda sin nombres.
  *
- * `false` cuando no hay `window` (`build:ssg` prerenderiza) o cuando el
+ * Vale `false` en `setup` (también en el cliente, para que coincida con el HTML
+ * prerenderizado) y se sincroniza en `onMounted`. Sigue en `false` cuando no hay
+ * `window` (`build:ssg` prerenderiza) o cuando el
  * navegador no sabe de `matchMedia`: el velo tiene además una red de seguridad
  * en CSS (`@media (hover: none)`), así que equivocarse por abajo no deja a nadie
  * sin información.
@@ -23,9 +25,10 @@ function sePuedeConsultar(): boolean {
 }
 
 export function useCoarsePointer(): ComputedRef<boolean> {
-  const grueso = ref(
-    sePuedeConsultar() ? window.matchMedia(CONSULTA).matches : false
-  );
+  // Siempre `false` hasta montar: el servidor prerenderiza con `false` y, si el
+  // primer render del cliente calculara `true`, la hidratación no repara las
+  // clases y el velo quedaría sin la clase de «siempre visible».
+  const grueso = ref(false);
 
   let soltar: (() => void) | null = null;
 

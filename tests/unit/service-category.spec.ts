@@ -105,6 +105,14 @@ describe('etiquetaDeCategoria', () => {
     expect(categoria).not.toBe('spa');
   });
 
+  /** `type` es texto libre: `constructor` no es una clave de la tabla. */
+  it('un tipo como «constructor» cae en la primera etiqueta', () => {
+    expect(
+      etiquetaDeCategoria({ type: 'constructor', tags: ['Uñas gel'] })
+    ).toBe('Uñas gel');
+    expect(etiquetaDeCategoria({ type: 'toString' })).toBe('');
+  });
+
   it('sin tipo y sin etiquetas no dice nada, y la línea no se pinta', () => {
     expect(etiquetaDeCategoria({})).toBe('');
     expect(etiquetaDeCategoria({ type: '', tags: [] })).toBe('');

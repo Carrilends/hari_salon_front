@@ -62,6 +62,28 @@ describe('useCoarsePointer', () => {
     expect(montar().grueso.value).toBe(true);
   });
 
+  /**
+   * La hidratación no repara clases: el primer render del cliente debe coincidir
+   * con el HTML prerenderizado (`false`) y solo `onMounted` sube a `true`.
+   */
+  it('en setup vale false aunque el puntero sea grueso, y true tras montar', () => {
+    dobleDeMatchMedia(true);
+    let enSetup: boolean | undefined;
+    let grueso: ReturnType<typeof useCoarsePointer> | undefined;
+    mount(
+      defineComponent({
+        setup() {
+          grueso = useCoarsePointer();
+          enSetup = grueso.value;
+          return () => h('div');
+        },
+      })
+    );
+
+    expect(enSetup).toBe(false);
+    expect(grueso!.value).toBe(true);
+  });
+
   it('con ratón dice que no', () => {
     dobleDeMatchMedia(false);
 

@@ -66,7 +66,9 @@ export function etiquetaDeCategoria(servicio: ServicioRotulable): string {
   const clave = String(servicio?.type ?? '')
     .trim()
     .toLowerCase();
-  const traducido = ETIQUETAS[clave];
-  if (traducido) return traducido;
+  // `hasOwnProperty`: `type: 'constructor'` no debe devolver una función.
+  if (Object.prototype.hasOwnProperty.call(ETIQUETAS, clave)) {
+    return ETIQUETAS[clave];
+  }
   return etiquetasDeServicio(servicio)[0] ?? '';
 }
