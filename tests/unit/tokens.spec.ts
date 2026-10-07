@@ -29,4 +29,110 @@ describe('tokens visuales', () => {
   it('declara el fondo de la banda de aviso', () => {
     expect(valorDe('m-aviso-fondo')).toBe('#efe7dc');
   });
+
+  it('declara el rosa de peligro de las acciones destructivas', () => {
+    expect(valorDe('m-peligro')).toBe('#8e3b5c');
+    expect(valorDe('m-peligro-texto')).toBe('#f6f1ea');
+  });
+
+  it('declara el canal del riel de desplazamiento, oscuro y claro', () => {
+    expect(valorDe('m-riel-canal')).toBe('#2a251f');
+    expect(valorDe('m-riel-canal-claro')).toBe('#e6ded3');
+  });
+
+  it('declara el fondo de los botones que se posan sobre una foto', () => {
+    expect(valorDe('m-velo-accion')).toBe('rgba(22, 19, 15, 0.72)');
+  });
+
+  /**
+   * La regla del fichero es que todo token lleve su contraste medido o la razón
+   * de que no sea color de texto. Un token sin anotar vuelve a abrir la puerta
+   * a elegir colores a ojo.
+   */
+  it('anota el contraste del rosa de peligro, que sí es color de texto', () => {
+    const [, comentario] =
+      TOKENS.match(/((?:\s*\/\/\/[^\n]*\n)+)\s*--m-peligro:/) ?? [];
+
+    expect(comentario).toMatch(/6,4:1/);
+  });
+
+  it('anota que el canal del riel no es color de texto', () => {
+    const [, comentario] =
+      TOKENS.match(/((?:\s*\/\/\/[^\n]*\n)+)\s*--m-riel-canal:/) ?? [];
+
+    expect(comentario).toMatch(/no es color de texto/i);
+  });
+
+  it('anota que el fondo de acción sobre foto no es color de texto', () => {
+    const [, comentario] =
+      TOKENS.match(/((?:\s*\/\/\/[^\n]*\n)+)\s*--m-velo-accion:/) ?? [];
+
+    expect(comentario).toMatch(/No es color de texto/);
+  });
+});
+
+const APP = readFileSync(join(__dirname, '../../src/css/app.scss'), 'utf8');
+
+/**
+ * El riel dorado es de la página de servicios, no del portal: en las bandas
+ * claras del inicio un pulgar de oro sobre canal carbón sería una raya oscura
+ * en medio del hueso. Por eso se declara sobre `html.m-riel-oro`, una clase
+ * que `ServicePage.vue` pone al montarse y quita al desmontarse — el mismo
+ * recurso que `html.m-panel-abierto` del asistente.
+ */
+describe('riel dorado de la página de servicios', () => {
+  it('pinta el pulgar en oro sobre el canal del token', () => {
+    expect(APP).toMatch(
+      /html\.m-riel-oro\s*\{[^}]*scrollbar-color: var\(--m-oro\) var\(--m-riel-canal\);/
+    );
+  });
+
+  it('mide 6 px y el pulgar va redondo del todo', () => {
+    expect(APP).toMatch(/::-webkit-scrollbar\s*\{[^}]*width: 6px;/);
+    expect(APP).toMatch(/::-webkit-scrollbar\s*\{[^}]*height: 6px;/);
+    expect(APP).toMatch(
+      /::-webkit-scrollbar-thumb\s*\{[^}]*border-radius: var\(--m-radio-pildora\);/
+    );
+  });
+
+  it('declara el canal, para que el riel se vea siempre y no solo al desplazar', () => {
+    expect(APP).toMatch(
+      /::-webkit-scrollbar-track\s*\{[^}]*background: var\(--m-riel-canal\);/
+    );
+  });
+
+  /**
+   * Lo que de verdad se vigila: que no se escape al resto del portal. Toda
+   * regla de riel tiene que llevar la clase de la página en el selector.
+   */
+  it('no toca el riel de ninguna otra página', () => {
+    // `[^\n{]` y no `[^{]`: una clase negada SÍ casa saltos de línea, y la
+    // expresión se comería desde el comentario de arriba hasta la primera
+    // llave, devolviendo un selector que no existe.
+    const selectores = [
+      ...APP.matchAll(/^([^\n{]*::-webkit-scrollbar[^\n{]*)\{/gm),
+    ].map((coincidencia) => coincidencia[1].trim());
+
+    expect(selectores).toHaveLength(3);
+    for (const selector of selectores) {
+      expect(selector).toContain('html.m-riel-oro');
+    }
+    expect(APP.match(/scrollbar-color/g)).toHaveLength(1);
+  });
+});
+
+/**
+ * La etiqueta que solo oye el lector de pantalla. Va global y no en un
+ * componente porque la necesitan el buscador de la barra (fase A) y los campos
+ * de los filtros (fase C): declararla dos veces sería dos sitios donde
+ * equivocarse.
+ */
+describe('utilidad de texto para lector de pantalla', () => {
+  it('declara la clase `sr` y la saca del flujo sin apagarla', () => {
+    expect(APP).toMatch(/^\.sr \{/m);
+    expect(APP).toMatch(/\.sr \{[^}]*position: absolute;/);
+    expect(APP).toMatch(/\.sr \{[^}]*clip-path: inset\(50%\);/);
+    // `display: none` la escondería TAMBIÉN del lector de pantalla.
+    expect(APP).not.toMatch(/\.sr \{[^}]*display: none/);
+  });
 });

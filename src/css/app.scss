@@ -55,3 +55,56 @@ body.m-panel-abierto {
     animation: none;
   }
 }
+
+/**
+ * Riel de desplazamiento dorado — SOLO en la página de servicios.
+ *
+ * Va sobre `html` porque el riel lo pinta el elemento que desplaza, y desde que
+ * la página de servicios dejó su scroll interno (D4) el que desplaza es el
+ * documento: un selector sobre el `<div>` de la página no pintaría nada.
+ * `ServicePage.vue` pone la clase al montarse y la quita al desmontarse, igual
+ * que `AssistantPanel.vue` hace con `m-panel-abierto`; así el oro no se cuela
+ * en las bandas claras del inicio, donde sería una raya oscura sobre hueso.
+ *
+ * Declarar `::-webkit-scrollbar` con un ancho explícito es además lo que hace
+ * que WebKit abandone el riel flotante que solo aparece al desplazar: con esto
+ * el riel se ve SIEMPRE, que es lo que pide el lienzo.
+ */
+html.m-riel-oro {
+  scrollbar-width: thin;
+  scrollbar-color: var(--m-oro) var(--m-riel-canal);
+}
+
+html.m-riel-oro::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+html.m-riel-oro::-webkit-scrollbar-track {
+  background: var(--m-riel-canal);
+}
+
+html.m-riel-oro::-webkit-scrollbar-thumb {
+  background: var(--m-oro);
+  border-radius: var(--m-radio-pildora);
+}
+
+/**
+ * Etiqueta que existe para el lector de pantalla y para nadie más.
+ *
+ * Un buscador con `placeholder` y sin `<label>` deja al lector de pantalla
+ * diciendo «campo de edición» y nada más. Esto saca la etiqueta de la vista sin
+ * sacarla del árbol de accesibilidad — que es exactamente lo que `display: none`
+ * sí haría.
+ */
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

@@ -57,6 +57,15 @@
   /// secundarias (p. ej. «Deja la tuya») en las bandas claras.
   --m-rosa-profundo: #8e3b5c;
 
+  /// Acción destructiva sobre fondo oscuro o claro. 6,4:1 con
+  /// `--m-peligro-texto`, que es el hueso. Única excepción a «un acento por
+  /// pantalla»: solo el botón que borra de verdad.
+  /// Es la MISMA tinta que `--m-rosa-profundo` a propósito: la paleta no tiene
+  /// rojo y un borrado no merece un color nuevo, pero sí un nombre propio —
+  /// quien lea `var(--m-peligro)` sabe que está pintando una acción sin vuelta.
+  --m-peligro: #8e3b5c;
+  --m-peligro-texto: #f6f1ea;
+
   // --- Neutros --------------------------------------------------------------
 
   /// Texto secundario sobre hueso: 5,2:1.
@@ -85,6 +94,21 @@
   /// se distinga de la conversación sin competir con ella. Con `--m-piedra`
   /// encima da 4,8:1 (calculado), así que pasa AA.
   --m-aviso-fondo: #efe7dc;
+
+  /// Canal del riel de desplazamiento sobre fondo oscuro (el pulgar es
+  /// `--m-oro`). Mismo valor que `--m-carbon` y nombre propio por lo mismo que
+  /// `--m-peligro`: el riel es un sitio, no una superficie.
+  /// No es color de texto: nada se escribe encima.
+  --m-riel-canal: #2a251f;
+
+  /// Canal del riel sobre fondo claro, para cuando una superficie de hueso
+  /// tenga su propio desplazamiento (fases C y D). Con `--m-oro` encima da
+  /// 2,6:1 (calculado): basta para un pulgar, y no es color de texto.
+  --m-riel-canal-claro: #e6ded3;
+
+  /// Fondo de un botón que se posa sobre una foto (las acciones de la dueña en
+  /// la tarjeta). No es color de texto: solo asienta el icono.
+  --m-velo-accion: rgba(22, 19, 15, 0.72);
 
   // --- Canal de WhatsApp ----------------------------------------------------
 
