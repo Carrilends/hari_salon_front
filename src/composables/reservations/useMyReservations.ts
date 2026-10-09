@@ -2,7 +2,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query';
 import {
   fetchMyReservations,
   cancelReservation,
-  rescheduleReservation,
 } from 'src/api/reservations-api';
 import type { ReservationDto } from 'src/interfaces/booking';
 import { queryKeys } from 'src/api/query-keys';
@@ -13,6 +12,10 @@ import { queryKeys } from 'src/api/query-keys';
  * cancelación que invalida esa consulta. La cancelación va por el mismo endpoint
  * que usa el asistente conversacional: comparten el caso de uso de Reservas, así
  * que ambas vías informan siempre del mismo estado.
+ *
+ * Mover una cita ya no vive aquí: lo hace `CambiarFechaDialog`, que lo reutiliza
+ * la bandeja de la dueña y que invalida `reservations.all` (por prefijo, también
+ * esta consulta) antes de avisar.
  */
 export function useMyReservations() {
   const queryClient = useQueryClient();
@@ -28,20 +31,5 @@ export function useMyReservations() {
       queryClient.invalidateQueries({ queryKey: queryKeys.reservations.me }),
   });
 
-  // Mueve una cita conservando su id. Invalida la misma consulta que cancelar:
-  // ambas vías y el asistente comparten el caso de uso del backend, así que
-  // siempre informan del mismo estado.
-  //
-  // `onSuccess` **devuelve** la promesa de la invalidación, así que `mutateAsync`
-  // no resuelve hasta que la lista está refrescada. De eso depende poder nombrar
-  // a la estilista nueva cuando el sistema reasigna: la respuesta del PATCH solo
-  // trae su id, y el nombre está en la lista recién traída.
-  const reschedule = useMutation({
-    mutationFn: ({ id, scheduledAt }: { id: string; scheduledAt: string }) =>
-      rescheduleReservation(id, scheduledAt),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: queryKeys.reservations.me }),
-  });
-
-  return { query, cancel, reschedule };
+  return { query, cancel };
 }
