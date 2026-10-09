@@ -54,7 +54,7 @@
       <button
         v-if="movible"
         type="button"
-        class="tarjeta-reserva__mover m-boton-plano"
+        class="tarjeta-reserva__mover"
         :aria-label="`Cambiar fecha de la cita del ${dia}`"
         data-test="abrir-cambiar-fecha"
         @click="emit('cambiar-fecha', reserva)"

@@ -59,7 +59,7 @@
       </button>
       <button
         type="button"
-        class="cancelar-reserva__volver m-boton--ancho m-boton-plano"
+        class="cancelar-reserva__volver m-boton--ancho"
         data-test="volver-cancelacion"
         @click="cerrar"
       >
