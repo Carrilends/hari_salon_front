@@ -139,3 +139,93 @@ describe('TiraDeDias', () => {
     ).toBe('Días siguientes');
   });
 });
+
+/**
+ * Revisión final del plan 2 (D3): «Cambiar fecha» abre con el día de la cita
+ * elegido, y si caía más allá de los primeros siete la tira no se movía: se
+ * veían las horas de un día que no estaba a la vista. Ahora el elegido se
+ * centra DENTRO de la tira (solo ella: ni el diálogo ni la página se mueven),
+ * y solo si no se ve entero. jsdom no maqueta: se fijan las cajas a mano
+ * (tira de 300 px; cada día, 52 px cada 58).
+ */
+describe('TiraDeDias · el día elegido se ve', () => {
+  const desplazar = jest.fn();
+  const matchMediaOriginal = window.matchMedia;
+  const caja = (left: number, width: number) =>
+    ({
+      left,
+      width,
+      right: left + width,
+      top: 0,
+      bottom: 72,
+      height: 72,
+    } as DOMRect);
+
+  beforeEach(() => {
+    desplazar.mockReset();
+    Object.defineProperty(HTMLElement.prototype, 'scrollBy', {
+      value: desplazar,
+      configurable: true,
+      writable: true,
+    });
+    jest
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockImplementation(function (this: HTMLElement) {
+        if (this.tagName === 'UL') return caja(0, 300);
+        const li = this.closest('li');
+        const indice = li?.parentElement
+          ? Array.from(li.parentElement.children).indexOf(li)
+          : 0;
+        return caja(indice * 58, 52);
+      });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+    delete (HTMLElement.prototype as Partial<HTMLElement>).scrollBy;
+    window.matchMedia = matchMediaOriginal;
+  });
+
+  it('al montar con un día lejano elegido, lo centra sin animar', () => {
+    // Día 10 (17 oct): de 580 a 632; su centro (606) menos el de la tira (150).
+    montar(DIAS[10].fecha);
+
+    expect(desplazar).toHaveBeenCalledTimes(1);
+    expect(desplazar).toHaveBeenCalledWith({ left: 456, behavior: 'auto' });
+  });
+
+  it('si el elegido ya se ve entero, no mueve la tira', () => {
+    montar(DIAS[1].fecha);
+
+    expect(desplazar).not.toHaveBeenCalled();
+  });
+
+  it('al cambiar a un día que no se ve, lo centra con suavidad', async () => {
+    const wrapper = montar(DIAS[1].fecha);
+
+    await wrapper.setProps({ seleccionado: DIAS[12].fecha });
+
+    // Día 12: de 696 a 748; centro 722 − 150.
+    expect(desplazar).toHaveBeenCalledWith({ left: 572, behavior: 'smooth' });
+  });
+
+  it('con movimiento reducido, el cambio no anima', async () => {
+    window.matchMedia = ((consulta: string) => ({
+      matches: consulta.includes('prefers-reduced-motion'),
+      media: consulta,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    })) as unknown as typeof window.matchMedia;
+    const wrapper = montar(DIAS[1].fecha);
+
+    await wrapper.setProps({ seleccionado: DIAS[12].fecha });
+
+    expect(desplazar).toHaveBeenCalledWith({ left: 572, behavior: 'auto' });
+  });
+
+  it('sin `scrollBy` (un navegador viejo) no revienta', () => {
+    delete (HTMLElement.prototype as Partial<HTMLElement>).scrollBy;
+
+    expect(() => montar(DIAS[10].fecha)).not.toThrow();
+  });
+});

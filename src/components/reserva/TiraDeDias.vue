@@ -84,8 +84,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import StrokeIcon from 'src/components/shared/StrokeIcon.vue';
+import { useConsultaMedios } from 'src/composables/shared/useConsultaMedios';
 import type { DiaDeTira } from 'src/helpers/reserva-huecos';
 import { diaYNumero, fechaLarga } from 'src/helpers/reserva-texto';
 
@@ -139,6 +140,42 @@ const festivoElegido = computed(
 function desplazar(sentido: 1 | -1) {
   lista.value?.scrollBy?.({ left: sentido * PASO_FLECHA, behavior: 'smooth' });
 }
+
+/** Movimiento reducido: el día elegido se lleva a la vista sin animar. */
+const sinMovimiento = useConsultaMedios(
+  '(prefers-reduced-motion: reduce)',
+  false
+);
+
+/**
+ * Lleva el día elegido a la vista DENTRO de la tira (revisión final del plan
+ * 2, D3): «Cambiar fecha» abre con el día de la cita elegido, y si caía más
+ * allá de los primeros siete no se veía. Se centra con `scrollBy` sobre la
+ * lista y no con `scrollIntoView`, que movería también el diálogo o la página;
+ * y solo si no se ve entero, para no mover la tira bajo el dedo de quien
+ * acaba de tocar un día visible. Solo corre en `onMounted` o tras un cambio
+ * (nada de esto existe en el SSG); sin `scrollBy`, no hace nada.
+ */
+function mostrarElegido(suave: boolean) {
+  const contenedor = lista.value;
+  if (!contenedor || typeof contenedor.scrollBy !== 'function') return;
+  const boton = contenedor.querySelector<HTMLElement>('[aria-pressed="true"]');
+  if (!boton) return;
+  const tira = contenedor.getBoundingClientRect();
+  const dia = boton.getBoundingClientRect();
+  if (dia.left >= tira.left && dia.right <= tira.right) return;
+  contenedor.scrollBy({
+    left: dia.left + dia.width / 2 - (tira.left + tira.width / 2),
+    behavior: suave && !sinMovimiento.value ? 'smooth' : 'auto',
+  });
+}
+
+onMounted(() => mostrarElegido(false));
+watch(
+  () => props.seleccionado,
+  () => mostrarElegido(true),
+  { flush: 'post' }
+);
 </script>
 
 <style scoped lang="scss">
