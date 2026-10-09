@@ -106,6 +106,27 @@ describe('CancelarReservaDialog (de Mis reservas)', () => {
     expect(boton.text()).toBe('Cancelando…');
   });
 
+  /**
+   * Revisión final (M8): la página ya no cierra mientras cancela; «Volver»
+   * lo dice en vez de quedarse vivo sin hacer nada, como en «Cambiar fecha».
+   */
+  it('mientras cancela, «Volver» también se deshabilita', () => {
+    expect(
+      montar({ cancelando: true })
+        .get('[data-test="volver-cancelacion"]')
+        .attributes('disabled')
+    ).toBeDefined();
+    expect(
+      montar().get('[data-test="volver-cancelacion"]').attributes('disabled')
+    ).toBeUndefined();
+    expect(ESTILOS).toMatch(
+      /\.cancelar-reserva__volver:disabled\s*\{[^}]*opacity:/
+    );
+    expect(ESTILOS).toMatch(
+      /\.cancelar-reserva__volver:hover:not\(:disabled\)/
+    );
+  });
+
   it('el error se lee en línea, como alerta', () => {
     const wrapper = montar({
       error: 'Ya no se puede cancelar: la hora de la cita ya pasó.',

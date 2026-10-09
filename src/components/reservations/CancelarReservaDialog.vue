@@ -61,6 +61,7 @@
         type="button"
         class="cancelar-reserva__volver m-boton--ancho"
         data-test="volver-cancelacion"
+        :disabled="cancelando"
         @click="cerrar"
       >
         Volver
@@ -261,6 +262,12 @@ function confirmar(): void {
   cursor: pointer;
 }
 
+/* Mientras cancela, la página no cierra: «Volver» lo dice apagándose. */
+.cancelar-reserva__volver:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .cancelar-reserva__confirmar:focus-visible,
 .cancelar-reserva__volver:focus-visible {
   outline: 2px solid var(--m-tinta);
@@ -277,7 +284,7 @@ function confirmar(): void {
     border-color: var(--m-oro);
   }
 
-  .cancelar-reserva__volver:hover {
+  .cancelar-reserva__volver:hover:not(:disabled) {
     border-color: var(--m-oro);
   }
 }
