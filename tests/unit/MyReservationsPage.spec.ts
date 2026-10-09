@@ -17,6 +17,7 @@ const mockQuery = {
   isLoading: ref(false),
   isError: ref(false),
   isFetching: ref(false),
+  dataUpdatedAt: ref(0),
   refetch: jest.fn(),
 };
 const mockCancelar = jest.fn();
@@ -118,6 +119,7 @@ beforeEach(() => {
   mockQuery.isLoading.value = false;
   mockQuery.isError.value = false;
   mockQuery.isFetching.value = false;
+  mockQuery.dataUpdatedAt.value = 0;
   mockQuery.refetch.mockReset();
   mockCancelar.mockReset();
   mockSolicitarResena.mockReset();
@@ -209,6 +211,79 @@ describe('MyReservationsPage · la lista', () => {
     expect(boton.attributes('disabled')).toBeDefined();
     expect(boton.attributes('aria-busy')).toBe('true');
     expect(boton.text()).toBe('Actualizar');
+  });
+});
+
+/**
+ * Revisión final I1: «ahora» se renovaba solo cuando cambiaba `data`, pero
+ * TanStack conserva el MISMO arreglo si el servidor devuelve la lista igual.
+ * La pestaña de ayer seguía diciendo «Mañana» y una cita ya empezada seguía en
+ * «Próximas» con sus botones. Se fija el reloj (solo `Date`) para mover el
+ * tiempo sin tocar los temporizadores de Vue.
+ */
+describe('MyReservationsPage · «ahora» se renueva', () => {
+  const SOLO_FECHA = [
+    'hrtime',
+    'nextTick',
+    'performance',
+    'queueMicrotask',
+    'requestAnimationFrame',
+    'cancelAnimationFrame',
+    'requestIdleCallback',
+    'cancelIdleCallback',
+    'setImmediate',
+    'clearImmediate',
+    'setInterval',
+    'clearInterval',
+    'setTimeout',
+    'clearTimeout',
+  ] as const;
+
+  beforeEach(() => {
+    jest.useFakeTimers({ doNotFake: Array.from(SOLO_FECHA) });
+    jest.setSystemTime(new Date('2026-10-09T15:00:00.000Z'));
+  });
+  afterEach(() => jest.useRealTimers());
+
+  /** Una cita que empieza en 5 minutos, y la misma lista para siempre. */
+  const conUnaCitaInminente = () => {
+    const misma = [cita('r9', 5 * 60_000)];
+    mockQuery.data.value = misma;
+    return misma;
+  };
+  const conAcciones = (w: Pagina) =>
+    w
+      .findAll('[data-test="tarjeta-reserva"]')
+      .map((t) => t.find('[data-test="abrir-cancelar"]').exists());
+
+  it('una respuesta con la MISMA lista saca de «Próximas» la cita ya empezada', async () => {
+    const misma = conUnaCitaInminente();
+    mockQuery.dataUpdatedAt.value = Date.now();
+    const wrapper = montar();
+    expect(conAcciones(wrapper)).toEqual([true]);
+
+    jest.setSystemTime(Date.now() + 10 * 60_000);
+    // El servidor respondió igual: el arreglo es el mismo, solo cambia la marca.
+    mockQuery.data.value = misma;
+    mockQuery.dataUpdatedAt.value = Date.now();
+    await nextTick();
+
+    expect(wrapper.find('[data-test="seccion-proximas"]').exists()).toBe(false);
+    expect(wrapper.get('[data-test="plegar-pasadas"]').text()).toContain(
+      'Pasadas · 1'
+    );
+  });
+
+  it('«Actualizar» renueva «ahora» aunque la respuesta no llegue', async () => {
+    conUnaCitaInminente();
+    const wrapper = montar();
+    expect(conAcciones(wrapper)).toEqual([true]);
+
+    jest.setSystemTime(Date.now() + 10 * 60_000);
+    await wrapper.get('[data-test="actualizar"]').trigger('click');
+
+    expect(mockQuery.refetch).toHaveBeenCalledTimes(1);
+    expect(wrapper.find('[data-test="seccion-proximas"]').exists()).toBe(false);
   });
 });
 

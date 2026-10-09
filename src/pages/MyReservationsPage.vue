@@ -209,11 +209,15 @@ const { query, cancel } = useMyReservations();
 const { solicitar: pedirResena } = useReviewDialog();
 
 // Instante de referencia para separar próximas y pasadas y para la cortesía de
-// los botones. La regla real la aplica el backend. Se renueva con cada lista
-// nueva, para que una cita cuya hora ya pasó salga de «Próximas» al actualizar.
+// los botones. La regla real la aplica el backend. Se renueva con cada
+// respuesta del servidor y al pulsar «Actualizar», para que una cita cuya hora
+// ya pasó salga de «Próximas». Se vigila `dataUpdatedAt` y no `data`: si la
+// lista vuelve igual, TanStack conserva el MISMO objeto (lo comparte) y un
+// vigilante de `data` no se enteraba; la pestaña abierta desde ayer seguía
+// diciendo «Mañana» el día de la cita.
 const ahora = ref(new Date());
 watch(
-  () => query.data.value,
+  () => query.dataUpdatedAt.value,
   () => {
     ahora.value = new Date();
   }
@@ -231,6 +235,7 @@ const pasadasAbiertas = ref(false);
 const aviso = ref('');
 
 function actualizar(): void {
+  ahora.value = new Date();
   void query.refetch();
 }
 
