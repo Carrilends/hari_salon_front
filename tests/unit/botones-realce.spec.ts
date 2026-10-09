@@ -297,6 +297,7 @@ const BOTONES: Boton[] = [
   { archivo: 'components/shared/MenuMasContenido.vue', clase: 'menu-mas__entrada--pie', claro: true },
   { archivo: 'components/shared/MenuMasContenido.vue', clase: 'menu-mas__boton--macizo' },
   { archivo: 'components/shared/MenuMasContenido.vue', clase: 'menu-mas__boton--contorno', claro: true },
+  { archivo: 'components/shared/MenuMasHoja.vue', clase: 'menu-hoja__cerrar', claro: true },
 ];
 
 /** El bloque de estilos de un SFC dentro de las consultas de puntero fino. */

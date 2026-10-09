@@ -58,6 +58,7 @@ describe('los diálogos reciben los clics', () => {
         join('components', 'dialogs', 'serviceFilterDialog.vue'),
         join('components', 'dialogs', 'ServicePromotionDialog.vue'),
         join('components', 'dialogs', 'ServiceDeleteDialog.vue'),
+        join('components', 'shared', 'MenuMasHoja.vue'),
       ])
     );
   });
