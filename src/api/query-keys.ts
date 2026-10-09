@@ -20,6 +20,9 @@ export const queryKeys = {
     /** Días con hueco del mes que muestra el calendario del diálogo de reserva. */
     month: (year: number, month: number) =>
       ['reservation-occupancy', year, month] as const,
+    /** Los días de la tira del cajón de reserva (`desde`/`hasta` `YYYY-MM-DD`). */
+    rango: (desde: string, hasta: string) =>
+      ['reservation-occupancy', 'rango', desde, hasta] as const,
   },
   workerAvailability: {
     all: ['worker-availability'] as const,

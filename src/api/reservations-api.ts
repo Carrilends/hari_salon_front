@@ -105,13 +105,20 @@ export interface CreateReservationPayload {
 }
 
 /**
- * Crea una reserva desde el portal público (Fase 4). Va por `reservationsApi`
- * (sin Bearer): la reserva es anónima, así que el back exige `contact`.
+ * Crea una reserva desde el portal (Fase 4; cajón de reserva, plan 1 de las
+ * vistas). Va por `authedReservationsApi`, que añade el Bearer **solo si hay
+ * sesión**: con sesión, `OptionalJwtAuthGuard` liga la reserva a la cuenta
+ * (`userId`) y el back ya no exige `contact`; sin sesión sale anónima, como
+ * antes, y el back exige `contact`. Hasta el plan 1 iba por `reservationsApi`
+ * (sin Bearer) y la reserva de una clienta con sesión no aparecía en «Mis
+ * reservas».
+ *
+ * Responde el agregado serializado: trae `workerId`, no `worker`.
  */
 export async function createReservation(
   payload: CreateReservationPayload
 ): Promise<ReservationDto> {
-  const { data } = await reservationsApi.post<ReservationDto>(
+  const { data } = await authedReservationsApi.post<ReservationDto>(
     '/reservations',
     payload
   );
