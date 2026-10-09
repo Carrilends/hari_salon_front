@@ -118,7 +118,8 @@ export function useCajonReserva(abierto: Ref<boolean>) {
   const errores = ref<ErroresDatos>({});
   const enviando = ref(false);
   const errorEnvio = ref<string | null>(null);
-  const aviso = ref<AvisoDisponibilidad | null>(null);
+  /** El aviso tal como se dio; lo que se pinta es `aviso`, más abajo. */
+  const avisoBase = ref<AvisoDisponibilidad | null>(null);
   const resumen = ref<ResumenExito | null>(null);
   /** La hora que falló, para «Probar sin preferencia». */
   let horaFallida: string | null = null;
@@ -216,6 +217,21 @@ export function useCajonReserva(abierto: Ref<boolean>) {
       )
     );
 
+  /**
+   * «Probar sin preferencia» solo tiene sentido si lo elegido ahora mismo es
+   * una estilista: el vigilante pudo pasarla a «Sin preferencia» mientras se
+   * enviaba, o la clienta elegirla a mano con el aviso a la vista.
+   */
+  const aviso = computed<AvisoDisponibilidad | null>(() =>
+    avisoBase.value
+      ? {
+          ...avisoBase.value,
+          ofrecerSinPreferencia:
+            avisoBase.value.ofrecerSinPreferencia && estilistaId.value !== null,
+        }
+      : null
+  );
+
   const puedeContinuar = computed(() => {
     if (enviando.value || cantidad.value === 0) return false;
     if (paso.value === 'cuando') return horaLibre(hora.value);
@@ -257,7 +273,7 @@ export function useCajonReserva(abierto: Ref<boolean>) {
   function reiniciar() {
     paso.value = 'servicios';
     resumen.value = null;
-    aviso.value = null;
+    avisoBase.value = null;
     errorEnvio.value = null;
     horaFallida = null;
   }
@@ -272,6 +288,9 @@ export function useCajonReserva(abierto: Ref<boolean>) {
       if (paso.value === 'exito' && resumen.value) return;
       ahora.value = getSalonNowParts();
       paso.value = 'servicios';
+      // Un aviso de otra visita ya no dice nada de lo que hay ahora.
+      avisoBase.value = null;
+      horaFallida = null;
       // Aunque ya estuviera en «servicios»: abrir también es cambiar de paso.
       ultimoCambioDePaso = Date.now();
       errorEnvio.value = null;
@@ -292,7 +311,7 @@ export function useCajonReserva(abierto: Ref<boolean>) {
 
   watch(fecha, () => {
     hora.value = null;
-    aviso.value = null;
+    avisoBase.value = null;
     horaFallida = null;
   });
 
@@ -380,7 +399,7 @@ export function useCajonReserva(abierto: Ref<boolean>) {
   function elegirHora(h: string) {
     if (!horaLibre(h)) return;
     hora.value = h;
-    aviso.value = null;
+    avisoBase.value = null;
     horaFallida = null;
   }
 
@@ -412,7 +431,7 @@ export function useCajonReserva(abierto: Ref<boolean>) {
     elegida: { id: string | null; nombre: string | null },
     horaElegida: string
   ) {
-    aviso.value = {
+    avisoBase.value = {
       texto: elegida.nombre
         ? `La disponibilidad cambió y ya no hay tiempo suficiente con ${
             elegida.nombre
@@ -433,21 +452,24 @@ export function useCajonReserva(abierto: Ref<boolean>) {
    * Igual que en B6: de vuelta a «Cuándo», sin la hora y con todo lo demás.
    */
   function irAHoraPasada() {
-    aviso.value = { texto: MENSAJE_HORA_PASADA, ofrecerSinPreferencia: false };
+    avisoBase.value = {
+      texto: MENSAJE_HORA_PASADA,
+      ofrecerSinPreferencia: false,
+    };
     horaFallida = null;
     hora.value = null;
     paso.value = 'cuando';
   }
 
   function elegirOtraHora() {
-    aviso.value = null;
+    avisoBase.value = null;
     horaFallida = null;
   }
 
   function probarSinPreferencia() {
     const anterior = horaFallida;
     estilistaId.value = null;
-    aviso.value = null;
+    avisoBase.value = null;
     horaFallida = null;
     if (
       anterior &&

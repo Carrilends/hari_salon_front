@@ -540,6 +540,63 @@ describe('useCajonReserva · «la disponibilidad cambió» (B6)', () => {
     expect(useBookStore().bookings).toHaveLength(1);
   });
 
+  it('un aviso viejo no sobrevive a cerrar y volver a abrir', async () => {
+    mockEnviar.mockResolvedValue({ tipo: 'conflicto' });
+    const { cajon, abierto } = montar();
+    await hastaDatos(cajon);
+    datosSinSesion(cajon);
+    await cajon.confirmar();
+    expect(cajon.aviso.value).not.toBeNull();
+
+    abierto.value = false;
+    await nextTick();
+    abierto.value = true;
+    await nextTick();
+
+    expect(cajon.aviso.value).toBeNull();
+  });
+
+  it('no ofrece «Probar sin preferencia» si «Sin preferencia» ya es lo elegido', async () => {
+    mockEnviar.mockResolvedValue({ tipo: 'conflicto' });
+    const { cajon } = montar();
+    await hastaDatos(cajon, { estilista: 'w-monica' });
+    datosSinSesion(cajon);
+    // La recarga antes de enviar deja a Monica sin tiempo para 1 h (la hora
+    // sigue libre en su agenda): el vigilante la cambia a «Sin preferencia»
+    // mientras se espera la respuesta, y luego llega el 409.
+    mockDisponibilidad.refetch.mockImplementationOnce(async () => {
+      const base = disponibilidad();
+      mockDisponibilidad.data.value = {
+        ...base,
+        workers: base.workers.map((w) =>
+          w.id === 'w-monica' ? { ...w, availableMinutes: 30 } : w
+        ),
+      };
+      return { data: mockDisponibilidad.data.value };
+    });
+
+    await cajon.confirmar();
+
+    expect(cajon.estilistaId.value).toBeNull();
+    expect(cajon.aviso.value?.ofrecerSinPreferencia).toBe(false);
+  });
+
+  it('si después elige «Sin preferencia» a mano, deja de ofrecerla', async () => {
+    const { cajon } = montar();
+    await hastaDatos(cajon, { estilista: 'w-monica' });
+    datosSinSesion(cajon);
+    mockDisponibilidad.refetch.mockImplementationOnce(async () => {
+      mockDisponibilidad.data.value = conMonicaOcupada();
+      return { data: mockDisponibilidad.data.value };
+    });
+    await cajon.confirmar();
+    expect(cajon.aviso.value?.ofrecerSinPreferencia).toBe(true);
+
+    cajon.elegirEstilista(null);
+
+    expect(cajon.aviso.value?.ofrecerSinPreferencia).toBe(false);
+  });
+
   it('elegir una hora nueva quita el aviso', async () => {
     mockEnviar.mockResolvedValue({ tipo: 'conflicto' });
     const { cajon } = montar();
