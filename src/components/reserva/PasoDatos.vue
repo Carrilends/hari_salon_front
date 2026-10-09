@@ -104,9 +104,7 @@
         :href="RUTA_POLITICA"
         target="_blank"
         rel="noopener"
-        ><span class="datos__subrayado"
-          >política de tratamiento de datos</span
-        ></a
+        >política de tratamiento de datos</a
       >
       al crear tu cuenta; no hace falta marcarla otra vez.
     </p>
@@ -132,9 +130,7 @@
             :href="RUTA_POLITICA"
             target="_blank"
             rel="noopener"
-            ><span class="datos__subrayado"
-              >política de tratamiento de datos</span
-            ></a
+            >política de tratamiento de datos</a
           >.
         </span>
       </label>
