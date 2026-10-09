@@ -23,6 +23,8 @@
         @input="alEscribir"
         @blur="emit('blur')"
       />
+      <!-- Nombre fijo: el estado lo anuncia aria-pressed; si el nombre también
+           cambiara, el lector diría dos cosas contradictorias. -->
       <!-- type="button" a propósito: sin él, dentro de un <form> el ojo
            enviaría el formulario con la contraseña a medias. -->
       <button
@@ -31,9 +33,7 @@
         class="campo-acceso__ojo m-boton-plano"
         data-test="ver-contrasena"
         :aria-pressed="visible ? 'true' : 'false'"
-        :aria-label="
-          visible ? 'Ocultar la contraseña' : 'Mostrar la contraseña'
-        "
+        aria-label="Mostrar la contraseña"
         @click="visible = !visible"
       >
         <svg

@@ -129,7 +129,7 @@ describe('CampoAcceso', () => {
 
     expect(input().attributes('type')).toBe('text');
     expect(ojo().attributes('aria-pressed')).toBe('true');
-    expect(ojo().attributes('aria-label')).toBe('Ocultar la contraseña');
+    expect(ojo().attributes('aria-label')).toBe('Mostrar la contraseña');
   });
 
   /** Foco de revisión 1: un `<button>` sin tipo dentro de un form envía. */
