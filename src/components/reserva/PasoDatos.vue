@@ -9,7 +9,7 @@
           data-test="cambiar-cita"
           @click="emit('cambiar')"
         >
-          Cambiar
+          <span class="datos__subrayado">Cambiar</span>
         </button>
       </div>
       <p class="datos__cita-cuando">{{ cita.cuando }}</p>
@@ -242,7 +242,12 @@ const marcadoDe = (evento: Event) =>
   margin: 0;
 }
 
+.datos__subrayado {
+  border-bottom: var(--m-filete-grosor) solid var(--m-filete-rosa);
+}
+
 .datos__cambiar {
+  border-bottom: none;
   min-height: var(--m-tactil-min);
   font-size: 12.5px;
 }

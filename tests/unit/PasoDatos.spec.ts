@@ -39,6 +39,9 @@ describe('PasoDatos', () => {
     expect(tarjeta.text()).toContain('Jueves 8 de octubre · 10:30');
     expect(tarjeta.text()).toContain('Hasta las 11:30 · con Monica');
     expect(tarjeta.text()).toContain('Bob clásico · Uñas de gel');
+    expect(
+      wrapper.get('[data-test="cambiar-cita"] .datos__subrayado').text()
+    ).toBe('Cambiar');
     await wrapper.get('[data-test="cambiar-cita"]').trigger('click');
     expect(wrapper.emitted('cambiar')).toHaveLength(1);
   });
