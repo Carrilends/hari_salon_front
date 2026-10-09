@@ -14,6 +14,7 @@ import {
   diasDeLaTira,
   huecosDelDia,
   rangoDeLaTira,
+  type DiaDeTira,
   type HuecoDeHora,
 } from 'src/helpers/reserva-huecos';
 import {
@@ -300,9 +301,34 @@ export function useCajonReserva(abierto: Ref<boolean>) {
     }
   });
 
+  /**
+   * ¿Le queda hoy alguna hora en la que quepa la bolsa antes del cierre? Se
+   * mira con el reloj, sin esperar a la ocupación: mientras esta no llega,
+   * todos los días son «desconocida» y, a las 19:50, hoy pasaría por bueno.
+   * La rejilla es la de `huecosDelDia`: cada 30 min desde la apertura, y solo
+   * las horas posteriores al minuto actual.
+   */
+  function hoyQuedaHueco(dia: DiaDeTira, minutoActual: number): boolean {
+    const cierra = minutoDe(dia.horario.cierra);
+    for (
+      let t = minutoDe(dia.horario.abre);
+      t + duracion.value <= cierra;
+      t += 30
+    ) {
+      if (t > minutoActual) return true;
+    }
+    return false;
+  }
+
   function primerDiaConHueco(): string | null {
+    const reloj =
+      ahoraDelServidor(ocupacion.data.value?.salonNow) ?? ahora.value;
     return (
-      dias.value.find((d) => d.disponibilidad !== 'sin-hueco')?.fecha ?? null
+      dias.value.find(
+        (d) =>
+          d.disponibilidad !== 'sin-hueco' &&
+          !(d.esHoy && !hoyQuedaHueco(d, reloj.minOfDay))
+      )?.fecha ?? null
     );
   }
 

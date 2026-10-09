@@ -184,6 +184,34 @@ describe('useCajonReserva · pasos', () => {
     expect(cajon.fecha.value).toBe('2026/10/08');
   });
 
+  it('sin la ocupación aún, no elige hoy si ya no le cabe la bolsa antes del cierre', () => {
+    // 19:50 del miércoles 7 en Bogotá: cierra a las 20:00.
+    jest.setSystemTime(new Date('2026-10-08T00:50:00Z'));
+    const { cajon } = montar();
+    conBolsa(); // 1 h
+
+    cajon.continuar();
+
+    expect(cajon.paso.value).toBe('cuando');
+    expect(cajon.fecha.value).toBe('2026/10/08');
+  });
+
+  it('sin la ocupación aún, hoy vale mientras quede una hora en la que quepa la bolsa', () => {
+    // 18:40: las 19:00 aún caben (19:00 a 20:00). A las 19:00 ya no.
+    jest.setSystemTime(new Date('2026-10-07T23:40:00Z'));
+    const temprano = montar().cajon;
+    conBolsa();
+    temprano.continuar();
+    expect(temprano.fecha.value).toBe('2026/10/07');
+
+    jest.setSystemTime(new Date('2026-10-08T00:00:00Z'));
+    setActivePinia((pinia = createPinia()));
+    const tarde = montar().cajon;
+    conBolsa();
+    tarde.continuar();
+    expect(tarde.fecha.value).toBe('2026/10/08');
+  });
+
   it('en «Cuándo» no sigue sin una hora libre elegida', async () => {
     const { cajon } = montar();
     conBolsa();
