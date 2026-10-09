@@ -1,4 +1,5 @@
 import type { RouteLocationRaw } from 'vue-router';
+import { redireccionSegura } from 'src/helpers/redireccion-segura';
 
 /**
  * El modelo del menú «Más» de la cabecera (M2 de
@@ -33,36 +34,13 @@ export type SeccionMenu = {
   entradas: EntradaMenu[];
 };
 
-const REGRESO_POR_DEFECTO = '/services';
-
-// eslint-disable-next-line no-control-regex
-const CARACTER_DE_CONTROL = /[\u0000-\u001F\u007F]/;
-
-/**
- * Solo rutas internas (spec §7.7): lo que no empieza por `/`, o empieza por
- * `//`, es una redirección abierta y se cambia por `/services`. También lo que
- * lleva `\` o caracteres de control (los navegadores convierten `/\x` y
- * `/<tab>/x` en `//x`) y lo que vuelve al acceso (`/auth…`: tras entrar sería
- * un bucle). Es la misma regla que `redireccionSegura` del plan de acceso, que
- * la sustituirá sin cambiar conducta.
- */
-function regresoInterno(redirect: string): string {
-  const ruta = (redirect ?? '').trim();
-  if (!ruta.startsWith('/') || ruta.startsWith('//'))
-    return REGRESO_POR_DEFECTO;
-  if (ruta.includes('\\') || CARACTER_DE_CONTROL.test(ruta)) {
-    return REGRESO_POR_DEFECTO;
-  }
-  if (/^\/auth(?:[/?#]|$)/.test(ruta)) return REGRESO_POR_DEFECTO;
-  return ruta;
-}
-
 export function seccionesDelMenu(estado: {
   isLoggedIn: boolean;
   isAdmin: boolean;
   redirect: string;
 }): SeccionMenu[] {
-  const redirect = regresoInterno(estado.redirect);
+  // Solo rutas internas (§7.7): el saneador común del login y el registro.
+  const redirect = redireccionSegura(estado.redirect);
   const secciones: SeccionMenu[] = [];
 
   if (estado.isLoggedIn) {
