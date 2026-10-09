@@ -281,6 +281,30 @@ export function getBusinessDayBounds(dateStr: string): {
   };
 }
 
+/** Minutos desde medianoche → `H:MM`, sin cero a la izquierda (8:00, 19:00). */
+function formatearHora(minutos: number): string {
+  const horas = Math.floor(minutos / 60);
+  const resto = minutos % 60;
+  return `${horas}:${String(resto).padStart(2, '0')}`;
+}
+
+/**
+ * Apertura y cierre de hoy, para la línea «Hoy · 8:00 a 20:00» del menú «Más»
+ * (M9 de `docs/superpowers/specs/2026-10-07-menu-y-acceso-design.md`).
+ *
+ * Reusa `getBusinessDayBounds`, así que hereda la regla entera —sábado,
+ * domingo y festivos con el horario reducido— y no hay una segunda copia que
+ * pueda desfasarse. Quien la llama lo hace al ABRIR el menú, no en `setup`: así
+ * no hay desajuste con el HTML prerenderizado ni se queda con el día de ayer si
+ * la pestaña pasa la medianoche.
+ */
+export function horarioDeHoy(
+  partes: SalonNowParts = getSalonNowParts()
+): { abre: string; cierra: string } {
+  const { openMin, closeMin } = getBusinessDayBounds(partes.qDate);
+  return { abre: formatearHora(openMin), cierra: formatearHora(closeMin) };
+}
+
 /**
  * Rango efectivo para elegir hora: respeta horario de apertura y, si el día
  * es hoy, no permite minutos ya pasados.
