@@ -105,7 +105,11 @@ function alCredencialGoogle(idToken: string) {
       Entra para reservar más rápido y ver tus citas.
     </p>
 
-    <aviso-acceso v-if="restablecida" variante="tranquilo" class="entrar__restablecida">
+    <aviso-acceso
+      v-if="restablecida"
+      variante="tranquilo"
+      class="entrar__restablecida"
+    >
       Tu contraseña quedó cambiada. Entra con la nueva.
     </aviso-acceso>
 

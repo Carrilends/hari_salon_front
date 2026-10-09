@@ -65,7 +65,9 @@ describe('GoogleSignInButton', () => {
     const wrapper = await montar();
 
     expect(gsi.initialize).toHaveBeenCalledWith(
-      expect.objectContaining({ client_id: 'cliente.apps.googleusercontent.com' })
+      expect.objectContaining({
+        client_id: 'cliente.apps.googleusercontent.com',
+      })
     );
     expect(wrapper.emitted('disponible')).toEqual([[true]]);
   });
@@ -74,7 +76,9 @@ describe('GoogleSignInButton', () => {
     const wrapper = await montar();
     const [contenedor, opciones] = gsi.renderButton.mock.calls[0];
 
-    expect(contenedor).toBe(wrapper.find('[data-test="google-signin"]').element);
+    expect(contenedor).toBe(
+      wrapper.find('[data-test="google-signin"]').element
+    );
     expect(opciones).toEqual(
       expect.objectContaining({
         shape: 'pill',

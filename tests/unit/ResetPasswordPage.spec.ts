@@ -103,7 +103,9 @@ describe('ResetPasswordPage', () => {
       'Contraseña nueva'
     );
     expect(wrapper.find('label[for="repetida"]').text()).toBe('Repítela');
-    expect(wrapper.find('[data-test="enviar"]').text()).toBe('Guardar contraseña');
+    expect(wrapper.find('[data-test="enviar"]').text()).toBe(
+      'Guardar contraseña'
+    );
     expect(wrapper.find('[data-test="enviar"]').classes()).toContain(
       'm-boton--ancho'
     );
@@ -112,7 +114,9 @@ describe('ResetPasswordPage', () => {
   it('las reglas se marcan al escribir (A6)', async () => {
     wrapper = montar();
 
-    await wrapper.find('[data-test="campo-contrasena"]').setValue('Marlene2026');
+    await wrapper
+      .find('[data-test="campo-contrasena"]')
+      .setValue('Marlene2026');
 
     expect(
       wrapper
@@ -164,15 +168,18 @@ describe('ResetPasswordPage', () => {
     ['caducado', 'El enlace expiró; solicita uno nuevo'],
     ['usado', 'El enlace ya fue utilizado'],
     ['inexistente', 'El enlace no es válido'],
-  ])('un enlace %s (400) lleva a «Este enlace ya no sirve»', async (_caso, mensaje) => {
-    mockGuardar.mockRejectedValue(errorHttp(400, mensaje));
-    wrapper = montar();
+  ])(
+    'un enlace %s (400) lleva a «Este enlace ya no sirve»',
+    async (_caso, mensaje) => {
+      mockGuardar.mockRejectedValue(errorHttp(400, mensaje));
+      wrapper = montar();
 
-    await guardar(wrapper, 'Marlene2026');
+      await guardar(wrapper, 'Marlene2026');
 
-    enlaceRoto(wrapper);
-    expect(mockPush).not.toHaveBeenCalled();
-  });
+      enlaceRoto(wrapper);
+      expect(mockPush).not.toHaveBeenCalled();
+    }
+  );
 
   /** Foco de revisión 4: la red caída no quema el enlace bueno. */
   it('sin conexión: aviso en línea y el formulario sigue', async () => {

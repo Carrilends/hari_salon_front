@@ -132,16 +132,19 @@ describe('el acceso entero, leído de la fuente', () => {
   });
 
   it('las cinco páginas siguen fuera del SSG (§7.3)', () => {
-    const config = readFileSync(join(__dirname, '../../quasar.config.js'), 'utf8');
+    const config = readFileSync(
+      join(__dirname, '../../quasar.config.js'),
+      'utf8'
+    );
     const exclusiones = config.slice(config.indexOf('exclude:'));
 
     expect(exclusiones.slice(0, 300)).toContain('/^\\/auth/');
   });
 
   it('el diálogo de consentimiento devuelve los clics a su raíz (§7.9)', () => {
-    expect(reglaDe('components/auth/ConsentimientoGoogle.vue', '.consentimiento')).toMatch(
-      /pointer-events: all;/
-    );
+    expect(
+      reglaDe('components/auth/ConsentimientoGoogle.vue', '.consentimiento')
+    ).toMatch(/pointer-events: all;/);
   });
 
   it.each(TODOS)(
@@ -156,11 +159,16 @@ describe('el acceso entero, leído de la fuente', () => {
     }
   );
 
-  it.each(TODOS)('%s solo cambia de color al pasar con puntero fino', (archivo) => {
-    const fueraDelFino = reglasDe(sinPunteroFino(estilosDe(leer(archivo))));
+  it.each(TODOS)(
+    '%s solo cambia de color al pasar con puntero fino',
+    (archivo) => {
+      const fueraDelFino = reglasDe(sinPunteroFino(estilosDe(leer(archivo))));
 
-    expect(fueraDelFino.filter((r) => r.selector.includes(':hover'))).toEqual([]);
-  });
+      expect(fueraDelFino.filter((r) => r.selector.includes(':hover'))).toEqual(
+        []
+      );
+    }
+  );
 
   it.each([
     LAYOUT,
@@ -196,7 +204,10 @@ describe('el acceso entero, leído de la fuente', () => {
   it('los enlaces de contenido van en rosa profundo con filete rosa', () => {
     [
       reglaDe(LAYOUT, '.acceso-enlace'),
-      reglaDe('components/auth/ConsentimientoGoogle.vue', '.consentimiento__enlace'),
+      reglaDe(
+        'components/auth/ConsentimientoGoogle.vue',
+        '.consentimiento__enlace'
+      ),
     ].forEach((cuerpo) => {
       expect(cuerpo).toMatch(/color: var\(--m-rosa-profundo\);/);
       expect(cuerpo).toMatch(
@@ -206,28 +217,38 @@ describe('el acceso entero, leído de la fuente', () => {
   });
 
   it('los errores van en peligro', () => {
-    expect(reglaDe('components/auth/CampoAcceso.vue', '.campo-acceso__error')).toMatch(
-      /color: var\(--m-peligro\);/
+    expect(
+      reglaDe('components/auth/CampoAcceso.vue', '.campo-acceso__error')
+    ).toMatch(/color: var\(--m-peligro\);/);
+    const aviso = reglaDe(
+      'components/auth/AvisoAcceso.vue',
+      '.aviso-acceso--error'
     );
-    const aviso = reglaDe('components/auth/AvisoAcceso.vue', '.aviso-acceso--error');
     expect(aviso).toMatch(/border-color: var\(--m-peligro\);/);
     expect(aviso).toMatch(/color: var\(--m-peligro\);/);
   });
 
-  it.each(PAGINAS)('%s: todo botón de acceso es ancho (m-boton--ancho)', (archivo) => {
-    const listas = Array.from(plantillaDe(leer(archivo)).matchAll(/\sclass="([^"]*)"/g))
-      .map((m) => m[1].split(/\s+/))
-      .filter((clases) => clases.includes('acceso-boton'));
+  it.each(PAGINAS)(
+    '%s: todo botón de acceso es ancho (m-boton--ancho)',
+    (archivo) => {
+      const listas = Array.from(
+        plantillaDe(leer(archivo)).matchAll(/\sclass="([^"]*)"/g)
+      )
+        .map((m) => m[1].split(/\s+/))
+        .filter((clases) => clases.includes('acceso-boton'));
 
-    expect(listas.length).toBeGreaterThan(0);
-    listas.forEach((clases) => expect(clases).toContain('m-boton--ancho'));
-  });
+      expect(listas.length).toBeGreaterThan(0);
+      listas.forEach((clases) => expect(clases).toContain('m-boton--ancho'));
+    }
+  );
 
   it.each(PAGINAS)(
     '%s: los enlaces con aspecto de botón llevan m-boton (realce y hundido)',
     (archivo) => {
       Array.from(
-        plantillaDe(leer(archivo)).matchAll(/<router-link\b[^>]*\sclass="([^"]*)"/g)
+        plantillaDe(leer(archivo)).matchAll(
+          /<router-link\b[^>]*\sclass="([^"]*)"/g
+        )
       )
         .map((m) => m[1].split(/\s+/))
         .filter((clases) => clases.includes('acceso-boton'))
@@ -235,46 +256,68 @@ describe('el acceso entero, leído de la fuente', () => {
     }
   );
 
-  it.each(PAGINAS.concat(PIEZAS, [LAYOUT]))('%s: todo <button> declara su type', (archivo) => {
-    const botones = Array.from(plantillaDe(leer(archivo)).matchAll(/<button\b[^>]*>/g)).map(
-      (m) => m[0]
-    );
-    botones.forEach((boton) => expect(boton).toMatch(/\stype="(button|submit)"/));
-  });
+  it.each(PAGINAS.concat(PIEZAS, [LAYOUT]))(
+    '%s: todo <button> declara su type',
+    (archivo) => {
+      const botones = Array.from(
+        plantillaDe(leer(archivo)).matchAll(/<button\b[^>]*>/g)
+      ).map((m) => m[0]);
+      botones.forEach((boton) =>
+        expect(boton).toMatch(/\stype="(button|submit)"/)
+      );
+    }
+  );
 
-  it.each(PAGINAS)('%s: los formularios validan por su cuenta (novalidate)', (archivo) => {
-    Array.from(plantillaDe(leer(archivo)).matchAll(/<form\b[^>]*>/g)).forEach((m) =>
-      expect(m[0]).toMatch(/\snovalidate/)
-    );
-  });
+  it.each(PAGINAS)(
+    '%s: los formularios validan por su cuenta (novalidate)',
+    (archivo) => {
+      Array.from(plantillaDe(leer(archivo)).matchAll(/<form\b[^>]*>/g)).forEach(
+        (m) => expect(m[0]).toMatch(/\snovalidate/)
+      );
+    }
+  );
 
-  it.each(PAGINAS)('%s: cada clase común que usa existe en el armazón', (archivo) => {
-    const globales = estilosDe(leer(LAYOUT).slice(leer(LAYOUT).indexOf('<style lang="scss">')));
-    const usadas = new Set<string>();
-    Array.from(plantillaDe(leer(archivo)).matchAll(/\sclass="([^"]*)"/g)).forEach((m) =>
-      m[1]
-        .split(/\s+/)
-        .filter((clase) => /^acceso-/.test(clase))
-        .forEach((clase) => usadas.add(clase))
-    );
+  it.each(PAGINAS)(
+    '%s: cada clase común que usa existe en el armazón',
+    (archivo) => {
+      const globales = estilosDe(
+        leer(LAYOUT).slice(leer(LAYOUT).indexOf('<style lang="scss">'))
+      );
+      const usadas = new Set<string>();
+      Array.from(
+        plantillaDe(leer(archivo)).matchAll(/\sclass="([^"]*)"/g)
+      ).forEach((m) =>
+        m[1]
+          .split(/\s+/)
+          .filter((clase) => /^acceso-/.test(clase))
+          .forEach((clase) => usadas.add(clase))
+      );
 
-    usadas.forEach((clase) => {
-      expect(globales).toMatch(new RegExp(`\\.${clase}(?![\\w-])[^{]*\\{`));
-    });
-  });
+      usadas.forEach((clase) => {
+        expect(globales).toMatch(new RegExp(`\\.${clase}(?![\\w-])[^{]*\\{`));
+      });
+    }
+  );
 
   it('los controles pequeños miden 44 px', () => {
-    const tactil = /width: var\(--m-tactil-min\);[\s\S]*height: var\(--m-tactil-min\);/;
+    const tactil =
+      /width: var\(--m-tactil-min\);[\s\S]*height: var\(--m-tactil-min\);/;
     expect(reglaDe(LAYOUT, '.acceso__cerrar')).toMatch(tactil);
-    expect(reglaDe('components/auth/CampoAcceso.vue', '.campo-acceso__ojo')).toMatch(tactil);
-    expect(reglaDe(LAYOUT, '.acceso__entrar')).toMatch(/height: var\(--m-tactil-min\);/);
-    expect(reglaDe(LAYOUT, '.acceso-secundario')).toMatch(/min-height: var\(--m-tactil-min\);/);
+    expect(
+      reglaDe('components/auth/CampoAcceso.vue', '.campo-acceso__ojo')
+    ).toMatch(tactil);
+    expect(reglaDe(LAYOUT, '.acceso__entrar')).toMatch(
+      /height: var\(--m-tactil-min\);/
+    );
+    expect(reglaDe(LAYOUT, '.acceso-secundario')).toMatch(
+      /min-height: var\(--m-tactil-min\);/
+    );
     expect(reglaDe(LAYOUT, '.acceso-enlace--suelto')).toMatch(
       /min-height: var\(--m-tactil-min\);/
     );
-    expect(reglaDe('auth/pages/RegisterPage.vue', '.registro__consentimiento')).toMatch(
-      /min-height: var\(--m-tactil-min\);/
-    );
+    expect(
+      reglaDe('auth/pages/RegisterPage.vue', '.registro__consentimiento')
+    ).toMatch(/min-height: var\(--m-tactil-min\);/);
   });
 
   it.each(PIEZAS.concat([LAYOUT]))('%s pinta con tokens', (archivo) => {

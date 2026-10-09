@@ -75,7 +75,9 @@ async function reenviar() {
 <template>
   <div v-if="!sent" class="acceso-pagina">
     <h1 class="acceso-titulo">Recupera tu contraseña</h1>
-    <p class="acceso-entradilla">Te enviamos un enlace para elegir una nueva.</p>
+    <p class="acceso-entradilla">
+      Te enviamos un enlace para elegir una nueva.
+    </p>
 
     <form novalidate @submit.prevent="enviar">
       <campo-acceso
@@ -124,7 +126,10 @@ async function reenviar() {
       </svg>
     </template>
 
-    <p>Si <strong data-test="correo-enviado">{{ email }}</strong> tiene cuenta, te llegó un enlace para elegir una contraseña nueva. Sirve una sola vez.</p>
+    <p>
+      Si <strong data-test="correo-enviado">{{ email }}</strong> tiene cuenta,
+      te llegó un enlace para elegir una contraseña nueva. Sirve una sola vez.
+    </p>
 
     <template #acciones>
       <router-link
@@ -141,7 +146,9 @@ async function reenviar() {
           data-test="reenviar"
           :disabled="reenviando"
           @click="reenviar"
-        >envíalo otra vez</button>.
+        >
+          envíalo otra vez</button
+        >.
       </p>
       <p class="acceso-vivo" aria-live="polite" data-test="reenvio-estado">
         {{ reenviado ? 'Te lo enviamos otra vez.' : '' }}

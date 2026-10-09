@@ -11,7 +11,7 @@ type ApiError = {
 
 function messageOf(err: unknown): string {
   const msg = (err as ApiError)?.response?.data?.message;
-  return Array.isArray(msg) ? msg.join(', ') : (msg ?? '');
+  return Array.isArray(msg) ? msg.join(', ') : msg ?? '';
 }
 
 /**

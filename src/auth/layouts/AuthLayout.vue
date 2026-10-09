@@ -18,7 +18,9 @@
         data-test="cabecera-foto"
       >
         <div class="acceso__foto-movil-fila">
-          <span class="acceso__marca acceso__marca--movil acceso__marca--sobre-foto">
+          <span
+            class="acceso__marca acceso__marca--movil acceso__marca--sobre-foto"
+          >
             MARLENE
           </span>
           <router-link

@@ -12,12 +12,7 @@ import {
   useFormularioAcceso,
   type FormularioAcceso,
 } from 'src/composables/auth/useFormularioAcceso';
-import {
-  isEmail,
-  matches,
-  minLength,
-  requerido,
-} from 'src/helpers/validators';
+import { isEmail, matches, minLength, requerido } from 'src/helpers/validators';
 
 type Campo = 'correo' | 'contrasena' | 'repetida';
 
@@ -40,7 +35,11 @@ describe('useFormularioAcceso', () => {
     const f = crear();
 
     expect(f.valores.correo.value).toBe('');
-    expect(f.errores.value).toEqual({ correo: '', contrasena: '', repetida: '' });
+    expect(f.errores.value).toEqual({
+      correo: '',
+      contrasena: '',
+      repetida: '',
+    });
   });
 
   it('mientras se escribe por primera vez no regaña', () => {

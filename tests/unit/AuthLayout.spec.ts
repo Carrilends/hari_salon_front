@@ -120,7 +120,9 @@ describe('AuthLayout', () => {
 
     expect(entrar.text()).toContain('Entrar');
     expect(entrar.attributes('href')).toBe('/auth/login');
-    expect(wrapper.find('[data-test="marca-movil"]').attributes('href')).toBe('/');
+    expect(wrapper.find('[data-test="marca-movil"]').attributes('href')).toBe(
+      '/'
+    );
     expect(wrapper.findAll('[data-test="volver-portal"]')).toHaveLength(1);
   });
 
@@ -130,12 +132,14 @@ describe('AuthLayout', () => {
 
     expect(
       decodeURIComponent(
-        interno.find('[data-test="ir-a-entrar-cabecera"]').attributes('href') ?? ''
+        interno.find('[data-test="ir-a-entrar-cabecera"]').attributes('href') ??
+          ''
       )
     ).toBe('/auth/login?redirect=/testimonios');
     expect(
       decodeURIComponent(
-        externo.find('[data-test="ir-a-entrar-cabecera"]').attributes('href') ?? ''
+        externo.find('[data-test="ir-a-entrar-cabecera"]').attributes('href') ??
+          ''
       )
     ).toBe('/auth/login?redirect=/services');
   });
@@ -190,15 +194,20 @@ describe('AuthLayout · la pintura, leída de la fuente', () => {
   });
 
   it('desde 1024 px: hoja de min(620px, 50%) y foto a la derecha', () => {
-    const escritorio = ESTILOS.slice(ESTILOS.indexOf('@media (min-width: 1024px)'));
+    const escritorio = ESTILOS.slice(
+      ESTILOS.indexOf('@media (min-width: 1024px)')
+    );
     expect(escritorio).toMatch(/width: min\(620px, 50%\);/);
     expect(escritorio).toMatch(/\.acceso__foto\s*\{[^}]*display: block;/);
   });
 
   it('la foto es rainbow_hair, en la banda de móvil y en la columna de escritorio', () => {
     expect(
-      (ESTILOS.match(/background-image: url\('\/people\/rainbow_hair\.jpg'\);/g) ?? [])
-        .length
+      (
+        ESTILOS.match(
+          /background-image: url\('\/people\/rainbow_hair\.jpg'\);/g
+        ) ?? []
+      ).length
     ).toBe(2);
   });
 
@@ -234,7 +243,9 @@ describe('AuthLayout · la pintura, leída de la fuente', () => {
     const fino = GLOBALES.slice(
       GLOBALES.indexOf('@media (hover: hover) and (pointer: fine)')
     );
-    expect(fino).toMatch(/\.acceso-boton:hover:not\(:disabled\)\s*\{[^}]*color: var\(--m-oro\);/);
+    expect(fino).toMatch(
+      /\.acceso-boton:hover:not\(:disabled\)\s*\{[^}]*color: var\(--m-oro\);/
+    );
   });
 
   it('el enlace común va en rosa profundo con filete rosa', () => {

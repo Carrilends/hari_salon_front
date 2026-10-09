@@ -152,7 +152,9 @@ describe('LoginPage · textos y estructura', () => {
     expect(
       wrapper.find('[data-test="campo-correo"]').attributes('placeholder')
     ).toBe('tu@correo.com');
-    expect(wrapper.find('[data-test="olvidaste"]').text()).toBe('¿La olvidaste?');
+    expect(wrapper.find('[data-test="olvidaste"]').text()).toBe(
+      '¿La olvidaste?'
+    );
     expect(wrapper.find('[data-test="enviar"]').text()).toBe('Entrar');
     expect(texto).toContain('¿Primera vez? Crea tu cuenta');
     expect(texto).not.toMatch(/Email|Password|Login/);
@@ -237,7 +239,9 @@ describe('LoginPage · Google primero (A9, A10)', () => {
 
   it('si Google pide consentimiento, se abre el diálogo propio y sus respuestas llegan al composable', async () => {
     wrapper = montar();
-    expect(wrapper.find('[data-test="consentimiento-google"]').exists()).toBe(false);
+    expect(wrapper.find('[data-test="consentimiento-google"]').exists()).toBe(
+      false
+    );
 
     mockGoogle.pidiendoConsentimiento.value = true;
     await nextTick();
@@ -245,7 +249,9 @@ describe('LoginPage · Google primero (A9, A10)', () => {
     await dialogo.vm.$emit('aceptar');
     await dialogo.vm.$emit('cancelar');
 
-    expect(wrapper.find('[data-test="consentimiento-google"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="consentimiento-google"]').exists()).toBe(
+      true
+    );
     expect(mockGoogle.aceptarConsentimiento).toHaveBeenCalledTimes(1);
     expect(mockGoogle.rechazarConsentimiento).toHaveBeenCalledTimes(1);
   });
@@ -272,7 +278,9 @@ describe('LoginPage · validación (A4, A5)', () => {
     const correo = wrapper.find('[data-test="campo-correo"]');
 
     await correo.setValue('ana');
-    expect(wrapper.find('[data-test="campo-correo-error"]').exists()).toBe(false);
+    expect(wrapper.find('[data-test="campo-correo-error"]').exists()).toBe(
+      false
+    );
 
     await correo.trigger('blur');
     expect(wrapper.find('[data-test="campo-correo-error"]').text()).toBe(
@@ -366,7 +374,9 @@ describe('LoginPage · envío (A7, A8, §7.4, §7.7)', () => {
       wrapper.find('[data-test="enviar"]').attributes('disabled')
     ).toBeUndefined();
     expect(
-      wrapper.find('[data-test="campo-contrasena"]').attributes('aria-describedby')
+      wrapper
+        .find('[data-test="campo-contrasena"]')
+        .attributes('aria-describedby')
     ).toBe('aviso-entrar');
     expect(mockPush).not.toHaveBeenCalled();
   });
@@ -431,14 +441,18 @@ describe('LoginPage · vuelta de restablecer (A15)', () => {
       '[data-test="aviso-acceso"][data-variante="tranquilo"]'
     );
 
-    expect(aviso.text()).toBe('Tu contraseña quedó cambiada. Entra con la nueva.');
+    expect(aviso.text()).toBe(
+      'Tu contraseña quedó cambiada. Entra con la nueva.'
+    );
     expect(aviso.attributes('role')).toBe('status');
   });
 
   it('sin el parámetro, no', () => {
     wrapper = montar();
     expect(
-      wrapper.find('[data-test="aviso-acceso"][data-variante="tranquilo"]').exists()
+      wrapper
+        .find('[data-test="aviso-acceso"][data-variante="tranquilo"]')
+        .exists()
     ).toBe(false);
   });
 });

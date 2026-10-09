@@ -1,10 +1,5 @@
 <template>
-  <ul
-    :id="id"
-    class="reglas"
-    data-test="reglas-contrasena"
-    aria-live="polite"
-  >
+  <ul :id="id" class="reglas" data-test="reglas-contrasena" aria-live="polite">
     <li
       v-for="regla in reglas"
       :key="regla.clave"

@@ -33,7 +33,9 @@ jest.mock('src/composables/seo/useSeo', () => ({
 
 const reenviar = authApi.resendVerification as jest.Mock;
 
-const montar = async (query: Record<string, string> = { token: 'token-bueno' }) => {
+const montar = async (
+  query: Record<string, string> = { token: 'token-bueno' }
+) => {
   mockRuta.query = query;
   const wrapper = mount(VerifyEmailPage, {
     attachTo: document.body,
@@ -55,7 +57,11 @@ beforeEach(() => {
   mockVerificar.mockReset();
   reenviar.mockReset();
   mockUseSeo.mockReset();
-  Object.assign(mockAuth, { isLoggedIn: false, email: '', emailVerified: false });
+  Object.assign(mockAuth, {
+    isLoggedIn: false,
+    email: '',
+    emailVerified: false,
+  });
 });
 
 afterEach(() => {
@@ -136,7 +142,9 @@ describe('VerifyEmailPage', () => {
 
   it('enlace malo con sesión: reenvía al correo de la sesión y lo dice en una línea viva', async () => {
     Object.assign(mockAuth, { isLoggedIn: true, email: 'clienta@correo.com' });
-    mockVerificar.mockRejectedValue(errorHttp(400, 'El enlace expiró; solicita uno nuevo'));
+    mockVerificar.mockRejectedValue(
+      errorHttp(400, 'El enlace expiró; solicita uno nuevo')
+    );
     reenviar.mockResolvedValue({ message: 'ok' });
     wrapper = await montar();
     const linea = () => wrapper?.find('[data-test="reenvio-estado"]');

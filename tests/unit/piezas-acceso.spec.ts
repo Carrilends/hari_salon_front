@@ -34,9 +34,12 @@ describe('ReglasContrasena (A6)', () => {
   it('lista las cuatro reglas en el orden y con el texto de la especificación', () => {
     const wrapper = mount(ReglasContrasena, { props: { valor: '' } });
     // El texto visible, sin el «(pendiente)» que solo oyen los lectores.
-    const textos = wrapper
-      .findAll('li')
-      .map((li) => li.text().replace(/\((cumplida|pendiente)\)$/, '').trim());
+    const textos = wrapper.findAll('li').map((li) =>
+      li
+        .text()
+        .replace(/\((cumplida|pendiente)\)$/, '')
+        .trim()
+    );
 
     expect(textos).toEqual([
       '8 caracteres o más',
@@ -173,7 +176,9 @@ describe('EstadoAcceso (A13, A14, A16)', () => {
   });
 
   it('el antetítulo solo sale si se da', () => {
-    expect(montar().find('[data-test="estado-antetitulo"]').exists()).toBe(false);
+    expect(montar().find('[data-test="estado-antetitulo"]').exists()).toBe(
+      false
+    );
     expect(
       montar({ antetitulo: 'Recuperar contraseña' })
         .find('[data-test="estado-antetitulo"]')
@@ -196,7 +201,9 @@ describe('EstadoAcceso (A13, A14, A16)', () => {
 
   it('ocupado se anuncia con aria-busy', () => {
     expect(
-      montar({ ocupado: true }).find('[data-test="estado-acceso"]').attributes('aria-busy')
+      montar({ ocupado: true })
+        .find('[data-test="estado-acceso"]')
+        .attributes('aria-busy')
     ).toBe('true');
     expect(
       montar().find('[data-test="estado-acceso"]').attributes('aria-busy')

@@ -39,9 +39,9 @@ describe('ConsentimientoGoogle', () => {
     const wrapper = montar(true);
     const enlace = wrapper.findComponent(RouterLinkStub);
 
-    expect(wrapper.find('[data-test="consentimiento-google"]').text()).toContain(
-      'Ley 1581 de 2012'
-    );
+    expect(
+      wrapper.find('[data-test="consentimiento-google"]').text()
+    ).toContain('Ley 1581 de 2012');
     expect(enlace.props('to')).toEqual({ name: 'privacy-policy' });
     expect(enlace.attributes('target')).toBe('_blank');
   });
@@ -58,7 +58,9 @@ describe('ConsentimientoGoogle', () => {
   it('«Cancelar» emite cancelar', async () => {
     const wrapper = montar(true);
 
-    await wrapper.find('[data-test="cancelar-consentimiento"]').trigger('click');
+    await wrapper
+      .find('[data-test="cancelar-consentimiento"]')
+      .trigger('click');
 
     expect(wrapper.emitted('cancelar')).toHaveLength(1);
   });

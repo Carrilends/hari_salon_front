@@ -31,7 +31,8 @@ import GoogleSignInButton from 'src/components/auth/GoogleSignInButton.vue';
 // Página privada: se sirve como SPA (excluida del SSG) y no debe indexarse.
 useSeo({
   title: 'Crear cuenta | Peluquería Marlene',
-  description: 'Crea tu cuenta para gestionar tus reservas en la Peluquería Marlene.',
+  description:
+    'Crea tu cuenta para gestionar tus reservas en la Peluquería Marlene.',
   noindex: true,
 });
 

@@ -31,7 +31,9 @@
         class="campo-acceso__ojo m-boton-plano"
         data-test="ver-contrasena"
         :aria-pressed="visible ? 'true' : 'false'"
-        :aria-label="visible ? 'Ocultar la contraseña' : 'Mostrar la contraseña'"
+        :aria-label="
+          visible ? 'Ocultar la contraseña' : 'Mostrar la contraseña'
+        "
         @click="visible = !visible"
       >
         <svg
@@ -46,7 +48,9 @@
           aria-hidden="true"
           focusable="false"
         >
-          <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
+          <path
+            d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"
+          />
           <circle cx="12" cy="12" r="2.8" />
           <path v-if="visible" d="M4 4l16 16" />
         </svg>

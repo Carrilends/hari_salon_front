@@ -25,7 +25,8 @@ const failed = ref(false);
 const GSI_SRC = 'https://accounts.google.com/gsi/client';
 
 function loadScript(): Promise<void> {
-  if (document.querySelector(`script[src="${GSI_SRC}"]`)) return Promise.resolve();
+  if (document.querySelector(`script[src="${GSI_SRC}"]`))
+    return Promise.resolve();
   return new Promise((resolve, reject) => {
     const script = document.createElement('script');
     script.src = GSI_SRC;
@@ -53,7 +54,8 @@ onMounted(async () => {
   }
   try {
     await loadScript();
-    if (!window.google) throw new Error('Google Identity Services no disponible');
+    if (!window.google)
+      throw new Error('Google Identity Services no disponible');
     if (!container.value) throw new Error('Sin contenedor para el botón');
     window.google.accounts.id.initialize({
       client_id: clientId,

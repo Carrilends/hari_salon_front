@@ -62,8 +62,12 @@ const enlace = (wrapper: Pagina, gancho: string) =>
     .find((l) => l.attributes('data-test') === gancho);
 
 async function rellenarTodo(wrapper: Pagina) {
-  await wrapper.find('[data-test="campo-nombre"]').setValue('  Clienta de Ejemplo ');
-  await wrapper.find('[data-test="campo-correo"]').setValue('clienta@correo.com');
+  await wrapper
+    .find('[data-test="campo-nombre"]')
+    .setValue('  Clienta de Ejemplo ');
+  await wrapper
+    .find('[data-test="campo-correo"]')
+    .setValue('clienta@correo.com');
   await wrapper.find('[data-test="campo-contrasena"]').setValue('Marlene2026');
   await wrapper.find('[data-test="campo-repetida"]').setValue('Marlene2026');
 }
@@ -136,7 +140,9 @@ describe('RegisterPage · textos y estructura', () => {
     wrapper = montar();
     const politica = wrapper
       .findAllComponents(RouterLinkStub)
-      .find((l) => (l.props('to') as { name?: string }).name === 'privacy-policy');
+      .find(
+        (l) => (l.props('to') as { name?: string }).name === 'privacy-policy'
+      );
 
     expect(politica?.attributes('target')).toBe('_blank');
   });
@@ -168,7 +174,9 @@ describe('RegisterPage · consentimiento (S9, §7.1)', () => {
       (wrapper.find('[data-test="consentimiento"]').element as HTMLInputElement)
         .checked
     ).toBe(false);
-    expect(wrapper.find('[data-test="enviar"]').attributes('disabled')).toBeDefined();
+    expect(
+      wrapper.find('[data-test="enviar"]').attributes('disabled')
+    ).toBeDefined();
   });
 
   it('al marcarla, «Crear cuenta» se activa', async () => {
@@ -249,7 +257,9 @@ describe('RegisterPage · consentimiento (S9, §7.1)', () => {
 
   it('Google vuelve al mismo destino que el formulario', () => {
     wrapper = montar({ redirect: '/mis-reservas' });
-    expect(mockUsarGoogle).toHaveBeenCalledWith({ redirectTo: '/mis-reservas' });
+    expect(mockUsarGoogle).toHaveBeenCalledWith({
+      redirectTo: '/mis-reservas',
+    });
   });
 });
 
@@ -266,7 +276,9 @@ describe('RegisterPage · reglas y validación (A4, A6)', () => {
     expect(estado('largo')).toBe('no');
     expect(estado('numero')).toBe('no');
     expect(
-      wrapper.find('[data-test="campo-contrasena"]').attributes('aria-describedby')
+      wrapper
+        .find('[data-test="campo-contrasena"]')
+        .attributes('aria-describedby')
     ).toBe('reglas-contrasena');
   });
 
@@ -285,7 +297,9 @@ describe('RegisterPage · reglas y validación (A4, A6)', () => {
 
   it('si las contraseñas no coinciden, lo dice al salir del campo', async () => {
     wrapper = montar();
-    await wrapper.find('[data-test="campo-contrasena"]').setValue('Marlene2026');
+    await wrapper
+      .find('[data-test="campo-contrasena"]')
+      .setValue('Marlene2026');
     const repetida = wrapper.find('[data-test="campo-repetida"]');
 
     await repetida.setValue('Marlene2025');

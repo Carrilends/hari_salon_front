@@ -63,7 +63,9 @@ describe('ForgotPasswordPage · el formulario', () => {
     wrapper = montar();
 
     expect(wrapper.find('h1').text()).toBe('Recupera tu contraseña');
-    expect(wrapper.text()).toContain('Te enviamos un enlace para elegir una nueva.');
+    expect(wrapper.text()).toContain(
+      'Te enviamos un enlace para elegir una nueva.'
+    );
     expect(wrapper.find('label[for="correo"]').text()).toBe('Correo');
     expect(
       wrapper.find('[data-test="campo-correo"]').attributes('placeholder')
@@ -125,17 +127,20 @@ describe('ForgotPasswordPage · «Revisa tu correo» (A13, §7.2)', () => {
   it.each([
     ['un error del servidor', errorHttp(500)],
     ['un error de red', errorDeRed()],
-  ])('con %s se ve exactamente lo mismo (respuesta neutra)', async (_caso, error) => {
-    mockEnviar.mockRejectedValue(error);
-    wrapper = montar();
+  ])(
+    'con %s se ve exactamente lo mismo (respuesta neutra)',
+    async (_caso, error) => {
+      mockEnviar.mockRejectedValue(error);
+      wrapper = montar();
 
-    await pedirEnlace(wrapper, 'clienta@correo.com');
+      await pedirEnlace(wrapper, 'clienta@correo.com');
 
-    expect(wrapper.find('[data-test="estado-acceso"] h1').text()).toBe(
-      'Revisa tu correo'
-    );
-    expect(wrapper.find('[data-test="aviso-acceso"]').exists()).toBe(false);
-  });
+      expect(wrapper.find('[data-test="estado-acceso"] h1').text()).toBe(
+        'Revisa tu correo'
+      );
+      expect(wrapper.find('[data-test="aviso-acceso"]').exists()).toBe(false);
+    }
+  );
 
   it('«Volver a entrar» lleva al login, como botón ancho', async () => {
     mockEnviar.mockResolvedValue({ message: 'ok' });

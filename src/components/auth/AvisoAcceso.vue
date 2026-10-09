@@ -55,10 +55,10 @@
  * - `tranquilo`: una buena noticia que no exige nada (`role="status"`, filete
  *   de oro): «Tu contraseña quedó cambiada…».
  */
-withDefaults(
-  defineProps<{ variante?: 'error' | 'tranquilo'; id?: string }>(),
-  { variante: 'error', id: undefined }
-);
+withDefaults(defineProps<{ variante?: 'error' | 'tranquilo'; id?: string }>(), {
+  variante: 'error',
+  id: undefined,
+});
 </script>
 
 <style scoped lang="scss">

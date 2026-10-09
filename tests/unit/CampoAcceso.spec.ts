@@ -80,7 +80,9 @@ describe('CampoAcceso', () => {
 
     expect(input.attributes('aria-invalid')).toBeUndefined();
     expect(input.attributes('aria-describedby')).toBeUndefined();
-    expect(wrapper.find('[data-test="campo-correo-error"]').exists()).toBe(false);
+    expect(wrapper.find('[data-test="campo-correo-error"]').exists()).toBe(
+      false
+    );
   });
 
   it('con error: aria-invalid y mensaje ligado por aria-describedby', () => {
@@ -153,17 +155,17 @@ describe('CampoAcceso', () => {
 
     await wrapper.find('[data-test="ver-contrasena"]').trigger('click');
 
-    expect(wrapper.find('[data-test="ver-contrasena"]').attributes('type')).toBe(
-      'button'
-    );
+    expect(
+      wrapper.find('[data-test="ver-contrasena"]').attributes('type')
+    ).toBe('button');
     expect(wrapper.find('[data-test="enviados"]').text()).toBe('1');
     wrapper.unmount();
   });
 
   it('los campos que no son contraseña no llevan ojo', () => {
-    expect(montar({ tipo: 'email' }).find('[data-test="ver-contrasena"]').exists()).toBe(
-      false
-    );
+    expect(
+      montar({ tipo: 'email' }).find('[data-test="ver-contrasena"]').exists()
+    ).toBe(false);
     expect(montar().find('[data-test="ver-contrasena"]').exists()).toBe(false);
   });
 
@@ -184,7 +186,9 @@ describe('CampoAcceso', () => {
 describe('CampoAcceso · la pintura, leída de la fuente', () => {
   const regla = (selector: string) =>
     ESTILOS.match(
-      new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{([^}]*)\\}`)
+      new RegExp(
+        `${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{([^}]*)\\}`
+      )
     )?.[1] ?? '';
 
   it('sin hexadecimales', () => {
@@ -194,7 +198,9 @@ describe('CampoAcceso · la pintura, leída de la fuente', () => {
   it('el input mide 48 px, con filete, sobre nieve y en Jost', () => {
     const cuerpo = regla('.campo-acceso__entrada');
     expect(cuerpo).toMatch(/height: 48px;/);
-    expect(cuerpo).toMatch(/border: var\(--m-filete-grosor\) solid var\(--m-filete\);/);
+    expect(cuerpo).toMatch(
+      /border: var\(--m-filete-grosor\) solid var\(--m-filete\);/
+    );
     expect(cuerpo).toMatch(/background: var\(--m-nieve\);/);
     expect(cuerpo).toMatch(/font-family: var\(--m-font-sans\);/);
   });
