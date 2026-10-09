@@ -518,6 +518,31 @@ describe('MyReservationsPage · cambiar fecha (M3)', () => {
     );
   });
 
+  /**
+   * Revisión final M7: el diálogo se monta al abrirlo y ya no se desmonta
+   * (`aMover` nunca vuelve a null). Así un PATCH que termina con el diálogo
+   * ya cerrado sigue encontrando quien escuche `reprogramada`.
+   */
+  it('cerrado, el diálogo sigue montado y su aviso llega a la página', async () => {
+    const wrapper = montar();
+    await wrapper
+      .findAll('[data-test="abrir-cambiar-fecha"]')[0]
+      .trigger('click');
+
+    moverDoble(wrapper).vm.$emit('update:modelValue', false);
+    await nextTick();
+
+    expect(moverDoble(wrapper).exists()).toBe(true);
+    expect(moverDoble(wrapper).props('modelValue')).toBe(false);
+
+    moverDoble(wrapper).vm.$emit('reprogramada', 'r1', 'w1');
+    await nextTick();
+
+    expect(wrapper.get('[data-test="aviso-texto"]').text()).toBe(
+      'Tu cita quedó movida.'
+    );
+  });
+
   it('el aviso se puede descartar', async () => {
     const wrapper = montar();
     await wrapper
