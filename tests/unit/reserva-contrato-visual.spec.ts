@@ -224,3 +224,42 @@ describe('el cajón de reserva · estados nunca solo por color', () => {
     );
   });
 });
+
+/** Revisión final, recorrido en navegador (D1, D2): medidas que Jest no ve. */
+describe('el cajón de reserva · cabecera y pie sin recortes', () => {
+  // Sin comentarios: el que precede a una regla se colaría en su selector.
+  const css = estilosDe(leer('components/reserva/CajonReserva.vue')).replace(
+    /\/\*[\s\S]*?\*\//g,
+    ''
+  );
+  const reglaDe = (selector: string) =>
+    Array.from(css.matchAll(/([^{}]+)\{([^{}]*)\}/g))
+      .filter((r) => r[1].trim() === selector)
+      .map((r) => r[2])
+      .join('\n');
+
+  it('D1 · el título y la cuenta fijan su interlineado (Quasar da 60 px a un h2)', () => {
+    expect(reglaDe('.cajon__titulo')).toMatch(/line-height: 1\.2;/);
+    expect(reglaDe('.cajon__cuenta')).toMatch(/line-height: [\d.]+;/);
+  });
+
+  it('D2 · importe, «Atrás» y el botón del pie no se parten en dos líneas', () => {
+    expect(reglaDe('.cajon__importe')).toMatch(/white-space: nowrap;/);
+    expect(reglaDe('.cajon__atras')).toMatch(/white-space: nowrap;/);
+    expect(reglaDe('.cajon__atras')).toMatch(/flex-shrink: 0;/);
+    expect(reglaDe('.cajon__continuar')).toMatch(/white-space: nowrap;/);
+    expect(reglaDe('.cajon__continuar')).toMatch(/flex-shrink: 0;/);
+    // El total cede el sitio que falte, no los botones.
+    expect(reglaDe('.cajon__total')).toMatch(/min-width: 0;/);
+  });
+
+  it('D2 · en móvil el botón aprieta el espaciado sin bajar del área táctil', () => {
+    const movil = css.slice(css.indexOf('@media (max-width: 699px)'));
+    const continuarMovil = Array.from(
+      movil.matchAll(/([^{}]+)\{([^{}]*)\}/g)
+    ).find((r) => r[1].trim() === '.cajon__continuar');
+
+    expect(continuarMovil?.[2]).toMatch(/letter-spacing: 0\.1em;/);
+    expect(reglaDe('.cajon__continuar')).toMatch(/min-height: 48px;/);
+  });
+});

@@ -320,16 +320,20 @@ function abrirAsistente() {
 .cajon__cuenta {
   margin: 0 0 3px;
   font-size: 10.5px;
+  line-height: 1.4;
   letter-spacing: var(--m-tracking-etiqueta);
   text-transform: uppercase;
   color: var(--m-oro);
 }
 
+/* Un h2 hereda de Quasar `line-height: 3.75rem` (60 px): con la cuenta
+   encima no cabía en la barra de 68 y la cuenta salía recortada arriba. */
 .cajon__titulo {
   margin: 0;
   font-family: var(--m-font-display);
   font-size: 24px;
   font-weight: 400;
+  line-height: 1.2;
 }
 
 .cajon__cerrar {
@@ -396,7 +400,9 @@ function abrirAsistente() {
 }
 
 .cajon__atras {
+  flex-shrink: 0;
   min-height: var(--m-tactil-min);
+  white-space: nowrap;
   padding: 0 4px;
   border: none;
   background: transparent;
@@ -408,6 +414,7 @@ function abrirAsistente() {
 
 .cajon__total {
   flex: 1 1 auto;
+  min-width: 0;
   text-align: right;
 }
 
@@ -415,6 +422,7 @@ function abrirAsistente() {
   margin: 0;
   font-family: var(--m-font-display);
   font-size: 20px;
+  white-space: nowrap;
 }
 
 .cajon__duracion {
@@ -424,6 +432,7 @@ function abrirAsistente() {
 }
 
 .cajon__continuar {
+  flex-shrink: 0;
   min-height: 48px;
   padding: 0 28px;
   border: none;
@@ -434,6 +443,7 @@ function abrirAsistente() {
   font-size: 12px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -485,8 +495,11 @@ function abrirAsistente() {
     font-size: 18px;
   }
 
+  /* A 390 px, «Confirmar reserva» con el espaciado de escritorio no cabía
+     junto a «Atrás» y el importe: se partía en dos líneas. */
   .cajon__continuar {
-    padding: 0 20px;
+    padding: 0 18px;
+    letter-spacing: 0.1em;
   }
 }
 
