@@ -1,40 +1,32 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { useQuasar } from 'quasar';
+import { useRoute, useRouter } from 'vue-router';
 import { authApi } from 'src/api/auth-api';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useLoginWithGoogle } from 'src/composables/auth/useLoginWithGoogle';
-import GoogleSignInButton from 'src/components/auth/GoogleSignInButton.vue';
+import {
+  enfocarCampo,
+  useFormularioAcceso,
+  type FormularioAcceso,
+} from 'src/composables/auth/useFormularioAcceso';
 import { useSeo } from 'src/composables/seo/useSeo';
+import { mensajeDeAcceso } from 'src/helpers/mensajes-acceso';
+import { redireccionSegura } from 'src/helpers/redireccion-segura';
 import {
   hasLowercase,
   hasNumber,
   hasUppercase,
   isEmail,
-  isRequired,
   matches,
   minLength,
   minTrimmedLength,
+  requerido,
 } from 'src/helpers/validators';
-
-interface RegisterApiError {
-  response?: {
-    data?: {
-      message?: string | string[];
-    };
-  };
-}
-
-const $q = useQuasar();
-const router = useRouter();
-const authStore = useAuthStore();
-
-const fullName = ref('');
-const email = ref('');
-const password = ref('');
-const confirmPassword = ref('');
-const dataPolicyAccepted = ref(false);
+import CampoAcceso from 'src/components/auth/CampoAcceso.vue';
+import ReglasContrasena from 'src/components/auth/ReglasContrasena.vue';
+import AvisoAcceso from 'src/components/auth/AvisoAcceso.vue';
+import SeparadorAcceso from 'src/components/auth/SeparadorAcceso.vue';
+import GoogleSignInButton from 'src/components/auth/GoogleSignInButton.vue';
 
 // Página privada: se sirve como SPA (excluida del SSG) y no debe indexarse.
 useSeo({
@@ -42,45 +34,80 @@ useSeo({
   description: 'Crea tu cuenta para gestionar tus reservas en la Peluquería Marlene.',
   noindex: true,
 });
-const isSubmitting = ref(false);
 
-// Registro con Google (Fase 3b): registrarse por Google tampoco puede ser una
-// puerta trasera al consentimiento (S9). El botón se habilita solo tras marcar
-// la casilla, y ese consentimiento se envía al backend.
-const { handleCredential } = useLoginWithGoogle();
-function onGoogleRegister(idToken: string) {
-  void handleCredential(idToken, dataPolicyAccepted.value);
-}
+const router = useRouter();
+const route = useRoute();
+const authStore = useAuthStore();
 
-const canSubmit = computed(
-  () =>
-    !!fullName.value.trim() &&
-    !!email.value.trim() &&
-    !!password.value &&
-    !!confirmPassword.value &&
-    password.value === confirmPassword.value &&
-    dataPolicyAccepted.value
+// A12: el registro también vuelve adonde la clienta iba (el menú manda
+// `redirect` a «Crear cuenta»). Solo rutas internas (§7.7).
+const destino = redireccionSegura(route.query.redirect);
+const consultaDestino = computed(() =>
+  typeof route.query.redirect === 'string' ? { redirect: destino } : {}
 );
 
-async function submitRegister() {
-  if (!canSubmit.value || isSubmitting.value) return;
+type CampoRegistro = 'nombre' | 'correo' | 'contrasena' | 'repetida';
 
-  isSubmitting.value = true;
-  $q.loading.show({
-    message: 'Creando cuenta...',
-    spinnerColor: 'primary',
+const formulario: FormularioAcceso<CampoRegistro> =
+  useFormularioAcceso<CampoRegistro>({
+    nombre: [
+      requerido('Escribe tu nombre.'),
+      minTrimmedLength(3, 'Escribe tu nombre completo (3 letras o más).'),
+    ],
+    correo: [
+      requerido('Escribe tu correo.'),
+      isEmail('Escribe un correo válido, como tu@correo.com.'),
+    ],
+    // La misma política que valida el backend (`CreateUserDto`).
+    contrasena: [
+      requerido('Elige una contraseña.'),
+      minLength(8, 'Usa 8 caracteres o más.'),
+      hasUppercase('Añade una mayúscula.'),
+      hasLowercase('Añade una minúscula.'),
+      hasNumber('Añade un número.'),
+    ],
+    repetida: [
+      requerido('Repite la contraseña.'),
+      matches(
+        () => formulario.valores.contrasena.value,
+        'Las contraseñas no coinciden.'
+      ),
+    ],
   });
+const { valores, errores, tocar, validarTodo } = formulario;
 
+// S9: nunca premarcada. Sin ella no se crea cuenta, ni por formulario ni por
+// Google.
+const aceptaPolitica = ref(false);
+const enviando = ref(false);
+const errorServidor = ref('');
+const googleDisponible = ref(false);
+
+const { handleCredential, error: errorGoogle } = useLoginWithGoogle({
+  redirectTo: destino,
+});
+
+const avisoError = computed(() => errorServidor.value || errorGoogle.value);
+
+async function crearCuenta() {
+  if (enviando.value || !aceptaPolitica.value) return;
+  errorServidor.value = '';
+  errorGoogle.value = '';
+  const primero = validarTodo();
+  if (primero) {
+    enfocarCampo(primero);
+    return;
+  }
+  enviando.value = true;
   try {
     const data = await authApi.register({
-      fullName: fullName.value.trim(),
-      email: email.value.trim(),
-      password: password.value,
+      fullName: valores.nombre.value.trim(),
+      email: valores.correo.value.trim(),
+      password: valores.contrasena.value,
       // Obligatorio en el backend: deja constancia auditable de la aceptación
       // de la Política de Tratamiento de Datos Personales (Ley 1581 de 2012).
-      dataPolicyAccepted: dataPolicyAccepted.value,
+      dataPolicyAccepted: aceptaPolitica.value,
     });
-
     authStore.setSession(
       data.token,
       {
@@ -91,172 +118,163 @@ async function submitRegister() {
       },
       data.expiresIn * 1000 + Date.now()
     );
-
-    await router.push({ path: '/services' });
+    await router.push({ path: destino });
   } catch (err: unknown) {
-    const msg = (err as RegisterApiError)?.response?.data?.message;
-    $q.notify({
-      type: 'negative',
-      message: Array.isArray(msg) ? msg.join(', ') : msg || 'No se pudo crear la cuenta',
-    });
+    errorServidor.value = mensajeDeAcceso(err, 'registro');
   } finally {
-    isSubmitting.value = false;
-    $q.loading.hide();
+    enviando.value = false;
   }
+}
+
+function alCredencialGoogle(idToken: string) {
+  // S9: el botón de Google se apaga con `pointer-events`, pero su iframe sigue
+  // al alcance del teclado. Sin la casilla, la credencial se descarta:
+  // registrarse por Google no puede ser una puerta trasera al consentimiento.
+  if (!aceptaPolitica.value) return;
+  errorServidor.value = '';
+  void handleCredential(idToken, true);
 }
 </script>
 
 <template>
-  <div class="register-page column flex-center">
-    <q-card class="register-page__card q-pa-lg q-pa-md-sm shadow-2 rounded-borders full-width">
-      <q-card-section class="text-center">
-        <div class="text-h5 text-weight-bold q-mb-sm">Crear cuenta</div>
-        <div class="text-caption text-grey-7">Regístrate como usuario normal</div>
-      </q-card-section>
+  <div class="acceso-pagina">
+    <h1 class="acceso-titulo registro__titulo">Crea tu cuenta</h1>
 
-      <q-form @submit="submitRegister" class="q-gutter-md">
-        <q-input
-          v-model="fullName"
-          filled
-          outlined
-          color="black"
-          label="Nombre completo"
-          :rules="[isRequired, minTrimmedLength(3)]"
+    <form novalidate @submit.prevent="crearCuenta">
+      <campo-acceso
+        id="nombre"
+        v-model="valores.nombre.value"
+        rotulo="Nombre completo"
+        tipo="text"
+        autocomplete="name"
+        :error="errores.nombre"
+        @blur="tocar('nombre')"
+      />
+      <campo-acceso
+        id="correo"
+        v-model="valores.correo.value"
+        rotulo="Correo"
+        tipo="email"
+        autocomplete="email"
+        marcador="tu@correo.com"
+        :error="errores.correo"
+        @blur="tocar('correo')"
+      />
+      <campo-acceso
+        id="contrasena"
+        v-model="valores.contrasena.value"
+        rotulo="Contraseña"
+        tipo="password"
+        autocomplete="new-password"
+        describedby="reglas-contrasena"
+        :error="errores.contrasena"
+        @blur="tocar('contrasena')"
+      />
+      <reglas-contrasena :valor="valores.contrasena.value" />
+      <campo-acceso
+        id="repetida"
+        v-model="valores.repetida.value"
+        rotulo="Repite la contraseña"
+        tipo="password"
+        autocomplete="new-password"
+        :error="errores.repetida"
+        @blur="tocar('repetida')"
+      />
+
+      <label class="registro__consentimiento" for="consentimiento">
+        <input
+          id="consentimiento"
+          v-model="aceptaPolitica"
+          type="checkbox"
+          class="registro__casilla"
+          data-test="consentimiento"
         />
+        <span data-test="texto-consentimiento">
+          He leído y acepto la
+          <router-link
+            :to="{ name: 'privacy-policy' }"
+            target="_blank"
+            rel="noopener"
+            class="acceso-enlace"
+            >política de tratamiento de datos</router-link
+          >
+          (Ley 1581 de 2012).
+        </span>
+      </label>
 
-        <q-input
-          v-model="email"
-          filled
-          outlined
-          color="black"
-          type="email"
-          label="Email"
-          :rules="[isRequired, isEmail('Correo inválido')]"
-        />
+      <aviso-acceso v-if="avisoError" class="registro__aviso">
+        {{ avisoError }}
+      </aviso-acceso>
 
-        <q-input
-          v-model="password"
-          filled
-          outlined
-          color="black"
-          type="password"
-          label="Password"
-          :rules="[
-            isRequired,
-            minLength(8),
-            hasUppercase(),
-            hasLowercase(),
-            hasNumber(),
-          ]"
-        />
+      <button
+        type="submit"
+        class="acceso-boton m-boton--ancho"
+        data-test="enviar"
+        :disabled="!aceptaPolitica || enviando"
+        :aria-busy="enviando ? 'true' : undefined"
+      >
+        {{ enviando ? 'Creando tu cuenta…' : 'Crear cuenta' }}
+      </button>
+    </form>
 
-        <q-input
-          v-model="confirmPassword"
-          filled
-          outlined
-          color="black"
-          type="password"
-          label="Confirmación de password"
-          :rules="[isRequired, matches(() => password)]"
-        />
+    <separador-acceso v-if="googleDisponible" texto="o" />
+    <google-sign-in-button
+      :disabled="!aceptaPolitica"
+      @credential="alCredencialGoogle"
+      @disponible="googleDisponible = $event"
+    />
+    <p
+      v-if="googleDisponible && !aceptaPolitica"
+      class="acceso-nota"
+      data-test="nota-google"
+    >
+      Marca la casilla para seguir.
+    </p>
 
-        <div class="register-page__consent">
-          <q-checkbox
-            v-model="dataPolicyAccepted"
-            color="primary"
-            :aria-label="'Aceptar la Política de Tratamiento de Datos Personales'"
-          />
-          <span class="register-page__consent-text">
-            He leído y acepto la
-            <router-link
-              :to="{ name: 'privacy-policy' }"
-              class="register-page__consent-link"
-              @click.stop
-            >
-              Política de Tratamiento de Datos Personales
-            </router-link>
-            de Peluquería Marlene, conforme a la Ley 1581 de 2012 y el Decreto
-            1377 de 2013.
-          </span>
-        </div>
-
-        <div class="row justify-center q-pt-sm">
-          <q-btn
-            type="submit"
-            color="primary"
-            label="Registrarme"
-            :disable="!canSubmit || isSubmitting"
-          />
-        </div>
-      </q-form>
-
-      <q-separator class="q-my-md" />
-      <div class="text-center text-caption text-grey-7 q-mb-sm">
-        o regístrate con
-      </div>
-      <div class="row justify-center">
-        <GoogleSignInButton
-          :disabled="!dataPolicyAccepted"
-          @credential="onGoogleRegister"
-        />
-      </div>
-
-      <q-card-section class="text-center q-pt-md">
-        <q-btn flat no-caps color="grey-8" label="Ya estoy registrado, ir a login" :to="{ name: 'login' }" />
-      </q-card-section>
-    </q-card>
+    <p class="acceso-pie-formulario">
+      ¿Ya tienes cuenta?
+      <router-link
+        :to="{ name: 'login', query: consultaDestino }"
+        class="acceso-enlace"
+        data-test="ir-a-entrar"
+        >Entra</router-link
+      >
+    </p>
   </div>
 </template>
 
 <style scoped>
-.register-page {
-  width: 100%;
-  min-height: 100vh;
-  padding: 16px;
-  box-sizing: border-box;
-  background-color: #e8e8e8;
+.registro__titulo {
+  margin-bottom: 18px;
 }
 
-/* Pantalla pequeña: el registro se centra y la imagen pasa a ser el fondo
-   completo, con una capa tenue para que el formulario siga legible. */
-@media (max-width: 1023px) {
-  .register-page {
-    background-image: linear-gradient(
-        rgba(255, 255, 255, 0.62),
-        rgba(255, 255, 255, 0.68)
-      ),
-      url('/people/rainbow_hair.jpg');
-    background-position: center;
-    background-size: cover;
-    background-repeat: no-repeat;
-  }
-}
-
-.register-page__card {
-  max-width: 440px;
-}
-
-.register-page__consent {
+.registro__consentimiento {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  padding: 4px 2px 0;
+  gap: 12px;
+  min-height: var(--m-tactil-min);
+  margin-top: 16px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--m-piedra);
+  cursor: pointer;
 }
 
-.register-page__consent-text {
-  font-size: 0.9rem;
-  line-height: 1.4;
-  color: #333;
+.registro__casilla {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin: 1px 0 0;
+  accent-color: var(--m-tinta);
+  cursor: pointer;
 }
 
-.register-page__consent-link {
-  color: #1976d2;
-  text-decoration: underline;
+.registro__casilla:focus-visible {
+  outline: 2px solid var(--m-oro);
+  outline-offset: 2px;
 }
 
-.register-page__consent-link:hover,
-.register-page__consent-link:focus {
-  text-decoration: underline;
-  color: #0d47a1;
+.registro__aviso {
+  margin-top: 14px;
 }
 </style>
