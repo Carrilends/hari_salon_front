@@ -598,3 +598,90 @@ describe('plan 1 · los botones de puro texto del cajón llevan m-boton-plano', 
     }
   });
 });
+
+/**
+ * Plan 2 de las vistas: «Mis reservas» (tarjeta, fila pasada, página y sus dos
+ * diálogos). Mismo repaso que `BOTONES`: color al pasar con un token, dentro
+ * del puntero fino; los `claro` nunca en oro claro.
+ */
+const BOTONES_MIS_RESERVAS: Boton[] = [
+  { archivo: 'components/reservations/TarjetaReserva.vue', clase: 'tarjeta-reserva__cancelar', claro: true },
+  { archivo: 'components/reservations/TarjetaReserva.vue', clase: 'tarjeta-reserva__mover', claro: true },
+  { archivo: 'components/reservations/FilaPasada.vue', clase: 'fila-pasada__resena', claro: true },
+  { archivo: 'pages/MyReservationsPage.vue', clase: 'mis-reservas__actualizar', claro: true },
+  { archivo: 'pages/MyReservationsPage.vue', clase: 'mis-reservas__descartar', claro: true },
+  { archivo: 'pages/MyReservationsPage.vue', clase: 'mis-reservas__reintentar', claro: true },
+  { archivo: 'pages/MyReservationsPage.vue', clase: 'mis-reservas__plegar', claro: true },
+  { archivo: 'components/reservations/CancelarReservaDialog.vue', clase: 'cancelar-reserva__confirmar', claro: true },
+  { archivo: 'components/reservations/CancelarReservaDialog.vue', clase: 'cancelar-reserva__volver', claro: true },
+  { archivo: 'components/reservations/CambiarFechaDialog.vue', clase: 'cambiar-fecha__cerrar' },
+  { archivo: 'components/reservations/CambiarFechaDialog.vue', clase: 'cambiar-fecha__volver', claro: true },
+  { archivo: 'components/reservations/CambiarFechaDialog.vue', clase: 'cambiar-fecha__reintentar', claro: true },
+  { archivo: 'components/reservations/CambiarFechaDialog.vue', clase: 'cambiar-fecha__guardar' },
+];
+
+describe('plan 2 · cada botón de «Mis reservas» cambia de color al pasar', () => {
+  it.each(BOTONES_MIS_RESERVAS)('$clase ($archivo)', ({ archivo, clase, claro }) => {
+    const finos = bloquesFinos(archivo);
+    const patron = new RegExp(`\\.${clase}(?![\\w-])[^,{]*:hover`);
+    const cuerpo = cuerposDe(finos, patron);
+
+    expect(cuerpo).toMatch(
+      /(^|\s)(color|border-color|border-bottom-color|background|background-color): var\(--m-[\w-]+\);/
+    );
+    if (claro) {
+      expect(cuerpo).not.toMatch(/(^|\s)color: var\(--m-oro\);/);
+    }
+  });
+
+  it.each([
+    ['components/reservations/CancelarReservaDialog.vue', 'cancelar-reserva__confirmar'],
+    ['components/reservations/CancelarReservaDialog.vue', 'cancelar-reserva__volver'],
+    ['pages/MyReservationsPage.vue', 'mis-reservas__plegar'],
+  ])('%s · %s lleva m-boton--ancho', (archivo, clase) => {
+    const plantilla = leer(archivo).split('<script')[0];
+    const clases = Array.from(plantilla.matchAll(/\sclass="([^"]*)"/g))
+      .map((c) => c[1].split(/\s+/))
+      .filter((lista) => lista.includes(clase));
+
+    expect(clases.length).toBeGreaterThan(0);
+    for (const lista of clases) {
+      expect(lista).toContain('m-boton--ancho');
+    }
+  });
+
+  it.each([
+    ['components/reservations/TarjetaReserva.vue', 'tarjeta-reserva__cancelar'],
+    ['components/reservations/FilaPasada.vue', 'fila-pasada__resena'],
+    ['components/reservations/CambiarFechaDialog.vue', 'cambiar-fecha__cerrar'],
+    ['components/reservations/CambiarFechaDialog.vue', 'cambiar-fecha__volver'],
+    ['pages/MyReservationsPage.vue', 'mis-reservas__descartar'],
+    ['pages/MyReservationsPage.vue', 'mis-reservas__plegar'],
+  ])('%s · %s (puro texto o icono) lleva m-boton-plano', (archivo, clase) => {
+    const plantilla = leer(archivo).split('<script')[0];
+    const clases = (plantilla.match(/<button\b[^>]*>/g) ?? [])
+      .map((boton) => /\sclass="([^"]*)"/.exec(boton)?.[1].split(/\s+/) ?? [])
+      .filter((lista) => lista.includes(clase));
+
+    expect(clases.length).toBeGreaterThan(0);
+    for (const lista of clases) {
+      expect(lista).toContain('m-boton-plano');
+    }
+  });
+
+  it.each([
+    ['components/reservations/TarjetaReserva.vue', 'tarjeta-reserva__mover'],
+    ['pages/MyReservationsPage.vue', 'mis-reservas__actualizar'],
+    ['components/reservations/CancelarReservaDialog.vue', 'cancelar-reserva__volver'],
+  ])('%s · %s (con borde o relleno) NO lleva m-boton-plano', (archivo, clase) => {
+    const plantilla = leer(archivo).split('<script')[0];
+    const clases = (plantilla.match(/<button\b[^>]*>/g) ?? [])
+      .map((boton) => /\sclass="([^"]*)"/.exec(boton)?.[1].split(/\s+/) ?? [])
+      .filter((lista) => lista.includes(clase));
+
+    expect(clases.length).toBeGreaterThan(0);
+    for (const lista of clases) {
+      expect(lista).not.toContain('m-boton-plano');
+    }
+  });
+});
