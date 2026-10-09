@@ -566,3 +566,35 @@ describe('plan 1 · cada botón del cajón de reserva cambia de color al pasar',
     expect(plantilla).toMatch(/class="exito__whatsapp m-boton m-boton--ancho"/);
   });
 });
+
+/**
+ * Revisión final del plan 1: los botones del cajón que son puro texto o un
+ * icono sin fondo («← Atrás», «Cambiar», «Entra», «Reintentar», la X…) suben
+ * sin sombra, como el resto del portal: la sombra dibujaría una caja
+ * alrededor de una palabra.
+ */
+describe('plan 1 · los botones de puro texto del cajón llevan m-boton-plano', () => {
+  it.each([
+    ['components/reserva/CajonReserva.vue', 'cajon__cerrar'],
+    ['components/reserva/CajonReserva.vue', 'cajon__atras'],
+    ['components/reserva/PasoDatos.vue', 'cajon-enlace'],
+    ['components/reserva/PasoServicios.vue', 'bolsa__quitar'],
+    ['components/reserva/PasoServicios.vue', 'bolsa__anadir'],
+    ['components/reserva/PasoServicios.vue', 'bolsa__asistente'],
+    ['components/reserva/PasoCuando.vue', 'cuando__aviso-enlace'],
+    ['components/reserva/PasoCuando.vue', 'cuando__reintentar'],
+    ['components/reserva/TiraDeDias.vue', 'tira__flecha'],
+    ['components/reserva/PantallaExito.vue', 'exito__seguir'],
+  ])('%s · %s', (archivo, clase) => {
+    // Solo los <button>: un <a> en línea no hereda el movimiento de app.scss.
+    const plantilla = leer(archivo).split('<script')[0];
+    const clases = (plantilla.match(/<button\b[^>]*>/g) ?? [])
+      .map((boton) => /\sclass="([^"]*)"/.exec(boton)?.[1].split(/\s+/) ?? [])
+      .filter((lista) => lista.includes(clase));
+
+    expect(clases.length).toBeGreaterThan(0);
+    for (const lista of clases) {
+      expect(lista).toContain('m-boton-plano');
+    }
+  });
+});

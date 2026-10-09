@@ -48,7 +48,7 @@
           </div>
           <button
             type="button"
-            class="bolsa__quitar"
+            class="bolsa__quitar m-boton-plano"
             data-test="quitar-servicio"
             :aria-label="`Quitar ${linea.service.name}`"
             @click="emit('quitar', linea.service.id)"
@@ -59,7 +59,7 @@
       </ul>
       <button
         type="button"
-        class="bolsa__anadir"
+        class="bolsa__anadir m-boton-plano"
         data-test="anadir-servicios"
         @click="emit('ver-servicios')"
       >
@@ -91,7 +91,7 @@
       </button>
       <button
         type="button"
-        class="bolsa__asistente"
+        class="bolsa__asistente m-boton-plano"
         data-test="abrir-asistente"
         @click="emit('abrir-asistente')"
       >

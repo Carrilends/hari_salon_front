@@ -37,7 +37,7 @@
         <button
           v-if="aviso.ofrecerSinPreferencia"
           type="button"
-          class="cuando__aviso-enlace"
+          class="cuando__aviso-enlace m-boton-plano"
           data-test="probar-sin-preferencia"
           @click="emit('probar-sin-preferencia')"
         >
@@ -60,7 +60,7 @@
       </p>
       <button
         type="button"
-        class="cuando__reintentar"
+        class="cuando__reintentar m-boton-plano"
         data-test="reintentar-huecos"
         @click="emit('reintentar')"
       >

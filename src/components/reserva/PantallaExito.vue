@@ -67,7 +67,7 @@
     <footer class="exito__pie">
       <button
         type="button"
-        class="exito__seguir"
+        class="exito__seguir m-boton-plano"
         data-test="seguir-viendo"
         @click="emit('ver-servicios')"
       >

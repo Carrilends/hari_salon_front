@@ -5,7 +5,7 @@
         <h3 class="cajon-etiqueta datos__cita-rotulo">Tu cita</h3>
         <button
           type="button"
-          class="cajon-enlace datos__cambiar"
+          class="cajon-enlace datos__cambiar m-boton-plano"
           data-test="cambiar-cita"
           @click="emit('cambiar')"
         >
@@ -146,7 +146,7 @@
         ¿Tienes cuenta?
         <button
           type="button"
-          class="cajon-enlace"
+          class="cajon-enlace m-boton-plano"
           data-test="entrar"
           @click="emit('entrar')"
         >

@@ -3,7 +3,7 @@
     <div class="tira__fila">
       <button
         type="button"
-        class="tira__flecha"
+        class="tira__flecha m-boton-plano"
         data-test="tira-anterior"
         aria-label="Días anteriores"
         @click="desplazar(-1)"
@@ -51,7 +51,7 @@
 
       <button
         type="button"
-        class="tira__flecha"
+        class="tira__flecha m-boton-plano"
         data-test="tira-siguiente"
         aria-label="Días siguientes"
         @click="desplazar(1)"

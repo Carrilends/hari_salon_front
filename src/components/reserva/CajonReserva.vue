@@ -31,7 +31,7 @@
           </div>
           <button
             type="button"
-            class="cajon__cerrar"
+            class="cajon__cerrar m-boton-plano"
             data-test="cerrar-cajon"
             aria-label="Cerrar"
             :disabled="enviando"
@@ -107,7 +107,7 @@
             <button
               v-if="paso !== 'servicios'"
               type="button"
-              class="cajon__atras"
+              class="cajon__atras m-boton-plano"
               data-test="atras"
               @click="atras"
             >
