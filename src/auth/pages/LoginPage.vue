@@ -59,16 +59,20 @@ const googleDisponible = ref(false);
 
 const {
   handleCredential,
+  isLoading: googleCargando,
   error: errorGoogle,
   pidiendoConsentimiento,
   aceptarConsentimiento,
   rechazarConsentimiento,
 } = useLoginWithGoogle({ redirectTo: destino });
 
+// `login()` cierra la sesión ante cualquier fallo: si el formulario y Google
+// corrieran a la vez, el 401 tardío del primero borraría la sesión del segundo.
+const ocupado = computed(() => enviando.value || googleCargando.value);
 const avisoError = computed(() => errorServidor.value || errorGoogle.value);
 
 async function entrar() {
-  if (enviando.value) return;
+  if (ocupado.value) return;
   errorServidor.value = '';
   errorGoogle.value = '';
   const primero = validarTodo();
@@ -92,6 +96,7 @@ async function entrar() {
 }
 
 function alCredencialGoogle(idToken: string) {
+  if (ocupado.value) return;
   errorServidor.value = '';
   void handleCredential(idToken);
 }
@@ -114,6 +119,7 @@ function alCredencialGoogle(idToken: string) {
     </aviso-acceso>
 
     <google-sign-in-button
+      :disabled="ocupado"
       @credential="alCredencialGoogle"
       @disponible="googleDisponible = $event"
     />
@@ -158,10 +164,10 @@ function alCredencialGoogle(idToken: string) {
         type="submit"
         class="acceso-boton m-boton--ancho"
         data-test="enviar"
-        :disabled="enviando"
-        :aria-busy="enviando ? 'true' : undefined"
+        :disabled="ocupado"
+        :aria-busy="ocupado ? 'true' : undefined"
       >
-        {{ enviando ? 'Entrando…' : 'Entrar' }}
+        {{ ocupado ? 'Entrando…' : 'Entrar' }}
       </button>
     </form>
 

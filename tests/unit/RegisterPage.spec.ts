@@ -2,7 +2,7 @@
  * Crear cuenta (A6, A8, A9, A12, A17; S9 y §7.1, §7.3, §7.4, §7.7).
  */
 import { flushPromises, mount, RouterLinkStub } from '@vue/test-utils';
-import { ref, type Ref } from 'vue';
+import { nextTick, ref, type Ref } from 'vue';
 import RegisterPage from 'src/auth/pages/RegisterPage.vue';
 import { authApi } from 'src/api/auth-api';
 import { errorHttp, respuestaSesion } from './fixtures/acceso';
@@ -198,23 +198,19 @@ describe('RegisterPage · consentimiento (S9, §7.1)', () => {
     expect(registrar).not.toHaveBeenCalled();
   });
 
-  it('Google desactivado y con la nota hasta marcar la casilla', async () => {
+  it('Google desactivado hasta marcar la casilla', async () => {
     wrapper = montar();
     await googleDisponible(wrapper);
 
     expect(
       wrapper.find('[data-test="google-doble"]').attributes('data-desactivado')
     ).toBe('si');
-    expect(wrapper.find('[data-test="nota-google"]').text()).toBe(
-      'Marca la casilla para seguir.'
-    );
 
     await marcarCasilla(wrapper);
 
     expect(
       wrapper.find('[data-test="google-doble"]').attributes('data-desactivado')
     ).toBe('no');
-    expect(wrapper.find('[data-test="nota-google"]').exists()).toBe(false);
   });
 
   /** Foco de revisión 3: el iframe de Google se alcanza con el teclado. */
@@ -241,11 +237,26 @@ describe('RegisterPage · consentimiento (S9, §7.1)', () => {
     expect(mockGoogle.handleCredential).toHaveBeenCalledWith('id-token', true);
   });
 
-  it('sin Google disponible, ni separador ni nota', () => {
+  it('sin Google disponible, no hay separador', () => {
     wrapper = montar();
 
     expect(wrapper.find('[data-test="separador-google"]').exists()).toBe(false);
-    expect(wrapper.find('[data-test="nota-google"]').exists()).toBe(false);
+  });
+
+  it('la nota de la casilla sale siempre que esté sin marcar, con o sin Google, y el botón la referencia', async () => {
+    wrapper = montar();
+    const boton = () => wrapper!.find('[data-test="enviar"]');
+
+    expect(wrapper.find('[data-test="nota-casilla"]').text()).toBe(
+      'Marca la casilla para seguir.'
+    );
+    expect(wrapper.find('#nota-casilla').exists()).toBe(true);
+    expect(boton().attributes('aria-describedby')).toBe('nota-casilla');
+
+    await marcarCasilla(wrapper);
+
+    expect(wrapper.find('[data-test="nota-casilla"]').exists()).toBe(false);
+    expect(boton().attributes('aria-describedby')).toBeUndefined();
   });
 
   it('con Google disponible, el separador dice «o»', async () => {
@@ -392,6 +403,35 @@ describe('RegisterPage · envío (A8, A12, §7.4)', () => {
     await flushPromises();
 
     expect(registrar).toHaveBeenCalledTimes(1);
+  });
+
+  it('una credencial de Google con el formulario en vuelo se ignora', async () => {
+    registrar.mockReturnValue(new Promise(() => undefined));
+    wrapper = montar();
+    await rellenarTodo(wrapper);
+    await marcarCasilla(wrapper);
+    await enviar(wrapper);
+
+    await wrapper
+      .findComponent({ name: 'GoogleSignInButton' })
+      .vm.$emit('credential', 'id-token');
+
+    expect(mockGoogle.handleCredential).not.toHaveBeenCalled();
+  });
+
+  it('con Google cargando, enviar el formulario no registra', async () => {
+    wrapper = montar();
+    await rellenarTodo(wrapper);
+    await marcarCasilla(wrapper);
+    mockGoogle.isLoading.value = true;
+    await nextTick();
+
+    await enviar(wrapper);
+
+    expect(registrar).not.toHaveBeenCalled();
+    expect(wrapper.find('[data-test="enviar"]').attributes('aria-busy')).toBe(
+      'true'
+    );
   });
 
   it('el botón de enviar es ancho', () => {

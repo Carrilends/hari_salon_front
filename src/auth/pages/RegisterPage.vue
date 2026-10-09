@@ -84,14 +84,19 @@ const enviando = ref(false);
 const errorServidor = ref('');
 const googleDisponible = ref(false);
 
-const { handleCredential, error: errorGoogle } = useLoginWithGoogle({
-  redirectTo: destino,
-});
+const {
+  handleCredential,
+  isLoading: googleCargando,
+  error: errorGoogle,
+} = useLoginWithGoogle({ redirectTo: destino });
 
+// Formulario y Google no corren a la vez: dos sesiones abriéndose a la vez
+// se pisarían entre sí.
+const ocupado = computed(() => enviando.value || googleCargando.value);
 const avisoError = computed(() => errorServidor.value || errorGoogle.value);
 
 async function crearCuenta() {
-  if (enviando.value || !aceptaPolitica.value) return;
+  if (ocupado.value || !aceptaPolitica.value) return;
   errorServidor.value = '';
   errorGoogle.value = '';
   const primero = validarTodo();
@@ -131,7 +136,7 @@ function alCredencialGoogle(idToken: string) {
   // S9: el botón de Google se apaga con `pointer-events`, pero su iframe sigue
   // al alcance del teclado. Sin la casilla, la credencial se descarta:
   // registrarse por Google no puede ser una puerta trasera al consentimiento.
-  if (!aceptaPolitica.value) return;
+  if (ocupado.value || !aceptaPolitica.value) return;
   errorServidor.value = '';
   void handleCredential(idToken, true);
 }
@@ -203,6 +208,15 @@ function alCredencialGoogle(idToken: string) {
         </span>
       </label>
 
+      <p
+        v-if="!aceptaPolitica"
+        id="nota-casilla"
+        class="acceso-nota"
+        data-test="nota-casilla"
+      >
+        Marca la casilla para seguir.
+      </p>
+
       <aviso-acceso v-if="avisoError" class="registro__aviso">
         {{ avisoError }}
       </aviso-acceso>
@@ -211,26 +225,20 @@ function alCredencialGoogle(idToken: string) {
         type="submit"
         class="acceso-boton m-boton--ancho"
         data-test="enviar"
-        :disabled="!aceptaPolitica || enviando"
-        :aria-busy="enviando ? 'true' : undefined"
+        :disabled="!aceptaPolitica || ocupado"
+        :aria-busy="ocupado ? 'true' : undefined"
+        :aria-describedby="aceptaPolitica ? undefined : 'nota-casilla'"
       >
-        {{ enviando ? 'Creando tu cuenta…' : 'Crear cuenta' }}
+        {{ ocupado ? 'Creando tu cuenta…' : 'Crear cuenta' }}
       </button>
     </form>
 
     <separador-acceso v-if="googleDisponible" texto="o" />
     <google-sign-in-button
-      :disabled="!aceptaPolitica"
+      :disabled="!aceptaPolitica || ocupado"
       @credential="alCredencialGoogle"
       @disponible="googleDisponible = $event"
     />
-    <p
-      v-if="googleDisponible && !aceptaPolitica"
-      class="acceso-nota"
-      data-test="nota-google"
-    >
-      Marca la casilla para seguir.
-    </p>
 
     <p class="acceso-pie-formulario">
       ¿Ya tienes cuenta?

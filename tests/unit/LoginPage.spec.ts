@@ -226,6 +226,37 @@ describe('LoginPage · Google primero (A9, A10)', () => {
     expect(mockGoogle.handleCredential).toHaveBeenCalledWith('id-token');
   });
 
+  it('una credencial de Google con el formulario en vuelo se ignora', async () => {
+    entrar.mockReturnValue(new Promise(() => undefined));
+    wrapper = montar();
+    await rellenar(wrapper, 'clienta@correo.com', 'Marlene2026');
+    await enviar(wrapper);
+
+    await wrapper
+      .findComponent({ name: 'GoogleSignInButton' })
+      .vm.$emit('credential', 'id-token');
+
+    expect(mockGoogle.handleCredential).not.toHaveBeenCalled();
+    expect(
+      wrapper.find('[data-test="google-doble"]').attributes('data-desactivado')
+    ).toBe('si');
+  });
+
+  it('con Google cargando, enviar el formulario no hace ninguna petición', async () => {
+    wrapper = montar();
+    await rellenar(wrapper, 'clienta@correo.com', 'Marlene2026');
+    mockGoogle.isLoading.value = true;
+    await nextTick();
+
+    await enviar(wrapper);
+
+    const boton = wrapper.find('[data-test="enviar"]');
+    expect(entrar).not.toHaveBeenCalled();
+    expect(boton.attributes('disabled')).toBeDefined();
+    expect(boton.attributes('aria-busy')).toBe('true');
+    expect(boton.text()).toBe('Entrando…');
+  });
+
   it('el error de Google se pinta en línea', async () => {
     wrapper = montar();
 
