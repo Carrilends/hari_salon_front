@@ -9,7 +9,7 @@
           data-test="cambiar-cita"
           @click="emit('cambiar')"
         >
-          <span class="datos__subrayado">Cambiar</span>
+          Cambiar
         </button>
       </div>
       <p class="datos__cita-cuando">{{ cita.cuando }}</p>
@@ -154,7 +154,7 @@
           data-test="entrar"
           @click="emit('entrar')"
         >
-          <span class="datos__subrayado">Entra</span>
+          Entra
         </button>
         y no tendrás que escribir tus datos.
       </p>
@@ -244,19 +244,6 @@ const marcadoDe = (evento: Event) =>
 
 .datos__cita-rotulo {
   margin: 0;
-}
-
-.cajon-enlace {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--m-rosa-profundo);
-  font: inherit;
-  cursor: pointer;
-}
-
-.datos__subrayado {
-  border-bottom: var(--m-filete-grosor) solid var(--m-filete-rosa);
 }
 
 .datos__cambiar {
