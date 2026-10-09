@@ -27,6 +27,11 @@ export function useMyReservations() {
 
   const cancel = useMutation({
     mutationFn: (id: string) => cancelReservation(id),
+    // Sin conexión, el modo por defecto (`'online'`) PAUSA la mutación: el
+    // diálogo se quedaba en «Cancelando…» sin error y la cancelación salía
+    // sola al volver la red. Con `'always'` se intenta, falla al momento y el
+    // diálogo pinta el aviso de conexión (`cancelErrorMessage`).
+    networkMode: 'always',
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: queryKeys.reservations.me }),
   });
