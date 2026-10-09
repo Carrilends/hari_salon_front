@@ -443,7 +443,7 @@ describe('MyReservationsPage · cambiar fecha (M3)', () => {
       .findAll('[data-test="abrir-cambiar-fecha"]')[0]
       .trigger('click');
 
-    moverDoble(wrapper).vm.$emit('reprogramada', 'r1');
+    moverDoble(wrapper).vm.$emit('reprogramada', 'r1', 'w1');
     await nextTick();
 
     expect(wrapper.get('[data-test="aviso-texto"]').text()).toBe(
@@ -463,11 +463,41 @@ describe('MyReservationsPage · cambiar fecha (M3)', () => {
         : r
     );
 
-    moverDoble(wrapper).vm.$emit('reprogramada', 'r2');
+    moverDoble(wrapper).vm.$emit('reprogramada', 'r2', 'w2');
     await nextTick();
 
     expect(wrapper.get('[data-test="aviso-texto"]').text()).toBe(
       'Tu cita quedó movida. Ahora te atiende Sonia.'
+    );
+  });
+
+  /** Revisión final I2: la lista refrescada falló y sigue con la estilista vieja. */
+  it('si la lista refrescada no llegó, igual dice que cambió la estilista', async () => {
+    const wrapper = montar();
+    await wrapper
+      .findAll('[data-test="abrir-cambiar-fecha"]')[1]
+      .trigger('click');
+
+    // La lista sigue como antes (w3, Alejandro); el PATCH dijo w2.
+    moverDoble(wrapper).vm.$emit('reprogramada', 'r2', 'w2');
+    await nextTick();
+
+    expect(wrapper.get('[data-test="aviso-texto"]').text()).toBe(
+      'Tu cita quedó movida. Te atenderá otra estilista.'
+    );
+  });
+
+  it('un oyente antiguo de «reprogramada(id)» sin estilista sigue funcionando', async () => {
+    const wrapper = montar();
+    await wrapper
+      .findAll('[data-test="abrir-cambiar-fecha"]')[0]
+      .trigger('click');
+
+    moverDoble(wrapper).vm.$emit('reprogramada', 'r1');
+    await nextTick();
+
+    expect(wrapper.get('[data-test="aviso-texto"]').text()).toBe(
+      'Tu cita quedó movida.'
     );
   });
 
@@ -476,7 +506,7 @@ describe('MyReservationsPage · cambiar fecha (M3)', () => {
     await wrapper
       .findAll('[data-test="abrir-cambiar-fecha"]')[0]
       .trigger('click');
-    moverDoble(wrapper).vm.$emit('reprogramada', 'r1');
+    moverDoble(wrapper).vm.$emit('reprogramada', 'r1', 'w1');
     await nextTick();
 
     const descartar = wrapper.get('[data-test="descartar-aviso"]');

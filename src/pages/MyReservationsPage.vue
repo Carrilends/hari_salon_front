@@ -257,20 +257,19 @@ function abrirMover(reserva: ReservationDto): void {
 }
 
 /**
- * El diálogo avisa cuando la lista ya está refrescada, así que la fila de la
- * lista es la verdad: si el sistema reasignó la estilista, su nombre está ahí.
- * `aMover` conserva la reserva tal como estaba antes de moverla.
+ * `workerId` es la estilista que devolvió el PATCH: decide si cambió, aunque
+ * la lista refrescada no haya llegado (`invalidateQueries` no falla si el
+ * refresco falla). La fila refrescada solo pone el nombre, y solo si ya dice
+ * esa misma estilista. `aMover` conserva la reserva tal como estaba antes.
+ * Sin `workerId` (un oyente del contrato antiguo) se usa la fila refrescada.
  */
-function alReprogramar(id: string): void {
+function alReprogramar(id: string, workerId?: string): void {
   const antes = aMover.value;
   const refrescada = todas.value.find((r) => r.id === id) ?? null;
+  const nueva = workerId ?? refrescada?.workerId;
   aviso.value =
-    antes && refrescada
-      ? rescheduleSuccessMessage(
-          antes,
-          { workerId: refrescada.workerId },
-          refrescada
-        )
+    antes && nueva
+      ? rescheduleSuccessMessage(antes, { workerId: nueva }, refrescada)
       : 'Tu cita quedó movida.';
 }
 

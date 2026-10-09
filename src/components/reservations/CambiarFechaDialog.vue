@@ -203,9 +203,10 @@ import type { ReservationDto } from 'src/interfaces/booking';
  * al comprobar el solape; sin recortarlo, el portal tacharía horas válidas).
  *
  * Hace el PATCH él mismo porque lo reutiliza la bandeja de la dueña (plan 3).
- * Al salir bien espera a que se invaliden las consultas antes de avisar: quien
- * escucha `reprogramada` ya tiene su lista refrescada y puede nombrar a la
- * estilista nueva si el sistema la reasignó.
+ * Al salir bien espera a que se invaliden las consultas antes de avisar, y
+ * avisa con la estilista que devolvió el PATCH: quien escucha `reprogramada`
+ * sabe si el sistema la reasignó aunque la lista no se haya podido refrescar,
+ * y si se refrescó, saca de ahí su nombre.
  *
  * Los puntos de la tira salen de la ocupación real del salón
  * (`useOcupacionDeLaTira`, clave `queryKeys.occupancy.rango`, la misma
@@ -228,7 +229,12 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   (e: 'update:modelValue', valor: boolean): void;
-  (e: 'reprogramada', id: string): void;
+  /**
+   * `workerId` es la estilista que devolvió el PATCH: la verdad del servidor,
+   * aunque la lista refrescada falle. Segundo argumento aditivo (§4.2): quien
+   * escucha solo `(id)` sigue valiendo.
+   */
+  (e: 'reprogramada', id: string, workerId: string): void;
 }>();
 
 /**
@@ -438,8 +444,10 @@ async function guardar(): Promise<void> {
   const reserva = props.reserva;
   guardando.value = true;
   error.value = '';
+  let estilistaNueva: string;
   try {
-    await rescheduleReservation(reserva.id, iso);
+    const movida = await rescheduleReservation(reserva.id, iso);
+    estilistaNueva = movida.workerId;
   } catch (fallo) {
     if (mia !== vuelta) return;
     error.value = rescheduleErrorMessage(fallo, reserva);
@@ -458,7 +466,7 @@ async function guardar(): Promise<void> {
     queryClient.invalidateQueries({ queryKey: queryKeys.occupancy.all }),
   ]);
   // Cerrado a mitad, la cita se movió igual: la página lo sabe por aquí.
-  emit('reprogramada', reserva.id);
+  emit('reprogramada', reserva.id, estilistaNueva);
   if (mia !== vuelta) return;
   guardando.value = false;
   emit('update:modelValue', false);

@@ -409,7 +409,7 @@ describe('CambiarFechaDialog · mover', () => {
     expect(mockInvalidar).toHaveBeenCalledWith({
       queryKey: ['reservation-occupancy'],
     });
-    expect(wrapper.emitted('reprogramada')).toEqual([['r1']]);
+    expect(wrapper.emitted('reprogramada')).toEqual([['r1', 'w1']]);
     expect(wrapper.emitted('update:modelValue')).toEqual([[false]]);
   });
 
@@ -428,7 +428,23 @@ describe('CambiarFechaDialog · mover', () => {
 
     terminar();
     await flushPromises();
-    expect(wrapper.emitted('reprogramada')).toEqual([['r1']]);
+    expect(wrapper.emitted('reprogramada')).toEqual([['r1', 'w1']]);
+  });
+
+  /**
+   * Revisión final I2: la estilista que devuelve el PATCH viaja con el aviso.
+   * Antes se tiraba y la página la reconstruía de la lista refrescada, que
+   * puede fallar en silencio: «Tu cita quedó movida.» con otra estilista.
+   */
+  it('avisa con la estilista que devolvió el servidor, aunque sea otra', async () => {
+    mockReprogramar.mockResolvedValue({ id: 'r1', workerId: 'w2' });
+    const wrapper = montar({ reserva: { ...RESERVA, workerPinned: false } });
+    await elegir(wrapper, '2026/10/09', '15:00');
+
+    await wrapper.get('[data-test="guardar-fecha"]').trigger('click');
+    await flushPromises();
+
+    expect(wrapper.emitted('reprogramada')).toEqual([['r1', 'w2']]);
   });
 
   it('sin estilista elegida la cita nueva no promete un nombre', async () => {
@@ -611,7 +627,7 @@ describe('CambiarFechaDialog · mover', () => {
     terminar({ id: 'r1', workerId: 'w1' });
     await flushPromises();
 
-    expect(wrapper.emitted('reprogramada')).toEqual([['r1']]);
+    expect(wrapper.emitted('reprogramada')).toEqual([['r1', 'w1']]);
     expect(wrapper.emitted('update:modelValue')).toBeUndefined();
     expect(
       wrapper.get('[data-test="guardar-fecha"]').attributes('aria-busy')
