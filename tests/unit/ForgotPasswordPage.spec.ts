@@ -164,7 +164,7 @@ describe('ForgotPasswordPage · «Revisa tu correo» (A13, §7.2)', () => {
     await pedirEnlace(wrapper, 'clienta@correo.com');
     const linea = () => wrapper?.find('[data-test="reenvio-estado"]');
 
-    expect(wrapper.text()).toContain(
+    expect(wrapper.text().replace(/\s+/g, ' ')).toContain(
       '¿No llegó? Mira en correo no deseado o envíalo otra vez.'
     );
     expect(linea()?.attributes('aria-live')).toBe('polite');
