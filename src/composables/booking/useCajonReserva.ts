@@ -229,6 +229,10 @@ export function useCajonReserva(abierto: Ref<boolean>) {
   // éxito deja el cajón limpio para la próxima reserva.
   watch(abierto, (estaAbierto) => {
     if (estaAbierto) {
+      // El cajón no se deja cerrar mientras registra; si aun así algo lo
+      // cerró y la reserva quedó, el éxito se ve al abrir: la bolsa ya se
+      // vació y es la única confirmación que tiene la clienta.
+      if (paso.value === 'exito' && resumen.value) return;
       ahora.value = getSalonNowParts();
       paso.value = 'servicios';
       // Aunque ya estuviera en «servicios»: abrir también es cambiar de paso.

@@ -8,6 +8,7 @@
     :full-height="!movil"
     :transition-show="movil ? 'slide-up' : 'slide-left'"
     :transition-hide="movil ? 'slide-down' : 'slide-right'"
+    :persistent="enviando"
     @update:model-value="alCambiarDialogo"
   >
     <section
@@ -33,6 +34,7 @@
             class="cajon__cerrar"
             data-test="cerrar-cajon"
             aria-label="Cerrar"
+            :disabled="enviando"
             @click="cerrar"
           >
             <StrokeIcon nombre="cerrar" :tamano="20" />
@@ -236,11 +238,19 @@ watch(paso, async () => {
   cuerpo.value.focus({ preventScroll: true });
 });
 
+/**
+ * Mientras se registra, el cajón no se cierra: si se cerrara, la reserva que
+ * sí quedó vaciaría la bolsa sin que la clienta viera nunca el éxito.
+ * `persistent` hace que QDialog ignore Escape, el velo y el cambio de ruta;
+ * la X va deshabilitada; y aquí se ignora cualquier cierre que aun así llegue.
+ */
 function alCambiarDialogo(valor: boolean) {
+  if (!valor && enviando.value) return;
   emit('update:abierto', valor);
 }
 
 function cerrar() {
+  if (enviando.value) return;
   emit('update:abierto', false);
 }
 
@@ -334,6 +344,11 @@ function abrirAsistente() {
   background: transparent;
   color: var(--m-hueso);
   cursor: pointer;
+}
+
+.cajon__cerrar:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .cajon__cerrar:focus-visible {
@@ -476,7 +491,7 @@ function abrirAsistente() {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .cajon__cerrar:hover {
+  .cajon__cerrar:hover:not(:disabled) {
     color: var(--m-oro);
   }
 

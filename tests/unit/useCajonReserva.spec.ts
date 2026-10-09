@@ -587,6 +587,31 @@ describe('useCajonReserva · Foco de revisión', () => {
     expect(cajon.resumen.value).toBeNull();
   });
 
+  it('4d · si algo lo cerró mientras registraba y la reserva quedó, al abrir se ve el éxito', async () => {
+    let soltar!: (valor: unknown) => void;
+    mockEnviar.mockImplementation(
+      () =>
+        new Promise((resolver) => {
+          soltar = resolver;
+        })
+    );
+    const { cajon, abierto } = montar();
+    await hastaDatos(cajon);
+    datosSinSesion(cajon);
+
+    const envio = cajon.confirmar();
+    await flushPromises();
+    abierto.value = false;
+    await nextTick();
+    soltar(CREADA);
+    await envio;
+    abierto.value = true;
+    await nextTick();
+
+    expect(cajon.paso.value).toBe('exito');
+    expect(cajon.resumen.value).not.toBeNull();
+  });
+
   it('4b · abrir empieza en la bolsa y conserva lo elegido', async () => {
     const { cajon, abierto } = montar();
     await hastaDatos(cajon);

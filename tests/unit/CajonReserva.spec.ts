@@ -50,7 +50,7 @@ import { PAUSA_TRAS_CAMBIO_DE_PASO_MS } from 'src/composables/booking/useCajonRe
 
 const QDialog = {
   name: 'QDialog',
-  props: ['modelValue'],
+  props: ['modelValue', 'persistent'],
   emits: ['update:modelValue'],
   template: '<div v-if="modelValue" class="q-dialog"><slot /></div>',
 };
@@ -273,6 +273,42 @@ describe('CajonReserva', () => {
     expect(wrapper.find('[data-test="casilla-consentimiento"]').exists()).toBe(
       false
     );
+  });
+
+  it('mientras registra no se cierra: ni la X, ni Escape, ni el velo; luego se ve el éxito', async () => {
+    let soltar!: (valor: unknown) => void;
+    mockEnviar.mockImplementation(
+      () =>
+        new Promise((resolver) => {
+          soltar = resolver;
+        })
+    );
+    useBookStore().addBooking(servicio());
+    const wrapper = montar();
+    await hastaDatos(wrapper);
+    await rellenarSinSesion(wrapper);
+    dejarPasarLaPausa();
+    await pulsar(wrapper, '[data-test="continuar"]');
+    expect(wrapper.get('[data-test="continuar"]').text()).toBe('Registrando…');
+
+    const dialogo = wrapper.findComponent({ name: 'QDialog' });
+    // `persistent`: QDialog ignora Escape, el velo y el cambio de ruta.
+    expect(dialogo.props('persistent')).toBe(true);
+    const cerrarCajon = wrapper.get('[data-test="cerrar-cajon"]');
+    expect(cerrarCajon.attributes('disabled')).toBeDefined();
+    await cerrarCajon.trigger('click');
+    dialogo.vm.$emit('update:modelValue', false);
+    await nextTick();
+    expect(wrapper.emitted('update:abierto')).toBeUndefined();
+
+    soltar({ tipo: 'creada', reserva: { id: 'r1', workerId: 'w-alejandro' } });
+    await flushPromises();
+
+    expect(wrapper.find('[data-test="pantalla-exito"]').exists()).toBe(true);
+    expect(dialogo.props('persistent')).toBe(false);
+    expect(
+      wrapper.get('[data-test="cerrar-cajon"]').attributes('disabled')
+    ).toBeUndefined();
   });
 
   it('cerrar emite update:abierto con false', async () => {
