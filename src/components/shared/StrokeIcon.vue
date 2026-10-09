@@ -101,6 +101,30 @@ const TRAZOS: Record<string, string[]> = {
   ],
   /** Hamburguesa: el disparador de «Más» por debajo de 700 px (tablero móvil). */
   menu: ['M4 7h16M4 12h16M4 17h16'],
+  // --- Plan 1 de las vistas: el cajón de reserva (tableros ReservaCajon*) ---
+  cerrar: ['M6 6l12 12M18 6L6 18'],
+  check: ['M5 12.5l4.5 4.5L19 7.5'],
+  calendario: ['M4.5 6.5h15v13h-15z', 'M4.5 10.5h15M8.5 4v4M15.5 4v4'],
+  'sin-preferencia': [
+    'M16 3h5v5',
+    'M4 20 21 3',
+    'M21 16v5h-5',
+    'M15 15l6 6',
+    'M4 4l5 5',
+  ],
+  alerta: [
+    'M20.5 12a8.5 8.5 0 1 1-17 0 8.5 8.5 0 0 1 17 0',
+    'M12 7.5v5',
+    'M11.95 16.2h.1',
+  ],
+  whatsapp: [
+    'M20.5 11.6a8.5 8.5 0 0 1-12.4 7.6L3.5 20.5l1.4-4.4A8.5 8.5 0 1 1 20.5 11.6z',
+    'M9 9.2c.3-.7.6-.7.9-.7h.6c.2 0 .5 0 .7.5l.7 1.6c.1.3 0 .5-.1.7l-.4.5c-.1.2-.2.3 0 .6a6 6 0 0 0 2.8 2.3c.3.1.5.1.7-.1l.5-.6c.2-.2.4-.2.6-.1l1.6.8c.3.1.4.3.4.5v.5c-.1.5-.6 1-1.2 1.1-1.1.2-2.6-.3-4.2-1.4a9.4 9.4 0 0 1-3.3-3.8c-.5-1.1-.5-2-.3-2.4z',
+  ],
+  bolsa: ['M5 8h14l-1 12H6z', 'M9 8V6a3 3 0 0 1 6 0v2'],
+  mas: ['M12 5v14M5 12h14'],
+  anterior: ['M15 6l-6 6 6 6'],
+  siguiente: ['M9 6l6 6-6 6'],
 };
 
 const props = withDefaults(defineProps<{ nombre: string; tamano?: number }>(), {

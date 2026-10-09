@@ -223,3 +223,17 @@
   /// alto, esto cambia con ella (lo vigila `tokens.spec.ts`). No es un color.
   --m-flotante-despeje: calc(18px + 48px + 8px);
 }
+
+/// Plan 1 — reserva: el cajón por pasos (spec §1 de las vistas restantes).
+:root {
+  /// Hueco de una ficha que todavía carga (esqueleto de las horas del cajón
+  /// de reserva). Sobre hueso apenas se separa, y es lo que se busca: se lee
+  /// como «aquí va algo», no como un botón apagado.
+  /// No es color de texto: nada se escribe encima.
+  --m-esqueleto: #ece5db;
+
+  /// Sombra del cajón de reserva, que entra por la derecha y se separa de la
+  /// página hacia la izquierda. Los canales de `--m-tinta`, como las demás.
+  /// No es color de texto: solo eleva el cajón.
+  --m-sombra-cajon: -18px 0 44px rgba(22, 19, 15, 0.25);
+}
