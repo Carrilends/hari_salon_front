@@ -52,39 +52,57 @@
             </q-btn>
           </div>
           <q-btn
-            class="main-header__link"
-            icon="expand_more"
-            :label="showButtonLabels ? 'Más' : undefined"
+            class="main-header__link main-header__mas"
+            :class="{ 'main-header__mas--abierto': menuAbierto }"
             aria-label="Más opciones"
+            aria-haspopup="dialog"
+            :aria-expanded="menuAbierto || hojaAbierta ? 'true' : 'false'"
             rounded
             flat
             :dense="!showButtonLabels"
+            @click="alPulsarMas"
           >
+            <StrokeIcon v-if="esMovil" nombre="menu" :tamano="22" />
+            <template v-else>
+              <svg
+                class="main-header__chevron"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+              <span v-if="showButtonLabels" class="main-header__mas-rotulo">Más</span>
+            </template>
             <q-menu
+              v-if="!esMovil"
+              v-model="menuAbierto"
               class="more-menu"
-              auto-close
+              role="dialog"
+              aria-label="Menú"
               anchor="bottom right"
               self="top right"
+              :offset="[0, 6]"
               transition-show="fade"
               transition-hide="fade"
+              @before-show="refrescarHorario"
             >
-              <q-list class="more-menu__list" separator>
-                <q-item
-                  v-for="item in moreMenuItems"
-                  :key="item.label"
-                  clickable
-                  v-close-popup
-                  class="more-menu__item"
-                  @click="item.method"
-                >
-                  <q-item-section avatar>
-                    <StrokeIcon :nombre="item.icon" class="more-menu__icon" />
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label>{{ item.label }}</q-item-label>
-                  </q-item-section>
-                </q-item>
-              </q-list>
+              <MenuMasContenido
+                class="more-menu__list"
+                :secciones="seccionesMenu"
+                variante="desplegable"
+                :nombre="authStore.fullname"
+                :correo="authStore.email"
+                :horario-hoy="horarioHoy"
+                @elegir="alElegirEntrada"
+              />
             </q-menu>
           </q-btn>
         </nav>
@@ -164,6 +182,14 @@
 
     <whoWeAreDialog v-model:dialog="whoWeAreDialogComponent" />
     <ourContact v-model:dialog="ourContactDialog" />
+    <MenuMasHoja
+      v-model:abierta="hojaAbierta"
+      :secciones="seccionesMenu"
+      :nombre="authStore.fullname"
+      :correo="authStore.email"
+      :horario-hoy="horarioHoy"
+      @elegir="alElegirEntrada"
+    />
     <BookingDialog v-model:dialog="bookingStore.showDialog" />
 
     <AssistantLauncher :mostrar-flotante="mostrarFlotanteAsistente" />
@@ -171,7 +197,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch, onMounted, onUnmounted } from 'vue';
+import { computed, reactive, ref, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import ourContact from 'src/components/dialogs/ourContact.vue';
@@ -179,9 +205,17 @@ import whoWeAreDialog from 'src/components/dialogs/whoWeAreDialog.vue';
 import BookingDialog from 'src/components/dialogs/bookingDialog.vue';
 import AssistantLauncher from 'src/components/assistant/AssistantLauncher.vue';
 import StrokeIcon from 'src/components/shared/StrokeIcon.vue';
+import MenuMasContenido from 'src/components/shared/MenuMasContenido.vue';
+import MenuMasHoja from 'src/components/shared/MenuMasHoja.vue';
 import { migrateLegacyBookings, useBookStore } from 'src/stores/book-store';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useReviewDialog } from 'src/composables/reviews/useReviewDialog';
+import { useConsultaMedios } from 'src/composables/shared/useConsultaMedios';
+import {
+  seccionesDelMenu,
+  type EntradaMenu,
+} from 'src/composables/shared/menuMas';
+import { horarioDeHoy } from 'src/helpers/businessHours';
 import { adminServiceApi } from 'src/api/services-api';
 import { authApi } from 'src/api/auth-api';
 import type { CreateReviewBody, CreateReviewResponse } from 'src/api/apiTypes';
@@ -193,18 +227,18 @@ type HeaderActionButton = {
   method: () => void;
 };
 
-type HeaderMenuItem = {
-  label: string;
-  icon: string;
-  method: () => void;
-  visible?: () => boolean;
-};
-
 const bookingStore = useBookStore();
 const authStore = useAuthStore();
 const $q = useQuasar();
 
 const BREAKPOINT_LABELS_PX = 1171;
+
+/**
+ * Por debajo de este ancho «Más» es una hamburguesa y abre la hoja inferior
+ * (M6). Es el mismo corte que el `@media (max-width: 699px)` que ya cambia la
+ * cabecera en el CSS de abajo.
+ */
+const CONSULTA_MENU_MOVIL = '(max-width: 699px)';
 
 const route = useRoute();
 const router = useRouter();
@@ -321,23 +355,86 @@ async function onLogout() {
   router.push({ path: '/' });
 }
 
-function onLogin() {
-  router.push({
-    name: 'login',
-    query: {
-      redirect: route.fullPath || '/services',
-    },
-  });
-}
-
 const whoWeAreDialogComponent = ref(false);
 const ourContactDialog = ref(false);
 
-const showButtonLabels = ref(
-  typeof window !== 'undefined'
-    ? window.matchMedia(`(min-width: ${BREAKPOINT_LABELS_PX}px)`).matches
-    : true
+/**
+ * M11: arrancan en lo que prerenderiza el SSG (rótulos a la vista, sin
+ * hamburguesa) y la ventana real llega al montar. Antes los rótulos se
+ * sembraban con `matchMedia` en `setup` —desajuste de hidratación en un
+ * teléfono— y se escuchaban con `addEventListener` directo, que revienta en
+ * Safari 13.1.
+ */
+const showButtonLabels = useConsultaMedios(
+  `(min-width: ${BREAKPOINT_LABELS_PX}px)`,
+  true
 );
+const esMovil = useConsultaMedios(CONSULTA_MENU_MOVIL, false);
+
+// --- Menú «Más» -----------------------------------------------------------
+//
+// El modelo lo da `seccionesDelMenu` (src/composables/shared/menuMas.ts), lo
+// pinta `MenuMasContenido` dentro de dos envoltorios —el `q-menu` de arriba
+// desde 700 px y `MenuMasHoja` por debajo— y lo que se hace al elegir se
+// resuelve aquí, que es donde viven los diálogos y la sesión.
+
+const menuAbierto = ref(false);
+const hojaAbierta = ref(false);
+const horarioHoy = ref('');
+
+const seccionesMenu = computed(() =>
+  seccionesDelMenu({
+    isLoggedIn: authStore.isLoggedIn,
+    isAdmin: authStore.isAdmin,
+    redirect: route.fullPath || '/services',
+  })
+);
+
+/**
+ * M9: el horario de hoy se calcula al ABRIR el menú, no en `setup`: así no
+ * descuadra el HTML prerenderizado ni se queda con el día de ayer si la pestaña
+ * pasa la medianoche abierta.
+ */
+function refrescarHorario() {
+  const { abre, cierra } = horarioDeHoy();
+  horarioHoy.value = `${abre} a ${cierra}`;
+}
+
+/** En escritorio el `q-menu` se abre solo al pulsar su botón padre. */
+function alPulsarMas() {
+  if (!esMovil.value) return;
+  refrescarHorario();
+  hojaAbierta.value = true;
+}
+
+/**
+ * Toda entrada pasa por aquí, también los enlaces: el menú se cierra primero
+ * —incluso si la entrada lleva a la página en la que ya se está, donde el
+ * `<router-link>` no navega— y después se resuelve la acción, si la hay. Las
+ * entradas con destino navegan solas.
+ */
+function alElegirEntrada(entrada: EntradaMenu) {
+  menuAbierto.value = false;
+  hojaAbierta.value = false;
+  if (entrada.accion === 'quienes-somos') {
+    whoWeAreDialogComponent.value = true;
+  } else if (entrada.accion === 'horarios') {
+    ourContactDialog.value = true;
+  } else if (entrada.accion === 'cerrar-sesion') {
+    void onLogout();
+  }
+}
+
+/**
+ * Al cruzar los 700 px con el menú abierto (girar el teléfono, estrechar la
+ * ventana) se cierran los dos: el `q-menu` se desmontaría con `menuAbierto` en
+ * `true` y el botón seguiría diciendo `aria-expanded="true"`, y la hoja
+ * volvería a saltar sola al estrechar.
+ */
+watch(esMovil, () => {
+  menuAbierto.value = false;
+  hojaAbierta.value = false;
+});
 
 onMounted(() => {
   const b = bookingStore.bookings;
@@ -349,14 +446,6 @@ onMounted(() => {
       });
     }
   }
-
-  const mq = window.matchMedia(`(min-width: ${BREAKPOINT_LABELS_PX}px)`);
-  const syncLabels = () => {
-    showButtonLabels.value = mq.matches;
-  };
-  syncLabels();
-  mq.addEventListener('change', syncLabels);
-  onUnmounted(() => mq.removeEventListener('change', syncLabels));
 });
 
 const serviceHomeButton = ref<HeaderActionButton>({
@@ -365,73 +454,6 @@ const serviceHomeButton = ref<HeaderActionButton>({
   class: 'color-bar',
   method: () => router.push('/services'),
 });
-
-const moreMenuItems = computed<HeaderMenuItem[]>(() =>
-  [
-    {
-      icon: 'cuenta',
-      label: 'Mi cuenta',
-      visible: () => authStore.isLoggedIn,
-      method: () => router.push('/mi-cuenta'),
-    },
-    {
-      icon: 'reservas',
-      label: 'Mis reservas',
-      visible: () => authStore.isLoggedIn,
-      method: () => router.push('/mis-reservas'),
-    },
-    {
-      icon: 'testimonios',
-      label: 'Testimonios',
-      method: () => router.push('/testimonios'),
-    },
-    {
-      icon: 'equipo',
-      label: '¿Quiénes somos?',
-      method: () =>
-        (whoWeAreDialogComponent.value = !whoWeAreDialogComponent.value),
-    },
-    {
-      icon: 'horario',
-      label: 'Horarios',
-      method: () => (ourContactDialog.value = !ourContactDialog.value),
-    },
-    {
-      icon: 'estilistas',
-      label: 'Mis estilistas',
-      visible: () => authStore.isAdmin,
-      method: () => router.push('/mis-empleados'),
-    },
-    {
-      icon: 'agenda',
-      label: 'Reservas',
-      visible: () => authStore.isAdmin,
-      method: () => router.push('/reservas'),
-    },
-    {
-      icon: 'ayuda',
-      label: 'Preguntas frecuentes',
-      method: () => router.push('/preguntas-frecuentes'),
-    },
-    {
-      icon: 'privacidad',
-      label: 'Política de datos',
-      method: () => router.push({ name: 'privacy-policy' }),
-    },
-    {
-      icon: 'entrar',
-      label: 'Iniciar sesión',
-      visible: () => !authStore.isLoggedIn,
-      method: onLogin,
-    },
-    {
-      icon: 'salir',
-      label: 'Cerrar sesión',
-      visible: () => authStore.isLoggedIn,
-      method: onLogout,
-    },
-  ].filter((item) => (item.visible ? item.visible() : true))
-);
 
 function syncServicesNavButton() {
   if (route.path === '/') {
@@ -521,6 +543,41 @@ defineOptions({
   min-width: 0;
 }
 
+/**
+ * El disparador de «Más» (M6). El filete transparente reserva su píxel: al
+ * abrirse el botón se pinta en nieve con filete sin cambiar de tamaño, y la
+ * cabecera no se mueve.
+ */
+.main-header__mas {
+  min-height: var(--m-tactil-min);
+  border: var(--m-filete-grosor) solid transparent;
+}
+
+.main-header__mas--abierto {
+  background: var(--m-nieve);
+  border-color: var(--m-filete);
+}
+
+.main-header__mas-rotulo {
+  margin-left: 7px;
+}
+
+.main-header__chevron {
+  flex: 0 0 auto;
+  transition: transform var(--m-transicion-pulsar) ease;
+}
+
+.main-header__mas--abierto .main-header__chevron {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .main-header__chevron {
+    transition: none;
+  }
+}
+
+
 @media (max-width: 699px) {
   .main-header {
     padding: 0 var(--m-banda-margen-movil);
@@ -536,6 +593,12 @@ defineOptions({
   .main-header__actions {
     gap: 6px;
     flex-wrap: nowrap;
+  }
+
+
+  // La hamburguesa: 44 × 44, como en el tablero móvil.
+  .main-header__mas {
+    min-width: var(--m-tactil-min);
   }
 }
 
@@ -611,69 +674,28 @@ defineOptions({
 
 <!--
   Sin `scoped` a propósito. Quasar teletransporta el menú al `body`, así que su
-  raíz no lleva el atributo de ámbito del componente y ninguna regla scoped la
-  alcanza. De hecho el `border-radius` y el `backdrop-filter` que había antes
-  aquí nunca llegaron a aplicarse: solo pegaban las de la lista y las filas, que
-  sí viven en esta plantilla. Las clases van prefijadas, así que no se escapan.
+  raíz (`.q-menu`) no lleva el atributo de ámbito del componente y ninguna regla
+  scoped la alcanza. Las clases van prefijadas, así que no se escapan. Aquí solo
+  vive el MARCO del desplegable; lo de dentro es de `MenuMasContenido.vue`.
 -->
 <style lang="scss">
 /**
- * El desplegable de «Más», con el lenguaje de la remodelación.
+ * El desplegable de «Más» desde 700 px (M6, M12; tablero
+ * MenuSeccionesEscritorio): tarjeta de nieve de 344 px con filete y la sombra de
+ * capa flotante. Se conservan `.more-menu` y `.more-menu__list`, que es por
+ * donde lo busca `tests/browser-compat/index-layout.spec.ts`.
  *
- * Era lo último que quedaba de la pintura vieja: degradado de rosa a azul,
- * iconos morados, esquinas de 14 px, píldoras dentro de la tarjeta y un
- * desplazamiento al pasar el ratón. Ahora es una tarjeta de nieve con filete,
- * filas separadas por una línea de 1 px y los rótulos en versalitas, como la
- * fila de navegación de la que cuelga.
+ * El techo de alto sustituye al 65vh de Quasar: con las cuatro secciones de la
+ * dueña, 65vh de una ventana de 900 px cortaba el pie. 88 px = cabecera de
+ * 68 + aire.
  */
 .more-menu {
-  border-radius: var(--m-radio-tarjeta);
-  border: var(--m-filete-grosor) solid var(--m-filete);
-  box-shadow: 0 14px 34px rgba(11, 9, 7, 0.16);
-}
-
-.more-menu__list {
-  min-width: 258px;
-  padding: 0;
+  width: 344px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 88px);
   background: var(--m-nieve);
-  font-family: var(--m-font-sans);
-}
-
-/// La línea entre filas es el filete, no el gris que trae Quasar.
-.more-menu__list.q-list--separator > .q-item-type + .q-item-type {
-  border-top-color: var(--m-filete);
-}
-
-.more-menu__item {
-  min-height: var(--m-tactil-min);
-  padding: 10px 18px;
-  color: var(--m-tinta);
-}
-
-.more-menu__item .q-item__label {
-  font-size: 11.5px;
-  letter-spacing: var(--m-tracking-nav);
-  text-transform: uppercase;
-  line-height: 1.35;
-}
-
-/// Quasar reserva 56 px para el hueco del icono; con uno de 20 sobra la mitad.
-.more-menu__item .q-item__section--avatar {
-  min-width: 34px;
-  padding-right: 12px;
-}
-
-.more-menu__item:hover {
-  background: var(--m-hueso);
-}
-
-.more-menu__item:focus-visible {
-  outline: 2px solid var(--m-oro);
-  outline-offset: -2px;
-}
-
-/// El dorado claro no es color de icono sobre nieve (2,8:1): aquí, el profundo.
-.more-menu__icon {
-  color: var(--m-oro-profundo);
+  border: var(--m-filete-grosor) solid var(--m-filete);
+  border-radius: var(--m-radio-tarjeta);
+  box-shadow: var(--m-sombra-flotante);
 }
 </style>
