@@ -63,6 +63,18 @@ describe('tokens visuales', () => {
     expect(valorDe('m-velo-accion')).toBe('rgba(22, 19, 15, 0.72)');
   });
 
+  /** Spec del menú §4: la sombra del desplegable de «Más», con su token. */
+  it('declara la sombra de capa flotante con los canales de la tinta', () => {
+    expect(valorDe('m-sombra-flotante')).toBe('0 18px 44px rgba(22, 19, 15, 0.16)');
+  });
+
+  it('anota que la sombra flotante no es color de texto', () => {
+    const [, comentario] =
+      TOKENS.match(/((?:\s*\/\/\/[^\n]*\n)+)\s*--m-sombra-flotante:/) ?? [];
+
+    expect(comentario).toMatch(/no es color de texto/i);
+  });
+
   /**
    * La regla del fichero es que todo token lleve su contraste medido o la razón
    * de que no sea color de texto. Un token sin anotar vuelve a abrir la puerta

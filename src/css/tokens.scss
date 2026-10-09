@@ -208,6 +208,12 @@
   /// Safari 13.1). No es color de texto.
   --m-sombra-realce: 0 3px 10px rgba(22, 19, 15, 0.16);
 
+  /// Sombra de una capa que flota sobre la página: el desplegable de «Más»
+  /// (`MainLayout.vue`). Los mismos canales de `--m-tinta` que la del realce,
+  /// más honda porque la capa se separa de verdad del fondo.
+  /// No es color de texto: solo eleva una capa flotante.
+  --m-sombra-flotante: 0 18px 44px rgba(22, 19, 15, 0.16);
+
   /// Área táctil mínima de cualquier control. No bajar de aquí.
   --m-tactil-min: 44px;
 

@@ -99,6 +99,8 @@ const TRAZOS: Record<string, string[]> = {
     'M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2',
     'M10 11v6M14 11v6',
   ],
+  /** Hamburguesa: el disparador de «Más» por debajo de 700 px (tablero móvil). */
+  menu: ['M4 7h16M4 12h16M4 17h16'],
 };
 
 const props = withDefaults(defineProps<{ nombre: string; tamano?: number }>(), {

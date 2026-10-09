@@ -6,13 +6,7 @@
  */
 import { mount } from '@vue/test-utils';
 import StrokeIcon from 'src/components/shared/StrokeIcon.vue';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-
-const LAYOUT = readFileSync(
-  join(__dirname, '../../src/layouts/MainLayout.vue'),
-  'utf8'
-);
+import { seccionesDelMenu } from 'src/composables/shared/menuMas';
 
 const montar = (nombre: string) => mount(StrokeIcon, { props: { nombre } });
 
@@ -49,16 +43,37 @@ describe('StrokeIcon', () => {
     expect(wrapper.findAll('path')).toHaveLength(0);
   });
 
-  /** Cada icono que pide el menú de «Más» tiene que existir de verdad. */
-  it('cubre todos los iconos que el menú de «Más» nombra', () => {
-    const pedidos = [...LAYOUT.matchAll(/^\s+icon: '([a-z-]+)',$/gm)].map(
-      (m) => m[1]
-    );
+  /**
+   * Cada icono que pide el menú de «Más» tiene que existir de verdad. Antes se
+   * leían las líneas `icon: '…'` de `MainLayout.vue`; desde la carta por
+   * secciones las entradas viven en `menuMas.ts`, y se recorren los tres
+   * estados de sesión para no dejarse los iconos de la dueña.
+   */
+  it('cubre todos los iconos que el menú de «Más» nombra, en los tres estados', () => {
+    const estados = [
+      { isLoggedIn: false, isAdmin: false },
+      { isLoggedIn: true, isAdmin: false },
+      { isLoggedIn: true, isAdmin: true },
+    ];
+    const pedidos: string[] = [];
+    for (const estado of estados) {
+      for (const seccion of seccionesDelMenu({ ...estado, redirect: '/' })) {
+        for (const entrada of seccion.entradas) pedidos.push(entrada.icono);
+      }
+    }
 
-    expect(pedidos.length).toBeGreaterThanOrEqual(10);
+    expect(pedidos.length).toBeGreaterThanOrEqual(20);
     for (const nombre of pedidos) {
       expect(montar(nombre).findAll('path').length).toBeGreaterThan(0);
     }
+  });
+
+  /** M6: por debajo de 700 px «Más» es una hamburguesa (tablero móvil). */
+  it('trae la hamburguesa del disparador de «Más» en móvil', () => {
+    const trazos = montar('menu').findAll('path');
+
+    expect(trazos).toHaveLength(1);
+    expect(trazos[0].attributes('d')).toBe('M4 7h16M4 12h16M4 17h16');
   });
 
   /** La ficha del servicio marca con una elipse la línea de los rostros. */
