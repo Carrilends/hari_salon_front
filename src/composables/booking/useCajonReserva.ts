@@ -587,7 +587,10 @@ export function useCajonReserva(abierto: Ref<boolean>) {
           elegida.nombre ?? nombreAsignada(resultado.reserva.workerId, fresca),
           sesion !== null
         );
-        // Primero el paso: así vaciar la bolsa no lo devuelve a «Tus servicios».
+        // El orden de estas líneas no importa: el vigilante de `cantidad` es
+        // de los de antes de pintar (`flush: 'pre'`), corre cuando todo esto
+        // ya pasó y ve el paso en «exito», así que vaciar la bolsa no lo
+        // devuelve a «Tus servicios».
         paso.value = 'exito';
         bolsa.clearBookings();
         nombre.value = '';
