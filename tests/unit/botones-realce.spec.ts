@@ -298,6 +298,14 @@ const BOTONES: Boton[] = [
   { archivo: 'components/shared/MenuMasContenido.vue', clase: 'menu-mas__boton--macizo' },
   { archivo: 'components/shared/MenuMasContenido.vue', clase: 'menu-mas__boton--contorno', claro: true },
   { archivo: 'components/shared/MenuMasHoja.vue', clase: 'menu-hoja__cerrar', claro: true },
+  // Acceso: botón común, secundario, enlace y la X del armazón; el ojo; el diálogo de Google.
+  { archivo: 'auth/layouts/AuthLayout.vue', clase: 'acceso-boton' },
+  { archivo: 'auth/layouts/AuthLayout.vue', clase: 'acceso-secundario', claro: true },
+  { archivo: 'auth/layouts/AuthLayout.vue', clase: 'acceso-enlace', claro: true },
+  { archivo: 'auth/layouts/AuthLayout.vue', clase: 'acceso__cerrar', claro: true },
+  { archivo: 'components/auth/CampoAcceso.vue', clase: 'campo-acceso__ojo', claro: true },
+  { archivo: 'components/auth/ConsentimientoGoogle.vue', clase: 'consentimiento__boton', claro: true },
+  { archivo: 'components/auth/ConsentimientoGoogle.vue', clase: 'consentimiento__boton--macizo' },
 ];
 
 /** El bloque de estilos de un SFC dentro de las consultas de puntero fino. */
@@ -434,6 +442,7 @@ describe('la revisión · los botones anchos no encogen al pulsar', () => {
     ['components/dialogs/ServicePromotionDialog.vue', 'promo__boton--oro'],
     ['components/assistant/PackageProposalCard.vue', 'package-card__anadir'],
     ['components/shared/MenuMasContenido.vue', 'menu-mas__entrada'],
+    ['components/auth/ConsentimientoGoogle.vue', 'consentimiento__boton'],
   ])('%s · %s lleva m-boton--ancho', (archivo, clase) => {
     const plantilla = leer(archivo).split('<script')[0];
     const clases = [...plantilla.matchAll(/\sclass="([^"]*)"/g)]
