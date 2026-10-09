@@ -1,11 +1,13 @@
 <template>
   <div class="exito" data-test="pantalla-exito">
     <div class="exito__cuerpo">
-      <div class="exito__cabeza">
+      <!-- La región viva es el envoltorio, no el título: un `role` en el
+           encabezado le quitaría su papel de encabezado. El foco va al título. -->
+      <div class="exito__cabeza" role="status">
         <span class="exito__sello" aria-hidden="true">
           <StrokeIcon nombre="check" :tamano="30" />
         </span>
-        <h3 ref="titulo" class="exito__titulo" role="status" tabindex="-1">
+        <h3 ref="titulo" class="exito__titulo" tabindex="-1">
           Tu cita quedó registrada
         </h3>
         <p class="exito__texto" data-test="texto-exito">{{ texto }}</p>

@@ -38,12 +38,21 @@ describe('PantallaExito', () => {
   it('anuncia que la cita quedó registrada, y pendiente', () => {
     const wrapper = montar();
 
-    expect(wrapper.get('[role="status"]').text()).toBe(
+    expect(wrapper.get('[role="status"]').text()).toContain(
       'Tu cita quedó registrada'
     );
     expect(wrapper.get('[data-test="texto-exito"]').text()).toContain(
       'Queda pendiente hasta que el salón la confirme.'
     );
+  });
+
+  it('el título sigue siendo un encabezado: la región viva es su envoltorio', () => {
+    const wrapper = montar();
+    const titulo = wrapper.get('h3');
+
+    expect(titulo.text()).toBe('Tu cita quedó registrada');
+    expect(titulo.attributes('role')).toBeUndefined();
+    expect(wrapper.get('[role="status"]').find('h3').exists()).toBe(true);
   });
 
   it('con sesión y sin teléfono, la encuentra en «Mis reservas»', () => {
