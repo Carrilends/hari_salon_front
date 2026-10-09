@@ -141,7 +141,6 @@ const emptyLabel = computed(() =>
     : `en estado «${statusFilter.value}»`
 );
 
-
 function serviceNames(res: ReservationDto): string {
   const names = (res.services ?? []).map((s) => s.name);
   return names.length ? names.join(', ') : 'Sin servicios';
