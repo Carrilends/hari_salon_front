@@ -292,6 +292,11 @@ const BOTONES: Boton[] = [
   { archivo: 'components/assistant/AssistantComposer.vue', clase: 'assistant-composer__enviar' },
   { archivo: 'components/assistant/ServiceListCard.vue', clase: 'service-card__anadir' },
   { archivo: 'components/assistant/PackageProposalCard.vue', clase: 'package-card__anadir' },
+  // Menú «Más»: las filas, el pie y los dos botones de la cuenta.
+  { archivo: 'components/shared/MenuMasContenido.vue', clase: 'menu-mas__entrada', claro: true },
+  { archivo: 'components/shared/MenuMasContenido.vue', clase: 'menu-mas__entrada--pie', claro: true },
+  { archivo: 'components/shared/MenuMasContenido.vue', clase: 'menu-mas__boton--macizo' },
+  { archivo: 'components/shared/MenuMasContenido.vue', clase: 'menu-mas__boton--contorno', claro: true },
 ];
 
 /** El bloque de estilos de un SFC dentro de las consultas de puntero fino. */
@@ -427,6 +432,7 @@ describe('la revisión · los botones anchos no encogen al pulsar', () => {
     ['components/dialogs/ServiceDeleteDialog.vue', 'borrado__boton--peligro'],
     ['components/dialogs/ServicePromotionDialog.vue', 'promo__boton--oro'],
     ['components/assistant/PackageProposalCard.vue', 'package-card__anadir'],
+    ['components/shared/MenuMasContenido.vue', 'menu-mas__entrada'],
   ])('%s · %s lleva m-boton--ancho', (archivo, clase) => {
     const plantilla = leer(archivo).split('<script')[0];
     const clases = [...plantilla.matchAll(/\sclass="([^"]*)"/g)]
