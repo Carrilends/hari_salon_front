@@ -31,6 +31,8 @@ module.exports = {
     '^(?:src/api|\\.)/ws-url$': '<rootDir>/tests/wsUrlMock.ts',
     '^(?:src/constants|\\.)/whatsapp-phone$':
       '<rootDir>/tests/whatsappPhoneMock.ts',
+    '^(?:src/constants|\\.)/google-client-id$':
+      '<rootDir>/tests/googleClientIdMock.ts',
     '^src/(.*)$': '<rootDir>/src/$1',
     '\\.(css|scss|sass)$': '<rootDir>/tests/styleMock.js',
   },
