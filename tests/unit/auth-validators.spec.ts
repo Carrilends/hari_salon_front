@@ -7,6 +7,7 @@ import {
   matches,
   minLength,
   minTrimmedLength,
+  requerido,
 } from 'src/helpers/validators';
 
 describe('auth validators (NF05 — frontend)', () => {
@@ -56,5 +57,12 @@ describe('auth validators (NF05 — frontend)', () => {
     expect(isRequired(null)).toBe('Requerido');
     expect(isRequired(undefined)).toBe('Requerido');
     expect(isRequired('hola')).toBe(true);
+  });
+
+  it('Caso 7: requerido(mensaje) marca vacíos con el texto propio de la pantalla', () => {
+    const regla = requerido('Escribe tu correo.');
+    expect(regla('')).toBe('Escribe tu correo.');
+    expect(regla(undefined as unknown as string)).toBe('Escribe tu correo.');
+    expect(regla('ana@correo.com')).toBe(true);
   });
 });

@@ -10,6 +10,15 @@ const ISO_8601_REGEX =
 export const isRequired = (val: unknown): RuleResult =>
   (val !== null && val !== undefined && val !== '') || 'Requerido';
 
+/**
+ * `isRequired` con el texto de la pantalla. Las pantallas de acceso hablan de
+ * tú («Escribe tu correo.»); el «Requerido» de Quasar se queda para el resto.
+ */
+export const requerido =
+  (message: string): Rule<string> =>
+  (val) =>
+    isRequired(val) === true || message;
+
 export const isEmail =
   (message = 'Debe ser un correo válido'): Rule<string> =>
   (val) =>
