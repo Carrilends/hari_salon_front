@@ -129,4 +129,52 @@ describe('Mis reservas · guardas de fuente', () => {
     expect(pagina).toMatch(/solicitar: pedirResena/);
     expect(pagina).not.toMatch(/\babrir\(\)/);
   });
+
+  /**
+   * Revisión final D4: por debajo de 700 px «Actualizar» es solo icono, sin
+   * borde ni fondo; con ratón (una ventana de escritorio estrecha) el realce
+   * de la píldora le dibujaba un anillo oro y una sombra alrededor de nada.
+   */
+  it('«Actualizar» de solo icono no pinta anillo ni sombra al pasar', () => {
+    const css = estilos(leer('pages/MyReservationsPage.vue'));
+    const bloque =
+      /@media \(max-width: 699px\) and \(hover: hover\) and \(pointer: fine\) \{([\s\S]*?)\n\}/.exec(
+        css
+      )?.[1] ?? '';
+    const regla =
+      /\.mis-reservas__actualizar:hover:not\(\[aria-disabled='true'\]\)\s*\{([^}]*)\}/.exec(
+        bloque
+      )?.[1] ?? '';
+
+    expect(regla).toMatch(/border-color: transparent;/);
+    expect(regla).toMatch(/box-shadow: none;/);
+    expect(regla).toMatch(/(^|\s)color: var\(--m-oro-profundo\);/);
+    // Va DESPUÉS del realce general, que tiene la misma especificidad.
+    expect(css.indexOf(bloque)).toBeGreaterThan(
+      css.indexOf('@media (hover: hover) and (pointer: fine)')
+    );
+  });
+
+  /**
+   * Revisión final D5: con `disabled`, el botón enfocado perdía el foco al
+   * pulsarlo (el navegador lo manda al `body`). Ocupado se dice con
+   * `aria-disabled` y lo frena el manejador; la señal no es de color.
+   */
+  it('«Actualizar» ocupado no usa `disabled` y gira su icono (o lo atenúa)', () => {
+    const pagina = leer('pages/MyReservationsPage.vue');
+    const boton =
+      /<button\b[^>]*data-test="actualizar"[^>]*>/.exec(
+        plantilla(pagina)
+      )?.[0] ?? '';
+    const css = estilos(pagina);
+
+    expect(boton).not.toMatch(/:disabled=/);
+    expect(boton).toMatch(/:aria-disabled=/);
+    expect(css).toMatch(
+      /\.mis-reservas__actualizar-icono--girando\s*\{[^}]*animation:/
+    );
+    expect(css).toMatch(
+      /@media \(prefers-reduced-motion: reduce\) \{[^@]*\.mis-reservas__actualizar-icono--girando\s*\{[^}]*animation: none;/
+    );
+  });
 });

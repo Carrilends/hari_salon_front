@@ -9,11 +9,14 @@
             Puedes mover o cancelar una cita hasta la hora en que empieza.
           </p>
         </div>
+        <!-- Ocupado con `aria-disabled` y no con `disabled`: un botón
+             enfocado que se deshabilita pierde el foco (se va al documento).
+             Lo frena `actualizar`; la señal es el texto y el icono que gira. -->
         <button
           type="button"
           class="mis-reservas__actualizar"
           data-test="actualizar"
-          :disabled="query.isFetching.value"
+          :aria-disabled="query.isFetching.value ? 'true' : undefined"
           :aria-busy="query.isFetching.value ? 'true' : 'false'"
           @click="actualizar"
         >
@@ -21,8 +24,13 @@
             nombre="actualizar"
             :tamano="16"
             class="mis-reservas__actualizar-icono"
+            :class="{
+              'mis-reservas__actualizar-icono--girando': query.isFetching.value,
+            }"
           />
-          <span class="mis-reservas__actualizar-texto">Actualizar</span>
+          <span class="mis-reservas__actualizar-texto">{{
+            query.isFetching.value ? 'Actualizando…' : 'Actualizar'
+          }}</span>
         </button>
       </header>
 
@@ -234,7 +242,9 @@ const pasadasAbiertas = ref(false);
 /** El resultado de mover o cancelar, en línea y descartable. */
 const aviso = ref('');
 
+/** Ocupado, no se repite: el botón sigue enfocable (`aria-disabled`). */
 function actualizar(): void {
+  if (query.isFetching.value) return;
   ahora.value = new Date();
   void query.refetch();
 }
@@ -387,12 +397,31 @@ async function confirmarCancelacion(id: string): Promise<void> {
   cursor: pointer;
 }
 
-.mis-reservas__actualizar:disabled {
+.mis-reservas__actualizar[aria-disabled='true'] {
   cursor: progress;
 }
 
 .mis-reservas__actualizar-icono {
   color: var(--m-oro-profundo);
+}
+
+/* Ocupado: el icono gira (la señal no es de color). */
+.mis-reservas__actualizar-icono--girando {
+  animation: mis-reservas-girar 1s linear infinite;
+}
+
+@keyframes mis-reservas-girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Sin movimiento: quieto y atenuado; el texto («Actualizando…») sigue. */
+@media (prefers-reduced-motion: reduce) {
+  .mis-reservas__actualizar-icono--girando {
+    animation: none;
+    opacity: 0.45;
+  }
 }
 
 .mis-reservas__aviso {
@@ -616,8 +645,14 @@ async function confirmarCancelacion(id: string): Promise<void> {
  * `app.scss`. Todo es superficie clara: nada de oro claro como texto.
  */
 @media (hover: hover) and (pointer: fine) {
-  .mis-reservas__actualizar:hover:not(:disabled) {
+  .mis-reservas__actualizar:hover:not([aria-disabled='true']) {
     border-color: var(--m-oro);
+  }
+
+  /* Ocupado no responde al pasar: ni sube ni se sombrea. */
+  .mis-reservas__actualizar[aria-disabled='true']:hover {
+    transform: none;
+    box-shadow: none;
   }
 
   .mis-reservas__descartar:hover {
@@ -630,6 +665,21 @@ async function confirmarCancelacion(id: string): Promise<void> {
 
   .mis-reservas__plegar:hover {
     border-bottom-color: var(--m-oro);
+  }
+}
+
+/**
+ * Por debajo de 700 px «Actualizar» es solo icono, sin borde ni fondo. Con
+ * ratón (una ventana de escritorio estrecha) el realce de la píldora le
+ * dibujaba un anillo oro y una sombra alrededor de nada: aquí se borran y el
+ * realce es el color del icono. Misma especificidad que la regla general, y
+ * va después: gana.
+ */
+@media (max-width: 699px) and (hover: hover) and (pointer: fine) {
+  .mis-reservas__actualizar:hover:not([aria-disabled='true']) {
+    border-color: transparent;
+    box-shadow: none;
+    color: var(--m-oro-profundo);
   }
 }
 </style>

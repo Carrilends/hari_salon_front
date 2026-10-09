@@ -204,12 +204,29 @@ describe('MyReservationsPage · la lista', () => {
     expect(mockQuery.refetch).toHaveBeenCalled();
   });
 
-  it('mientras actualiza, el botón lo dice y no se repite', () => {
+  /**
+   * Revisión final D5: sin `disabled` (el botón enfocado perdía el foco), con
+   * `aria-disabled` y el manejador que no repite la consulta.
+   */
+  it('mientras actualiza, el botón lo dice, conserva el foco y no se repite', async () => {
     mockQuery.isFetching.value = true;
-    const boton = montar().get('[data-test="actualizar"]');
+    const wrapper = montar();
+    const boton = wrapper.get('[data-test="actualizar"]');
 
-    expect(boton.attributes('disabled')).toBeDefined();
+    expect(boton.attributes('disabled')).toBeUndefined();
+    expect(boton.attributes('aria-disabled')).toBe('true');
     expect(boton.attributes('aria-busy')).toBe('true');
+    expect(boton.text()).toBe('Actualizando…');
+    expect(
+      boton.find('.mis-reservas__actualizar-icono--girando').exists()
+    ).toBe(true);
+
+    await boton.trigger('click');
+    expect(mockQuery.refetch).not.toHaveBeenCalled();
+
+    mockQuery.isFetching.value = false;
+    await nextTick();
+    expect(boton.attributes('aria-disabled')).toBeUndefined();
     expect(boton.text()).toBe('Actualizar');
   });
 });
