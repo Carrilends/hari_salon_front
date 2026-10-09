@@ -76,10 +76,7 @@
           <div
             class="col-12 col-sm-auto row items-center justify-end q-gutter-sm"
           >
-            <q-badge
-              :color="statusMeta(res).color"
-              :label="statusMeta(res).label"
-            />
+            <EstadoReserva :estado="res.status" />
             <q-btn
               v-if="res.status === 'pendiente'"
               color="positive"
@@ -112,7 +109,7 @@
 import { computed, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { useAdminReservations } from 'src/composables/reservations/useAdminReservations';
-import { reservationStatusMeta } from 'src/helpers/reservation-status';
+import EstadoReserva from 'src/components/reservations/EstadoReserva.vue';
 import type { ReservationDto } from 'src/interfaces/booking';
 import {
   ADMIN_RESERVATION_FILTERS,
@@ -144,9 +141,6 @@ const emptyLabel = computed(() =>
     : `en estado «${statusFilter.value}»`
 );
 
-function statusMeta(res: ReservationDto) {
-  return reservationStatusMeta(res.status);
-}
 
 function serviceNames(res: ReservationDto): string {
   const names = (res.services ?? []).map((s) => s.name);

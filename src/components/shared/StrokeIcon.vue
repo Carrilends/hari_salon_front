@@ -125,6 +125,25 @@ const TRAZOS: Record<string, string[]> = {
   mas: ['M12 5v14M5 12h14'],
   anterior: ['M15 6l-6 6 6 6'],
   siguiente: ['M9 6l6 6-6 6'],
+  /** Estado «Pendiente» (Mis reservas, bandeja): un reloj. */
+  reloj: [
+    'M20.5 12a8.5 8.5 0 1 1-17 0 8.5 8.5 0 0 1 17 0',
+    'M12 7.4V12l3 1.9',
+  ],
+  /** Estado «Cumplida»: la marca dentro de un círculo. */
+  cumplida: [
+    'M20.5 12a8.5 8.5 0 1 1-17 0 8.5 8.5 0 0 1 17 0',
+    'M8.2 12.3l2.6 2.6 5-5.2',
+  ],
+  /** Estado «Cancelada»: un aspa dentro de un círculo. */
+  cancelada: [
+    'M20.5 12a8.5 8.5 0 1 1-17 0 8.5 8.5 0 0 1 17 0',
+    'M9 9l6 6M15 9l-6 6',
+  ],
+  /** «Actualizar» de Mis reservas (tablero MisReservasA). */
+  actualizar: ['M19.5 12a7.5 7.5 0 1 1-2.2-5.3', 'M19.5 4.5v4h-4'],
+  /** Desplegable cerrado: «Pasadas» de Mis reservas (gira al abrirse). */
+  'chevron-abajo': ['M6 9l6 6 6-6'],
 };
 
 const props = withDefaults(defineProps<{ nombre: string; tamano?: number }>(), {

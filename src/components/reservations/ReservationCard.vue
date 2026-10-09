@@ -16,7 +16,7 @@
       </div>
 
       <div class="col-12 col-sm-auto row items-center justify-end q-gutter-sm">
-        <q-badge :color="statusMeta.color" :label="statusMeta.label" />
+        <EstadoReserva :estado="reservation.status" />
         <q-btn
           v-if="reschedulable"
           color="primary"
@@ -46,7 +46,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { reservationStatusMeta } from 'src/helpers/reservation-status';
+import EstadoReserva from 'src/components/reservations/EstadoReserva.vue';
 import type { ReservationDto } from 'src/interfaces/booking';
 
 defineOptions({ name: 'ReservationCard' });
@@ -63,10 +63,6 @@ const emit = defineEmits<{
   (e: 'cancel', reservation: ReservationDto): void;
   (e: 'reschedule', reservation: ReservationDto): void;
 }>();
-
-const statusMeta = computed(() =>
-  reservationStatusMeta(props.reservation.status)
-);
 
 const serviceNames = computed(() => {
   const names = (props.reservation.services ?? []).map((s) => s.name);
