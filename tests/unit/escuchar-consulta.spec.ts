@@ -72,6 +72,7 @@ describe('los que escuchan consultas de medios', () => {
     'src/composables/shared/useCoarsePointer.ts',
     'src/components/dialogs/serviceFilterDialog.vue',
     'src/components/dialogs/serviceDialog.vue',
+    'src/composables/shared/useConsultaMedios.ts',
   ];
 
   it.each(CONSUMIDORES)('%s usa escucharConsulta y no addEventListener a pelo', (ruta) => {
