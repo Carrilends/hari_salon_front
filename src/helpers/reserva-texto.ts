@@ -9,7 +9,7 @@
 import { formatCopDisplay } from 'src/helpers/price-display';
 import { formatDurationMinutes } from 'src/helpers/duration';
 
-const DIAS = [
+export const DIAS = [
   'Domingo',
   'Lunes',
   'Martes',
@@ -19,7 +19,7 @@ const DIAS = [
   'Sábado',
 ];
 
-const MESES = [
+export const MESES = [
   'enero',
   'febrero',
   'marzo',
