@@ -424,6 +424,25 @@ describe('useCajonReserva · éxito (B5)', () => {
     );
   });
 
+  it('si el sistema asignó la predeterminada, no nombra a ninguna estilista', async () => {
+    // Sin estilistas asignables, el backend reparte a la predeterminada, que
+    // en la BD se llama «Sin prefencia»: eso no es el nombre de nadie.
+    mockEnviar.mockResolvedValue({
+      tipo: 'creada',
+      reserva: { id: 'r1', workerId: 'w-defecto' },
+    });
+    const { cajon } = montar();
+    await hastaDatos(cajon);
+    datosSinSesion(cajon);
+
+    await cajon.confirmar();
+
+    const mensaje = decodeURIComponent(cajon.resumen.value?.urlWhatsApp ?? '');
+    expect(cajon.resumen.value?.estilista).toBeNull();
+    expect(mensaje).not.toContain('Sin prefencia');
+    expect(mensaje).not.toContain('*Estilista:*');
+  });
+
   it('invalida horas, ocupación y «mis reservas»', async () => {
     mockEnviar.mockResolvedValue(CREADA);
     const { cajon } = montar();

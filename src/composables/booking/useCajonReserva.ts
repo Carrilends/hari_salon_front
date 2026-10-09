@@ -200,6 +200,22 @@ export function useCajonReserva(abierto: Ref<boolean>) {
     lista: WorkerAvailabilityEntry[] = disponibilidad.value?.workers ?? []
   ) => (id === null ? null : lista.find((w) => w.id === id)?.name ?? null);
 
+  /**
+   * Quién atenderá, según asignó el sistema. La predeterminada no cuenta: el
+   * backend la reparte cuando no hay ninguna asignable, y su nombre en la BD
+   * («Sin prefencia») no es el de nadie. Entonces no se nombra a ninguna.
+   */
+  const nombreAsignada = (
+    id: string,
+    datos: WorkerAvailabilityResponse | undefined
+  ) =>
+    nombreEstilista(
+      id,
+      ((datos ?? disponibilidad.value)?.workers ?? []).filter(
+        (w) => !w.isDefault
+      )
+    );
+
   const puedeContinuar = computed(() => {
     if (enviando.value || cantidad.value === 0) return false;
     if (paso.value === 'cuando') return horaLibre(hora.value);
@@ -546,8 +562,7 @@ export function useCajonReserva(abierto: Ref<boolean>) {
         resumen.value = armarResumen(
           f,
           h,
-          elegida.nombre ??
-            nombreEstilista(resultado.reserva.workerId, fresca?.workers),
+          elegida.nombre ?? nombreAsignada(resultado.reserva.workerId, fresca),
           sesion !== null
         );
         // Primero el paso: así vaciar la bolsa no lo devuelve a «Tus servicios».
