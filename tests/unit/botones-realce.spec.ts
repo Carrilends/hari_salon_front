@@ -501,3 +501,68 @@ describe('la revisión · iOS Safari y el `:active` táctil', () => {
     expect(arranque).toMatch(/activarActiveTactil\(/);
   });
 });
+
+/**
+ * Plan 1 de las vistas: los botones del cajón de reserva. Mismo repaso que
+ * `BOTONES`: color al pasar con un token, dentro del puntero fino; los
+ * `claro` (superficie hueso, nieve o transparente sobre claro) nunca en oro
+ * claro. Y los anchos, con `m-boton--ancho`.
+ */
+const BOTONES_RESERVA: Boton[] = [
+  { archivo: 'components/reserva/CajonReserva.vue', clase: 'cajon__cerrar' },
+  { archivo: 'components/reserva/CajonReserva.vue', clase: 'cajon__atras', claro: true },
+  { archivo: 'components/reserva/CajonReserva.vue', clase: 'cajon__continuar' },
+  { archivo: 'components/reserva/CajonReserva.vue', clase: 'cajon-enlace', claro: true },
+  { archivo: 'components/reserva/TiraDeDias.vue', clase: 'tira__dia', claro: true },
+  { archivo: 'components/reserva/TiraDeDias.vue', clase: 'tira__flecha', claro: true },
+  { archivo: 'components/reserva/FichasDeHora.vue', clase: 'horas__ficha', claro: true },
+  { archivo: 'components/reserva/FichasDeEstilista.vue', clase: 'estilistas__ficha', claro: true },
+  { archivo: 'components/reserva/PasoServicios.vue', clase: 'bolsa__quitar', claro: true },
+  { archivo: 'components/reserva/PasoServicios.vue', clase: 'bolsa__anadir', claro: true },
+  { archivo: 'components/reserva/PasoServicios.vue', clase: 'bolsa__ver', claro: true },
+  { archivo: 'components/reserva/PasoServicios.vue', clase: 'bolsa__asistente', claro: true },
+  { archivo: 'components/reserva/PasoCuando.vue', clase: 'cuando__aviso-boton' },
+  { archivo: 'components/reserva/PasoCuando.vue', clase: 'cuando__aviso-enlace', claro: true },
+  { archivo: 'components/reserva/PasoCuando.vue', clase: 'cuando__reintentar', claro: true },
+  { archivo: 'components/reserva/PantallaExito.vue', clase: 'exito__whatsapp' },
+  { archivo: 'components/reserva/PantallaExito.vue', clase: 'exito__seguir', claro: true },
+  { archivo: 'components/reserva/PantallaExito.vue', clase: 'exito__principal' },
+];
+
+describe('plan 1 · cada botón del cajón de reserva cambia de color al pasar', () => {
+  it.each(BOTONES_RESERVA)('$clase ($archivo)', ({ archivo, clase, claro }) => {
+    const finos = bloquesFinos(archivo);
+    const patron = new RegExp(`\\.${clase}(?![\\w-])[^,{]*:hover`);
+    const cuerpo = cuerposDe(finos, patron);
+
+    expect(cuerpo).toMatch(
+      /(^|\s)(color|border-color|border-bottom-color|background|background-color): var\(--m-[\w-]+\);/
+    );
+    if (claro) {
+      expect(cuerpo).not.toMatch(/(^|\s)color: var\(--m-oro\);/);
+    }
+  });
+
+  it.each([
+    ['components/reserva/PasoServicios.vue', 'bolsa__ver'],
+    ['components/reserva/PantallaExito.vue', 'exito__whatsapp'],
+  ])('%s · %s lleva m-boton--ancho', (archivo, clase) => {
+    const plantilla = leer(archivo).split('<script')[0];
+    const clases = Array.from(plantilla.matchAll(/\sclass="([^"]*)"/g))
+      .map((c) => c[1].split(/\s+/))
+      .filter((lista) => lista.includes(clase));
+
+    expect(clases.length).toBeGreaterThan(0);
+    for (const lista of clases) {
+      expect(lista).toContain('m-boton--ancho');
+    }
+  });
+
+  it('el enlace verde de WhatsApp lleva la clase común m-boton', () => {
+    const plantilla = leer('components/reserva/PantallaExito.vue').split(
+      '<script'
+    )[0];
+
+    expect(plantilla).toMatch(/class="exito__whatsapp m-boton m-boton--ancho"/);
+  });
+});
