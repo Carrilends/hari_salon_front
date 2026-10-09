@@ -89,10 +89,10 @@ jest.mock('src/components/reserva/FichasDeEstilista.vue', () => ({
 
 const QDialog = {
   name: 'QDialog',
-  props: ['modelValue', 'maximized', 'position'],
+  props: ['modelValue', 'maximized', 'position', 'persistent'],
   emits: ['update:modelValue'],
   template:
-    '<div class="q-dialog-doble" :data-posicion="position" :data-maximizado="maximized ? \'si\' : \'no\'"><slot v-if="modelValue" /></div>',
+    '<div class="q-dialog-doble" :data-posicion="position" :data-maximizado="maximized ? \'si\' : \'no\'" :data-persistente="persistent ? \'si\' : \'no\'"><slot v-if="modelValue" /></div>',
 };
 
 const DIAS: DiaDeTira[] = ['2026/10/07', '2026/10/08', '2026/10/09'].map(
@@ -594,7 +594,9 @@ describe('CambiarFechaDialog · mover', () => {
     );
   });
 
-  it('si se reabre con otra cita mientras mueve, avisa de la que movió y no cierra la nueva', async () => {
+  // La clienta ya no puede cerrar a mitad; la página sí (un aviso en tiempo
+  // real, otra cita en la bandeja).
+  it('si la página lo cierra y lo reabre con otra cita mientras mueve, avisa de la que movió y no cierra la nueva', async () => {
     let terminar: (valor: unknown) => void = () => undefined;
     mockReprogramar.mockReturnValueOnce(new Promise((r) => (terminar = r)));
     const wrapper = montar();
@@ -632,6 +634,66 @@ describe('CambiarFechaDialog · mover', () => {
 });
 
 describe('CambiarFechaDialog · cerrar y tamaño', () => {
+  it('mientras mueve no se cierra: ni Escape ni el velo, ni la X ni «Volver»', async () => {
+    mockReprogramar.mockReturnValue(new Promise(() => undefined));
+    const wrapper = montar();
+    await elegir(wrapper, '2026/10/09', '15:00');
+    await wrapper.get('[data-test="guardar-fecha"]').trigger('click');
+    await flushPromises();
+
+    const capa = wrapper.get('.q-dialog-doble');
+    expect(capa.attributes('data-persistente')).toBe('si');
+    // Escape o el velo: lo que QDialog pediría si no fuera persistente.
+    wrapper
+      .findComponent({ name: 'QDialog' })
+      .vm.$emit('update:modelValue', false);
+    await nextTick();
+    const x = wrapper.get('[data-test="cerrar-cambiar-fecha"]');
+    const volver = wrapper.get('[data-test="volver-cambiar-fecha"]');
+    expect(x.attributes('disabled')).toBeDefined();
+    expect(volver.attributes('disabled')).toBeDefined();
+    // Aunque el clic llegara (deshabilitado o no), no cierra.
+    (x.element as HTMLButtonElement).disabled = false;
+    (volver.element as HTMLButtonElement).disabled = false;
+    await x.trigger('click');
+    await volver.trigger('click');
+
+    expect(wrapper.emitted('update:modelValue')).toBeUndefined();
+    expect(wrapper.find('[data-test="cambiar-fecha"]').exists()).toBe(true);
+  });
+
+  it('fuera de un PATCH no es persistente', () => {
+    expect(montar().get('.q-dialog-doble').attributes('data-persistente')).toBe(
+      'no'
+    );
+  });
+
+  it('si el PATCH falla, se queda abierto con el error y luego se puede cerrar', async () => {
+    mockReprogramar.mockRejectedValue({
+      response: { status: 409, data: { reason: 'hora_ocupada' } },
+    });
+    const wrapper = montar();
+    await elegir(wrapper, '2026/10/09', '15:00');
+    await wrapper.get('[data-test="guardar-fecha"]').trigger('click');
+    await flushPromises();
+
+    expect(wrapper.emitted('update:modelValue')).toBeUndefined();
+    expect(wrapper.get('[data-test="aviso-choque"]').text()).toBe(
+      'No queda ninguna estilista libre a esa hora.'
+    );
+    expect(wrapper.get('.q-dialog-doble').attributes('data-persistente')).toBe(
+      'no'
+    );
+
+    await wrapper.get('[data-test="cerrar-cambiar-fecha"]').trigger('click');
+    wrapper
+      .findComponent({ name: 'QDialog' })
+      .vm.$emit('update:modelValue', false);
+    await nextTick();
+
+    expect(wrapper.emitted('update:modelValue')).toEqual([[false], [false]]);
+  });
+
   it('la X y «Volver» cierran sin mover', async () => {
     const wrapper = montar();
 

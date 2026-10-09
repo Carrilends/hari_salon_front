@@ -3,6 +3,7 @@
     :model-value="modelValue"
     class="cambiar-fecha-dialogo"
     :maximized="esMovil"
+    :persistent="guardando"
     :position="esMovil ? 'bottom' : 'standard'"
     transition-show="slide-up"
     transition-hide="slide-down"
@@ -25,6 +26,7 @@
             class="cambiar-fecha__cerrar m-boton-plano"
             aria-label="Cerrar"
             data-test="cerrar-cambiar-fecha"
+            :disabled="guardando"
             @click="cerrar"
           >
             <StrokeIcon nombre="cerrar" :tamano="20" />
@@ -134,6 +136,7 @@
             type="button"
             class="cambiar-fecha__volver m-boton-plano"
             data-test="volver-cambiar-fecha"
+            :disabled="guardando"
             @click="cerrar"
           >
             Volver
@@ -356,10 +359,12 @@ const nuevaTexto = computed(() => {
 });
 
 /**
- * Cada apertura es una vuelta. Un PATCH que sigue en vuelo cuando el diálogo
- * se cierra y se reabre (quizá con otra cita) ya no es de la vuelta que se ve:
- * al terminar avisa de la cita que movió, pero no cierra ni pinta su error
- * sobre la nueva.
+ * Cada apertura es una vuelta. La clienta no puede cerrar mientras se mueve
+ * (ver `cerrar`), pero la página sí puede cerrarlo, reabrirlo o cambiarle la
+ * cita por su cuenta (un aviso en tiempo real, otra cita en la bandeja). Un
+ * PATCH que sigue en vuelo entonces ya no es de la vuelta que se ve: al
+ * terminar avisa de la cita que movió, pero no cierra ni pinta su error sobre
+ * la nueva.
  */
 let vuelta = 0;
 
@@ -405,12 +410,20 @@ function reintentarHuecos(): void {
   void disponibilidad.refetch();
 }
 
+/**
+ * Mientras se mueve no se cierra: ni con la X, ni con «Volver», ni con Escape
+ * o el velo (`persistent` los frena en Quasar; esto, por si algo pidiera
+ * cerrar igual). Cerrar a mitad dejaba reabrir la misma cita y mandar un
+ * segundo PATCH, callaba un fallo y, si la página desmontaba el diálogo,
+ * perdía el éxito. Es la regla del cajón de reserva.
+ */
 function alCambiarVisibilidad(valor: boolean): void {
+  if (!valor && guardando.value) return;
   emit('update:modelValue', valor);
 }
 
 function cerrar(): void {
-  emit('update:modelValue', false);
+  alCambiarVisibilidad(false);
 }
 
 async function guardar(): Promise<void> {
@@ -671,6 +684,8 @@ async function guardar(): Promise<void> {
   cursor: pointer;
 }
 
+.cambiar-fecha__cerrar:disabled,
+.cambiar-fecha__volver:disabled,
 .cambiar-fecha__guardar:disabled {
   opacity: 0.45;
   cursor: not-allowed;
@@ -689,11 +704,11 @@ async function guardar(): Promise<void> {
  * claro, nunca en oro claro.
  */
 @media (hover: hover) and (pointer: fine) {
-  .cambiar-fecha__cerrar:hover {
+  .cambiar-fecha__cerrar:hover:not(:disabled) {
     color: var(--m-oro);
   }
 
-  .cambiar-fecha__volver:hover {
+  .cambiar-fecha__volver:hover:not(:disabled) {
     color: var(--m-oro-profundo);
   }
 
