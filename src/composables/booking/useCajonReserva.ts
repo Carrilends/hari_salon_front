@@ -50,6 +50,14 @@ export type PasoReserva = 'servicios' | 'cuando' | 'datos' | 'exito';
 export const MENSAJE_ERROR_ENVIO =
   'No pudimos registrar tu reserva. Revisa tu conexión e inténtalo de nuevo: tus datos siguen aquí.';
 
+/**
+ * Tras cambiar de paso, «Continuar» no hace nada durante este tiempo. El pie
+ * tiene un solo botón que en «Tus datos» pasa a ser «Confirmar reserva»: sin
+ * esta pausa, un doble toque en «Cuándo» confirmaría sin que la clienta llegue
+ * a ver «Tus datos».
+ */
+export const PAUSA_TRAS_CAMBIO_DE_PASO_MS = 400;
+
 export const MENSAJE_SESION_CERRADA =
   'Tu sesión se cerró. Escribe tus datos para reservar, o entra de nuevo.';
 
@@ -93,6 +101,8 @@ export function useCajonReserva(abierto: Ref<boolean>) {
   const resumen = ref<ResumenExito | null>(null);
   /** La hora que falló, para «Probar sin preferencia». */
   let horaFallida: string | null = null;
+  /** Cuándo cambió el paso por última vez (abrir el cajón cuenta). */
+  let ultimoCambioDePaso = abierto.value ? Date.now() : -Infinity;
 
   // `getSalonNowParts` solo usa `Intl`: es seguro en `setup` (también en SSG).
   const ahora = ref<SalonNowParts>(getSalonNowParts());
@@ -221,11 +231,23 @@ export function useCajonReserva(abierto: Ref<boolean>) {
     if (estaAbierto) {
       ahora.value = getSalonNowParts();
       paso.value = 'servicios';
+      // Aunque ya estuviera en «servicios»: abrir también es cambiar de paso.
+      ultimoCambioDePaso = Date.now();
       errorEnvio.value = null;
       return;
     }
     if (paso.value === 'exito') reiniciar();
   });
+
+  // Síncrono: dos llamadas seguidas a `continuar()` en el mismo evento ya
+  // deben ver el cambio de la primera.
+  watch(
+    paso,
+    () => {
+      ultimoCambioDePaso = Date.now();
+    },
+    { flush: 'sync' }
+  );
 
   watch(fecha, () => {
     hora.value = null;
@@ -262,6 +284,7 @@ export function useCajonReserva(abierto: Ref<boolean>) {
 
   function continuar() {
     if (!puedeContinuar.value) return;
+    if (Date.now() - ultimoCambioDePaso < PAUSA_TRAS_CAMBIO_DE_PASO_MS) return;
     if (paso.value === 'servicios') {
       const sigueEnLaTira = dias.value.some((d) => d.fecha === fecha.value);
       if (!fecha.value || !sigueEnLaTira) fecha.value = primerDiaConHueco();

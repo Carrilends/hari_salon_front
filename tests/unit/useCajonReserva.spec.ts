@@ -7,7 +7,7 @@
  * Bogotá. Las pruebas reservan el jueves 8 a las 10:30 (1 h, «Bob clásico»).
  */
 import { defineComponent, h, nextTick, ref } from 'vue';
-import { flushPromises, mount } from '@vue/test-utils';
+import { flushPromises, mount, type VueWrapper } from '@vue/test-utils';
 import { createPinia, setActivePinia, type Pinia } from 'pinia';
 import type { WorkerAvailabilityResponse } from 'src/api/workers-api';
 import type { ReservationOccupancyResponse } from 'src/helpers/booking-occupancy';
@@ -42,6 +42,7 @@ jest.mock('@tanstack/vue-query', () => ({
 import {
   MENSAJE_ERROR_ENVIO,
   MENSAJE_SESION_CERRADA,
+  PAUSA_TRAS_CAMBIO_DE_PASO_MS,
   useCajonReserva,
 } from 'src/composables/booking/useCajonReserva';
 import { useBookStore } from 'src/stores/book-store';
@@ -56,6 +57,8 @@ const CREADA = {
 };
 
 let pinia: Pinia;
+const montados: VueWrapper[] = [];
+const AHORA_EN_BOGOTA = new Date('2026-10-07T14:00:00Z');
 
 beforeAll(() => {
   jest.useFakeTimers({
@@ -67,7 +70,7 @@ beforeAll(() => {
       'queueMicrotask',
     ],
   });
-  jest.setSystemTime(new Date('2026-10-07T14:00:00Z'));
+  jest.setSystemTime(AHORA_EN_BOGOTA);
 });
 
 afterAll(() => {
@@ -75,6 +78,8 @@ afterAll(() => {
 });
 
 beforeEach(() => {
+  // Las pausas entre pasos adelantan el reloj: cada prueba vuelve a las 9:00.
+  jest.setSystemTime(AHORA_EN_BOGOTA);
   pinia = createPinia();
   setActivePinia(pinia);
   mockDisponibilidad.data.value = disponibilidad();
@@ -89,10 +94,22 @@ beforeEach(() => {
   mockInvalidar.mockReset();
 });
 
+afterEach(() => {
+  // Sin desmontar, los `visibilitychange` de pruebas anteriores seguirían
+  // escuchando.
+  montados.splice(0).forEach((w) => w.unmount());
+  delete (document as { visibilityState?: unknown }).visibilityState;
+});
+
+/** Lo que tarda la clienta en leer un paso antes de pulsar «Continuar». */
+const dejarPasarLaPausa = () =>
+  jest.advanceTimersByTime(PAUSA_TRAS_CAMBIO_DE_PASO_MS);
+
+/** Monta el cajón (abierto, por defecto) y deja pasar la pausa de abrirlo. */
 function montar(abiertoAlInicio = true) {
   const abierto = ref(abiertoAlInicio);
   let cajon!: Cajon;
-  mount(
+  const wrapper = mount(
     defineComponent({
       setup() {
         cajon = useCajonReserva(abierto);
@@ -101,6 +118,8 @@ function montar(abiertoAlInicio = true) {
     }),
     { global: { plugins: [pinia] } }
   );
+  montados.push(wrapper);
+  dejarPasarLaPausa();
   return { cajon, abierto };
 }
 
@@ -129,8 +148,10 @@ async function hastaDatos(
   }
   cajon.elegirHora(opciones.hora ?? '10:30');
   await nextTick();
+  dejarPasarLaPausa();
   cajon.continuar();
   await nextTick();
+  expect(cajon.paso.value).toBe('datos');
 }
 
 const datosSinSesion = (cajon: Cajon) => {
@@ -623,5 +644,117 @@ describe('useCajonReserva · Foco de revisión', () => {
 
     expect(mockOcupacion.refetch).toHaveBeenCalled();
     expect(mockDisponibilidad.refetch).toHaveBeenCalled();
+  });
+
+  it('con el cajón cerrado, volver a la pestaña no recarga nada', () => {
+    const { cajon } = montar(false);
+    cajon.fecha.value = '2026/10/08';
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      get: () => 'visible',
+    });
+
+    document.dispatchEvent(new Event('visibilitychange'));
+
+    expect(mockOcupacion.refetch).not.toHaveBeenCalled();
+    expect(mockDisponibilidad.refetch).not.toHaveBeenCalled();
+  });
+
+  it('2b · un doble toque en «Continuar» desde «Cuándo» no confirma sin ver «Tus datos»', async () => {
+    // Con sesión y sin teléfono los datos ya son válidos: el caso peligroso.
+    iniciarSesion();
+    mockEnviar.mockResolvedValue(CREADA);
+    const { cajon } = montar();
+    conBolsa();
+    cajon.continuar();
+    await nextTick();
+    cajon.elegirFecha('2026/10/08');
+    await nextTick();
+    cajon.elegirHora('10:30');
+    await nextTick();
+    dejarPasarLaPausa();
+
+    cajon.continuar();
+    cajon.continuar(); // en el mismo evento
+    await nextTick();
+    cajon.continuar(); // en el siguiente tic
+    await flushPromises();
+
+    expect(mockEnviar).not.toHaveBeenCalled();
+    expect(cajon.paso.value).toBe('datos');
+  });
+
+  it('2c · pasada la pausa, «Continuar» en «Tus datos» sí confirma', async () => {
+    iniciarSesion();
+    mockEnviar.mockResolvedValue(CREADA);
+    const { cajon } = montar();
+    await hastaDatos(cajon);
+
+    jest.advanceTimersByTime(PAUSA_TRAS_CAMBIO_DE_PASO_MS - 1);
+    cajon.continuar();
+    await flushPromises();
+    expect(mockEnviar).not.toHaveBeenCalled();
+
+    jest.advanceTimersByTime(1);
+    cajon.continuar();
+    await flushPromises();
+    expect(mockEnviar).toHaveBeenCalledTimes(1);
+    expect(cajon.paso.value).toBe('exito');
+  });
+
+  it('2d · abrir el cajón también cuenta como cambio de paso', async () => {
+    const { cajon, abierto } = montar(false);
+    conBolsa();
+    abierto.value = true;
+    await nextTick();
+
+    cajon.continuar();
+    expect(cajon.paso.value).toBe('servicios');
+    dejarPasarLaPausa();
+    cajon.continuar();
+    expect(cajon.paso.value).toBe('cuando');
+  });
+
+  it('3c · si la bolsa crece y a la estilista ya no le alcanza, vuelve a «Sin preferencia»', async () => {
+    const { cajon } = montar();
+    conBolsa();
+    cajon.continuar();
+    cajon.elegirFecha('2026/10/08');
+    await nextTick();
+    cajon.elegirEstilista('w-monica'); // 180 min libres
+    await nextTick();
+
+    useBookStore().addBooking(
+      servicio({ id: 's2', name: 'Cejas', duration: 30 })
+    );
+    await nextTick();
+    expect(cajon.estilistaId.value).toBe('w-monica'); // 90 min: aún le alcanza
+
+    useBookStore().addBooking(
+      servicio({ id: 's3', name: 'Mechas', duration: 120 })
+    );
+    await nextTick();
+    expect(cajon.estilistaId.value).toBeNull(); // 210 min: ya no
+  });
+
+  it('3d · si llega disponibilidad nueva sin tiempo para la estilista, vuelve a «Sin preferencia»', async () => {
+    const { cajon } = montar();
+    conBolsa();
+    cajon.continuar();
+    cajon.elegirFecha('2026/10/08');
+    await nextTick();
+    cajon.elegirEstilista('w-monica');
+    await nextTick();
+
+    const base = disponibilidad();
+    mockDisponibilidad.data.value = {
+      ...base,
+      workers: base.workers.map((w) =>
+        w.id === 'w-monica' ? { ...w, availableMinutes: 30 } : w
+      ),
+    };
+    await nextTick();
+
+    expect(cajon.estilistaId.value).toBeNull();
   });
 });
