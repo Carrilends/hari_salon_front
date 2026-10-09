@@ -160,6 +160,7 @@ describe('seccionesDelMenu · el regreso saneado', () => {
     ['services', '/services'],
     ['', '/services'],
     ['/autorizado', '/autorizado'],
+    ['/authors', '/authors'],
     ['/preguntas-frecuentes', '/preguntas-frecuentes'],
     ['/services?genero=g1#lista', '/services?genero=g1#lista'],
   ])('«%s» → «%s»', (pedido, esperado) => {

@@ -577,7 +577,6 @@ defineOptions({
   }
 }
 
-
 @media (max-width: 699px) {
   .main-header {
     padding: 0 var(--m-banda-margen-movil);
@@ -594,7 +593,6 @@ defineOptions({
     gap: 6px;
     flex-wrap: nowrap;
   }
-
 
   // La hamburguesa: 44 × 44, como en el tablero móvil.
   .main-header__mas {
