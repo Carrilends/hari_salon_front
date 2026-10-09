@@ -64,7 +64,7 @@
         data-test="reintentar-huecos"
         @click="emit('reintentar')"
       >
-        Reintentar
+        <span class="cuando__subrayado">Reintentar</span>
       </button>
     </div>
     <p v-else-if="!fecha" class="cuando__pista" data-test="elige-dia">

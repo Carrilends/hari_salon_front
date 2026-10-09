@@ -27,11 +27,20 @@ const BASE = {
   aviso: null as AvisoDisponibilidad | null,
 };
 
-const montar = (cambios: Partial<typeof BASE> = {}) =>
-  mount(PasoCuando, {
+const montados: Array<{ unmount: () => void }> = [];
+
+afterEach(() => {
+  montados.splice(0).forEach((w) => w.unmount());
+});
+
+const montar = (cambios: Partial<typeof BASE> = {}) => {
+  const wrapper = mount(PasoCuando, {
     props: { ...BASE, ...cambios },
     attachTo: document.body,
   });
+  montados.push(wrapper);
+  return wrapper;
+};
 
 const AVISO: AvisoDisponibilidad = {
   texto:
@@ -96,7 +105,6 @@ describe('PasoCuando', () => {
     await wrapper.vm.$nextTick();
 
     expect(document.activeElement?.textContent).toContain('A qué hora');
-    wrapper.unmount();
   });
 
   it('si ya era sin preferencia, no ofrece pasar a sin preferencia', () => {
@@ -119,6 +127,9 @@ describe('PasoCuando', () => {
       'alert'
     );
     expect(wrapper.find('[data-test="fichas-hora"]').exists()).toBe(false);
+    expect(
+      wrapper.get('[data-test="reintentar-huecos"] .cuando__subrayado').text()
+    ).toBe('Reintentar');
     await wrapper.get('[data-test="reintentar-huecos"]').trigger('click');
     expect(wrapper.emitted('reintentar')).toHaveLength(1);
   });
