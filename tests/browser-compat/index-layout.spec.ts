@@ -262,34 +262,53 @@ test.describe('el reparto vertical del inicio', () => {
  * El desplegable de «Más» lo monta Quasar en un portal, fuera del árbol de la
  * cabecera: comprobar su hoja de estilos en el fuente no basta para saber que
  * de verdad se pinta así. Esto lo abre y lo mide.
+ *
+ * Movida el 2026-10-07 a la carta por secciones: las filas ya no son
+ * `.more-menu__item` sino las entradas de `MenuMasContenido`. Se sigue midiendo
+ * lo mismo (fondo nieve, filete, icono en oro profundo, Jost, 44 px) y se añade
+ * lo nuevo: 344 px, la sombra flotante, filas en caja normal y versalitas solo
+ * en los títulos de sección.
  */
 test.describe('el desplegable de «Más»', () => {
-  test('se pinta con la paleta y sus filas se pueden tocar', async ({ page }) => {
+  test('se pinta con la paleta y sus entradas se pueden tocar', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await servirApiVacia(page);
     await irA(page, '/preguntas-frecuentes');
 
-    await page.locator('[aria-label="Más opciones"]').click();
+    const disparador = page.locator('button[aria-label="Más opciones"]');
+    await disparador.click();
     const menu = page.locator('.more-menu');
     await expect(menu).toBeVisible();
+    await expect(disparador).toHaveAttribute('aria-expanded', 'true');
 
     const pintura = await menu.evaluate((el) => {
       const lista = el.querySelector('.more-menu__list')!;
-      const fila = el.querySelector('.more-menu__item')!;
-      const icono = el.querySelector('.more-menu__icon')!;
+      const entrada = el.querySelector('[data-test="menu-entrada-testimonios"]')!;
+      const icono = entrada.querySelector('svg')!;
+      const titulo = el.querySelector('#menu-mas-titulo-desplegable-peluqueria')!;
       return {
         fondo: getComputedStyle(lista).backgroundColor,
         borde: getComputedStyle(el).borderTopColor,
+        sombra: getComputedStyle(el).boxShadow,
+        ancho: el.getBoundingClientRect().width,
         letra: getComputedStyle(lista).fontFamily,
         icono: getComputedStyle(icono).color,
-        alto: fila.getBoundingClientRect().height,
+        alto: entrada.getBoundingClientRect().height,
+        cajaEntrada: getComputedStyle(entrada).textTransform,
+        cajaTitulo: getComputedStyle(titulo).textTransform,
+        colorTitulo: getComputedStyle(titulo).color,
       };
     });
 
     expect(pintura.fondo).toBe('rgb(255, 255, 255)'); // nieve
     expect(pintura.borde).toBe('rgb(217, 209, 199)'); // filete
+    expect(pintura.sombra).toContain('rgba(22, 19, 15, 0.16)'); // sombra flotante
+    expect(Math.round(pintura.ancho)).toBe(344);
     expect(pintura.icono).toBe('rgb(122, 92, 40)'); // oro profundo
     expect(pintura.letra).toContain('Jost');
     expect(pintura.alto).toBeGreaterThanOrEqual(44);
+    expect(pintura.cajaEntrada).toBe('none'); // M5
+    expect(pintura.cajaTitulo).toBe('uppercase');
+    expect(pintura.colorTitulo).toBe('rgb(122, 92, 40)');
   });
 });
