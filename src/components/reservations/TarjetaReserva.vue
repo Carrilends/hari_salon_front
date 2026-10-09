@@ -165,17 +165,21 @@ const dia = computed(() => fechaDeCita(props.reserva.scheduledAt));
   min-width: 0;
 }
 
+/* El rango no se parte nunca (ver `__horas`); si con la píldora no cabe, la
+   píldora baja a la línea siguiente. */
 .tarjeta-reserva__fila {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px 8px;
   margin-bottom: 6px;
 }
 
 .tarjeta-reserva__horas {
   font-family: var(--m-font-display);
   font-size: 22px;
+  white-space: nowrap;
 }
 
 .tarjeta-reserva__detalle {

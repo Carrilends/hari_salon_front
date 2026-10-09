@@ -173,4 +173,18 @@ describe('TarjetaReserva', () => {
     expect(ESTILOS).toMatch(/text-decoration: line-through;/);
     expect(ESTILOS).toMatch(/min-height: var\(--m-tactil-min\);/);
   });
+
+  /**
+   * Revisión final D6: a 390 la píldora del estado (con icono) empujaba el
+   * rango y lo partía en dos líneas («10:00 –» / «10:30»). El rango no se
+   * parte; si no caben los dos, la píldora baja a la línea siguiente.
+   */
+  it('el rango horario va en una línea y la píldora baja si no cabe', () => {
+    expect(ESTILOS).toMatch(
+      /\.tarjeta-reserva__horas\s*\{[^}]*white-space: nowrap;/
+    );
+    expect(ESTILOS).toMatch(
+      /\.tarjeta-reserva__fila\s*\{[^}]*flex-wrap: wrap;/
+    );
+  });
 });
