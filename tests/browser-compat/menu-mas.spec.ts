@@ -179,13 +179,14 @@ test.describe('menú «Más» · escritorio 1280', () => {
     await expect(page.locator('.about-dialog')).toBeVisible();
   });
 
-  test('el foco de teclado se ve en las entradas', async ({ page }) => {
+  test('el foco de teclado se ve en las entradas', async ({ page, browserName }) => {
     await preparar(page);
     await irA(page, '/testimonios');
 
     await disparador(page).click();
     await entrada(page, 'testimonios').focus();
-    await page.keyboard.press('Tab');
+    // Safari: Tab solo salta a controles de formulario; Opción+Tab recorre enlaces y botones.
+    await page.keyboard.press(browserName === 'webkit' ? 'Alt+Tab' : 'Tab');
     const anillo = await page.evaluate(() => {
       const activo = document.activeElement as HTMLElement;
       const estilo = getComputedStyle(activo);
