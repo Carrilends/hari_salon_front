@@ -17,7 +17,8 @@ jest.mock('@tanstack/vue-query', () => ({
 }));
 const mockPedirOcupacion = jest.fn();
 jest.mock('src/api/reservations-api', () => ({
-  fetchReservationOccupancy: (...args: unknown[]) => mockPedirOcupacion(...args),
+  fetchReservationOccupancy: (...args: unknown[]) =>
+    mockPedirOcupacion(...args),
 }));
 
 import { ref } from 'vue';

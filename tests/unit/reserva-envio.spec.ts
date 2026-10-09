@@ -154,6 +154,8 @@ describe('armarSolicitud', () => {
   });
 
   it('una hora imposible no arma nada', () => {
-    expect(armarSolicitud({ ...BASE, hora: '25:00', sesion: SESION })).toBeNull();
+    expect(
+      armarSolicitud({ ...BASE, hora: '25:00', sesion: SESION })
+    ).toBeNull();
   });
 });

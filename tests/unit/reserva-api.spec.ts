@@ -16,7 +16,9 @@ const API = readFileSync(
 );
 
 describe('crear una reserva', () => {
-  const cuerpo = API.slice(API.indexOf('export async function createReservation'));
+  const cuerpo = API.slice(
+    API.indexOf('export async function createReservation')
+  );
 
   it('va por la instancia que añade el Bearer cuando hay sesión', () => {
     expect(cuerpo).toMatch(

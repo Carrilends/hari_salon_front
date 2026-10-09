@@ -49,6 +49,8 @@ export async function enviarReserva(
     const reserva = await createReservation(solicitud);
     return { tipo: 'creada', reserva };
   } catch (error) {
-    return estadoDeError(error) === 409 ? { tipo: 'conflicto' } : { tipo: 'error' };
+    return estadoDeError(error) === 409
+      ? { tipo: 'conflicto' }
+      : { tipo: 'error' };
   }
 }

@@ -101,7 +101,9 @@ describe('enviarReserva', () => {
       errorHttp(409, 'El estilista ya tiene una reserva en ese horario')
     );
 
-    expect(await enviarReserva(SOLICITUD, false)).toEqual({ tipo: 'conflicto' });
+    expect(await enviarReserva(SOLICITUD, false)).toEqual({
+      tipo: 'conflicto',
+    });
   });
 
   it('cualquier otro fallo es un error que se puede reintentar', async () => {

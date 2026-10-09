@@ -72,7 +72,9 @@ function disponibilidadDe(
   duracionMin: number
 ): DiaDeTira['disponibilidad'] {
   if (!entrada) return 'desconocida';
-  if (!hasSlotForCart(entrada.usedMinutes, entrada.capacityMinutes, duracionMin)) {
+  if (
+    !hasSlotForCart(entrada.usedMinutes, entrada.capacityMinutes, duracionMin)
+  ) {
     return 'sin-hueco';
   }
   return occupancyRatio(entrada.usedMinutes, entrada.capacityMinutes) >=
@@ -169,7 +171,11 @@ export function huecosDelDia(args: {
   const duracion = Math.max(0, args.duracionMin);
   const quienes = candidatas(disponibilidad.workers, estilistaId);
   const huecos: HuecoDeHora[] = [];
-  for (let t = openMin; t < closeMin && t + duracion <= closeMin; t += pasoMin) {
+  for (
+    let t = openMin;
+    t < closeMin && t + duracion <= closeMin;
+    t += pasoMin
+  ) {
     if (t < effectiveStartMin) continue;
     huecos.push({
       hora: aHora(t),

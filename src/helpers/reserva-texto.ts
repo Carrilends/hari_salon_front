@@ -100,7 +100,9 @@ export function precioTexto(valor: number): string {
 
 /** 'aprox. 1 h 30 min'; sin minutos, 'sin servicios' (el pie con la bolsa vacía). */
 export function duracionAprox(minutos: number): string {
-  return minutos > 0 ? `aprox. ${formatDurationMinutes(minutos)}` : 'sin servicios';
+  return minutos > 0
+    ? `aprox. ${formatDurationMinutes(minutos)}`
+    : 'sin servicios';
 }
 
 /** '1 servicio' / '2 servicios'. */

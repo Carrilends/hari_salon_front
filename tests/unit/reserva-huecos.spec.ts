@@ -162,7 +162,8 @@ describe('huecosDelDia', () => {
 
   it('cada hueco lleva su franja', () => {
     const huecos = huecosDelDia({ ...base, estilistaId: null });
-    const franja = (hora: string) => huecos.find((h) => h.hora === hora)?.franja;
+    const franja = (hora: string) =>
+      huecos.find((h) => h.hora === hora)?.franja;
 
     expect(franja('11:30')).toBe('manana');
     expect(franja('12:00')).toBe('tarde');
@@ -205,7 +206,10 @@ describe('huecosDelDia', () => {
     });
 
     expect(
-      libreA(huecosDelDia({ ...base, disponibilidad: d, estilistaId: null }), '09:00')
+      libreA(
+        huecosDelDia({ ...base, disponibilidad: d, estilistaId: null }),
+        '09:00'
+      )
     ).toBe(false);
   });
 
@@ -222,7 +226,10 @@ describe('huecosDelDia', () => {
     });
 
     expect(
-      libreA(huecosDelDia({ ...base, disponibilidad: d, estilistaId: null }), '09:00')
+      libreA(
+        huecosDelDia({ ...base, disponibilidad: d, estilistaId: null }),
+        '09:00'
+      )
     ).toBe(true);
   });
 
