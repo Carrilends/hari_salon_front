@@ -8,6 +8,8 @@
  * §4.1) y `huecosDelDia` se sustituye para ver con qué se la llama: lo que se
  * prueba aquí es el diálogo, no el cálculo de huecos.
  */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
 import CambiarFechaDialog from 'src/components/reservations/CambiarFechaDialog.vue';
@@ -739,7 +741,7 @@ describe('CambiarFechaDialog · cerrar y tamaño', () => {
     ).toContain('m-boton-plano');
   });
 
-  it('en escritorio es un diálogo; en móvil, a pantalla completa desde abajo', async () => {
+  it('en escritorio es un diálogo; en móvil, a pantalla completa', async () => {
     const escritorio = montar();
     await nextTick();
     const capaEscritorio = escritorio.get('.q-dialog-doble');
@@ -750,10 +752,35 @@ describe('CambiarFechaDialog · cerrar y tamaño', () => {
     const movil = montar();
     await nextTick();
     const capaMovil = movil.get('.q-dialog-doble');
-    expect(capaMovil.attributes('data-posicion')).toBe('bottom');
+    // `standard` y no `bottom` (revisión final D1): con `bottom` la capa de
+    // Quasar es `fixed-bottom`, de alto automático; la hoja medía 1091 px y su
+    // cabecera, la X y «Ahora…» quedaban por encima de la pantalla.
+    expect(capaMovil.attributes('data-posicion')).toBe('standard');
     expect(capaMovil.attributes('data-maximizado')).toBe('si');
     expect(movil.get('[data-test="cambiar-fecha"]').classes()).toContain(
       'cambiar-fecha--hoja'
     );
+  });
+
+  it('la hoja móvil llena la capa y desplaza solo su cuerpo (CSS)', () => {
+    const fuente = readFileSync(
+      join(
+        __dirname,
+        '../../src/components/reservations/CambiarFechaDialog.vue'
+      ),
+      'utf8'
+    );
+    const plantilla = fuente.split('<script')[0];
+    const estilos = fuente.slice(fuente.indexOf('<style'));
+    const regla = (selector: string) =>
+      new RegExp(`\\.${selector}\\s*\\{([^}]*)\\}`).exec(estilos)?.[1] ?? '';
+
+    expect(plantilla).not.toMatch(/'bottom'/);
+    expect(regla('cambiar-fecha--hoja')).toMatch(/(^|\s)height: 100%;/);
+    expect(regla('cambiar-fecha--hoja')).toMatch(/max-height: 100%;/);
+    expect(regla('cambiar-fecha__cabecera')).toMatch(/flex-shrink: 0;/);
+    expect(regla('cambiar-fecha__pie')).toMatch(/flex-shrink: 0;/);
+    expect(regla('cambiar-fecha__cuerpo')).toMatch(/min-height: 0;/);
+    expect(regla('cambiar-fecha__cuerpo')).toMatch(/overflow-y: auto;/);
   });
 });

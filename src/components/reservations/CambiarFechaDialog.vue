@@ -1,10 +1,14 @@
 <template>
+  <!-- En móvil, `maximized` con la posición `standard`: su capa es
+       `fixed-full` y el panel la llena con su propio desplazamiento. Con
+       `bottom` la capa era de alto automático y la cabecera se salía por
+       arriba. La entrada desde abajo la da `slide-up`. -->
   <q-dialog
     :model-value="modelValue"
     class="cambiar-fecha-dialogo"
     :maximized="esMovil"
     :persistent="guardando"
-    :position="esMovil ? 'bottom' : 'standard'"
+    position="standard"
     transition-show="slide-up"
     transition-hide="slide-down"
     @update:model-value="alCambiarVisibilidad"
@@ -497,12 +501,15 @@ async function guardar(): Promise<void> {
   font-family: var(--m-font-sans);
 }
 
-/* `maximized` ya da el alto completo a la capa: el panel la llena. */
+/* `maximized` + `standard`: la capa es `fixed-full` (alto de la pantalla
+   visible, también con la barra de Safari) y el panel la llena. Cabecera y pie
+   no encogen; desplaza solo el cuerpo. Sin `vh`: el 100 % de una capa fija es
+   el alto real, y Safari 13.1 no sabe de `dvh`. */
 .cambiar-fecha--hoja {
   width: 100%;
   max-width: 100%;
   height: 100%;
-  max-height: none;
+  max-height: 100%;
   border-radius: 0;
 }
 
