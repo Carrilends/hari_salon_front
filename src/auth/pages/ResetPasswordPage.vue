@@ -1,21 +1,26 @@
 <script lang="ts" setup>
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useQuasar } from 'quasar';
 import { useResetPassword } from 'src/composables/auth/useResetPassword';
+import {
+  enfocarCampo,
+  useFormularioAcceso,
+  type FormularioAcceso,
+} from 'src/composables/auth/useFormularioAcceso';
 import { useSeo } from 'src/composables/seo/useSeo';
+import { estadoDeError, mensajeDeAcceso } from 'src/helpers/mensajes-acceso';
 import {
   hasLowercase,
   hasNumber,
   hasUppercase,
-  isRequired,
   matches,
   minLength,
+  requerido,
 } from 'src/helpers/validators';
-
-interface ApiError {
-  response?: { data?: { message?: string | string[] } };
-}
+import CampoAcceso from 'src/components/auth/CampoAcceso.vue';
+import ReglasContrasena from 'src/components/auth/ReglasContrasena.vue';
+import AvisoAcceso from 'src/components/auth/AvisoAcceso.vue';
+import EstadoAcceso from 'src/components/auth/EstadoAcceso.vue';
 
 // Página privada: se sirve como SPA (excluida del SSG) y no debe indexarse.
 useSeo({
@@ -26,142 +31,158 @@ useSeo({
 
 const route = useRoute();
 const router = useRouter();
-const $q = useQuasar();
-const { submit, isLoading } = useResetPassword();
+const { submit } = useResetPassword();
 
-const token = computed(() =>
-  typeof route.query.token === 'string' ? route.query.token : ''
-);
-const newPassword = ref('');
-const confirmPassword = ref('');
-const failed = ref(false);
+const token = typeof route.query.token === 'string' ? route.query.token : '';
+// A14: sin token, el mismo estado que un enlace caducado o usado.
+const enlaceInvalido = ref(!token);
 
-const canSubmit = computed(
-  () =>
-    !!token.value &&
-    !!newPassword.value &&
-    !!confirmPassword.value &&
-    newPassword.value === confirmPassword.value
-);
+type CampoRestablecer = 'contrasena' | 'repetida';
 
-async function onSubmit() {
-  if (!canSubmit.value) return;
+const formulario: FormularioAcceso<CampoRestablecer> =
+  useFormularioAcceso<CampoRestablecer>({
+    // La misma política que valida el backend (`ResetPasswordDto`).
+    contrasena: [
+      requerido('Elige una contraseña.'),
+      minLength(8, 'Usa 8 caracteres o más.'),
+      hasUppercase('Añade una mayúscula.'),
+      hasLowercase('Añade una minúscula.'),
+      hasNumber('Añade un número.'),
+    ],
+    repetida: [
+      requerido('Repite la contraseña.'),
+      matches(
+        () => formulario.valores.contrasena.value,
+        'Las contraseñas no coinciden.'
+      ),
+    ],
+  });
+const { valores, errores, tocar, validarTodo } = formulario;
+
+const enviando = ref(false);
+const errorServidor = ref('');
+
+async function guardar() {
+  if (enviando.value) return;
+  errorServidor.value = '';
+  const primero = validarTodo();
+  if (primero) {
+    enfocarCampo(primero);
+    return;
+  }
+  enviando.value = true;
   try {
-    await submit({ token: token.value, newPassword: newPassword.value });
-    $q.notify({
-      type: 'positive',
-      message: 'Tu contraseña fue actualizada. Ya puedes iniciar sesión.',
-    });
-    await router.push({ name: 'login' });
+    await submit({ token, newPassword: valores.contrasena.value });
+    // A15: el backend revoca todas las sesiones y no abre una nueva: se vuelve
+    // a entrar con la contraseña nueva, y el login lo dice con calma.
+    await router.push({ name: 'login', query: { restablecida: '1' } });
   } catch (err: unknown) {
-    // Token expirado o ya usado: se ofrece pedir uno nuevo.
-    failed.value = true;
-    const msg = (err as ApiError)?.response?.data?.message;
-    $q.notify({
-      type: 'negative',
-      message: Array.isArray(msg)
-        ? msg.join(', ')
-        : msg || 'No se pudo restablecer la contraseña',
-    });
+    // Enlace inexistente, caducado o usado responden 400 a propósito (no se
+    // revela cuál). Cualquier otra cosa —la red, el servidor— no es culpa del
+    // enlace: se dice en línea y se puede volver a intentar.
+    if (estadoDeError(err) === 400) {
+      enlaceInvalido.value = true;
+    } else {
+      errorServidor.value = mensajeDeAcceso(err, 'restablecer');
+    }
+  } finally {
+    enviando.value = false;
   }
 }
 </script>
 
 <template>
-  <div class="auth-form-page column flex-center">
-    <q-card class="auth-form-page__card q-pa-xl shadow-2 rounded-borders full-width">
-      <q-card-section class="text-center">
-        <div class="text-h5 text-weight-bold q-mb-sm">Restablecer contraseña</div>
-      </q-card-section>
+  <estado-acceso
+    v-if="enlaceInvalido"
+    tono="peligro"
+    titulo="Este enlace ya no sirve"
+  >
+    <template #icono>
+      <svg
+        width="30"
+        height="30"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.4"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path d="M9.5 14.5l-1.8 1.8a3.2 3.2 0 0 1-4.5-4.5l2.6-2.6a3.2 3.2 0 0 1 4.2-.3" />
+        <path d="M14.5 9.5l1.8-1.8a3.2 3.2 0 0 1 4.5 4.5l-2.6 2.6a3.2 3.2 0 0 1-4.2.3" />
+        <path d="M8 4.5v2M4.5 8h2M16 19.5v-2M19.5 16h-2" />
+      </svg>
+    </template>
 
-      <template v-if="!token">
-        <q-card-section class="text-center">
-          <q-icon name="link_off" size="48px" color="negative" />
-          <div class="q-mt-md text-body1">
-            El enlace no es válido o está incompleto.
-          </div>
-        </q-card-section>
-        <q-card-section class="text-center q-pt-none">
-          <q-btn
-            flat
-            no-caps
-            color="primary"
-            label="Solicitar un enlace nuevo"
-            :to="{ name: 'forgot-password' }"
-          />
-        </q-card-section>
-      </template>
+    <p>
+      Puede que haya vencido o que ya lo hayas usado: cada enlace funciona una
+      sola vez.
+    </p>
 
-      <template v-else>
-        <q-form @submit="onSubmit" class="q-gutter-md">
-          <q-input
-            v-model="newPassword"
-            filled
-            outlined
-            color="black"
-            type="password"
-            label="Nueva contraseña"
-            :rules="[
-              isRequired,
-              minLength(8),
-              hasUppercase(),
-              hasLowercase(),
-              hasNumber(),
-            ]"
-          />
-          <q-input
-            v-model="confirmPassword"
-            filled
-            outlined
-            color="black"
-            type="password"
-            label="Confirmar nueva contraseña"
-            :rules="[isRequired, matches(() => newPassword)]"
-          />
-          <div class="row justify-center">
-            <q-btn
-              type="submit"
-              color="primary"
-              label="Guardar contraseña"
-              class="q-mt-md"
-              :disable="!canSubmit || isLoading"
-              :loading="isLoading"
-            />
-          </div>
-        </q-form>
+    <template #acciones>
+      <router-link
+        :to="{ name: 'forgot-password' }"
+        class="acceso-boton m-boton m-boton--ancho"
+        data-test="pedir-otro-enlace"
+        >Pedir otro enlace</router-link
+      >
+      <router-link :to="{ name: 'login' }" class="acceso-secundario"
+        >Volver a entrar</router-link
+      >
+    </template>
+  </estado-acceso>
 
-        <q-card-section v-if="failed" class="text-center q-pt-md">
-          <q-btn
-            flat
-            no-caps
-            color="primary"
-            label="El enlace no funcionó: solicitar uno nuevo"
-            :to="{ name: 'forgot-password' }"
-          />
-        </q-card-section>
-      </template>
+  <div v-else class="acceso-pagina">
+    <p class="acceso-antetitulo">Restablecer</p>
+    <h1 class="acceso-titulo">Elige una contraseña nueva</h1>
+    <p class="acceso-entradilla">
+      Al guardarla se cierran tus sesiones abiertas y vuelves a entrar con la
+      nueva.
+    </p>
 
-      <q-card-section class="text-center q-pt-md">
-        <q-btn
-          flat
-          no-caps
-          color="grey-8"
-          label="Volver a iniciar sesión"
-          :to="{ name: 'login' }"
-        />
-      </q-card-section>
-    </q-card>
+    <form novalidate @submit.prevent="guardar">
+      <campo-acceso
+        id="contrasena"
+        v-model="valores.contrasena.value"
+        rotulo="Contraseña nueva"
+        tipo="password"
+        autocomplete="new-password"
+        describedby="reglas-contrasena"
+        :error="errores.contrasena"
+        @blur="tocar('contrasena')"
+      />
+      <reglas-contrasena :valor="valores.contrasena.value" />
+      <campo-acceso
+        id="repetida"
+        v-model="valores.repetida.value"
+        rotulo="Repítela"
+        tipo="password"
+        autocomplete="new-password"
+        :error="errores.repetida"
+        @blur="tocar('repetida')"
+      />
+
+      <aviso-acceso v-if="errorServidor" class="restablecer__aviso">
+        {{ errorServidor }}
+      </aviso-acceso>
+
+      <button
+        type="submit"
+        class="acceso-boton m-boton--ancho"
+        data-test="enviar"
+        :disabled="enviando"
+        :aria-busy="enviando ? 'true' : undefined"
+      >
+        {{ enviando ? 'Guardando…' : 'Guardar contraseña' }}
+      </button>
+    </form>
   </div>
 </template>
 
 <style scoped>
-.auth-form-page {
-  width: 100%;
-  min-height: 100vh;
-  padding: 16px;
-  box-sizing: border-box;
-}
-.auth-form-page__card {
-  max-width: 400px;
+.restablecer__aviso {
+  margin-top: 14px;
 }
 </style>
