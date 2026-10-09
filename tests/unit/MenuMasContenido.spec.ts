@@ -14,7 +14,10 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { mount, RouterLinkStub } from '@vue/test-utils';
 import MenuMasContenido from 'src/components/shared/MenuMasContenido.vue';
-import { seccionesDelMenu, type EntradaMenu } from 'src/composables/shared/menuMas';
+import {
+  seccionesDelMenu,
+  type EntradaMenu,
+} from 'src/composables/shared/menuMas';
 
 type Estado = { isLoggedIn: boolean; isAdmin: boolean };
 type Opciones = {
@@ -58,7 +61,9 @@ function enlace(wrapper: ReturnType<typeof montar>, id: string) {
 }
 
 const seccionesPintadas = (wrapper: ReturnType<typeof montar>) =>
-  wrapper.findAll('[data-test^="menu-seccion-"]').map((s) => s.attributes('data-test'));
+  wrapper
+    .findAll('[data-test^="menu-seccion-"]')
+    .map((s) => s.attributes('data-test'));
 
 describe('MenuMasContenido · semántica (M8)', () => {
   it('es un <nav> etiquetado «Más opciones»', () => {
@@ -69,17 +74,33 @@ describe('MenuMasContenido · semántica (M8)', () => {
   });
 
   it('no usa role="menu" ni menuitem: son enlaces y botones', () => {
-    const wrapper = montar({ estado: DUENA, nombre: 'Marlene', correo: 'm@correo.com' });
+    const wrapper = montar({
+      estado: DUENA,
+      nombre: 'Marlene',
+      correo: 'm@correo.com',
+    });
 
     expect(wrapper.find('[role="menu"]').exists()).toBe(false);
     expect(wrapper.find('[role="menuitem"]').exists()).toBe(false);
   });
 
   it('las entradas con destino son enlaces; las de acción, botones de tipo button', () => {
-    const wrapper = montar({ estado: CLIENTA, nombre: 'Ana', correo: 'a@correo.com' });
+    const wrapper = montar({
+      estado: CLIENTA,
+      nombre: 'Ana',
+      correo: 'a@correo.com',
+    });
 
-    for (const id of ['testimonios', 'preguntas-frecuentes', 'mis-reservas', 'mi-cuenta', 'politica-datos']) {
-      expect(wrapper.find(`[data-test="menu-entrada-${id}"]`).element.tagName).toBe('A');
+    for (const id of [
+      'testimonios',
+      'preguntas-frecuentes',
+      'mis-reservas',
+      'mi-cuenta',
+      'politica-datos',
+    ]) {
+      expect(
+        wrapper.find(`[data-test="menu-entrada-${id}"]`).element.tagName
+      ).toBe('A');
     }
     for (const id of ['quienes-somos', 'horarios', 'cerrar-sesion']) {
       const boton = wrapper.find(`[data-test="menu-entrada-${id}"]`);
@@ -89,7 +110,11 @@ describe('MenuMasContenido · semántica (M8)', () => {
   });
 
   it('cada sección con título es un grupo con nombre; el pie no', () => {
-    const wrapper = montar({ estado: DUENA, nombre: 'Marlene', correo: 'm@correo.com' });
+    const wrapper = montar({
+      estado: DUENA,
+      nombre: 'Marlene',
+      correo: 'm@correo.com',
+    });
     const titulos: Record<string, string> = {
       cuenta: 'Tu cuenta',
       salon: 'El salón',
@@ -109,10 +134,16 @@ describe('MenuMasContenido · semántica (M8)', () => {
 
   it('los id de los títulos llevan la variante: escritorio y hoja no chocan', () => {
     const desplegable = montar().find('[data-test="menu-seccion-peluqueria"]');
-    const hoja = montar({ variante: 'hoja' }).find('[data-test="menu-seccion-peluqueria"]');
+    const hoja = montar({ variante: 'hoja' }).find(
+      '[data-test="menu-seccion-peluqueria"]'
+    );
 
-    expect(desplegable.attributes('aria-labelledby')).toBe('menu-mas-titulo-desplegable-peluqueria');
-    expect(hoja.attributes('aria-labelledby')).toBe('menu-mas-titulo-hoja-peluqueria');
+    expect(desplegable.attributes('aria-labelledby')).toBe(
+      'menu-mas-titulo-desplegable-peluqueria'
+    );
+    expect(hoja.attributes('aria-labelledby')).toBe(
+      'menu-mas-titulo-hoja-peluqueria'
+    );
   });
 });
 
@@ -126,7 +157,9 @@ describe('MenuMasContenido · secciones por estado (M3)', () => {
   });
 
   it('la clienta, las mismas tres', () => {
-    expect(seccionesPintadas(montar({ estado: CLIENTA, nombre: 'Ana' }))).toEqual([
+    expect(
+      seccionesPintadas(montar({ estado: CLIENTA, nombre: 'Ana' }))
+    ).toEqual([
       'menu-seccion-cuenta',
       'menu-seccion-peluqueria',
       'menu-seccion-pie',
@@ -134,7 +167,9 @@ describe('MenuMasContenido · secciones por estado (M3)', () => {
   });
 
   it('la dueña, con «El salón» en segundo lugar', () => {
-    expect(seccionesPintadas(montar({ estado: DUENA, nombre: 'Marlene' }))).toEqual([
+    expect(
+      seccionesPintadas(montar({ estado: DUENA, nombre: 'Marlene' }))
+    ).toEqual([
       'menu-seccion-cuenta',
       'menu-seccion-salon',
       'menu-seccion-peluqueria',
@@ -148,9 +183,15 @@ describe('MenuMasContenido · Tu cuenta', () => {
     const wrapper = montar();
     const cuenta = wrapper.find('[data-test="menu-seccion-cuenta"]');
 
-    expect(cuenta.text()).toContain('Entra para ver, mover o cancelar tus citas.');
-    expect(wrapper.find('[data-test="menu-entrada-iniciar-sesion"]').text()).toBe('Iniciar sesión');
-    expect(wrapper.find('[data-test="menu-entrada-crear-cuenta"]').text()).toBe('Crear cuenta');
+    expect(cuenta.text()).toContain(
+      'Entra para ver, mover o cancelar tus citas.'
+    );
+    expect(
+      wrapper.find('[data-test="menu-entrada-iniciar-sesion"]').text()
+    ).toBe('Iniciar sesión');
+    expect(wrapper.find('[data-test="menu-entrada-crear-cuenta"]').text()).toBe(
+      'Crear cuenta'
+    );
     expect(wrapper.find('[data-test="menu-avatar"]').exists()).toBe(false);
   });
 
@@ -168,9 +209,13 @@ describe('MenuMasContenido · Tu cuenta', () => {
   });
 
   it('«Iniciar sesión» lleva el icono de entrar en el desplegable, y no en la hoja (tableros)', () => {
-    expect(montar().find('[data-test="menu-entrada-iniciar-sesion"] svg').exists()).toBe(true);
     expect(
-      montar({ variante: 'hoja' }).find('[data-test="menu-entrada-iniciar-sesion"] svg').exists()
+      montar().find('[data-test="menu-entrada-iniciar-sesion"] svg').exists()
+    ).toBe(true);
+    expect(
+      montar({ variante: 'hoja' })
+        .find('[data-test="menu-entrada-iniciar-sesion"] svg')
+        .exists()
     ).toBe(false);
   });
 
@@ -189,19 +234,31 @@ describe('MenuMasContenido · Tu cuenta', () => {
   });
 
   it('el avatar es decorativo: el nombre ya se lee al lado', () => {
-    const wrapper = montar({ estado: CLIENTA, nombre: 'Ana', correo: 'a@correo.com' });
+    const wrapper = montar({
+      estado: CLIENTA,
+      nombre: 'Ana',
+      correo: 'a@correo.com',
+    });
 
-    expect(wrapper.find('[data-test="menu-avatar"]').attributes('aria-hidden')).toBe('true');
+    expect(
+      wrapper.find('[data-test="menu-avatar"]').attributes('aria-hidden')
+    ).toBe('true');
   });
 
   it('sin nombre, la inicial del correo', () => {
-    const wrapper = montar({ estado: CLIENTA, nombre: '', correo: 'clienta@correo.com' });
+    const wrapper = montar({
+      estado: CLIENTA,
+      nombre: '',
+      correo: 'clienta@correo.com',
+    });
 
     expect(wrapper.find('[data-test="menu-avatar"]').text()).toBe('C');
   });
 
   it('sin nombre ni correo, el avatar pinta el icono de cuenta', () => {
-    const avatar = montar({ estado: CLIENTA, nombre: '', correo: '' }).find('[data-test="menu-avatar"]');
+    const avatar = montar({ estado: CLIENTA, nombre: '', correo: '' }).find(
+      '[data-test="menu-avatar"]'
+    );
 
     expect(avatar.text()).toBe('');
     expect(avatar.find('svg path').attributes('d')).toContain('M15.2 8.2');
@@ -218,7 +275,9 @@ describe('MenuMasContenido · la línea del horario', () => {
   });
 
   it('sin horario calculado no pinta la línea (nunca «Hoy · » a secas)', () => {
-    expect(montar({ horarioHoy: '' }).find('[data-test="menu-horario-hoy"]').exists()).toBe(false);
+    expect(
+      montar({ horarioHoy: '' }).find('[data-test="menu-horario-hoy"]').exists()
+    ).toBe(false);
   });
 });
 
@@ -226,7 +285,9 @@ describe('MenuMasContenido · elegir', () => {
   it('un botón de acción emite elegir con su entrada', async () => {
     const wrapper = montar();
 
-    await wrapper.find('[data-test="menu-entrada-quienes-somos"]').trigger('click');
+    await wrapper
+      .find('[data-test="menu-entrada-quienes-somos"]')
+      .trigger('click');
 
     const [[elegida]] = wrapper.emitted('elegir') as Array<[EntradaMenu]>;
     expect(elegida.id).toBe('quienes-somos');
@@ -247,7 +308,9 @@ describe('MenuMasContenido · elegir', () => {
   it('cerrar sesión también pasa por elegir: lo resuelve el armazón', async () => {
     const wrapper = montar({ estado: CLIENTA, nombre: 'Ana' });
 
-    await wrapper.find('[data-test="menu-entrada-cerrar-sesion"]').trigger('click');
+    await wrapper
+      .find('[data-test="menu-entrada-cerrar-sesion"]')
+      .trigger('click');
 
     const [[elegida]] = wrapper.emitted('elegir') as Array<[EntradaMenu]>;
     expect(elegida.accion).toBe('cerrar-sesion');
@@ -257,17 +320,35 @@ describe('MenuMasContenido · elegir', () => {
 describe('MenuMasContenido · variantes', () => {
   it('la raíz dice su variante', () => {
     expect(montar().find('nav').classes()).toContain('menu-mas--desplegable');
-    expect(montar({ variante: 'hoja' }).find('nav').classes()).toContain('menu-mas--hoja');
+    expect(montar({ variante: 'hoja' }).find('nav').classes()).toContain(
+      'menu-mas--hoja'
+    );
   });
 
   it('los iconos miden 19 en el desplegable, 20 en la hoja y 16 en el pie (tableros)', () => {
     const desplegable = montar({ estado: CLIENTA, nombre: 'Ana' });
     const hoja = montar({ estado: CLIENTA, nombre: 'Ana', variante: 'hoja' });
 
-    expect(desplegable.find('[data-test="menu-entrada-testimonios"] svg').attributes('width')).toBe('19');
-    expect(hoja.find('[data-test="menu-entrada-testimonios"] svg').attributes('width')).toBe('20');
-    expect(desplegable.find('[data-test="menu-entrada-cerrar-sesion"] svg').attributes('width')).toBe('16');
-    expect(hoja.find('[data-test="menu-entrada-politica-datos"] svg').attributes('width')).toBe('16');
+    expect(
+      desplegable
+        .find('[data-test="menu-entrada-testimonios"] svg')
+        .attributes('width')
+    ).toBe('19');
+    expect(
+      hoja
+        .find('[data-test="menu-entrada-testimonios"] svg')
+        .attributes('width')
+    ).toBe('20');
+    expect(
+      desplegable
+        .find('[data-test="menu-entrada-cerrar-sesion"] svg')
+        .attributes('width')
+    ).toBe('16');
+    expect(
+      hoja
+        .find('[data-test="menu-entrada-politica-datos"] svg')
+        .attributes('width')
+    ).toBe('16');
   });
 });
 
@@ -281,10 +362,12 @@ const ESTILOS = FUENTE.slice(FUENTE.indexOf('<style'));
 const sinComentarios = (css: string) =>
   css.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 const reglas = (css: string) =>
-  Array.from(sinComentarios(css).matchAll(/([^{};]+)\{([^{}]*)\}/g)).map((r) => ({
-    selector: r[1].trim(),
-    cuerpo: r[2],
-  }));
+  Array.from(sinComentarios(css).matchAll(/([^{};]+)\{([^{}]*)\}/g)).map(
+    (r) => ({
+      selector: r[1].trim(),
+      cuerpo: r[2],
+    })
+  );
 const cuerpoDe = (selector: string) =>
   reglas(ESTILOS)
     .filter((r) => r.selector === selector)
@@ -317,16 +400,24 @@ describe('MenuMasContenido · contrato visual', () => {
   });
 
   it('las filas y los botones miden al menos 44 px', () => {
-    expect(cuerpoDe('.menu-mas__entrada')).toMatch(/min-height: var\(--m-tactil-min\);/);
-    expect(cuerpoDe('.menu-mas__boton')).toMatch(/min-height: var\(--m-tactil-min\);/);
-    expect(cuerpoDe('.menu-mas__avatar')).toMatch(/width: var\(--m-tactil-min\);/);
+    expect(cuerpoDe('.menu-mas__entrada')).toMatch(
+      /min-height: var\(--m-tactil-min\);/
+    );
+    expect(cuerpoDe('.menu-mas__boton')).toMatch(
+      /min-height: var\(--m-tactil-min\);/
+    );
+    expect(cuerpoDe('.menu-mas__avatar')).toMatch(
+      /width: var\(--m-tactil-min\);/
+    );
   });
 
   /** M5: seis filas en versalitas grandes era justo lo que pesaba. */
   it('los rótulos de fila van en caja normal: 14,5 px en el desplegable, 15 en la hoja', () => {
     expect(cuerpoDe('.menu-mas__entrada')).toMatch(/text-transform: none;/);
     expect(cuerpoDe('.menu-mas__entrada')).toMatch(/font-size: 14\.5px;/);
-    expect(cuerpoDe('.menu-mas--hoja .menu-mas__entrada')).toMatch(/font-size: 15px;/);
+    expect(cuerpoDe('.menu-mas--hoja .menu-mas__entrada')).toMatch(
+      /font-size: 15px;/
+    );
   });
 
   it('solo los títulos de sección van en versalitas, en oro profundo', () => {
@@ -339,17 +430,25 @@ describe('MenuMasContenido · contrato visual', () => {
   });
 
   it('los iconos de fila van en oro profundo (el claro da 2,8:1 sobre nieve)', () => {
-    expect(cuerpoDe('.menu-mas__icono')).toMatch(/color: var\(--m-oro-profundo\);/);
+    expect(cuerpoDe('.menu-mas__icono')).toMatch(
+      /color: var\(--m-oro-profundo\);/
+    );
   });
 
   it('el oro claro solo colorea texto sobre tinta: el rótulo de «Iniciar sesión» al pasar', () => {
-    const conOro = reglas(ESTILOS).filter((r) => /(^|[\s;])color: var\(--m-oro\);/.test(r.cuerpo));
+    const conOro = reglas(ESTILOS).filter((r) =>
+      /(^|[\s;])color: var\(--m-oro\);/.test(r.cuerpo)
+    );
 
-    expect(conOro.map((r) => r.selector)).toEqual(['.menu-mas__boton--macizo:hover']);
+    expect(conOro.map((r) => r.selector)).toEqual([
+      '.menu-mas__boton--macizo:hover',
+    ]);
   });
 
   it('el texto secundario es piedra, no el gris del lienzo', () => {
-    expect(cuerpoDe('.menu-mas__invitacion')).toMatch(/color: var\(--m-piedra\);/);
+    expect(cuerpoDe('.menu-mas__invitacion')).toMatch(
+      /color: var\(--m-piedra\);/
+    );
     expect(cuerpoDe('.menu-mas__detalle')).toMatch(/color: var\(--m-piedra\);/);
     expect(cuerpoDe('.menu-mas__correo')).toMatch(/color: var\(--m-piedra\);/);
   });
@@ -363,8 +462,12 @@ describe('MenuMasContenido · contrato visual', () => {
   });
 
   it('foco visible en filas y botones, con el anillo dorado', () => {
-    expect(ESTILOS).toMatch(/\.menu-mas__entrada:focus-visible\s*\{[^}]*outline: 2px solid var\(--m-oro\);/);
-    expect(ESTILOS).toMatch(/\.menu-mas__boton:focus-visible\s*\{[^}]*outline: 2px solid var\(--m-oro\);/);
+    expect(ESTILOS).toMatch(
+      /\.menu-mas__entrada:focus-visible\s*\{[^}]*outline: 2px solid var\(--m-oro\);/
+    );
+    expect(ESTILOS).toMatch(
+      /\.menu-mas__boton:focus-visible\s*\{[^}]*outline: 2px solid var\(--m-oro\);/
+    );
   });
 
   /** Foco de revisión 4: un nombre o un correo sin espacios no estira la hoja. */
@@ -382,12 +485,18 @@ describe('MenuMasContenido · contrato visual', () => {
 
   it('las filas responden igual sean enlace o botón, y al pulsar bajan en vez de encoger', () => {
     const plantilla = FUENTE.split('<script')[0];
-    const filas = Array.from(plantilla.matchAll(/\sclass="([^"]*menu-mas__entrada[^"]*)"/g));
+    const filas = Array.from(
+      plantilla.matchAll(/\sclass="([^"]*menu-mas__entrada[^"]*)"/g)
+    );
 
     expect(filas.length).toBe(2);
     for (const fila of filas) {
       expect(fila[1].split(/\s+/)).toEqual(
-        expect.arrayContaining(['menu-mas__entrada', 'm-boton', 'm-boton--ancho'])
+        expect.arrayContaining([
+          'menu-mas__entrada',
+          'm-boton',
+          'm-boton--ancho',
+        ])
       );
     }
   });

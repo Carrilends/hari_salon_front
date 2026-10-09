@@ -14,12 +14,18 @@ import { escucharConsulta } from 'src/helpers/escuchar-consulta';
  * Sin `window` (`build:ssg`) o sin `matchMedia` (un jsdom a medias) se queda
  * con `inicial`.
  */
-export function useConsultaMedios(consulta: string, inicial: boolean): Ref<boolean> {
+export function useConsultaMedios(
+  consulta: string,
+  inicial: boolean
+): Ref<boolean> {
   const coincide = ref(inicial);
   let soltar: (() => void) | null = null;
 
   onMounted(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    if (
+      typeof window === 'undefined' ||
+      typeof window.matchMedia !== 'function'
+    ) {
       return;
     }
     const lista = window.matchMedia(consulta);

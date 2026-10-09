@@ -48,7 +48,8 @@ const CARACTER_DE_CONTROL = /[\u0000-\u001F\u007F]/;
  */
 function regresoInterno(redirect: string): string {
   const ruta = (redirect ?? '').trim();
-  if (!ruta.startsWith('/') || ruta.startsWith('//')) return REGRESO_POR_DEFECTO;
+  if (!ruta.startsWith('/') || ruta.startsWith('//'))
+    return REGRESO_POR_DEFECTO;
   if (ruta.includes('\\') || CARACTER_DE_CONTROL.test(ruta)) {
     return REGRESO_POR_DEFECTO;
   }
@@ -69,8 +70,18 @@ export function seccionesDelMenu(estado: {
       id: 'cuenta',
       titulo: 'Tu cuenta',
       entradas: [
-        { id: 'mis-reservas', rotulo: 'Mis reservas', icono: 'reservas', destino: '/mis-reservas' },
-        { id: 'mi-cuenta', rotulo: 'Mi cuenta', icono: 'cuenta', destino: '/mi-cuenta' },
+        {
+          id: 'mis-reservas',
+          rotulo: 'Mis reservas',
+          icono: 'reservas',
+          destino: '/mis-reservas',
+        },
+        {
+          id: 'mi-cuenta',
+          rotulo: 'Mi cuenta',
+          icono: 'cuenta',
+          destino: '/mi-cuenta',
+        },
       ],
     });
   } else {
@@ -101,7 +112,12 @@ export function seccionesDelMenu(estado: {
       id: 'salon',
       titulo: 'El salón',
       entradas: [
-        { id: 'reservas', rotulo: 'Reservas', icono: 'agenda', destino: '/reservas' },
+        {
+          id: 'reservas',
+          rotulo: 'Reservas',
+          icono: 'agenda',
+          destino: '/reservas',
+        },
         {
           id: 'mis-estilistas',
           rotulo: 'Mis estilistas',
@@ -116,8 +132,18 @@ export function seccionesDelMenu(estado: {
     id: 'peluqueria',
     titulo: 'La peluquería',
     entradas: [
-      { id: 'testimonios', rotulo: 'Testimonios', icono: 'testimonios', destino: '/testimonios' },
-      { id: 'quienes-somos', rotulo: '¿Quiénes somos?', icono: 'equipo', accion: 'quienes-somos' },
+      {
+        id: 'testimonios',
+        rotulo: 'Testimonios',
+        icono: 'testimonios',
+        destino: '/testimonios',
+      },
+      {
+        id: 'quienes-somos',
+        rotulo: '¿Quiénes somos?',
+        icono: 'equipo',
+        accion: 'quienes-somos',
+      },
       {
         id: 'horarios',
         rotulo: 'Horarios',
@@ -144,7 +170,12 @@ export function seccionesDelMenu(estado: {
             icono: 'privacidad',
             destino: { name: 'privacy-policy' },
           },
-          { id: 'cerrar-sesion', rotulo: 'Cerrar sesión', icono: 'salir', accion: 'cerrar-sesion' },
+          {
+            id: 'cerrar-sesion',
+            rotulo: 'Cerrar sesión',
+            icono: 'salir',
+            accion: 'cerrar-sesion',
+          },
         ]
       : [
           {

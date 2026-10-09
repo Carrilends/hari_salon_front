@@ -10,9 +10,15 @@ import { join } from 'node:path';
 import { createMemoryHistory, createRouter } from 'vue-router';
 import routes from 'src/router/routes';
 
-const LAYOUT = readFileSync(join(__dirname, '../../src/layouts/MainLayout.vue'), 'utf8');
+const LAYOUT = readFileSync(
+  join(__dirname, '../../src/layouts/MainLayout.vue'),
+  'utf8'
+);
 const PLANTILLA = LAYOUT.split('<script')[0];
-const SCRIPT = LAYOUT.slice(LAYOUT.indexOf('<script setup'), LAYOUT.indexOf('</script>'));
+const SCRIPT = LAYOUT.slice(
+  LAYOUT.indexOf('<script setup'),
+  LAYOUT.indexOf('</script>')
+);
 const ESTILO_SCOPED = LAYOUT.slice(
   LAYOUT.indexOf('<style scoped lang="scss">'),
   LAYOUT.indexOf('</style>')
@@ -24,17 +30,25 @@ const funcion = (firma: string) => {
   const desde = SCRIPT.indexOf(firma);
   const hasta = SCRIPT.indexOf('\nfunction ', desde + firma.length);
   const hastaAsync = SCRIPT.indexOf('\nasync function ', desde + firma.length);
-  const fin = [hasta, hastaAsync, SCRIPT.length].filter((i) => i > desde).sort((a, b) => a - b)[0];
+  const fin = [hasta, hastaAsync, SCRIPT.length]
+    .filter((i) => i > desde)
+    .sort((a, b) => a - b)[0];
   return SCRIPT.slice(desde, fin);
 };
 
 /** El disparador de «Más»: del `<q-btn` que lleva su etiqueta hasta su `<q-menu`. */
 const DISPARADOR = (() => {
   const i = PLANTILLA.indexOf('aria-label="Más opciones"');
-  return PLANTILLA.slice(PLANTILLA.lastIndexOf('<q-btn', i), PLANTILLA.indexOf('<q-menu', i));
+  return PLANTILLA.slice(
+    PLANTILLA.lastIndexOf('<q-btn', i),
+    PLANTILLA.indexOf('<q-menu', i)
+  );
 })();
 
-const MENU = PLANTILLA.slice(PLANTILLA.indexOf('<q-menu'), PLANTILLA.indexOf('</q-menu>'));
+const MENU = PLANTILLA.slice(
+  PLANTILLA.indexOf('<q-menu'),
+  PLANTILLA.indexOf('</q-menu>')
+);
 
 describe('cabecera del portal', () => {
   it('ofrece un único botón de reserva, rotulado «Reservar»', () => {
@@ -43,7 +57,10 @@ describe('cabecera del portal', () => {
   });
 
   it('la cabecera se pinta con los tokens, no con hexadecimales sueltos', () => {
-    const cabecera = LAYOUT.slice(LAYOUT.indexOf('<q-header'), LAYOUT.indexOf('</q-header>'));
+    const cabecera = LAYOUT.slice(
+      LAYOUT.indexOf('<q-header'),
+      LAYOUT.indexOf('</q-header>')
+    );
     expect(cabecera).not.toMatch(/#[0-9a-fA-F]{3,6}/);
   });
 
@@ -90,7 +107,9 @@ describe('cabecera del portal', () => {
   it('oculta el flotante del asistente en el inicio', () => {
     expect(LAYOUT).toContain(':mostrar-flotante="mostrarFlotanteAsistente"');
 
-    const regla = LAYOUT.slice(LAYOUT.indexOf('const mostrarFlotanteAsistente'));
+    const regla = LAYOUT.slice(
+      LAYOUT.indexOf('const mostrarFlotanteAsistente')
+    );
     expect(regla.slice(0, 160)).toContain("route.path !== '/'");
   });
 
@@ -126,7 +145,7 @@ describe('menú «Más» · el disparador', () => {
     expect(DISPARADOR).toContain('aria-label="Más opciones"');
     expect(DISPARADOR).toContain('aria-haspopup="dialog"');
     expect(DISPARADOR).toContain(
-      ':aria-expanded="menuAbierto || hojaAbierta ? \'true\' : \'false\'"'
+      ":aria-expanded=\"menuAbierto || hojaAbierta ? 'true' : 'false'\""
     );
   });
 
@@ -141,7 +160,7 @@ describe('menú «Más» · el disparador', () => {
   });
 
   it('abierto se pinta en nieve con filete y el chevrón mira arriba (M6)', () => {
-    expect(DISPARADOR).toContain('\'main-header__mas--abierto\': menuAbierto');
+    expect(DISPARADOR).toContain("'main-header__mas--abierto': menuAbierto");
     expect(ESTILO_SCOPED).toMatch(
       /\.main-header__mas--abierto\s*\{[^}]*background: var\(--m-nieve\);[^}]*border-color: var\(--m-filete\);/
     );
@@ -162,8 +181,12 @@ describe('menú «Más» · el disparador', () => {
     expect(ESTILO_SCOPED).toMatch(
       /\.main-header__mas\s*\{[^}]*min-height: var\(--m-tactil-min\);/
     );
-    const movil = ESTILO_SCOPED.slice(ESTILO_SCOPED.indexOf('@media (max-width: 699px)'));
-    expect(movil).toMatch(/\.main-header__mas\s*\{[^}]*min-width: var\(--m-tactil-min\);/);
+    const movil = ESTILO_SCOPED.slice(
+      ESTILO_SCOPED.indexOf('@media (max-width: 699px)')
+    );
+    expect(movil).toMatch(
+      /\.main-header__mas\s*\{[^}]*min-width: var\(--m-tactil-min\);/
+    );
   });
 
   it('en móvil abre la hoja y calcula el horario antes', () => {
@@ -223,7 +246,9 @@ describe('menú «Más» · el desplegable de escritorio', () => {
     expect(ESTILO_LIBRE).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
     expect(marco).toMatch(/width: 344px;/);
     expect(marco).toMatch(/background: var\(--m-nieve\);/);
-    expect(marco).toMatch(/border: var\(--m-filete-grosor\) solid var\(--m-filete\);/);
+    expect(marco).toMatch(
+      /border: var\(--m-filete-grosor\) solid var\(--m-filete\);/
+    );
     expect(marco).toMatch(/border-radius: var\(--m-radio-tarjeta\);/);
     expect(marco).toMatch(/box-shadow: var\(--m-sombra-flotante\);/);
     expect(marco).not.toMatch(/rgba\(/);
@@ -259,7 +284,9 @@ describe('menú «Más» · la hoja y elegir', () => {
     expect(cuerpo.indexOf('menuAbierto.value = false')).toBeGreaterThan(-1);
     expect(cuerpo.indexOf('hojaAbierta.value = false')).toBeGreaterThan(-1);
     expect(cierres).toBeLessThan(cuerpo.indexOf("'quienes-somos'"));
-    expect(cuerpo).toMatch(/'quienes-somos'[\s\S]*whoWeAreDialogComponent\.value = true/);
+    expect(cuerpo).toMatch(
+      /'quienes-somos'[\s\S]*whoWeAreDialogComponent\.value = true/
+    );
     expect(cuerpo).toMatch(/'horarios'[\s\S]*ourContactDialog\.value = true/);
     expect(cuerpo).toMatch(/'cerrar-sesion'[\s\S]*onLogout\(\)/);
   });
@@ -269,7 +296,9 @@ describe('menú «Más» · la hoja y elegir', () => {
     const cuerpo = funcion('async function onLogout');
 
     expect(cuerpo).toMatch(/try \{\s*await authApi\.logout\(\);\s*\} catch/);
-    expect(cuerpo.indexOf('authApi.logout()')).toBeLessThan(cuerpo.indexOf('authStore.logout()'));
+    expect(cuerpo.indexOf('authApi.logout()')).toBeLessThan(
+      cuerpo.indexOf('authStore.logout()')
+    );
     expect(cuerpo).toContain("router.push({ path: '/' })");
   });
 
@@ -290,11 +319,15 @@ describe('cabecera · consultas de medios (M11)', () => {
     expect(SCRIPT).toMatch(
       /const showButtonLabels = useConsultaMedios\(\s*`\(min-width: \$\{BREAKPOINT_LABELS_PX\}px\)`,\s*true,?\s*\);/
     );
-    expect(SCRIPT).toContain('const esMovil = useConsultaMedios(CONSULTA_MENU_MOVIL, false);');
+    expect(SCRIPT).toContain(
+      'const esMovil = useConsultaMedios(CONSULTA_MENU_MOVIL, false);'
+    );
   });
 
   it('el corte de móvil es el mismo que cambia la cabecera en CSS', () => {
-    expect(SCRIPT).toContain("const CONSULTA_MENU_MOVIL = '(max-width: 699px)';");
+    expect(SCRIPT).toContain(
+      "const CONSULTA_MENU_MOVIL = '(max-width: 699px)';"
+    );
     expect(ESTILO_SCOPED).toContain('@media (max-width: 699px)');
   });
 

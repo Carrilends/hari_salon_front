@@ -34,7 +34,9 @@
             @click="elegir(entrada)"
           >
             <StrokeIcon
-              v-if="entrada.id === 'iniciar-sesion' && variante === 'desplegable'"
+              v-if="
+                entrada.id === 'iniciar-sesion' && variante === 'desplegable'
+              "
               :nombre="entrada.icono"
               :tamano="16"
             />
@@ -46,7 +48,11 @@
       <template v-else>
         <!-- Tu cuenta, con sesión: quién es, antes de sus dos filas. -->
         <div v-if="seccion.id === 'cuenta'" class="menu-mas__perfil">
-          <span class="menu-mas__avatar" aria-hidden="true" data-test="menu-avatar">
+          <span
+            class="menu-mas__avatar"
+            aria-hidden="true"
+            data-test="menu-avatar"
+          >
             <template v-if="iniciales">{{ iniciales }}</template>
             <StrokeIcon v-else nombre="cuenta" :tamano="20" />
           </span>
@@ -57,7 +63,11 @@
         </div>
 
         <ul class="menu-mas__lista">
-          <li v-for="entrada in seccion.entradas" :key="entrada.id" class="menu-mas__item">
+          <li
+            v-for="entrada in seccion.entradas"
+            :key="entrada.id"
+            class="menu-mas__item"
+          >
             <router-link
               v-if="entrada.destino"
               :to="destinoDe(entrada)"

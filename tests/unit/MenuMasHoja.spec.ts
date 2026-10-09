@@ -8,7 +8,10 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { mount, RouterLinkStub } from '@vue/test-utils';
 import MenuMasHoja from 'src/components/shared/MenuMasHoja.vue';
-import { seccionesDelMenu, type EntradaMenu } from 'src/composables/shared/menuMas';
+import {
+  seccionesDelMenu,
+  type EntradaMenu,
+} from 'src/composables/shared/menuMas';
 
 const FUENTE = readFileSync(
   join(__dirname, '../../src/components/shared/MenuMasHoja.vue'),
@@ -35,7 +38,11 @@ function montar(abierta = true) {
   return mount(MenuMasHoja, {
     props: {
       abierta,
-      secciones: seccionesDelMenu({ isLoggedIn: false, isAdmin: false, redirect: '/' }),
+      secciones: seccionesDelMenu({
+        isLoggedIn: false,
+        isAdmin: false,
+        redirect: '/',
+      }),
       nombre: '',
       correo: '',
       horarioHoy: '9:00 a 19:00',
@@ -52,14 +59,18 @@ describe('MenuMasHoja', () => {
   it('abierta sale por abajo, con tirador, título «Menú» y la X', () => {
     const wrapper = montar();
 
-    expect(wrapper.getComponent({ name: 'QDialog' }).props('position')).toBe('bottom');
+    expect(wrapper.getComponent({ name: 'QDialog' }).props('position')).toBe(
+      'bottom'
+    );
     expect(wrapper.find('[data-test="menu-hoja"]').exists()).toBe(true);
     expect(wrapper.find('[data-test="menu-hoja"] h2').text()).toBe('Menú');
     expect(wrapper.find('[data-test="menu-hoja-cerrar"]').exists()).toBe(true);
   });
 
   it('el diálogo tiene nombre para el lector de pantalla', () => {
-    expect(montar().getComponent({ name: 'QDialog' }).attributes('aria-label')).toBe('Menú');
+    expect(
+      montar().getComponent({ name: 'QDialog' }).attributes('aria-label')
+    ).toBe('Menú');
   });
 
   it('pinta el contenido en su variante de hoja, con el horario que le pasan', () => {
@@ -67,7 +78,9 @@ describe('MenuMasHoja', () => {
 
     expect(contenido.props('variante')).toBe('hoja');
     expect(contenido.props('horarioHoy')).toBe('9:00 a 19:00');
-    expect(contenido.find('[data-test="menu-horario-hoy"]').text()).toBe('Hoy · 9:00 a 19:00');
+    expect(contenido.find('[data-test="menu-horario-hoy"]').text()).toBe(
+      'Hoy · 9:00 a 19:00'
+    );
   });
 
   it('la X es un botón con nombre, de tipo button, y cierra la hoja', async () => {
@@ -85,7 +98,9 @@ describe('MenuMasHoja', () => {
   it('el velo y Escape (los cierra q-dialog) también llegan a quien la abrió', async () => {
     const wrapper = montar();
 
-    wrapper.getComponent({ name: 'QDialog' }).vm.$emit('update:modelValue', false);
+    wrapper
+      .getComponent({ name: 'QDialog' })
+      .vm.$emit('update:modelValue', false);
     await wrapper.vm.$nextTick();
 
     expect(wrapper.emitted('update:abierta')?.[0]).toEqual([false]);
@@ -127,7 +142,8 @@ describe('MenuMasHoja · contrato visual', () => {
   /** Foco de revisión 5: con cuatro secciones en un teléfono pequeño, desplaza el cuerpo. */
   it('el cuerpo desplaza y la cabecera con la X se queda', () => {
     const cuerpo = /\.menu-hoja__cuerpo\s*\{([^}]*)\}/.exec(ESTILOS)?.[1] ?? '';
-    const cabecera = /\.menu-hoja__cabecera\s*\{([^}]*)\}/.exec(ESTILOS)?.[1] ?? '';
+    const cabecera =
+      /\.menu-hoja__cabecera\s*\{([^}]*)\}/.exec(ESTILOS)?.[1] ?? '';
 
     expect(cuerpo).toMatch(/overflow-y: auto;/);
     expect(cuerpo).toMatch(/min-height: 0;/);
@@ -142,7 +158,9 @@ describe('MenuMasHoja · contrato visual', () => {
     expect(titulo).toMatch(/font-size: 20px;/);
     expect(cerrar).toMatch(/width: var\(--m-tactil-min\);/);
     expect(cerrar).toMatch(/height: var\(--m-tactil-min\);/);
-    expect(ESTILOS).toMatch(/\.menu-hoja__cerrar:focus-visible\s*\{[^}]*outline: 2px solid var\(--m-oro\);/);
+    expect(ESTILOS).toMatch(
+      /\.menu-hoja__cerrar:focus-visible\s*\{[^}]*outline: 2px solid var\(--m-oro\);/
+    );
   });
 
   it('el velo es el de la paleta, en un bloque sin scoped y prefijado', () => {
@@ -151,7 +169,9 @@ describe('MenuMasHoja · contrato visual', () => {
     expect(FUENTE.indexOf('<style lang="scss">')).toBeGreaterThan(
       FUENTE.indexOf('<style scoped lang="scss">')
     );
-    expect(libre).toMatch(/\.menu-hoja-dialogo \.q-dialog__backdrop\s*\{[^}]*background: var\(--m-velo\);/);
+    expect(libre).toMatch(
+      /\.menu-hoja-dialogo \.q-dialog__backdrop\s*\{[^}]*background: var\(--m-velo\);/
+    );
   });
 
   /** Quasar deja 24 px a cada lado entre 600 y 699 px; la hoja va de borde a borde hasta el corte. */

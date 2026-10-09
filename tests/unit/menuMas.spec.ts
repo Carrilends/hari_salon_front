@@ -48,15 +48,28 @@ const entrada = (secciones: SeccionMenu[], id: string) => {
 
 describe('seccionesDelMenu · el orden y las secciones (M3)', () => {
   it('sin sesión: Tu cuenta, La peluquería y el pie', () => {
-    expect(menu(SIN_SESION).map((s) => s.id)).toEqual(['cuenta', 'peluqueria', 'pie']);
+    expect(menu(SIN_SESION).map((s) => s.id)).toEqual([
+      'cuenta',
+      'peluqueria',
+      'pie',
+    ]);
   });
 
   it('la clienta ve las mismas tres secciones', () => {
-    expect(menu(CLIENTA).map((s) => s.id)).toEqual(['cuenta', 'peluqueria', 'pie']);
+    expect(menu(CLIENTA).map((s) => s.id)).toEqual([
+      'cuenta',
+      'peluqueria',
+      'pie',
+    ]);
   });
 
   it('la dueña ve además «El salón», justo después de su cuenta', () => {
-    expect(menu(DUENA).map((s) => s.id)).toEqual(['cuenta', 'salon', 'peluqueria', 'pie']);
+    expect(menu(DUENA).map((s) => s.id)).toEqual([
+      'cuenta',
+      'salon',
+      'peluqueria',
+      'pie',
+    ]);
   });
 
   it('los títulos son los del tablero, y el pie no lleva', () => {
@@ -80,7 +93,10 @@ describe('seccionesDelMenu · Tu cuenta', () => {
     const cuenta = seccion(menu(SIN_SESION), 'cuenta');
 
     expect(idsDe(cuenta.entradas)).toEqual(['iniciar-sesion', 'crear-cuenta']);
-    expect(cuenta.entradas.map((e) => e.rotulo)).toEqual(['Iniciar sesión', 'Crear cuenta']);
+    expect(cuenta.entradas.map((e) => e.rotulo)).toEqual([
+      'Iniciar sesión',
+      'Crear cuenta',
+    ]);
   });
 
   it('«Iniciar sesión» lleva al login con el regreso a la página actual', () => {
@@ -107,7 +123,10 @@ describe('seccionesDelMenu · Tu cuenta', () => {
   it('con sesión: «Mis reservas» y «Mi cuenta», sin las entradas de acceso', () => {
     const secciones = menu(CLIENTA);
 
-    expect(idsDe(seccion(secciones, 'cuenta').entradas)).toEqual(['mis-reservas', 'mi-cuenta']);
+    expect(idsDe(seccion(secciones, 'cuenta').entradas)).toEqual([
+      'mis-reservas',
+      'mi-cuenta',
+    ]);
     expect(idsDe(entradas(secciones))).not.toContain('iniciar-sesion');
     expect(idsDe(entradas(secciones))).not.toContain('crear-cuenta');
     expect(entrada(secciones, 'mis-reservas').destino).toBe('/mis-reservas');
@@ -116,7 +135,10 @@ describe('seccionesDelMenu · Tu cuenta', () => {
 
   /** §6.3: «Mis reservas» también para la dueña, como hoy. */
   it('la dueña conserva «Mis reservas»', () => {
-    expect(idsDe(seccion(menu(DUENA), 'cuenta').entradas)).toEqual(['mis-reservas', 'mi-cuenta']);
+    expect(idsDe(seccion(menu(DUENA), 'cuenta').entradas)).toEqual([
+      'mis-reservas',
+      'mi-cuenta',
+    ]);
   });
 });
 
@@ -160,50 +182,56 @@ describe('seccionesDelMenu · El salón, solo para la dueña (§7.6)', () => {
 
     expect(idsDe(salon.entradas)).toEqual(['reservas', 'mis-estilistas']);
     expect(entrada(menu(DUENA), 'reservas').destino).toBe('/reservas');
-    expect(entrada(menu(DUENA), 'mis-estilistas').destino).toBe('/mis-empleados');
+    expect(entrada(menu(DUENA), 'mis-estilistas').destino).toBe(
+      '/mis-empleados'
+    );
   });
 
   it.each([
     ['sin sesión', SIN_SESION],
     ['clienta', CLIENTA],
-  ] as Array<[string, Estado]>)('%s no ve ni estilistas ni la agenda', (_n, estado) => {
-    const ids = idsDe(entradas(menu(estado)));
+  ] as Array<[string, Estado]>)(
+    '%s no ve ni estilistas ni la agenda',
+    (_n, estado) => {
+      const ids = idsDe(entradas(menu(estado)));
 
-    expect(ids).not.toContain('mis-estilistas');
-    expect(ids).not.toContain('reservas');
-    expect(menu(estado).map((s) => s.id)).not.toContain('salon');
-  });
+      expect(ids).not.toContain('mis-estilistas');
+      expect(ids).not.toContain('reservas');
+      expect(menu(estado).map((s) => s.id)).not.toContain('salon');
+    }
+  );
 
   /**
    * Los roles se persisten y el token no (S7): con la sesión caducada puede
    * quedar `roles: ['admin']` en el almacén. Sin sesión no hay «El salón».
    */
   it('roles de dueña sin sesión viva no abren «El salón»', () => {
-    expect(menu({ isLoggedIn: false, isAdmin: true }).map((s) => s.id)).toEqual([
-      'cuenta',
-      'peluqueria',
-      'pie',
-    ]);
+    expect(menu({ isLoggedIn: false, isAdmin: true }).map((s) => s.id)).toEqual(
+      ['cuenta', 'peluqueria', 'pie']
+    );
   });
 });
 
 describe('seccionesDelMenu · La peluquería', () => {
-  it.each(ESTADOS)('%s: Testimonios, ¿Quiénes somos?, Horarios y Preguntas frecuentes', (_n, estado) => {
-    const peluqueria = seccion(menu(estado), 'peluqueria');
+  it.each(ESTADOS)(
+    '%s: Testimonios, ¿Quiénes somos?, Horarios y Preguntas frecuentes',
+    (_n, estado) => {
+      const peluqueria = seccion(menu(estado), 'peluqueria');
 
-    expect(idsDe(peluqueria.entradas)).toEqual([
-      'testimonios',
-      'quienes-somos',
-      'horarios',
-      'preguntas-frecuentes',
-    ]);
-    expect(peluqueria.entradas.map((e) => e.rotulo)).toEqual([
-      'Testimonios',
-      '¿Quiénes somos?',
-      'Horarios',
-      'Preguntas frecuentes',
-    ]);
-  });
+      expect(idsDe(peluqueria.entradas)).toEqual([
+        'testimonios',
+        'quienes-somos',
+        'horarios',
+        'preguntas-frecuentes',
+      ]);
+      expect(peluqueria.entradas.map((e) => e.rotulo)).toEqual([
+        'Testimonios',
+        '¿Quiénes somos?',
+        'Horarios',
+        'Preguntas frecuentes',
+      ]);
+    }
+  );
 
   it('«¿Quiénes somos?» y «Horarios» son acciones; Horarios pinta la línea de hoy', () => {
     const secciones = menu(SIN_SESION);
@@ -212,7 +240,9 @@ describe('seccionesDelMenu · La peluquería', () => {
     expect(entrada(secciones, 'horarios').accion).toBe('horarios');
     expect(entrada(secciones, 'horarios').detalle).toBe('horario-hoy');
     expect(entrada(secciones, 'testimonios').destino).toBe('/testimonios');
-    expect(entrada(secciones, 'preguntas-frecuentes').destino).toBe('/preguntas-frecuentes');
+    expect(entrada(secciones, 'preguntas-frecuentes').destino).toBe(
+      '/preguntas-frecuentes'
+    );
   });
 });
 
@@ -229,17 +259,23 @@ describe('seccionesDelMenu · el pie', () => {
     const pie = seccion(menu(CLIENTA), 'pie');
 
     expect(idsDe(pie.entradas)).toEqual(['politica-datos', 'cerrar-sesion']);
-    expect(pie.entradas.map((e) => e.rotulo)).toEqual(['Política de datos', 'Cerrar sesión']);
+    expect(pie.entradas.map((e) => e.rotulo)).toEqual([
+      'Política de datos',
+      'Cerrar sesión',
+    ]);
     expect(pie.entradas[1].accion).toBe('cerrar-sesion');
   });
 });
 
 describe('seccionesDelMenu · invariantes', () => {
-  it.each(ESTADOS)('%s: cada entrada lleva destino o acción, nunca las dos ni ninguna', (_n, estado) => {
-    for (const e of entradas(menu(estado))) {
-      expect(Boolean(e.destino) !== Boolean(e.accion)).toBe(true);
+  it.each(ESTADOS)(
+    '%s: cada entrada lleva destino o acción, nunca las dos ni ninguna',
+    (_n, estado) => {
+      for (const e of entradas(menu(estado))) {
+        expect(Boolean(e.destino) !== Boolean(e.accion)).toBe(true);
+      }
     }
-  });
+  );
 
   /** El `data-test` de cada fila es `menu-entrada-<id>`: dos iguales chocarían. */
   it.each(ESTADOS)('%s: no hay dos entradas con el mismo id', (_n, estado) => {
@@ -248,11 +284,14 @@ describe('seccionesDelMenu · invariantes', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it.each(ESTADOS)('%s: los rótulos van en caja normal, no en mayúsculas (M5)', (_n, estado) => {
-    for (const e of entradas(menu(estado))) {
-      expect(e.rotulo).not.toBe(e.rotulo.toUpperCase());
+  it.each(ESTADOS)(
+    '%s: los rótulos van en caja normal, no en mayúsculas (M5)',
+    (_n, estado) => {
+      for (const e of entradas(menu(estado))) {
+        expect(e.rotulo).not.toBe(e.rotulo.toUpperCase());
+      }
     }
-  });
+  );
 });
 
 describe('inicialesDe (M10)', () => {

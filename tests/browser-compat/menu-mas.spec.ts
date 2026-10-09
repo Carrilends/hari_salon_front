@@ -33,14 +33,22 @@ const DUENA: Perfil = {
   roles: ['admin'],
 };
 
-async function preparar(page: Page, { perfil, ahora = MIERCOLES }: { perfil?: Perfil; ahora?: Date } = {}) {
+async function preparar(
+  page: Page,
+  { perfil, ahora = MIERCOLES }: { perfil?: Perfil; ahora?: Date } = {}
+) {
   await page.clock.setFixedTime(ahora);
   await servirApiVacia(page);
   if (!perfil) return;
   await page.addInitScript((p) => {
     window.localStorage.setItem(
       'auth',
-      JSON.stringify({ fullname: p.nombre, email: p.correo, roles: p.roles, emailVerified: true })
+      JSON.stringify({
+        fullname: p.nombre,
+        email: p.correo,
+        roles: p.roles,
+        emailVerified: true,
+      })
     );
   }, perfil);
   // Registrada DESPUÉS del genérico de `servirApiVacia`: Playwright casa de la
@@ -63,8 +71,10 @@ async function preparar(page: Page, { perfil, ahora = MIERCOLES }: { perfil?: Pe
   );
 }
 
-const disparador = (page: Page) => page.locator('button[aria-label="Más opciones"]');
-const entrada = (page: Page, id: string) => page.locator(`[data-test="menu-entrada-${id}"]`);
+const disparador = (page: Page) =>
+  page.locator('button[aria-label="Más opciones"]');
+const entrada = (page: Page, id: string) =>
+  page.locator(`[data-test="menu-entrada-${id}"]`);
 const seccionesVisibles = (page: Page) =>
   page
     .locator('[data-test^="menu-seccion-"]')
@@ -73,7 +83,9 @@ const seccionesVisibles = (page: Page) =>
 test.describe('menú «Más» · escritorio 1280', () => {
   test.use({ viewport: ESCRITORIO });
 
-  test('sin sesión: cuenta con invitación, peluquería, pie y el horario de hoy', async ({ page }) => {
+  test('sin sesión: cuenta con invitación, peluquería, pie y el horario de hoy', async ({
+    page,
+  }) => {
     await preparar(page);
     await irA(page, '/testimonios');
 
@@ -85,15 +97,19 @@ test.describe('menú «Más» · escritorio 1280', () => {
       'menu-seccion-peluqueria',
       'menu-seccion-pie',
     ]);
-    await expect(page.locator('[data-test="menu-seccion-cuenta"]')).toContainText(
-      'Entra para ver, mover o cancelar tus citas.'
-    );
+    await expect(
+      page.locator('[data-test="menu-seccion-cuenta"]')
+    ).toContainText('Entra para ver, mover o cancelar tus citas.');
     await expect(entrada(page, 'crear-cuenta')).toHaveAttribute(
       'href',
       /\/auth\/register\?redirect=(%2F|\/)testimonios/
     );
-    await expect(page.locator('[data-test="menu-horario-hoy"]')).toHaveText('Hoy · 8:00 a 20:00');
-    await expect(entrada(page, 'politica-datos')).toHaveText('Política de tratamiento de datos');
+    await expect(page.locator('[data-test="menu-horario-hoy"]')).toHaveText(
+      'Hoy · 8:00 a 20:00'
+    );
+    await expect(entrada(page, 'politica-datos')).toHaveText(
+      'Política de tratamiento de datos'
+    );
   });
 
   test('la dueña ve «El salón» y su avatar', async ({ page }) => {
@@ -120,11 +136,15 @@ test.describe('menú «Más» · escritorio 1280', () => {
     await disparador(page).click();
 
     await expect(page.locator('[data-test="menu-avatar"]')).toHaveText('AM');
-    await expect(page.locator('[data-test="menu-seccion-salon"]')).toHaveCount(0);
+    await expect(page.locator('[data-test="menu-seccion-salon"]')).toHaveCount(
+      0
+    );
     await expect(entrada(page, 'mis-reservas')).toBeVisible();
   });
 
-  test('el chevrón gira al abrir y Escape cierra devolviendo el estado', async ({ page }) => {
+  test('el chevrón gira al abrir y Escape cierra devolviendo el estado', async ({
+    page,
+  }) => {
     await preparar(page);
     await irA(page, '/testimonios');
 
@@ -152,7 +172,9 @@ test.describe('menú «Más» · escritorio 1280', () => {
   });
 
   /** Foco de revisión 3. */
-  test('la entrada de la página actual también cierra el menú', async ({ page }) => {
+  test('la entrada de la página actual también cierra el menú', async ({
+    page,
+  }) => {
     await preparar(page);
     await irA(page, '/preguntas-frecuentes');
 
@@ -163,7 +185,9 @@ test.describe('menú «Más» · escritorio 1280', () => {
     await expect(disparador(page)).toHaveAttribute('aria-expanded', 'false');
   });
 
-  test('«¿Quiénes somos?» y «Horarios» abren sus diálogos y cierran el menú', async ({ page }) => {
+  test('«¿Quiénes somos?» y «Horarios» abren sus diálogos y cierran el menú', async ({
+    page,
+  }) => {
     await preparar(page);
     await irA(page, '/testimonios');
 
@@ -179,7 +203,10 @@ test.describe('menú «Más» · escritorio 1280', () => {
     await expect(page.locator('.about-dialog')).toBeVisible();
   });
 
-  test('el foco de teclado se ve en las entradas', async ({ page, browserName }) => {
+  test('el foco de teclado se ve en las entradas', async ({
+    page,
+    browserName,
+  }) => {
     await preparar(page);
     await irA(page, '/testimonios');
 
@@ -198,7 +225,9 @@ test.describe('menú «Más» · escritorio 1280', () => {
   });
 
   /** Foco de revisión 5: ventana baja (teléfono tumbado, 844 × 390), la dueña. */
-  test('en una ventana baja el desplegable no se sale por abajo y desplaza', async ({ page }) => {
+  test('en una ventana baja el desplegable no se sale por abajo y desplaza', async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 844, height: 390 });
     await preparar(page, { perfil: DUENA });
     await irA(page, '/testimonios');
@@ -219,7 +248,9 @@ test.describe('menú «Más» · escritorio 1280', () => {
 test.describe('menú «Más» · móvil 390', () => {
   test.use({ viewport: MOVIL });
 
-  test('la hamburguesa abre la hoja inferior, a todo el ancho y pegada abajo', async ({ page }) => {
+  test('la hamburguesa abre la hoja inferior, a todo el ancho y pegada abajo', async ({
+    page,
+  }) => {
     await preparar(page);
     await irA(page, '/testimonios');
 
@@ -232,7 +263,9 @@ test.describe('menú «Más» · móvil 390', () => {
 
     const caja = await hoja.boundingBox();
     expect(caja).not.toBeNull();
-    expect(Math.abs(caja!.y + caja!.height - MOVIL.height)).toBeLessThanOrEqual(1);
+    expect(Math.abs(caja!.y + caja!.height - MOVIL.height)).toBeLessThanOrEqual(
+      1
+    );
     expect(Math.round(caja!.width)).toBe(MOVIL.width);
     await expect(page.locator('[data-test="menu-hoja"] h2')).toHaveText('Menú');
   });
@@ -271,7 +304,9 @@ test.describe('menú «Más» · móvil 390', () => {
     expect(velo).toBe('rgba(15, 13, 11, 0.52)');
   });
 
-  test('«Horarios» cierra la hoja y abre el diálogo de contacto', async ({ page }) => {
+  test('«Horarios» cierra la hoja y abre el diálogo de contacto', async ({
+    page,
+  }) => {
     await preparar(page);
     await irA(page, '/testimonios');
 
@@ -288,15 +323,20 @@ test.describe('menú «Más» · móvil 390', () => {
 
     await disparador(page).click();
 
-    await expect(page.locator('[data-test="menu-horario-hoy"]')).toHaveText('Hoy · 9:00 a 19:00');
+    await expect(page.locator('[data-test="menu-horario-hoy"]')).toHaveText(
+      'Hoy · 9:00 a 19:00'
+    );
   });
 
   /** Foco de revisión 4. */
-  test('un nombre y un correo larguísimos no arrastran la página', async ({ page }) => {
+  test('un nombre y un correo larguísimos no arrastran la página', async ({
+    page,
+  }) => {
     await preparar(page, {
       perfil: {
         nombre: 'MariaDelPilarEcheverriMontoyaDeLaCruzYSantamaria Rodríguez',
-        correo: 'maria.del.pilar.echeverri.montoya.de.la.cruz@correo-muy-largo.example.com',
+        correo:
+          'maria.del.pilar.echeverri.montoya.de.la.cruz@correo-muy-largo.example.com',
         roles: ['user'],
       },
     });
@@ -305,7 +345,9 @@ test.describe('menú «Más» · móvil 390', () => {
     await disparador(page).click();
     await expect(page.locator('[data-test="menu-avatar"]')).toHaveText('MR');
     const medida = await page.evaluate(() => {
-      const nav = document.querySelector('[data-test="menu-hoja"] [data-test="menu-mas"]')!;
+      const nav = document.querySelector(
+        '[data-test="menu-hoja"] [data-test="menu-mas"]'
+      )!;
       return {
         pagina: document.documentElement.scrollWidth - window.innerWidth,
         nav: nav.scrollWidth - nav.clientWidth,
@@ -317,17 +359,22 @@ test.describe('menú «Más» · móvil 390', () => {
   });
 
   /** Foco de revisión 5: la dueña en un teléfono pequeño. */
-  test('si el menú no cabe, desplaza el cuerpo y la X sigue a la vista', async ({ page }) => {
+  test('si el menú no cabe, desplaza el cuerpo y la X sigue a la vista', async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 360, height: 560 });
     await preparar(page, { perfil: DUENA });
     await irA(page, '/testimonios');
 
     await disparador(page).click();
     await expect(page.locator('[data-test="menu-hoja"]')).toBeVisible();
-    await expect(page.locator('[data-test="menu-hoja-cerrar"]')).toBeInViewport();
+    await expect(
+      page.locator('[data-test="menu-hoja-cerrar"]')
+    ).toBeInViewport();
     const desplaza = await page.evaluate(() => {
-      const cuerpo = document.querySelector('[data-test="menu-hoja"] [data-test="menu-mas"]')!
-        .parentElement!;
+      const cuerpo = document.querySelector(
+        '[data-test="menu-hoja"] [data-test="menu-mas"]'
+      )!.parentElement!;
       return cuerpo.scrollHeight > cuerpo.clientHeight;
     });
 
@@ -342,7 +389,9 @@ test.describe('menú «Más» · móvil 390', () => {
     await expect(page.locator('[data-test="menu-hoja"]')).toBeVisible();
     const altos = await page
       .locator('[data-test="menu-hoja"] [data-test^="menu-entrada-"]')
-      .evaluateAll((nodos) => nodos.map((n) => n.getBoundingClientRect().height));
+      .evaluateAll((nodos) =>
+        nodos.map((n) => n.getBoundingClientRect().height)
+      );
     const disparo = await disparador(page).boundingBox();
 
     expect(altos.length).toBeGreaterThan(0);

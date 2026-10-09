@@ -31,7 +31,11 @@ function montar(consulta: string, inicial: boolean) {
       },
     })
   );
-  return { valor: capturado.valor as Ref<boolean>, enSetup: capturado.enSetup, wrapper };
+  return {
+    valor: capturado.valor as Ref<boolean>,
+    enSetup: capturado.enSetup,
+    wrapper,
+  };
 }
 
 describe('useConsultaMedios', () => {
