@@ -106,12 +106,34 @@ describe('enviarReserva', () => {
     });
   });
 
-  it('cualquier otro fallo es un error que se puede reintentar', async () => {
-    mockCrear.mockRejectedValueOnce(errorDeRed());
-    mockCrear.mockRejectedValueOnce(
+  it('el 400 «en el pasado» del backend es que la hora ya pasó', () => {
+    // `ReservationInThePastError` → filtro de Reservas → 400 con este mensaje
+    // (hair_salon_back/src/reservations/domain/errors.ts). No trae `reason`.
+    mockCrear.mockRejectedValue(
       errorHttp(400, 'La reserva no puede programarse en el pasado')
     );
 
+    return expect(enviarReserva(SOLICITUD, false)).resolves.toEqual({
+      tipo: 'hora-pasada',
+    });
+  });
+
+  it('cualquier otro fallo es un error que se puede reintentar', async () => {
+    mockCrear.mockRejectedValueOnce(errorDeRed());
+    mockCrear.mockRejectedValueOnce(
+      errorHttp(
+        400,
+        'Una reserva sin usuario autenticado requiere datos de contacto'
+      )
+    );
+    mockCrear.mockRejectedValueOnce(errorHttp(500));
+    // Un 409 o un 500 que mencionen «pasado» no son la hora pasada.
+    mockCrear.mockRejectedValueOnce(
+      errorHttp(500, 'La reserva no puede programarse en el pasado')
+    );
+
+    expect(await enviarReserva(SOLICITUD, false)).toEqual({ tipo: 'error' });
+    expect(await enviarReserva(SOLICITUD, false)).toEqual({ tipo: 'error' });
     expect(await enviarReserva(SOLICITUD, false)).toEqual({ tipo: 'error' });
     expect(await enviarReserva(SOLICITUD, false)).toEqual({ tipo: 'error' });
   });

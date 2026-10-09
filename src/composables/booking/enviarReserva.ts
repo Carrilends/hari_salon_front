@@ -7,12 +7,28 @@ import { useAuthStore } from 'src/stores/auth-store';
 import { estadoDeError } from 'src/helpers/mensajes-acceso';
 import type { ReservationDto } from 'src/interfaces/booking';
 
+/**
+ * El texto con que el backend rechaza una hora que ya empezó
+ * (`ReservationInThePastError`, `hair_salon_back/src/reservations/domain/
+ * errors.ts`): «La reserva no puede programarse en el pasado». El filtro de
+ * Reservas lo devuelve como 400 sin código de motivo (`reason` solo viaja en
+ * los 409), así que no queda más que leer el mensaje.
+ */
+const MENSAJE_HORA_PASADA = /en el pasado/i;
+
+function esHoraPasada(error: unknown): boolean {
+  const mensaje = (error as { response?: { data?: { message?: unknown } } })
+    ?.response?.data?.message;
+  return typeof mensaje === 'string' && MENSAJE_HORA_PASADA.test(mensaje);
+}
+
 /** Lo que le queda al token por debajo de lo cual se renueva antes de enviar. */
 export const MARGEN_RENOVACION_MS = 60_000;
 
 export type ResultadoEnvio =
   | { tipo: 'creada'; reserva: ReservationDto }
   | { tipo: 'conflicto' }
+  | { tipo: 'hora-pasada' }
   | { tipo: 'sesion-cerrada' }
   | { tipo: 'error' };
 
@@ -26,8 +42,10 @@ export type ResultadoEnvio =
  * renovación falla, no se envía: una reserva con sesión sin teléfono saldría
  * sin `userId` ni `contact` (400), y con teléfono saldría huérfana de cuenta.
  *
- * Un 409 es que otra reserva tomó el hueco (`WorkerOverlapError`); cualquier
- * otro fallo —red, 400, 500— se puede reintentar sin perder nada.
+ * Un 409 es que otra reserva tomó el hueco (`WorkerOverlapError`). Un 400
+ * «en el pasado» es que la hora empezó mientras la clienta escribía
+ * (`ReservationInThePastError`): reintentarla fallaría igual. Cualquier otro
+ * fallo —red, otro 400, 500— se puede reintentar sin perder nada.
  */
 export async function enviarReserva(
   solicitud: CreateReservationPayload,
@@ -49,8 +67,9 @@ export async function enviarReserva(
     const reserva = await createReservation(solicitud);
     return { tipo: 'creada', reserva };
   } catch (error) {
-    return estadoDeError(error) === 409
-      ? { tipo: 'conflicto' }
-      : { tipo: 'error' };
+    const estado = estadoDeError(error);
+    if (estado === 409) return { tipo: 'conflicto' };
+    if (estado === 400 && esHoraPasada(error)) return { tipo: 'hora-pasada' };
+    return { tipo: 'error' };
   }
 }

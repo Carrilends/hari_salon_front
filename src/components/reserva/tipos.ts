@@ -4,7 +4,10 @@
  * no tenga que importar el composable (y con él la API) solo por un tipo.
  */
 
-/** El aviso en línea de B6, «la disponibilidad cambió». */
+/**
+ * El aviso en línea de «Cuándo»: el de B6, «la disponibilidad cambió», y el de
+ * la hora que empezó mientras la clienta escribía, «Esa hora ya pasó».
+ */
 export interface AvisoDisponibilidad {
   texto: string;
   /** Solo si la clienta había elegido estilista: «Probar sin preferencia». */

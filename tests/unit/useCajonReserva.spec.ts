@@ -507,6 +507,86 @@ describe('useCajonReserva · «la disponibilidad cambió» (B6)', () => {
   });
 });
 
+describe('useCajonReserva · «Esa hora ya pasó»', () => {
+  /** La disponibilidad de HOY (miércoles 7) a la hora del salón dada. */
+  const deHoyALas = (minOfDay: number) =>
+    disponibilidad({
+      dayBounds: {
+        openMin: 480,
+        closeMin: 1200,
+        effectiveStartMin: Math.max(480, minOfDay),
+        isToday: true,
+      },
+      salonNow: { ymd: '2026-10-07', minOfDay, tz: 'America/Bogota' },
+    });
+
+  /** Bolsa → hoy, con Monica → 10:30 → «Tus datos». */
+  async function hastaDatosHoy(cajon: Cajon) {
+    mockDisponibilidad.data.value = deHoyALas(540);
+    conBolsa();
+    cajon.continuar();
+    await nextTick();
+    cajon.elegirFecha('2026/10/07');
+    await nextTick();
+    cajon.elegirEstilista('w-monica');
+    await nextTick();
+    cajon.elegirHora('10:30');
+    await nextTick();
+    dejarPasarLaPausa();
+    cajon.continuar();
+    await nextTick();
+    expect(cajon.paso.value).toBe('datos');
+  }
+
+  it('si el backend dice que la hora ya pasó, vuelve a «Cuándo» con su aviso y recarga las horas', async () => {
+    mockEnviar.mockResolvedValue({ tipo: 'hora-pasada' });
+    const { cajon } = montar();
+    await hastaDatosHoy(cajon);
+    datosSinSesion(cajon);
+
+    await cajon.confirmar();
+
+    expect(cajon.paso.value).toBe('cuando');
+    expect(cajon.hora.value).toBeNull();
+    expect(cajon.aviso.value).toEqual({
+      texto: 'Esa hora ya pasó. Elige otra.',
+      ofrecerSinPreferencia: false,
+    });
+    expect(cajon.errorEnvio.value).toBeNull();
+    // Una recarga antes de enviar y otra después del rechazo.
+    expect(mockDisponibilidad.refetch).toHaveBeenCalledTimes(2);
+    expect(mockInvalidar).toHaveBeenCalledWith({
+      queryKey: ['reservation-occupancy'],
+    });
+    // Nada se pierde: ni los datos, ni la estilista, ni la bolsa.
+    expect(cajon.nombre.value).toBe('  Ana María ');
+    expect(cajon.telefono.value).toBe('300 123 4567');
+    expect(cajon.consentimiento.value).toBe(true);
+    expect(cajon.estilistaId.value).toBe('w-monica');
+    expect(useBookStore().bookings).toHaveLength(1);
+  });
+
+  it('si al recargar antes de enviar la hora ya pasó, lo dice así (no «la disponibilidad cambió»)', async () => {
+    const { cajon } = montar();
+    await hastaDatosHoy(cajon);
+    datosSinSesion(cajon);
+    mockDisponibilidad.refetch.mockImplementationOnce(async () => {
+      mockDisponibilidad.data.value = deHoyALas(631); // 10:31
+      return { data: mockDisponibilidad.data.value };
+    });
+
+    await cajon.confirmar();
+
+    expect(mockEnviar).not.toHaveBeenCalled();
+    expect(cajon.paso.value).toBe('cuando');
+    expect(cajon.aviso.value).toEqual({
+      texto: 'Esa hora ya pasó. Elige otra.',
+      ofrecerSinPreferencia: false,
+    });
+    expect(cajon.nombre.value).toBe('  Ana María ');
+  });
+});
+
 describe('useCajonReserva · Foco de revisión', () => {
   it('1 · si la sesión se cerró al enviar, lo dice en línea', async () => {
     iniciarSesion();

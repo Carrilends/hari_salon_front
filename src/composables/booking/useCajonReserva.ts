@@ -61,6 +61,26 @@ export const PAUSA_TRAS_CAMBIO_DE_PASO_MS = 400;
 export const MENSAJE_SESION_CERRADA =
   'Tu sesión se cerró. Escribe tus datos para reservar, o entra de nuevo.';
 
+export const MENSAJE_HORA_PASADA = 'Esa hora ya pasó. Elige otra.';
+
+/** `'HH:mm'` → minuto del día. */
+const minutoDe = (h: string) => {
+  const [horas, minutos] = h.split(':').map(Number);
+  return horas * 60 + minutos;
+};
+
+/** ¿La hora elegida de ese día ya empezó, según el reloj del servidor? */
+function yaPaso(
+  fecha: string,
+  h: string,
+  datos: WorkerAvailabilityResponse
+): boolean {
+  return (
+    fecha.replace(/\//g, '-') === datos.salonNow.ymd &&
+    minutoDe(h) <= datos.salonNow.minOfDay
+  );
+}
+
 /** La hora del salón según el servidor, si ya respondió la ocupación. */
 function ahoraDelServidor(
   salonNow: { ymd: string; minOfDay: number } | undefined
@@ -365,6 +385,18 @@ export function useCajonReserva(abierto: Ref<boolean>) {
     paso.value = 'cuando';
   }
 
+  /**
+   * La hora empezó mientras la clienta escribía: no es que otra la tomara, así
+   * que no se nombra a la estilista ni se ofrece «Probar sin preferencia».
+   * Igual que en B6: de vuelta a «Cuándo», sin la hora y con todo lo demás.
+   */
+  function irAHoraPasada() {
+    aviso.value = { texto: MENSAJE_HORA_PASADA, ofrecerSinPreferencia: false };
+    horaFallida = null;
+    hora.value = null;
+    paso.value = 'cuando';
+  }
+
   function elegirOtraHora() {
     aviso.value = null;
     horaFallida = null;
@@ -462,7 +494,8 @@ export function useCajonReserva(abierto: Ref<boolean>) {
           estilistaId: elegida.id,
         });
         if (!horaLibre(h, libres)) {
-          irACambio(elegida, h);
+          if (yaPaso(f, h, fresca)) irAHoraPasada();
+          else irACambio(elegida, h);
           return;
         }
       }
@@ -501,6 +534,15 @@ export function useCajonReserva(abierto: Ref<boolean>) {
         fecha.value = null;
         estilistaId.value = null;
         void invalidar();
+        return;
+      }
+
+      if (resultado.tipo === 'hora-pasada') {
+        await refrescarDisponibilidad();
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.occupancy.all,
+        });
+        irAHoraPasada();
         return;
       }
 
