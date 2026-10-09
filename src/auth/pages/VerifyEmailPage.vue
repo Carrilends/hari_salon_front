@@ -1,11 +1,11 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
-import { useQuasar } from 'quasar';
 import { useVerifyEmail } from 'src/composables/auth/useVerifyEmail';
 import { useAuthStore } from 'src/stores/auth-store';
 import { authApi } from 'src/api/auth-api';
 import { useSeo } from 'src/composables/seo/useSeo';
+import EstadoAcceso from 'src/components/auth/EstadoAcceso.vue';
 
 // Página privada: se sirve como SPA (excluida del SSG) y no debe indexarse.
 useSeo({
@@ -15,123 +15,173 @@ useSeo({
 });
 
 const route = useRoute();
-const $q = useQuasar();
 const authStore = useAuthStore();
-const { verify, isSuccess } = useVerifyEmail();
+const { verify } = useVerifyEmail();
 
-const token = computed(() =>
-  typeof route.query.token === 'string' ? route.query.token : ''
-);
-const failed = ref(false);
-const resending = ref(false);
+const token = typeof route.query.token === 'string' ? route.query.token : '';
+const estado = ref<'verificando' | 'confirmado' | 'fallido'>('verificando');
+const reenviando = ref(false);
+const reenviado = ref(false);
 
 onMounted(async () => {
-  if (!token.value) {
-    failed.value = true;
+  if (!token) {
+    estado.value = 'fallido';
     return;
   }
   try {
-    await verify(token.value);
+    await verify(token);
     // Reflejar la verificación en la sesión activa, si la hay.
     if (authStore.isLoggedIn) authStore.emailVerified = true;
+    estado.value = 'confirmado';
   } catch {
-    failed.value = true;
+    estado.value = 'fallido';
   }
 });
 
-async function resend() {
-  if (!authStore.email) return;
-  resending.value = true;
+async function reenviar() {
+  if (!authStore.email || reenviando.value) return;
+  reenviando.value = true;
+  reenviado.value = false;
   try {
     await authApi.resendVerification(authStore.email);
   } catch {
-    // respuesta neutra igualmente
+    // Respuesta neutra igualmente (§7.2).
   } finally {
-    resending.value = false;
-    $q.notify({
-      type: 'positive',
-      message:
-        'Si la cuenta existe y no está verificada, enviamos un nuevo enlace.',
-    });
+    reenviando.value = false;
+    reenviado.value = true;
   }
 }
 </script>
 
 <template>
-  <div class="auth-form-page column flex-center">
-    <q-card class="auth-form-page__card q-pa-xl shadow-2 rounded-borders full-width">
-      <q-card-section class="text-center">
-        <div class="text-h5 text-weight-bold q-mb-sm">Verificar correo</div>
-      </q-card-section>
+  <estado-acceso
+    v-if="estado === 'confirmado'"
+    tono="tinta"
+    titulo="Correo confirmado"
+  >
+    <template #icono>
+      <svg
+        width="30"
+        height="30"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path d="M5 12.5l4.5 4.5L19 7.5" />
+      </svg>
+    </template>
 
-      <!-- Éxito -->
-      <template v-if="isSuccess">
-        <q-card-section class="text-center">
-          <q-icon name="verified" size="56px" color="positive" />
-          <div class="q-mt-md text-body1">Tu correo quedó confirmado.</div>
-        </q-card-section>
-        <q-card-section class="text-center q-pt-none">
-          <q-btn
-            color="primary"
-            no-caps
-            label="Ir a mi cuenta"
-            :to="{ path: '/mi-cuenta' }"
-          />
-        </q-card-section>
-      </template>
+    <p>Ya puedes reservar y seguir tus citas desde tu cuenta.</p>
 
-      <!-- Fallo -->
-      <template v-else-if="failed">
-        <q-card-section class="text-center">
-          <q-icon name="error_outline" size="56px" color="negative" />
-          <div class="q-mt-md text-body1">
-            No pudimos confirmar tu correo: el enlace no es válido o expiró.
-          </div>
-        </q-card-section>
-        <q-card-section
-          v-if="authStore.isLoggedIn"
-          class="text-center q-pt-none"
+    <template #acciones>
+      <router-link
+        to="/services"
+        class="acceso-boton m-boton m-boton--ancho"
+        data-test="ver-servicios"
+        >Ver servicios</router-link
+      >
+      <router-link
+        to="/mi-cuenta"
+        class="acceso-secundario"
+        data-test="ir-a-mi-cuenta"
+        >Ir a mi cuenta</router-link
+      >
+    </template>
+  </estado-acceso>
+
+  <estado-acceso
+    v-else-if="estado === 'fallido'"
+    tono="peligro"
+    titulo="Este enlace ya no sirve"
+  >
+    <template #icono>
+      <svg
+        width="30"
+        height="30"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.4"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path d="M9.5 14.5l-1.8 1.8a3.2 3.2 0 0 1-4.5-4.5l2.6-2.6a3.2 3.2 0 0 1 4.2-.3" />
+        <path d="M14.5 9.5l1.8-1.8a3.2 3.2 0 0 1 4.5 4.5l-2.6 2.6a3.2 3.2 0 0 1-4.2.3" />
+        <path d="M8 4.5v2M4.5 8h2M16 19.5v-2M19.5 16h-2" />
+      </svg>
+    </template>
+
+    <p>
+      Puede que haya vencido o que ya lo hayas usado: cada enlace funciona una
+      sola vez.
+    </p>
+
+    <template #acciones>
+      <template v-if="authStore.isLoggedIn">
+        <button
+          type="button"
+          class="acceso-boton m-boton--ancho"
+          data-test="reenviar"
+          :disabled="reenviando"
+          :aria-busy="reenviando ? 'true' : undefined"
+          @click="reenviar"
         >
-          <q-btn
-            color="primary"
-            no-caps
-            label="Reenviar correo de confirmación"
-            :loading="resending"
-            @click="resend"
-          />
-        </q-card-section>
-        <q-card-section v-else class="text-center q-pt-none">
-          <q-btn
-            flat
-            no-caps
-            color="primary"
-            label="Iniciar sesión"
-            :to="{ name: 'login' }"
-          />
-        </q-card-section>
+          {{ reenviando ? 'Enviando…' : 'Enviar otro enlace' }}
+        </button>
+        <p class="acceso-vivo" aria-live="polite" data-test="reenvio-estado">
+          {{
+            reenviado
+              ? 'Si tu correo sigue sin confirmar, te enviamos un enlace nuevo.'
+              : ''
+          }}
+        </p>
       </template>
+      <router-link
+        v-else
+        :to="{ name: 'login' }"
+        class="acceso-boton m-boton m-boton--ancho"
+        data-test="entrar"
+        >Entrar</router-link
+      >
+    </template>
+  </estado-acceso>
 
-      <!-- Verificando -->
-      <template v-else>
-        <q-card-section class="text-center">
-          <q-spinner color="primary" size="40px" />
-          <div class="q-mt-md text-body2 text-grey-7">
-            Verificando tu correo…
-          </div>
-        </q-card-section>
-      </template>
-    </q-card>
-  </div>
+  <estado-acceso v-else tono="oro" titulo="Verificando tu correo…" ocupado>
+    <template #icono>
+      <span class="verificar__indicador" />
+    </template>
+  </estado-acceso>
 </template>
 
 <style scoped>
-.auth-form-page {
-  width: 100%;
-  min-height: 100vh;
-  padding: 16px;
+/* Indicador propio (A16): un aro de filete con el tramo de arriba en oro. */
+.verificar__indicador {
+  display: block;
+  width: 28px;
+  height: 28px;
   box-sizing: border-box;
+  border: var(--m-filete-grosor) solid var(--m-filete);
+  border-top-color: var(--m-oro-profundo);
+  border-radius: 50%;
+  animation: verificar-giro 0.9s linear infinite;
 }
-.auth-form-page__card {
-  max-width: 400px;
+
+@keyframes verificar-giro {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .verificar__indicador {
+    animation: none;
+  }
 }
 </style>
