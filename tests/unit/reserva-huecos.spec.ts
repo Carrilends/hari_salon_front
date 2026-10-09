@@ -259,6 +259,42 @@ describe('huecosDelDia', () => {
     expect(huecos[0].hora).toBe('09:30');
   });
 
+  it('hoy, la hora del minuto actual ya no se ofrece: el backend la da por pasada', () => {
+    // El backend fija `effectiveStartMin` en el minuto de ahora, pero rechaza
+    // (400) una reserva que empieza antes del instante actual: a las 10:30:xx
+    // las 10:30 ya pasaron.
+    const hoyALas = (minOfDay: number) =>
+      huecosDelDia({
+        ...base,
+        fecha: '2026/10/07',
+        estilistaId: null,
+        disponibilidad: disponibilidad({
+          dayBounds: {
+            openMin: 480,
+            closeMin: 1200,
+            effectiveStartMin: minOfDay,
+            isToday: true,
+          },
+          salonNow: { ymd: '2026-10-07', minOfDay, tz: 'America/Bogota' },
+        }),
+      });
+
+    expect(hoyALas(630)[0].hora).toBe('11:00');
+    expect(hoyALas(629)[0].hora).toBe('10:30');
+  });
+
+  it('otro día no se recorta por el minuto de ahora', () => {
+    const huecos = huecosDelDia({
+      ...base,
+      estilistaId: null,
+      disponibilidad: disponibilidad({
+        salonNow: { ymd: '2026-10-07', minOfDay: 600, tz: 'America/Bogota' },
+      }),
+    });
+
+    expect(huecos[0].hora).toBe('08:00');
+  });
+
   it('un día anterior al de hoy del salón no tiene huecos', () => {
     expect(
       huecosDelDia({ ...base, fecha: '2026/10/06', estilistaId: null })
@@ -293,5 +329,16 @@ describe('huecosDelDia', () => {
       '09:00',
       '10:00',
     ]);
+  });
+
+  it('un paso de cero o negativo vuelve a los 30 min (y no se queda en bucle)', () => {
+    const porDefecto = huecosDelDia({ ...base, estilistaId: null });
+
+    expect(huecosDelDia({ ...base, estilistaId: null, pasoMin: 0 })).toEqual(
+      porDefecto
+    );
+    expect(huecosDelDia({ ...base, estilistaId: null, pasoMin: -30 })).toEqual(
+      porDefecto
+    );
   });
 });

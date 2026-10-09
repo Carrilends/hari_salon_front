@@ -155,7 +155,14 @@ function estaLibre(
   );
 }
 
-/** Huecos cada 30 min del día, ya filtrados por horario y por «ahora» si es hoy. */
+/**
+ * Huecos cada 30 min del día, ya filtrados por horario y por «ahora» si es hoy.
+ *
+ * Hoy solo se ofrecen las horas **posteriores** al minuto actual del salón. El
+ * backend fija `effectiveStartMin` en ese mismo minuto, pero rechaza (400, «en
+ * el pasado») una reserva que empieza antes del instante actual: a las
+ * 10:30:15, las 10:30 ya pasaron.
+ */
 export function huecosDelDia(args: {
   fecha: string;
   duracionMin: number;
@@ -163,11 +170,16 @@ export function huecosDelDia(args: {
   estilistaId: string | null; // null = sin preferencia
   pasoMin?: number; // por defecto 30
 }): HuecoDeHora[] {
-  const { fecha, disponibilidad, estilistaId, pasoMin = 30 } = args;
+  const { fecha, disponibilidad, estilistaId } = args;
+  // Un paso de cero o negativo no avanzaría nunca: se vuelve a los 30 min.
+  const pasoMin =
+    args.pasoMin !== undefined && args.pasoMin > 0 ? args.pasoMin : 30;
   const dia = diaUtc(fecha);
   if (!dia || aYmd(dia) < disponibilidad.salonNow.ymd) return [];
 
   const { openMin, closeMin, effectiveStartMin } = disponibilidad.dayBounds;
+  const esHoy = aYmd(dia) === disponibilidad.salonNow.ymd;
+  const minutoActual = disponibilidad.salonNow.minOfDay;
   const duracion = Math.max(0, args.duracionMin);
   const quienes = candidatas(disponibilidad.workers, estilistaId);
   const huecos: HuecoDeHora[] = [];
@@ -177,6 +189,7 @@ export function huecosDelDia(args: {
     t += pasoMin
   ) {
     if (t < effectiveStartMin) continue;
+    if (esHoy && t <= minutoActual) continue;
     huecos.push({
       hora: aHora(t),
       minutoDelDia: t,
