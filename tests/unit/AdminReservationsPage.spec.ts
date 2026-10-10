@@ -358,6 +358,60 @@ describe('la bandeja · acciones (A2–A3)', () => {
     expect(w.find('[data-test="aviso-accion"]').exists()).toBe(false);
   });
 
+  it('el error de la fila se va cuando cambia el estado de esa reserva; la línea queda', async () => {
+    mockAdmin.confirm.mutateAsync.mockRejectedValue(errorDeRed());
+    const w = montar();
+    await w.find('[data-test="pestana-todas"]').trigger('click');
+    await w
+      .find('[data-id="res-1"] [data-test="confirmar-fila"]')
+      .trigger('click');
+    await flushPromises();
+    expect(w.find('[data-id="res-1"] [data-test="error-fila"]').exists()).toBe(
+      true
+    );
+
+    // La confirmó otra vía y llega la lista nueva: el error ya no es verdad.
+    mockAdmin.query.data.value = conEstado('res-1', 'confirmada');
+    await nextTick();
+
+    expect(w.find('[data-id="res-1"]').exists()).toBe(true);
+    expect(w.find('[data-test="error-fila"]').exists()).toBe(false);
+    expect(w.find('[data-test="aviso-accion"]').exists()).toBe(true);
+  });
+
+  it('el error de la fila no vuelve si la reserva sale de la lista y regresa', async () => {
+    mockAdmin.confirm.mutateAsync.mockRejectedValue(errorDeRed());
+    const w = montar();
+    await w
+      .find('[data-id="res-1"] [data-test="confirmar-fila"]')
+      .trigger('click');
+    await flushPromises();
+
+    mockAdmin.query.data.value = bandeja().filter((r) => r.id !== 'res-1');
+    await nextTick();
+    mockAdmin.query.data.value = bandeja();
+    await nextTick();
+
+    expect(w.find('[data-id="res-1"]').exists()).toBe(true);
+    expect(w.find('[data-test="error-fila"]').exists()).toBe(false);
+  });
+
+  it('el error de confirmar se va de la fila y de la ficha al empezar a cancelar', async () => {
+    mockAdmin.confirm.mutateAsync.mockRejectedValue(errorDeRed());
+    mockAdmin.cancel.mutateAsync.mockReturnValue(new Promise(() => undefined));
+    const w = montar();
+    await abrir(w, 'res-1');
+    await w.find('[data-test="confirmar-detalle"]').trigger('click');
+    await flushPromises();
+    expect(w.find('[data-test="error-detalle"]').exists()).toBe(true);
+
+    await w.find('[data-test="cancelar-detalle"]').trigger('click');
+    await w.find('[data-test="confirmar-cancelacion"]').trigger('click');
+
+    expect(w.find('[data-test="error-detalle"]').exists()).toBe(false);
+    expect(w.find('[data-test="error-fila"]').exists()).toBe(false);
+  });
+
   it('Mover abre «Cambiar fecha» sin elegir estilista (el backend no lo admite)', async () => {
     const w = montar();
     await abrir(w, 'res-1');

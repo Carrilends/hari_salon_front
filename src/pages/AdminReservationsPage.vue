@@ -289,6 +289,7 @@ import {
 } from 'src/helpers/admin-reservation-filter';
 import { getSalonNowParts } from 'src/helpers/businessHours';
 import { CONSULTA_MOVIL_RESERVAS } from 'src/helpers/my-reservations';
+import type { ReservationDto } from 'src/interfaces/booking';
 
 /**
  * «La bandeja»: la página de reservas de la dueña (spec §3, A1–A5; tablero
@@ -350,7 +351,24 @@ const detalleMovilAbierto = computed({
 });
 
 const ocupada = ref<{ id: string; accion: AccionBandeja } | null>(null);
-const errorAccion = ref<{ id: string; mensaje: string } | null>(null);
+/**
+ * El fallo de confirmar pintado en la fila y en la ficha, con el estado que
+ * tenía la reserva entonces. Se va al empezar otra acción y en cuanto la lista
+ * dice otra cosa de esa reserva (cambió de estado o salió de ella): ya no es
+ * verdad, y la línea de la página (`avisoAccion`) guarda lo que pasó.
+ */
+const errorAccion = ref<{
+  id: string;
+  mensaje: string;
+  estado: ReservationDto['status'] | null;
+} | null>(null);
+watch(todas, (lista) => {
+  const fallo = errorAccion.value;
+  if (!fallo) return;
+  const reserva = lista.find((r) => r.id === fallo.id);
+  if (!reserva || reserva.status !== fallo.estado) errorAccion.value = null;
+});
+
 /**
  * El último fallo de confirmar o cancelar, sobre la lista (Foco 3). Regla: se
  * va al empezar la acción siguiente o al cerrarlo; cambiar de pestaña no lo
@@ -419,7 +437,11 @@ async function confirmar(id: string) {
     await confirm.mutateAsync(id);
   } catch (err) {
     const fallo = falloDeAccion(err, 'confirmar');
-    errorAccion.value = { id, mensaje: fallo.mensaje };
+    errorAccion.value = {
+      id,
+      mensaje: fallo.mensaje,
+      estado: todas.value.find((r) => r.id === id)?.status ?? null,
+    };
     avisoAccion.value = fallo.mensaje;
     if (fallo.refrescar) void refrescar();
   } finally {
@@ -442,6 +464,7 @@ async function cancelarSeleccionada() {
   if (ocupada.value) return;
   ocupada.value = { id: objetivo.id, accion: 'cancelar' };
   errorCancelar.value = null;
+  errorAccion.value = null;
   avisoAccion.value = null;
   try {
     await cancel.mutateAsync(objetivo.id);
