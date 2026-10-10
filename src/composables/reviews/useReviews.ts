@@ -21,7 +21,10 @@ export const useReviews = () => {
   const reviews = computed(() => data.value ?? []);
   const averageScore = computed(() => {
     if (!reviews.value.length) return 0;
-    const total = reviews.value.reduce((acc, review) => acc + Number(review.score || 0), 0);
+    const total = reviews.value.reduce(
+      (acc, review) => acc + Number(review.score || 0),
+      0
+    );
     return Number((total / reviews.value.length).toFixed(1));
   });
 
