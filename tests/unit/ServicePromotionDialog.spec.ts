@@ -351,6 +351,23 @@ describe('ServicePromotionDialog · Enter, precio ausente y 100 %', () => {
     expect(caja?.[0]).toContain('overflow-y: auto;');
     expect(caja?.[0]).not.toContain('overflow: hidden');
   });
+
+  it('la raíz no es un div: ella misma se topa al alto de la ventana (100vh y luego 100dvh)', () => {
+    const fuente = readFileSync(
+      join(
+        __dirname,
+        '../../src/components/dialogs/ServicePromotionDialog.vue'
+      ),
+      'utf8'
+    );
+    const caja = /\.promo \{[^}]*\}/.exec(
+      fuente.slice(fuente.indexOf('<style'))
+    )?.[0];
+    expect(caja).toMatch(/max-height: calc\(100vh - 48px\);/);
+    expect(caja).toMatch(
+      /max-height: calc\(100vh - 48px\);\s*max-height: calc\(100dvh - 48px\);/
+    );
+  });
 });
 
 /**

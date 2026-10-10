@@ -284,9 +284,13 @@ defineOptions({ name: 'ServicePromotionDialog' });
   pointer-events: all;
   box-sizing: border-box;
   width: min(500px, calc(100vw - 32px));
-  /* No `hidden`: Quasar da a este `<div>` `overflow: auto` y un alto máximo;
-     con `hidden` el contenido se recorta en pantallas bajas y «Aplicar» queda
-     fuera de alcance. `auto` también recorta a la esquina redondeada. */
+  /* La raíz es un `<section>`, no un `<div>`: Quasar solo da `overflow: auto`
+     y alto máximo a los hijos `<div>` de la ventana, así que aquí los ponemos
+     nosotros. Sin el tope, en pantallas bajas la hoja crece más que la
+     ventana, se recorta por arriba y no desplaza. No `hidden`: dejaría
+     «Aplicar» fuera de alcance. `auto` también recorta a la esquina. */
+  max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 48px);
   overflow-y: auto;
   border: var(--m-filete-grosor) solid var(--m-oro);
   border-radius: var(--m-radio-panel);
