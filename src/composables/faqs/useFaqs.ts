@@ -66,23 +66,31 @@ export const useFaqs = () => {
   const guardandoOrden = ref(false);
 
   const vaciarCola = async (): Promise<boolean> => {
-    while (pendiente) {
-      const ids = pendiente;
-      pendiente = null;
-      try {
-        const lista = await reordenarPreguntas(ids);
-        confirmada = lista;
-        // Si ya hay otro orden pintado esperando, la respuesta vieja no lo pisa.
-        if (!pendiente) queryClient.setQueryData<Faq[]>(FAQ_QUERY_KEY, lista);
-      } catch {
+    // La limpieza va aquí dentro, no en un `.finally` de fuera: así corre en
+    // el mismo instante en que el bucle acaba, y un `reordenar` que llegue
+    // justo después ya no ve un `enVuelo` viejo que nadie va a vaciar.
+    try {
+      while (pendiente) {
+        const ids = pendiente;
         pendiente = null;
-        queryClient.setQueryData<Faq[]>(FAQ_QUERY_KEY, confirmada);
-        // Un 400 suele ser «la lista cambió en otra pestaña»: se trae la real.
-        void invalidar();
-        return false;
+        try {
+          const lista = await reordenarPreguntas(ids);
+          confirmada = lista;
+          // Si ya hay otro orden pintado esperando, la respuesta vieja no lo pisa.
+          if (!pendiente) queryClient.setQueryData<Faq[]>(FAQ_QUERY_KEY, lista);
+        } catch {
+          pendiente = null;
+          queryClient.setQueryData<Faq[]>(FAQ_QUERY_KEY, confirmada);
+          // Un 400 suele ser «la lista cambió en otra pestaña»: se trae la real.
+          void invalidar();
+          return false;
+        }
       }
+      return true;
+    } finally {
+      enVuelo = null;
+      guardandoOrden.value = false;
     }
-    return true;
   };
 
   const reordenar = async (ids: string[]): Promise<boolean> => {
@@ -98,10 +106,7 @@ export const useFaqs = () => {
     pendiente = ids;
     if (!enVuelo) {
       guardandoOrden.value = true;
-      enVuelo = vaciarCola().finally(() => {
-        enVuelo = null;
-        guardandoOrden.value = false;
-      });
+      enVuelo = vaciarCola();
     }
     return enVuelo;
   };

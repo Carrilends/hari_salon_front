@@ -109,9 +109,16 @@ describe('useFaqs · reordenar', () => {
 
   it('cancela las lecturas en curso antes de pintar', async () => {
     reordenarApi.mockResolvedValue(delServidor([CAMBIAR, RESERVAR, HORARIO]));
+    let ordenAlCancelar: string[] = [];
+    consulta.__cliente.cancelQueries.mockImplementationOnce(() => {
+      ordenAlCancelar = idsDe(consulta.__cache.value ?? []);
+      return Promise.resolve();
+    });
     const { reordenar } = useFaqs();
 
     await reordenar([CAMBIAR, RESERVAR, HORARIO]);
+
+    expect(ordenAlCancelar).toEqual([RESERVAR, CAMBIAR, HORARIO]);
 
     expect(consulta.__cliente.cancelQueries).toHaveBeenCalledWith({
       queryKey: FAQ_QUERY_KEY,
@@ -174,6 +181,33 @@ describe('useFaqs · reordenar', () => {
 
     await expect(r1).resolves.toBe(false);
     expect(idsDe(faqs.value)).toEqual([CAMBIAR, RESERVAR, HORARIO]);
+  });
+});
+
+describe('useFaqs · hueco al acabar la cola', () => {
+  it('un reordenar que llega justo al volver el PATCH se envía, no se queda pintado sin guardar', async () => {
+    const primera = diferida<FaqItem[]>();
+    const segunda = diferida<FaqItem[]>();
+    reordenarApi
+      .mockReturnValueOnce(primera.promesa)
+      .mockReturnValueOnce(segunda.promesa);
+    const { faqs, reordenar, guardandoOrden } = useFaqs();
+
+    const r1 = reordenar([CAMBIAR, RESERVAR, HORARIO]);
+    await flushPromises();
+
+    primera.resolver(delServidor([CAMBIAR, RESERVAR, HORARIO]));
+    const r2 = reordenar([HORARIO, CAMBIAR, RESERVAR]);
+    await flushPromises();
+
+    expect(reordenarApi).toHaveBeenCalledTimes(2);
+    expect(reordenarApi).toHaveBeenLastCalledWith([HORARIO, CAMBIAR, RESERVAR]);
+
+    segunda.resolver(delServidor([HORARIO, CAMBIAR, RESERVAR]));
+    await expect(r1).resolves.toBe(true);
+    await expect(r2).resolves.toBe(true);
+    expect(idsDe(faqs.value)).toEqual([HORARIO, CAMBIAR, RESERVAR]);
+    expect(guardandoOrden.value).toBe(false);
   });
 });
 
