@@ -164,6 +164,17 @@ const TRAZOS: Record<string, string[]> = {
     'M8.4 19a2.4 2.4 0 1 1-4.8 0 2.4 2.4 0 0 1 4.8 0',
     'M20.4 19a2.4 2.4 0 1 1-4.8 0 2.4 2.4 0 0 1 4.8 0',
   ],
+  /** Asa para arrastrar: seis puntos (preguntas frecuentes, vista de la dueña). */
+  asa: [
+    'M10.2 6a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0',
+    'M16.2 6a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0',
+    'M10.2 12a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0',
+    'M16.2 12a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0',
+    'M10.2 18a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0',
+    'M16.2 18a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0',
+  ],
+  /** Menos: cierra una respuesta del acordeón (`mas` y `cerrar` ya existen). */
+  menos: ['M5 12h14'],
 };
 
 const props = withDefaults(defineProps<{ nombre: string; tamano?: number }>(), {
