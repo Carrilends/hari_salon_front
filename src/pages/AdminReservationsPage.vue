@@ -180,6 +180,7 @@
     >
       <DetalleReserva
         v-if="seleccionada"
+        ref="detalle"
         variante="panel"
         :reserva="seleccionada"
         :ocupada="ocupadaDe(seleccionada.id)"
@@ -210,6 +211,7 @@
       <div class="bandeja__pantalla">
         <DetalleReserva
           v-if="seleccionada"
+          ref="detalle"
           variante="pantalla"
           :reserva="seleccionada"
           :ocupada="ocupadaDe(seleccionada.id)"
@@ -380,19 +382,29 @@ const errorCancelar = ref<string | null>(null);
 const moverAbierto = ref(false);
 
 const panelLista = ref<HTMLElement | null>(null);
+const detalle = ref<InstanceType<typeof DetalleReserva> | null>(null);
 
 /**
  * Si lo ocurrido se llevó el control enfocado (la fila salió de la pestaña, la
- * ficha se soltó), el foco cae al `<body>` y quien usa el teclado vuelve a
- * empezar desde arriba: lo recoge la lista. Con `forzar`, aunque el foco siga
- * aún en un diálogo que se está cerrando. Sin `preventScroll`, enfocar la
- * lista la desplazaría a la vista.
+ * ficha se soltó, «Confirmar» desapareció), el foco cae al `<body>` y quien
+ * usa el teclado vuelve a empezar desde arriba: lo recoge la lista. Con
+ * `forzar`, aunque el foco siga aún en un diálogo que se está cerrando. Sin
+ * `preventScroll`, enfocar la lista la desplazaría a la vista.
+ *
+ * Con una ficha abierta, el foco se queda en ella si la acción salió de ella
+ * (`enFicha`) o si la ficha tapa la lista (móvil: diálogo a pantalla completa,
+ * donde la lista queda detrás).
  */
-async function recogerFoco(forzar = false) {
+async function recogerFoco(forzar = false, enFicha = false) {
   await nextTick();
   const activo = document.activeElement;
   const perdido = !activo || activo === document.body || !activo.isConnected;
-  if (forzar || perdido) panelLista.value?.focus({ preventScroll: true });
+  if (!forzar && !perdido) return;
+  if (seleccionada.value && detalle.value && (enFicha || !esEscritorio.value)) {
+    detalle.value.enfocar();
+    return;
+  }
+  panelLista.value?.focus({ preventScroll: true });
 }
 
 watch(seleccionada, (reserva) => {
@@ -447,7 +459,7 @@ async function confirmar(id: string) {
   } finally {
     ocupada.value = null;
   }
-  await recogerFoco();
+  await recogerFoco(false, seleccionadaId.value === id);
 }
 
 function pedirCancelar() {

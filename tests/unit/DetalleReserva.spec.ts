@@ -150,4 +150,25 @@ describe('DetalleReserva', () => {
     expect(w.find('[data-test="volver-a-la-lista"]').exists()).toBe(false);
     expect(texto(w, 'detalle-antetitulo')).toBe('Reserva');
   });
+  it('enfocar() lleva el foco a «Mover»; sin él, a la ficha misma', () => {
+    const conMover = mount(DetalleReserva, {
+      props: { reserva: reserva({ status: 'confirmada' }) },
+      attachTo: document.body,
+    });
+    (conMover.vm as unknown as { enfocar: () => void }).enfocar();
+    expect(document.activeElement).toBe(
+      conMover.find('[data-test="mover"]').element
+    );
+    conMover.unmount();
+
+    const sinMover = mount(DetalleReserva, {
+      props: { reserva: reserva({ status: 'cumplida' }) },
+      attachTo: document.body,
+    });
+    const ficha = sinMover.find('[data-test="detalle-reserva"]');
+    expect(ficha.attributes('tabindex')).toBe('-1');
+    (sinMover.vm as unknown as { enfocar: () => void }).enfocar();
+    expect(document.activeElement).toBe(ficha.element);
+    sinMover.unmount();
+  });
 });

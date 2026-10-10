@@ -1,9 +1,11 @@
 <template>
   <article
+    ref="ficha"
     class="detalle"
     :class="`detalle--${variante}`"
     data-test="detalle-reserva"
     :aria-labelledby="tituloId"
+    tabindex="-1"
   >
     <header class="detalle__cabecera">
       <button
@@ -105,6 +107,7 @@
       </button>
       <div v-if="activa" class="detalle__pareja">
         <button
+          ref="botonMover"
           type="button"
           class="detalle__accion m-boton--ancho"
           data-test="mover"
@@ -130,7 +133,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import EstadoReserva from 'src/components/reservations/EstadoReserva.vue';
 import StrokeIcon from 'src/components/shared/StrokeIcon.vue';
 import type { AccionBandeja } from 'src/helpers/acciones-bandeja';
@@ -201,6 +204,20 @@ const estilista = computed(() => nombreDeEstilista(props.reserva));
 const asignacion = computed(() => textoAsignacion(props.reserva));
 const total = computed(() => precioTexto(totalDeLaReserva(props.reserva)));
 const apagada = computed(() => props.ocupada !== null || props.bloqueada);
+
+const ficha = ref<HTMLElement | null>(null);
+const botonMover = ref<HTMLButtonElement | null>(null);
+
+/**
+ * Para la página, cuando una acción de la ficha se lleva el botón enfocado
+ * (confirmar quita «Confirmar»): el foco sigue en la ficha, en «Mover», la
+ * acción que queda; si no la hay, en la ficha misma (`tabindex="-1"`).
+ */
+function enfocar() {
+  (botonMover.value ?? ficha.value)?.focus({ preventScroll: true });
+}
+
+defineExpose({ enfocar });
 const activa = computed(
   () =>
     props.reserva.status === 'pendiente' ||
@@ -468,6 +485,17 @@ defineOptions({ name: 'DetalleReserva' });
 .detalle__accion:focus-visible {
   outline: 2px solid var(--m-tinta);
   outline-offset: 2px;
+}
+
+/* La ficha solo recibe el foco por código (sin «Mover» que lo tome): el
+   filete va por dentro, para que el borde del panel no lo corte. */
+.detalle:focus {
+  outline: none;
+}
+
+.detalle:focus-visible {
+  outline: 2px solid var(--m-tinta);
+  outline-offset: -2px;
 }
 
 /**

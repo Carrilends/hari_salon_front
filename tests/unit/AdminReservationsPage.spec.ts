@@ -617,6 +617,24 @@ describe('la bandeja · el foco no se pierde', () => {
     w.unmount();
   });
 
+  it('confirmar desde la ficha deja el foco en la ficha, no en la lista', async () => {
+    mockAdmin.confirm.mutateAsync.mockImplementation(async () => {
+      mockAdmin.query.data.value = conEstado('res-1', 'confirmada');
+    });
+    const w = montarEnDocumento();
+    await abrir(w, 'res-1');
+    const boton = w.find('[data-test="confirmar-detalle"]');
+    (boton.element as HTMLElement).focus();
+
+    await boton.trigger('click');
+    await flushPromises();
+
+    // «Confirmar» ya no está (la reserva no es pendiente): sigue «Mover».
+    expect(w.find('[data-test="confirmar-detalle"]').exists()).toBe(false);
+    expect(document.activeElement).toBe(w.find('[data-test="mover"]').element);
+    w.unmount();
+  });
+
   it('sin acción de por medio no le roba el foco a nadie', async () => {
     const w = montarEnDocumento();
     const pestana = w.find('[data-test="pestana-todas"]');
@@ -736,6 +754,30 @@ describe('la bandeja · móvil (390)', () => {
 
     const hoja = w.find('[data-test="cancelar-reserva"]').element.parentElement;
     expect(hoja?.getAttribute('data-posicion')).toBe('bottom');
+  });
+
+  it('confirmar desde la ficha a pantalla completa deja el foco dentro de ella', async () => {
+    fijarViewport({ ancho: 390 });
+    mockAdmin.confirm.mutateAsync.mockImplementation(async () => {
+      mockAdmin.query.data.value = conEstado('res-1', 'confirmada');
+    });
+    const w = mount(AdminReservationsPage, {
+      attachTo: document.body,
+      global: { components: { QPage, QDialog } },
+    });
+    await nextTick();
+    await abrir(w, 'res-1');
+    const boton = w.find('.q-dialog-doble [data-test="confirmar-detalle"]');
+    (boton.element as HTMLElement).focus();
+
+    await boton.trigger('click');
+    await flushPromises();
+
+    // La lista queda detrás del diálogo: el foco no puede irse allí.
+    expect(document.activeElement).toBe(
+      w.find('.q-dialog-doble [data-test="mover"]').element
+    );
+    w.unmount();
   });
 
   it('si la ficha a pantalla completa se cierra y el foco cae al body, lo recoge la lista (Foco 1)', async () => {
