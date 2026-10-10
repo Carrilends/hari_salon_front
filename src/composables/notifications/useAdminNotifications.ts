@@ -123,6 +123,10 @@ export function useAdminNotifications() {
     socket.on('disconnect', (motivo: string) => {
       if (motivo !== 'io client disconnect') vivos.marcarEnVivo(false);
     });
+    // Por lo mismo, tras una renovación «En vivo» sigue encendido mientras el
+    // socket nuevo conecta: si no lo logra (servidor caído, token rechazado),
+    // no hay `disconnect` que lo apague, solo `connect_error`.
+    socket.on('connect_error', () => vivos.marcarEnVivo(false));
     for (const name of Object.keys(RESERVATION_EVENT_NAMES)) {
       socket.on(name, dispatch);
     }

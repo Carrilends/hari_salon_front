@@ -80,4 +80,16 @@ describe('useAdminNotifications · la sesión', () => {
     fakeSocket.emit('disconnect', 'transport close');
     expect(vivos.enVivo.value).toBe(false);
   });
+
+  it('si el socket de la renovación no llega a conectar, «En vivo» se apaga', () => {
+    const vivos = useAvisosEnVivo();
+    fakeSocket.emit('connect');
+    // La renovación cierra el viejo a propósito: «En vivo» sigue encendido…
+    fakeSocket.emit('disconnect', 'io client disconnect');
+    expect(vivos.enVivo.value).toBe(true);
+
+    // …pero el nuevo nunca conecta (servidor caído, token rechazado).
+    fakeSocket.emit('connect_error', new Error('xhr poll error'));
+    expect(vivos.enVivo.value).toBe(false);
+  });
 });
