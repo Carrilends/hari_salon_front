@@ -18,7 +18,10 @@ import {
 
 const asIs = (iso: string) => iso;
 const registrar = (evento: ReservationEvent) =>
-  useAvisosEnVivo().registrar(evento, reservationEventEffects(evento, asIs).notice);
+  useAvisosEnVivo().registrar(
+    evento,
+    reservationEventEffects(evento, asIs).notice
+  );
 const avisos = () => useAvisosEnVivo().avisos.value;
 
 beforeEach(() => {

@@ -16,7 +16,10 @@ describe('falloDeAccion', () => {
 
   it('un 400 al confirmar es que ya no estaba pendiente: lo dice y refresca', () => {
     expect(
-      falloDeAccion(errorHttp(400, 'Transición de estado inválida'), 'confirmar')
+      falloDeAccion(
+        errorHttp(400, 'Transición de estado inválida'),
+        'confirmar'
+      )
     ).toEqual({
       mensaje: 'Esta reserva ya no estaba pendiente. La lista se actualizó.',
       refrescar: true,

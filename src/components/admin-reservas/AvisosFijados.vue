@@ -15,7 +15,11 @@
       data-test="aviso"
       :data-evento="aviso.evento"
     >
-      <StrokeIcon class="aviso__icono" :nombre="ICONO[aviso.evento]" :tamano="20" />
+      <StrokeIcon
+        class="aviso__icono"
+        :nombre="ICONO[aviso.evento]"
+        :tamano="20"
+      />
       <span class="aviso__texto">
         <span class="aviso__mensaje" data-test="aviso-mensaje">{{
           aviso.mensaje

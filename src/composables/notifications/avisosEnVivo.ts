@@ -49,7 +49,8 @@ function registrar(evento: ReservationEvent, aviso: ReservationNotice): void {
   // El mismo hecho dos veces (reintento del servidor, reconexión) no se apila:
   // el aviso sube arriba con su texto nuevo.
   const resto = avisos.value.filter(
-    (a) => !(a.reservationId === nuevo.reservationId && a.evento === nuevo.evento)
+    (a) =>
+      !(a.reservationId === nuevo.reservationId && a.evento === nuevo.evento)
   );
   avisos.value = [nuevo, ...resto].slice(0, MAX_AVISOS);
 }

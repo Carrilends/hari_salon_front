@@ -23,8 +23,18 @@ export function reserva(cambios: Partial<ReservationDto> = {}): ReservationDto {
     userId: null,
     contact: { name: 'Andrea Ruiz', phone: '3001234567', email: null },
     services: [
-      { serviceId: 's-1', name: 'Wolf cut mujer', price: 37000, durationMinutes: 30 },
-      { serviceId: 's-2', name: 'Uñas de gel', price: 48000, durationMinutes: 30 },
+      {
+        serviceId: 's-1',
+        name: 'Wolf cut mujer',
+        price: 37000,
+        durationMinutes: 30,
+      },
+      {
+        serviceId: 's-2',
+        name: 'Uñas de gel',
+        price: 48000,
+        durationMinutes: 30,
+      },
     ],
     ...cambios,
   };
@@ -48,7 +58,12 @@ export function bandeja(): ReservationDto[] {
       totalDurationMinutes: 30,
       contact: { name: 'Paula R.', phone: '3007654321', email: null },
       services: [
-        { serviceId: 's-3', name: 'Uñas marmoleadas', price: 42000, durationMinutes: 30 },
+        {
+          serviceId: 's-3',
+          name: 'Uñas marmoleadas',
+          price: 42000,
+          durationMinutes: 30,
+        },
       ],
     }),
     // Viernes 9, 9:00 — confirmada; reservó con sesión y sin teléfono.
@@ -69,8 +84,18 @@ export function bandeja(): ReservationDto[] {
       worker: { id: 'w-alejandro', name: 'Alejandro', isDefault: false },
       contact: { name: 'Daniel M.', phone: '3011112222', email: null },
       services: [
-        { serviceId: 's-4', name: 'Two-block cut', price: 30000, durationMinutes: 30 },
-        { serviceId: 's-5', name: 'Undercut', price: 25000, durationMinutes: 30 },
+        {
+          serviceId: 's-4',
+          name: 'Two-block cut',
+          price: 30000,
+          durationMinutes: 30,
+        },
+        {
+          serviceId: 's-5',
+          name: 'Undercut',
+          price: 25000,
+          durationMinutes: 30,
+        },
       ],
     }),
     // Jueves 8, 10:30 — Andrea.

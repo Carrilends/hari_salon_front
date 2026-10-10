@@ -18,7 +18,10 @@ export interface FalloDeAccion {
  * imposible —confirmar una confirmada, cancelar una cancelada— y 404 a una
  * reserva que no existe: en los dos casos otra vía se adelantó.
  */
-export function falloDeAccion(err: unknown, accion: AccionBandeja): FalloDeAccion {
+export function falloDeAccion(
+  err: unknown,
+  accion: AccionBandeja
+): FalloDeAccion {
   const estado = estadoDeError(err);
   if (estado === undefined) {
     return {

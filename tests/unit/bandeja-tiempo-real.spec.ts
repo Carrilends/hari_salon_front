@@ -8,7 +8,10 @@
  */
 import { mount, type VueWrapper } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
-import type { ReservationCancelledEvent, ReservationDto } from 'src/interfaces/booking';
+import type {
+  ReservationCancelledEvent,
+  ReservationDto,
+} from 'src/interfaces/booking';
 
 type Handler = (payload?: unknown) => void;
 
@@ -58,7 +61,8 @@ jest.mock('@tanstack/vue-query', () => {
     // El refetch de verdad: invalidar la lista la vuelve a pedir al «servidor».
     useQueryClient: () => ({
       invalidateQueries: ({ queryKey }: { queryKey: readonly unknown[] }) => {
-        if (queryKey[0] === 'reservations') datos.value = Array.from(servidor.reservas);
+        if (queryKey[0] === 'reservations')
+          datos.value = Array.from(servidor.reservas);
         return Promise.resolve();
       },
     }),
@@ -66,7 +70,11 @@ jest.mock('@tanstack/vue-query', () => {
 });
 jest.mock('src/helpers/businessHours', () => ({
   ...jest.requireActual('src/helpers/businessHours'),
-  getSalonNowParts: () => ({ ymd: '2026-10-07', qDate: '2026/10/07', minOfDay: 600 }),
+  getSalonNowParts: () => ({
+    ymd: '2026-10-07',
+    qDate: '2026/10/07',
+    minOfDay: 600,
+  }),
 }));
 jest.mock('src/components/reservations/CambiarFechaDialog.vue', () => {
   const { defineComponent, h } = require('vue');
@@ -74,7 +82,11 @@ jest.mock('src/components/reservations/CambiarFechaDialog.vue', () => {
     __esModule: true,
     default: defineComponent({
       name: 'CambiarFechaDialog',
-      props: { reserva: Object, modelValue: Boolean, permitirEstilista: Boolean },
+      props: {
+        reserva: Object,
+        modelValue: Boolean,
+        permitirEstilista: Boolean,
+      },
       emits: ['update:modelValue', 'reprogramada'],
       setup: () => () => h('div'),
     }),
@@ -156,16 +168,20 @@ describe('la bandeja en tiempo real', () => {
     jest.runAllTimers();
     await nextTick();
     expect(wrapper.find('[data-id="res-1"]').exists()).toBe(false);
-    expect(wrapper.find('[data-test="pestana-pendientes"] [data-test="cuenta"]').text()).toBe(
-      '2'
-    );
+    expect(
+      wrapper
+        .find('[data-test="pestana-pendientes"] [data-test="cuenta"]')
+        .text()
+    ).toBe('2');
     // El aviso se queda (lo único que explica la desaparición) y sin «Ver».
     expect(wrapper.find('[data-test="aviso"]').exists()).toBe(true);
     expect(wrapper.find('[data-test="ver-aviso"]').exists()).toBe(false);
   });
 
   it('si estaba abierta en la ficha, la ficha la suelta y no ofrece confirmarla', async () => {
-    await wrapper.find('[data-id="res-1"] [data-test="abrir-reserva"]').trigger('click');
+    await wrapper
+      .find('[data-id="res-1"] [data-test="abrir-reserva"]')
+      .trigger('click');
     expect(wrapper.find('[data-test="confirmar-detalle"]').exists()).toBe(true);
 
     servidor.reservas = sinAndrea();
@@ -195,7 +211,9 @@ describe('la bandeja en tiempo real', () => {
     fakeSocket.emit('disconnect');
     await nextTick();
 
-    expect(wrapper.find('[data-test="en-vivo"]').text()).toContain('Sin tiempo real');
+    expect(wrapper.find('[data-test="en-vivo"]').text()).toContain(
+      'Sin tiempo real'
+    );
   });
 
   it('fuera de la bandeja el mismo evento sale como flotante, y queda fijado para luego', async () => {

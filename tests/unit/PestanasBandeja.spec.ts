@@ -40,16 +40,18 @@ describe('PestanasBandeja', () => {
   it('marca la activa y solo ella entra en la tabulación', () => {
     const w = montar('hoy');
 
-    expect(w.find('[data-test="pestana-hoy"]').attributes('aria-selected')).toBe(
-      'true'
+    expect(
+      w.find('[data-test="pestana-hoy"]').attributes('aria-selected')
+    ).toBe('true');
+    expect(w.find('[data-test="pestana-hoy"]').attributes('tabindex')).toBe(
+      '0'
     );
-    expect(w.find('[data-test="pestana-hoy"]').attributes('tabindex')).toBe('0');
     expect(
       w.find('[data-test="pestana-pendientes"]').attributes('aria-selected')
     ).toBe('false');
-    expect(w.find('[data-test="pestana-pendientes"]').attributes('tabindex')).toBe(
-      '-1'
-    );
+    expect(
+      w.find('[data-test="pestana-pendientes"]').attributes('tabindex')
+    ).toBe('-1');
   });
 
   it('cada pestaña controla el panel de la lista', () => {
@@ -80,7 +82,9 @@ describe('PestanasBandeja', () => {
     await pendientes.trigger('keydown', { key: 'ArrowRight' });
     await pendientes.trigger('keydown', { key: 'ArrowLeft' });
     await pendientes.trigger('keydown', { key: 'End' });
-    await w.find('[data-test="pestana-hoy"]').trigger('keydown', { key: 'Home' });
+    await w
+      .find('[data-test="pestana-hoy"]')
+      .trigger('keydown', { key: 'Home' });
 
     expect(w.emitted('elegir')).toEqual([
       ['confirmadas'],

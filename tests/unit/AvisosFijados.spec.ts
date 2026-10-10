@@ -39,10 +39,9 @@ describe('AvisosFijados', () => {
     const w = montar([nueva, cancelada]);
     const avisos = w.findAll('[data-test="aviso"]');
 
-    expect(avisos.map((a) => a.find('[data-test="aviso-mensaje"]').text())).toEqual([
-      'Nueva reserva de Sofía T.',
-      'Laura Gómez canceló su cita',
-    ]);
+    expect(
+      avisos.map((a) => a.find('[data-test="aviso-mensaje"]').text())
+    ).toEqual(['Nueva reserva de Sofía T.', 'Laura Gómez canceló su cita']);
     expect(avisos[1].find('[data-test="aviso-detalle"]').text()).toContain(
       'ya no está en la lista'
     );
@@ -69,9 +68,9 @@ describe('AvisosFijados', () => {
   it('los botones dicen qué hacen al lector de pantalla', () => {
     const w = montar([nueva]);
 
-    expect(w.find('[data-test="descartar-aviso"]').attributes('aria-label')).toBe(
-      'Descartar el aviso'
-    );
+    expect(
+      w.find('[data-test="descartar-aviso"]').attributes('aria-label')
+    ).toBe('Descartar el aviso');
     expect(w.find('[data-test="ver-aviso"]').attributes('aria-label')).toBe(
       'Ver la reserva: Nueva reserva de Sofía T.'
     );
@@ -80,8 +79,12 @@ describe('AvisosFijados', () => {
   it('«Ver» y descartar son botones planos: sin caja de sombra al pasar', () => {
     const w = montar([nueva]);
 
-    expect(w.find('[data-test="ver-aviso"]').classes()).toContain('m-boton-plano');
-    expect(w.find('[data-test="descartar-aviso"]').classes()).toContain('m-boton-plano');
+    expect(w.find('[data-test="ver-aviso"]').classes()).toContain(
+      'm-boton-plano'
+    );
+    expect(w.find('[data-test="descartar-aviso"]').classes()).toContain(
+      'm-boton-plano'
+    );
   });
 
   it('cada uno de los cuatro eventos tiene icono', () => {
@@ -93,7 +96,9 @@ describe('AvisosFijados', () => {
     ];
     for (const evento of eventos) {
       const w = montar([{ ...nueva, evento }]);
-      expect(w.find('[data-test="aviso"] svg').findAll('path').length).toBeGreaterThan(0);
+      expect(
+        w.find('[data-test="aviso"] svg').findAll('path').length
+      ).toBeGreaterThan(0);
     }
   });
 });

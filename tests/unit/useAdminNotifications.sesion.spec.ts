@@ -25,7 +25,9 @@ const mockSesion: { estado: { isAdmin: boolean; token: string } | null } = {
 
 jest.mock('quasar', () => ({ useQuasar: () => ({ notify: jest.fn() }) }));
 jest.mock('@tanstack/vue-query', () => ({
-  useQueryClient: () => ({ invalidateQueries: jest.fn(() => Promise.resolve()) }),
+  useQueryClient: () => ({
+    invalidateQueries: jest.fn(() => Promise.resolve()),
+  }),
 }));
 jest.mock('vue-router', () => ({ useRouter: () => ({ push: jest.fn() }) }));
 jest.mock('src/stores/auth-store', () => ({

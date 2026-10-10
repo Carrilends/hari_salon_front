@@ -86,7 +86,8 @@ describe('StrokeIcon', () => {
 });
 
 describe('StrokeIcon · la bandeja de reservas (plan 3)', () => {
-  const montarIcono = (nombre: string) => mount(StrokeIcon, { props: { nombre } });
+  const montarIcono = (nombre: string) =>
+    mount(StrokeIcon, { props: { nombre } });
 
   it('trae mover y cita cancelada', () => {
     for (const nombre of ['mover-cita', 'cita-cancelada']) {
