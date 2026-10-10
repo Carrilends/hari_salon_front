@@ -28,6 +28,13 @@ describe('shouldRefresh (predicado del interceptor)', () => {
     expect(shouldRefresh(401, '/auth/login', false)).toBe(false);
     expect(shouldRefresh(401, '/auth/refresh', false)).toBe(false);
     expect(shouldRefresh(401, '/auth/google', false)).toBe(false);
+    expect(shouldRefresh(401, '/auth/logout', false)).toBe(false);
+    expect(shouldRefresh(401, '/api/auth/login?x=1', false)).toBe(false);
+  });
+
+  it('un 401 en /auth/logout-all sí renueva: lleva Bearer y puede haber caducado', () => {
+    expect(shouldRefresh(401, '/auth/logout-all', false)).toBe(true);
+    expect(shouldRefresh(401, '/api/auth/logout-all', false)).toBe(true);
   });
 
   it('NO renueva si no es 401 ni si ya se reintentó', () => {

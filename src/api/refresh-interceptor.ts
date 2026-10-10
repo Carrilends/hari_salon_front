@@ -23,7 +23,15 @@ export function shouldRefresh(
   retried: boolean,
 ): boolean {
   if (status !== 401 || retried) return false;
-  return !NO_REFRESH.some((path) => (url ?? '').includes(path));
+  // La ruta debe acabar ahí (o seguir con `?`/`#`): `/auth/logout-all` NO es
+  // `/auth/logout` y sí debe renovar. Admite prefijo (`/api/auth/login`).
+  const destino = url ?? '';
+  return !NO_REFRESH.some((path) => {
+    const i = destino.indexOf(path);
+    if (i === -1) return false;
+    const resto = destino.charAt(i + path.length);
+    return resto === '' || resto === '?' || resto === '#' || resto === '/';
+  });
 }
 
 let refreshPromise: Promise<void> | null = null;

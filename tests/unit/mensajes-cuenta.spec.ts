@@ -44,6 +44,12 @@ describe('errorDeCuenta', () => {
     ).toEqual({ texto: 'El correo ya está registrado', campo: null });
   });
 
+  it('409 con un texto del servidor: se trata como un 400', () => {
+    expect(
+      errorDeCuenta(errorHttp(409, 'El correo ya está registrado'), 'correo')
+    ).toEqual({ texto: 'El correo ya está registrado', campo: null });
+  });
+
   it('400 con el arreglo de class-validator (en inglés): el respaldo', () => {
     expect(
       errorDeCuenta(errorHttp(400, ['newEmail must be an email']), 'correo')
