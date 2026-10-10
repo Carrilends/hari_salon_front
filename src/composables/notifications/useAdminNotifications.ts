@@ -13,6 +13,8 @@ import type { ReservationEvent } from 'src/interfaces/booking';
 import { queryKeys } from 'src/api/query-keys';
 import { reservationEventEffects } from './reservationEventEffects';
 import { createInvalidationCoalescer } from './invalidationCoalescer';
+import { ESTILO_AVISO, POSICION_AVISO } from 'src/composables/shared/useAviso';
+import { useAvisosEnVivo } from './avisosEnVivo';
 
 /**
  * Nombres a los que se suscribe el socket. La anotación obliga a que estén los
@@ -37,20 +39,27 @@ const EVERYTHING_RESERVATIONS_TOUCH = [
 
 /**
  * Canal en tiempo real del panel de administración (Fase 4, RF53, ampliado con
- * la Etapa 2 de WhatsApp). Despachador delgado: cada evento del socket pasa por
- * la tabla `reservationEventEffects`, que decide el aviso y las consultas a
- * invalidar; las invalidaciones se coalescen para que una ráfaga no dispare un
- * refetch por evento.
+ * la Etapa 2 de WhatsApp y con la bandeja, spec §3 A5). Despachador delgado:
+ * cada evento del socket pasa por la tabla `reservationEventEffects`, que
+ * decide el aviso y las consultas a invalidar; las invalidaciones se coalescen
+ * para que una ráfaga no dispare un refetch por evento.
+ *
+ * El aviso se **fija** siempre en `avisosEnVivo` (lo pinta la bandeja). Si la
+ * bandeja no está a la vista, además sale el flotante con «Ver», pintado con
+ * la paleta: `useAviso` no admite acciones, por eso esta es la única llamada
+ * directa a los avisos de Quasar que queda en el portal.
  *
  * El socket se abre solo para sesiones de administración y se reconstruye en
  * cada cambio de token (login o renovación de la Fase 3b, que el servidor solo
- * valida en el handshake); se cierra al cerrar sesión.
+ * valida en el handshake); se cierra al cerrar sesión. Los avisos fijados se
+ * borran por el mecanismo de limpieza de sesión (ver `avisosEnVivo`).
  */
 export function useAdminNotifications() {
   const auth = useAuthStore();
   const $q = useQuasar();
   const queryClient = useQueryClient();
   const router = useRouter();
+  const vivos = useAvisosEnVivo();
 
   const coalescer = createInvalidationCoalescer((keys) => {
     for (const queryKey of keys) void queryClient.invalidateQueries({ queryKey });
@@ -58,17 +67,29 @@ export function useAdminNotifications() {
 
   function dispatch(event: ReservationEvent) {
     const { notice, invalidate } = reservationEventEffects(event);
-    $q.notify({
-      ...notice,
-      timeout: 8000,
-      actions: [
-        {
-          label: 'Ver',
-          color: 'white',
-          handler: () => void router.push('/reservas'),
+    vivos.registrar(event, notice);
+    if (!vivos.bandejaAbierta.value) {
+      $q.notify({
+        message: notice.message,
+        caption: notice.caption,
+        icon: notice.icon,
+        position: POSICION_AVISO,
+        timeout: 8000,
+        attrs: {
+          // Mismo tratamiento que `useAviso`: radio de tarjeta y sin sombra.
+          style: `${ESTILO_AVISO.logro}; font-family: var(--m-font-sans); border-radius: var(--m-radio-tarjeta); box-shadow: none`,
+          'data-tono': 'logro',
         },
-      ],
-    });
+        actions: [
+          {
+            label: 'Ver',
+            // Sin `color`: la acción hereda el hueso del aviso (el blanco de
+            // Quasar no está en la paleta).
+            handler: () => void router.push('/reservas'),
+          },
+        ],
+      });
+    }
     // El panel se refresca solo: invalidar las consultas basta.
     coalescer.add(invalidate);
   }
@@ -79,7 +100,16 @@ export function useAdminNotifications() {
     // eventos emitidos mientras el socket estaba caído (portátil suspendido,
     // redeploy del backend) se perdieron: refrescarlo todo aquí es lo que los
     // recupera. En la primera conexión cuesta, como mucho, un refetch.
-    socket.on('connect', () => coalescer.add(EVERYTHING_RESERVATIONS_TOUCH));
+    socket.on('connect', () => {
+      vivos.marcarEnVivo(true);
+      coalescer.add(EVERYTHING_RESERVATIONS_TOUCH);
+    });
+    // La bandeja dice «En vivo» solo mientras lo está. Cada renovación del
+    // token (15 min) cierra a propósito el socket viejo: esa caída la provoca
+    // el cliente y no debe parpadear a «Sin tiempo real».
+    socket.on('disconnect', (motivo: string) => {
+      if (motivo !== 'io client disconnect') vivos.marcarEnVivo(false);
+    });
     for (const name of Object.keys(RESERVATION_EVENT_NAMES)) {
       socket.on(name, dispatch);
     }
@@ -96,6 +126,7 @@ export function useAdminNotifications() {
       return;
     }
     disconnectAdminSocket();
+    vivos.marcarEnVivo(false);
     // Un despliegue sin `VITE_WS_URL` no debe fallar en silencio: el panel
     // seguiría funcionando, pero sin tiempo real, y nadie sabría por qué.
     if (auth.isAdmin && auth.token && !WS_URL && !warnedNoWsUrl) {
