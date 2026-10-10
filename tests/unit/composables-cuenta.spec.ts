@@ -77,6 +77,18 @@ describe('useEnlaceContrasena', () => {
     expect(enlace.enviando.value).toBe(true);
   });
 
+  it('un segundo envío fallido no deja el «enviado» del primero', async () => {
+    pedirEnlace.mockResolvedValueOnce({ message: 'ok' });
+    const enlace = useEnlaceContrasena();
+    await enlace.enviar('laura@correo.com');
+
+    pedirEnlace.mockRejectedValueOnce(errorDeRed());
+    await enlace.enviar('laura@correo.com');
+
+    expect(enlace.enviadoA.value).toBe('');
+    expect(enlace.error.value).toBe(MENSAJE_SIN_CONEXION);
+  });
+
   it('sin conexión: lo dice y permite reintentar', async () => {
     pedirEnlace.mockRejectedValueOnce(errorDeRed());
     const enlace = useEnlaceContrasena();

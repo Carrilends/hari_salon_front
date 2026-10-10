@@ -21,6 +21,7 @@ export function useEnlaceContrasena() {
     if (enviando.value) return;
     enviando.value = true;
     error.value = '';
+    enviadoA.value = '';
     try {
       await authApi.forgotPassword(correo);
       enviadoA.value = correo;

@@ -1,6 +1,10 @@
 import type { AuthResponse } from 'src/api/apiTypes';
 import { useAuthStore } from 'src/stores/auth-store';
 
+/** Cuántas sesiones se han aplicado; la página lo compara para descartar respuestas viejas. */
+let aplicadas = 0;
+export const sesionesAplicadas = (): number => aplicadas;
+
 /**
  * Vuelca en el almacén la sesión que devuelven las rutas de Mi cuenta
  * (`PATCH /auth/me/profile|email|password`, `GET /auth/check-status`): todas
@@ -9,6 +13,7 @@ import { useAuthStore } from 'src/stores/auth-store';
  * olvide de un campo.
  */
 export function aplicarSesion(sesion: AuthResponse): void {
+  aplicadas += 1;
   useAuthStore().setSession(
     sesion.token,
     {

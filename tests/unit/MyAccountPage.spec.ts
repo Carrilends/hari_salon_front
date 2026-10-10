@@ -13,6 +13,7 @@ import type { Pinia } from 'pinia';
 import MyAccountPage from 'src/pages/MyAccountPage.vue';
 import { authApi } from 'src/api/auth-api';
 import { MENSAJE_SIN_CONEXION } from 'src/helpers/mensajes-acceso';
+import { aplicarSesion } from 'src/composables/cuenta/aplicarSesion';
 import { useAuthStore } from 'src/stores/auth-store';
 import { errorDeRed, respuestaSesion } from './fixtures/acceso';
 import {
@@ -404,6 +405,28 @@ describe('MyAccountPage · salir', () => {
     expect(
       wrapper.find('[data-test="doble-sesion"]').attributes('data-ocupado')
     ).toBe('todas');
+  });
+
+  it('si un cambio aplicó una sesión más nueva, la respuesta vieja se descarta', async () => {
+    let entregar: (valor: unknown) => void = () => undefined;
+    pedirSesion.mockReturnValue(
+      new Promise((resolver) => {
+        entregar = resolver;
+      })
+    );
+    wrapper = montar();
+
+    // Un PATCH (perfil, correo, contraseña) termina antes que check-status.
+    aplicarSesion(
+      respuestaSesion({ fullName: 'Nombre Nuevo', email: 'nuevo@correo.com' })
+    );
+    entregar(
+      respuestaSesion({ fullName: 'Nombre Viejo', email: 'viejo@correo.com' })
+    );
+    await flushPromises();
+
+    expect(useAuthStore().email).toBe('nuevo@correo.com');
+    expect(useAuthStore().fullname).toBe('Nombre Nuevo');
   });
 
   it('la sesión fresca que llega después de salir no vuelve a abrirla', async () => {

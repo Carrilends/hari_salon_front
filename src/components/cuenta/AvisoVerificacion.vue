@@ -64,7 +64,7 @@
  * línea, debajo. El backend responde 202 siempre (`resend-verification`); un
  * error solo puede ser de red o de servidor, y se dice para reintentar.
  */
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { authApi } from 'src/api/auth-api';
 import { errorDeCuenta } from 'src/helpers/mensajes-cuenta';
 
@@ -75,6 +75,16 @@ const props = withDefaults(defineProps<{ correo: string; movil?: boolean }>(), {
 const enviando = ref(false);
 const enviadoA = ref('');
 const error = ref('');
+
+// Si el correo cambia (la clienta lo cambió desde «Correo»), lo dicho sobre el
+// anterior ya no vale: ni «te enviamos un enlace a …» ni su error.
+watch(
+  () => props.correo,
+  () => {
+    enviadoA.value = '';
+    error.value = '';
+  }
+);
 
 async function reenviar() {
   if (enviando.value) return;

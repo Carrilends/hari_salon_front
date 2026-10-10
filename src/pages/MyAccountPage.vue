@@ -114,7 +114,10 @@ import { useAuthStore } from 'src/stores/auth-store';
 import { useSeo } from 'src/composables/seo/useSeo';
 import { useConsultaMedios } from 'src/composables/shared/useConsultaMedios';
 import { useAviso } from 'src/composables/shared/useAviso';
-import { aplicarSesion } from 'src/composables/cuenta/aplicarSesion';
+import {
+  aplicarSesion,
+  sesionesAplicadas,
+} from 'src/composables/cuenta/aplicarSesion';
 import {
   CONSULTA_CUENTA_MOVIL,
   seccionDeConsulta,
@@ -162,11 +165,19 @@ onMounted(() => {
     irAEntrar();
     return;
   }
+  const aplicadasAntes = sesionesAplicadas();
   authApi
     .checkStatus()
     .then((sesion) => {
-      // Puede llegar después de pulsar «Cerrar sesión»: no reabrirla.
-      if (authStore.isLoggedIn && !saliendo.value) aplicarSesion(sesion);
+      // Puede llegar después de pulsar «Cerrar sesión»: no reabrirla. Y si un
+      // cambio (perfil, correo, contraseña) aplicó una sesión más nueva
+      // mientras tanto, esta respuesta es anterior: no pisarla.
+      if (
+        authStore.isLoggedIn &&
+        !saliendo.value &&
+        sesionesAplicadas() === aplicadasAntes
+      )
+        aplicarSesion(sesion);
     })
     .catch(() => {
       // La página funciona con el perfil que ya había; si la renovación
@@ -174,14 +185,14 @@ onMounted(() => {
     });
 });
 
-// La sesión se pierde estando aquí (la renovación falló, otra pestaña salió):
+// La sesión se pierde estando aquí (la renovación falló; otra pestaña solo se nota por esa vía):
 // a entrar, y de vuelta aquí. Una salida a propósito va al inicio.
 watch(
   () => authStore.isLoggedIn,
   (conSesion) => {
     // Solo si NO fue a propósito: «Cerrar sesión» del menú también cierra el
-    // almacén y su destino es el inicio. Sin token aún pero sin sesión = la
-    // vigencia se agotó sin barrido: también involuntario.
+    // almacén y su destino es el inicio. `sesionCaducada` marca el cierre por
+    // renovación fallida; si aún queda token, el cierre no vino de «Salir».
     if (
       !conSesion &&
       !saliendo.value &&

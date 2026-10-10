@@ -58,6 +58,22 @@ describe('AvisoVerificacion', () => {
     expect(w.find('[data-test="reenvio-error"]').exists()).toBe(false);
   });
 
+  it('si el correo cambia, olvida lo dicho sobre el anterior', async () => {
+    reenviarApi.mockResolvedValue({ message: 'ok' });
+    const w = montar();
+    await w.find('[data-test="reenviar-enlace"]').trigger('click');
+    await flushPromises();
+    expect(w.find('[data-test="reenvio-estado"]').text()).toContain(
+      'laura@correo.com'
+    );
+
+    await w.setProps({ correo: 'otro@correo.com' });
+
+    expect(w.text()).not.toContain('laura@correo.com');
+    expect(w.find('[data-test="reenvio-estado"]').text()).toBe('');
+    expect(w.find('[data-test="reenvio-error"]').exists()).toBe(false);
+  });
+
   it('dos pulsaciones seguidas, una sola petición', async () => {
     reenviarApi.mockReturnValue(new Promise(() => undefined));
     const w = montar();
