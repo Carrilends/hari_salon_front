@@ -314,6 +314,16 @@ const BOTONES: Boton[] = [
   { archivo: 'pages/ErrorNotFound.vue', clase: 'pagina-404__atajo--enlace' },
   { archivo: 'pages/ErrorNotFound.vue', clase: 'pagina-404__inicio' },
   { archivo: 'pages/ErrorNotFound.vue', clase: 'pagina-404__whatsapp' },
+  // Plan 4 — páginas secundarias: enlaces y botones de Testimonios, los dos
+  // diálogos y el índice de la política.
+  { archivo: 'pages/TestimonialsPage.vue', clase: 'testimonios__dejar', claro: true },
+  { archivo: 'pages/TestimonialsPage.vue', clase: 'testimonios__reintentar', claro: true },
+  { archivo: 'components/dialogs/whoWeAreDialog.vue', clase: 'quienes__cerrar', claro: true },
+  { archivo: 'components/dialogs/whoWeAreDialog.vue', clase: 'quienes__abrir-mapa', claro: true },
+  { archivo: 'components/dialogs/ourContact.vue', clase: 'horarios__cerrar' },
+  { archivo: 'components/dialogs/ourContact.vue', clase: 'horarios__whatsapp' },
+  { archivo: 'pages/PrivacyPolicyPage.vue', clase: 'politica__alternar', claro: true },
+  { archivo: 'pages/PrivacyPolicyPage.vue', clase: 'politica__enlace', claro: true },
 ];
 
 /** El bloque de estilos de un SFC dentro de las consultas de puntero fino. */
