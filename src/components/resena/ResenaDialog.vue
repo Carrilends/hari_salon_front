@@ -178,6 +178,7 @@
               type="button"
               class="resena__cancelar m-boton-plano"
               data-test="resena-cancelar"
+              :disabled="estado === 'enviando'"
               @click="cerrar"
             >
               Cancelar
@@ -511,6 +512,13 @@ async function alEnviar(): Promise<void> {
   border-bottom: var(--m-filete-grosor) solid var(--m-filete-rosa);
 }
 
+/* A mitad de envío no se puede cerrar: se ven inactivos. */
+.resena__cerrar:disabled,
+.resena__cancelar:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 .resena__cerrar:focus-visible,
 .resena__cancelar:focus-visible,
 .resena__enviar:focus-visible,
@@ -547,11 +555,11 @@ async function alEnviar(): Promise<void> {
  * `app.scss`.
  */
 @media (hover: hover) and (pointer: fine) {
-  .resena__cerrar:hover {
+  .resena__cerrar:not(:disabled):hover {
     color: var(--m-oro-profundo);
   }
 
-  .resena__cancelar:hover {
+  .resena__cancelar:not(:disabled):hover {
     color: var(--m-oro-profundo);
   }
 

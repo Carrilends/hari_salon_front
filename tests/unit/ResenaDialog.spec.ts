@@ -439,6 +439,9 @@ describe('ResenaDialog · el envío', () => {
     expect(
       w.find('[data-test="resena-cerrar"]').attributes('disabled')
     ).toBeDefined();
+    expect(
+      w.find('[data-test="resena-cancelar"]').attributes('disabled')
+    ).toBeDefined();
   });
 
   /** Foco de revisión 4. */
