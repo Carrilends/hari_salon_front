@@ -3,6 +3,7 @@
     class="resena-dialogo"
     aria-labelledby="resena-titulo"
     :model-value="abierto"
+    :persistent="estado === 'enviando'"
     :position="esHoja ? 'bottom' : 'standard'"
     :transition-show="esHoja ? 'slide-up' : 'scale'"
     :transition-hide="esHoja ? 'slide-down' : 'scale'"
@@ -19,6 +20,7 @@
         class="resena__cerrar m-boton-plano"
         aria-label="Cerrar"
         data-test="resena-cerrar"
+        :disabled="estado === 'enviando'"
         @click="cerrar"
       >
         <svg
@@ -181,6 +183,7 @@
               Cancelar
             </button>
             <button
+              ref="botonEnviar"
               type="submit"
               class="resena__enviar m-boton--ancho"
               data-test="enviar-resena"
@@ -239,6 +242,7 @@ const estrellas = ref<InstanceType<typeof EstrellasPuntaje> | null>(null);
 const campoNombre = ref<HTMLInputElement | null>(null);
 const campoTexto = ref<HTMLTextAreaElement | null>(null);
 const tituloExito = ref<HTMLElement | null>(null);
+const botonEnviar = ref<HTMLButtonElement | null>(null);
 
 function alAbrir(): void {
   const quien = quienPuedeResenar({
@@ -284,6 +288,11 @@ async function alEnviar(): Promise<void> {
     return;
   }
   if (estado.value === 'enviada') tituloExito.value?.focus();
+  // Un fallo de red o del servidor: el botón pulsado se deshabilitó al enviar
+  // y el foco habría caído al <body>; vuelve al botón, junto al aviso.
+  else if (estado.value === 'editando' && errorEnvio.value) {
+    botonEnviar.value?.focus();
+  }
 }
 </script>
 

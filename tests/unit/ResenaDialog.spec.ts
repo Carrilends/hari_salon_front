@@ -40,10 +40,10 @@ const FUENTE = readFileSync(
 
 const QDialog = {
   name: 'QDialog',
-  props: ['modelValue', 'position'],
+  props: ['modelValue', 'position', 'persistent'],
   emits: ['update:modelValue'],
   template:
-    '<div v-if="modelValue" class="q-dialog" :data-posicion="position"><slot /></div>',
+    '<div v-if="modelValue" class="q-dialog" :data-posicion="position" :data-persistente="persistent"><slot /></div>',
 };
 
 const crear = () =>
@@ -421,6 +421,24 @@ describe('ResenaDialog · el envío', () => {
       (w.find('[data-test="campo-texto"]').element as HTMLTextAreaElement).value
     ).toBe('El tinte me quedó parejo.');
     expect((radios(w)[3].element as HTMLInputElement).checked).toBe(true);
+    expect(document.activeElement).toBe(
+      w.find('[data-test="enviar-resena"]').element
+    );
+  });
+
+  it('mientras envía no se puede cerrar: diálogo persistente y X deshabilitada', async () => {
+    mockCrear.mockReturnValue(new Promise(() => undefined));
+    const w = await montar();
+    await abrir();
+    await rellenar(w);
+    expect(w.find('.q-dialog').attributes('data-persistente')).toBe('false');
+
+    await w.find('[data-test="resena-formulario"]').trigger('submit');
+
+    expect(w.find('.q-dialog').attributes('data-persistente')).toBe('true');
+    expect(
+      w.find('[data-test="resena-cerrar"]').attributes('disabled')
+    ).toBeDefined();
   });
 
   /** Foco de revisión 4. */

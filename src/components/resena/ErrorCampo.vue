@@ -1,5 +1,5 @@
 <template>
-  <p class="error-campo" role="alert">
+  <p class="error-campo">
     <svg
       class="error-campo__icono"
       width="16"
@@ -25,6 +25,11 @@
  * La línea de error bajo un campo de la reseña (tablero ResenaA, móvil): icono
  * y texto en el rosa de peligro, nunca solo color. `id` y `data-test` los pone
  * quien la usa (el campo la enlaza con `aria-describedby`).
+ *
+ * Sin `role="alert"` a propósito: el error llega al lector de pantalla por el
+ * foco que va al campo, `aria-invalid` y `aria-describedby`. Una región viva lo
+ * anunciaría dos veces (varios errores a la vez) e interrumpiría al escribir,
+ * porque el formulario revalida en vivo tras el primer intento.
  */
 defineOptions({ name: 'ErrorCampo' });
 </script>

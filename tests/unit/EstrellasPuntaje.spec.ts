@@ -116,14 +116,14 @@ describe('EstrellasPuntaje', () => {
 });
 
 describe('ErrorCampo', () => {
-  it('avisa con role="alert" y hereda id y data-test', () => {
+  it('no es una región viva (el foco y aria-describedby lo anuncian) y hereda id y data-test', () => {
     const w = mount(ErrorCampo, {
       slots: { default: 'Escribe al menos 5 caracteres.' },
       attrs: { id: 'resena-error-texto', 'data-test': 'error-texto' },
     });
 
     expect(w.element.tagName).toBe('P');
-    expect(w.attributes('role')).toBe('alert');
+    expect(w.attributes('role')).toBeUndefined();
     expect(w.attributes('id')).toBe('resena-error-texto');
     expect(w.attributes('data-test')).toBe('error-texto');
     expect(w.text()).toBe('Escribe al menos 5 caracteres.');
