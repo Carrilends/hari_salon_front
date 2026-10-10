@@ -19,7 +19,31 @@ const ARCHIVOS = [
   'pages/ServicePage.vue',
 ];
 
-const estilos = (fuente: string) => fuente.slice(fuente.indexOf('<style'));
+const sinComentarios = (css: string) =>
+  css.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
+/** El CSS del archivo, sin comentarios; falla si no hay `<style`, para no pasar en vacío. */
+const estilos = (fuente: string) => {
+  const desde = fuente.indexOf('<style');
+  if (desde === -1) throw new Error('el archivo no tiene <style');
+  return sinComentarios(fuente.slice(desde));
+};
+
+/** El CSS sin los bloques de la consulta de puntero fino (llaves equilibradas). */
+const fueraDePunteroFino = (css: string) => {
+  let resto = css;
+  for (;;) {
+    const desde = resto.indexOf('@media (hover: hover) and (pointer: fine)');
+    if (desde === -1) return resto;
+    let nivel = 0;
+    let i = resto.indexOf('{', desde);
+    for (; i < resto.length; i++) {
+      if (resto[i] === '{') nivel++;
+      else if (resto[i] === '}' && --nivel === 0) break;
+    }
+    resto = resto.slice(0, desde) + resto.slice(i + 1);
+  }
+};
 const plantilla = (fuente: string) => fuente.split('<script')[0];
 
 /** Todos los `.vue`, `.ts` y `.scss` de `src/`, con su ruta relativa. */
@@ -46,21 +70,49 @@ describe('plan 9 · guarda de fuente', () => {
   it.each(ARCHIVOS)('%s respeta Safari 13.1: ni `inset` ni `:has()`', (ruta) => {
     const css = estilos(leer(ruta));
 
-    expect(css).not.toMatch(/\binset\s*:/);
+    expect(css).not.toMatch(/(?<![\w-])inset(-[a-z]+)?\s*:/);
     expect(css).not.toMatch(/:has\(/);
   });
 
-  it.each(ARCHIVOS)('%s deja ver el foco', (ruta) => {
-    const fuente = leer(ruta);
-    // La página no tiene controles propios: los pone cada pieza.
-    if (ruta === 'pages/ServicePage.vue') return;
+  it.each(ARCHIVOS)('%s no usa `rgba(` en sus estilos', (ruta) => {
+    expect(estilos(leer(ruta))).not.toMatch(/rgba?\(/);
+  });
 
-    expect(fuente).toContain(':focus-visible');
+  /**
+   * El realce de color al pasar vive solo en la consulta de puntero fino. La
+   * única excepción es la fila de la lista: su borde reacciona al puntero Y al
+   * foco del teclado (`:focus-within`), y no hay equivalente táctil que dañar.
+   */
+  it.each(ARCHIVOS)('%s no tiene `:hover` fuera de la consulta de puntero fino', (ruta) => {
+    const fuera = fueraDePunteroFino(estilos(leer(ruta))).replace(
+      /\.fila-servicio:hover,\s*\.fila-servicio:focus-within\s*\{/,
+      ''
+    );
+
+    expect(fuera).not.toMatch(/:hover/);
+  });
+
+  /** El foco se vigila por control, no por archivo: un control nuevo sin foco falla. */
+  it.each([
+    ['components/dialogs/serviceDialog.vue', 'ficha__cerrar'],
+    ['components/dialogs/serviceDialog.vue', 'ficha__anadir'],
+    ['components/dialogs/serviceDialog.vue', 'ficha__cerrar-pie'],
+    ['components/dialogs/ServicePromotionDialog.vue', 'promo__boton'],
+    ['components/dialogs/ServicePromotionDialog.vue', 'promo__entrada'],
+    ['components/servicePage/ServiceCardAdminActions.vue', 'acciones-admin__boton'],
+    ['components/index/MobileActionBar.vue', 'mobile-bar__crear'],
+    ['components/servicePage/ServiceToolbar.vue', 'barra__boton'],
+    ['components/servicePage/ServiceRow.vue', 'fila-servicio__enlace'],
+  ])('%s · .%s deja ver el foco', (ruta, clase) => {
+    expect(estilos(leer(ruta))).toMatch(
+      new RegExp(`\\.${clase}(?![\\w-])[^{]*:focus-visible`)
+    );
   });
 
   /**
    * El rosa de «Borrar» sobre tinta es para fondo oscuro: sobre hueso da 1,8:1.
-   * Solo lo usan la franja de la dueña y la hoja de la promoción.
+   * Solo lo usan la franja de la dueña y la hoja de la promoción. Si otra
+   * superficie oscura lo necesita, se añade aquí su ruta a propósito.
    */
   it('el rosa de peligro sobre tinta solo lo usan la franja y la promoción', () => {
     const usan = todos(SRC)
@@ -76,16 +128,17 @@ describe('plan 9 · guarda de fuente', () => {
     ]);
   });
 
-  /** Foco de revisión 2: el peligro macizo sobre carbón da 2,1:1. */
-  it('ninguna superficie oscura de este plan escribe con el peligro macizo', () => {
-    for (const ruta of [
-      'components/dialogs/ServicePromotionDialog.vue',
-      'components/servicePage/ServiceCardAdminActions.vue',
-      'components/servicePage/ServiceRow.vue',
-      'components/dialogs/serviceDialog.vue',
-    ]) {
-      expect({ ruta, usa: /var\(--m-peligro\)/.test(leer(ruta)) }).toEqual({
-        ruta,
+  /**
+   * Foco de revisión 2: sobre carbón el peligro macizo, el rosa profundo y el
+   * oro profundo dan 2,1:1, 2,1:1 y 2,5:1. Ningún archivo del plan los usa
+   * (el sufijo `-sobre-tinta` es otro token y no cuenta).
+   */
+  it.each(ARCHIVOS)('%s no usa los tokens de fondo claro como color', (ruta) => {
+    const css = estilos(leer(ruta));
+
+    for (const token of ['--m-peligro', '--m-rosa-profundo', '--m-oro-profundo']) {
+      expect({ token, usa: new RegExp(`var\\(${token}(?![\\w-])`).test(css) }).toEqual({
+        token,
         usa: false,
       });
     }
