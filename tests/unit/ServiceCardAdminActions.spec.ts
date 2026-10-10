@@ -163,7 +163,7 @@ describe('ServiceCardAdminActions', () => {
 
 /**
  * Lo que no se puede ver montando (el SCSS está mapeado a un mock): se lee la
- * fuente. `--m-peligro` ni rastro (vive solo en la confirmación de borrado); nada posicionado en absoluto, porque
+ * fuente. el peligro macizo (`--m-peligro`) no aparece (vive solo en la confirmación de borrado; la franja usa `--m-peligro-sobre-tinta`); nada posicionado en absoluto, porque
  * la ranura de la tarjeta ya lo está; ni un color suelto.
  */
 describe('ServiceCardAdminActions · estilos', () => {
@@ -180,11 +180,6 @@ describe('ServiceCardAdminActions · estilos', () => {
     expect(estilos).not.toMatch(/position:\s*absolute/);
   });
 
-  /**
-   * En el renglón de 390 px tres botones de 44 en fila se comían ~150 px y el
-   * nombre del servicio se quedaba en una columna de 90. Apilados ocupan 44 de
-   * ancho y el texto conserva más de 150; el renglón crece hacia abajo.
-   */
   /**
    * Plan 9 (V2): en el renglón ya no van apilados a la derecha. Son una franja
    * al pie de la tarjeta, tres tercios de 44 px con filete arriba y entre
@@ -234,6 +229,19 @@ describe('ServiceCardAdminActions · estilos', () => {
   });
 
   /** Foco de revisión 5: «100 % · Quitar» en un tercio de 320 px. */
+  /** Hueso sobre oro macizo da ~2,8:1, bajo el 3:1 del indicador de foco. */
+  it('el foco de la promoción activa en la franja va en tinta, no en hueso', () => {
+    expect(estilos).toMatch(
+      /\.acciones-admin--compacto \.acciones-admin__boton--oro:focus-visible \{[^}]*outline-color: var\(--m-tinta\);/
+    );
+  });
+
+  it('al pasar sobre la promoción activa no se repinta el filete izquierdo', () => {
+    expect(estilos).not.toMatch(
+      /\.acciones-admin--compacto \.acciones-admin__boton--oro:hover \{[^}]*border-color/
+    );
+  });
+
   it('un rótulo que no cabe se corta con puntos suspensivos, no desborda', () => {
     expect(estilos).toMatch(
       /\.acciones-admin__rotulo \{[^}]*min-width: 0;[^}]*overflow: hidden;[^}]*white-space: nowrap;[^}]*text-overflow: ellipsis;/

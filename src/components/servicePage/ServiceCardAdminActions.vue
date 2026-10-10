@@ -218,6 +218,11 @@ defineOptions({ name: 'ServiceCardAdminActions' });
   outline-offset: -4px;
 }
 
+/* Hueso sobre oro macizo da ~2,8:1: sobre la promoción activa el foco va en tinta (5,8:1). */
+.acciones-admin--compacto .acciones-admin__boton--oro:focus-visible {
+  outline-color: var(--m-tinta);
+}
+
 /* «100 % · Quitar» en un tercio de 320 px no cabe entero: se corta, no desborda. */
 .acciones-admin__rotulo {
   min-width: 0;
@@ -240,9 +245,14 @@ defineOptions({ name: 'ServiceCardAdminActions' });
   }
 
   // Con la promoción activa, el oro macizo se aclara.
-  .acciones-admin__boton--oro:hover,
-  .acciones-admin--compacto .acciones-admin__boton--oro:hover {
+  .acciones-admin__boton--oro:hover {
     border-color: var(--m-oro-claro);
+    background: var(--m-oro-claro);
+    color: var(--m-tinta);
+  }
+
+  // En la franja solo cambian fondo y texto: el filete izquierdo se queda.
+  .acciones-admin--compacto .acciones-admin__boton--oro:hover {
     background: var(--m-oro-claro);
     color: var(--m-tinta);
   }
