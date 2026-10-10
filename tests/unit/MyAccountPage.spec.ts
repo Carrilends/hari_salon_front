@@ -301,10 +301,20 @@ describe('MyAccountPage · la sesión', () => {
   it('si la sesión se pierde estando aquí, va a entrar', async () => {
     wrapper = montar();
 
-    useAuthStore().logout();
+    useAuthStore().caducar();
     await nextTick();
 
     expect(mockPush).toHaveBeenCalledWith(A_ENTRAR);
+  });
+
+  it('una salida a secas estando aquí (menú) no manda a entrar', async () => {
+    wrapper = montar();
+
+    useAuthStore().logout();
+    await nextTick();
+    await flushPromises();
+
+    expect(mockPush).not.toHaveBeenCalled();
   });
 });
 
@@ -361,6 +371,25 @@ describe('MyAccountPage · salir', () => {
     expect(seccion.attributes('data-ocupado')).toBe('');
     expect(useAuthStore().isLoggedIn).toBe(true);
     expect(mockPush).not.toHaveBeenCalled();
+    expect(mockLogro).not.toHaveBeenCalled();
+  });
+
+  it('si «en todos» pierde la sesión (renovación fallida), va a entrar y no deja el error', async () => {
+    salirTodasApi.mockImplementation(() => {
+      useAuthStore().caducar();
+      return Promise.reject(
+        Object.assign(new Error('401'), { response: { status: 401 } })
+      );
+    });
+    wrapper = montar({ seccion: 'sesion' });
+
+    await wrapper.find('[data-test="doble-cerrar-todas"]').trigger('click');
+    await flushPromises();
+
+    expect(mockPush).toHaveBeenCalledWith(A_ENTRAR);
+    expect(
+      wrapper.find('[data-test="doble-sesion"]').attributes('data-error')
+    ).toBe('');
     expect(mockLogro).not.toHaveBeenCalled();
   });
 

@@ -7,15 +7,15 @@ import { useAuthStore } from 'src/stores/auth-store';
 
 const refresh = authApi.refresh as jest.Mock;
 const setSession = jest.fn();
-const logout = jest.fn();
+const caducar = jest.fn();
 
 beforeEach(() => {
   refresh.mockReset();
   setSession.mockReset();
-  logout.mockReset();
+  caducar.mockReset();
   (useAuthStore as unknown as jest.Mock).mockReturnValue({
     setSession,
-    logout,
+    caducar,
   });
 });
 
@@ -80,10 +80,10 @@ describe('refreshOnce (petición única)', () => {
     );
   });
 
-  it('si la renovación falla, cierra la sesión y propaga el error', async () => {
+  it('si la renovación falla, cierra la sesión (como caducada) y propaga el error', async () => {
     refresh.mockRejectedValue(new Error('401'));
     await expect(refreshOnce()).rejects.toThrow();
-    expect(logout).toHaveBeenCalledTimes(1);
+    expect(caducar).toHaveBeenCalledTimes(1);
     expect(setSession).not.toHaveBeenCalled();
   });
 });

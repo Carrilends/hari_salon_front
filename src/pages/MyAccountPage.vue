@@ -179,7 +179,15 @@ onMounted(() => {
 watch(
   () => authStore.isLoggedIn,
   (conSesion) => {
-    if (!conSesion && !saliendo.value) irAEntrar();
+    // Solo si NO fue a propósito: «Cerrar sesión» del menú también cierra el
+    // almacén y su destino es el inicio. Sin token aún pero sin sesión = la
+    // vigencia se agotó sin barrido: también involuntario.
+    if (
+      !conSesion &&
+      !saliendo.value &&
+      (authStore.sesionCaducada || authStore.token)
+    )
+      irAEntrar();
   }
 );
 
@@ -216,6 +224,12 @@ async function cerrarTodas() {
   } catch (err: unknown) {
     // Si falla, NO se cierra la local: la clienta creería que cerró las demás.
     saliendo.value = null;
+    // La renovación que dispara un 401 pudo cerrar la sesión (el `watch` la
+    // ignoró porque `saliendo` estaba puesto): reintentar sería otro 401.
+    if (!authStore.isLoggedIn) {
+      irAEntrar();
+      return;
+    }
     errorSesion.value = errorDeCuenta(err, 'cerrar-todas').texto;
     return;
   }

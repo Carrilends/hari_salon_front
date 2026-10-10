@@ -54,7 +54,7 @@ export async function refreshOnce(): Promise<void> {
         session.expiresIn * 1000 + Date.now(),
       );
     } catch (error) {
-      auth.logout();
+      auth.caducar();
       throw error;
     } finally {
       refreshPromise = null;

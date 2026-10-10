@@ -108,6 +108,27 @@ describe('auth-store', () => {
     expect(store.token).toBe('');
     expect(store.isLoggedIn).toBe(false);
     expect(store.roles).toEqual([]);
+    expect(store.sesionCaducada).toBe(true);
+  });
+
+  test('caducar cierra y marca; setSession lo limpia; logout a secas no lo toca', () => {
+    const store = useAuthStore();
+    const perfil = { fullName: 'U', email: 'u@e.com', roles: [] };
+    store.setSession('t', perfil, Date.now() + 60_000);
+
+    store.logout();
+    expect(store.sesionCaducada).toBe(false);
+
+    store.setSession('t', perfil, Date.now() + 60_000);
+    store.caducar();
+    expect(store.isLoggedIn).toBe(false);
+    expect(store.sesionCaducada).toBe(true);
+
+    store.logout();
+    expect(store.sesionCaducada).toBe(true);
+
+    store.setSession('t', perfil, Date.now() + 60_000);
+    expect(store.sesionCaducada).toBe(false);
   });
 });
 

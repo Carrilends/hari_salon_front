@@ -36,6 +36,10 @@ export const useAuthStore = defineStore(
     // las sesiones persistidas de antes no lo traen. La renovación sí (pasa la
     // sesión entera) y Mi cuenta lo pregunta al abrir (`checkStatus`).
     const hasPassword = ref<boolean | null>(null);
+    // Plan 6: ¿la sesión se cerró SIN que la clienta lo pidiera (renovación
+    // fallida, vigencia agotada)? Mi cuenta solo manda a entrar en ese caso:
+    // una salida a propósito (menú, página) va al inicio. No se persiste.
+    const sesionCaducada = ref(false);
 
     const isExpired = computed(
       () => !!expiresAt.value && Date.now() >= expiresAt.value
@@ -63,6 +67,7 @@ export const useAuthStore = defineStore(
       // undefined solo en respuestas antiguas: asumir verificado (ver arriba).
       emailVerified.value = profile.emailVerified ?? true;
       hasPassword.value = profile.hasPassword ?? null;
+      sesionCaducada.value = false;
       // si el back no manda exp, se decodifica del JWT
       const decoded = expMs && expMs > 0 ? expMs : decodeJwtExpMs(newToken);
       expiresAt.value = decoded || 0;
@@ -84,8 +89,14 @@ export const useAuthStore = defineStore(
       hasPassword.value = null;
     }
 
+    /** Cierre involuntario: igual que `logout()`, y deja constancia. */
+    function caducar() {
+      logout();
+      sesionCaducada.value = true;
+    }
+
     function sweepIfExpired() {
-      if (token.value && isExpired.value) logout();
+      if (token.value && isExpired.value) caducar();
     }
 
     return {
@@ -96,11 +107,13 @@ export const useAuthStore = defineStore(
       expiresAt,
       emailVerified,
       hasPassword,
+      sesionCaducada,
       isExpired,
       isLoggedIn,
       isAdmin,
       setSession,
       logout,
+      caducar,
       sweepIfExpired,
     };
   },
