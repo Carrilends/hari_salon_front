@@ -175,6 +175,8 @@ const TRAZOS: Record<string, string[]> = {
   ],
   /** Menos: cierra una respuesta del acordeón (`mas` y `cerrar` ya existen). */
   menos: ['M5 12h14'],
+  /** Candado: «No se puede eliminar: tiene reservas registradas» (Mis estilistas). */
+  candado: ['M6 11h12v9H6z', 'M8.5 11V8a3.5 3.5 0 0 1 7 0v3'],
 };
 
 const props = withDefaults(defineProps<{ nombre: string; tamano?: number }>(), {

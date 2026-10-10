@@ -35,3 +35,20 @@ describe('workers-api · la semana', () => {
     );
   });
 });
+
+import { mount } from '@vue/test-utils';
+import StrokeIcon from 'src/components/shared/StrokeIcon.vue';
+
+describe('los iconos de «Mis estilistas»', () => {
+  it.each([
+    'mas',
+    'cerrar',
+    'anterior',
+    'siguiente',
+    'candado',
+    'sin-preferencia',
+  ])('StrokeIcon dibuja «%s»', (nombre) => {
+    const icono = mount(StrokeIcon, { props: { nombre } });
+    expect(icono.findAll('path').length).toBeGreaterThan(0);
+  });
+});
