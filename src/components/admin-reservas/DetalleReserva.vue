@@ -242,7 +242,9 @@ defineOptions({ name: 'DetalleReserva' });
 .detalle--pantalla .detalle__cabecera {
   height: 56px;
   box-sizing: border-box;
-  padding: 0 8px;
+  /* A la izquierda, 8 + los 12 de relleno de «← Reservas»; a la derecha, el
+     estado a 20, como el cuerpo. */
+  padding: 0 20px 0 8px;
   border-bottom: var(--m-filete-grosor) solid var(--m-filete);
 }
 

@@ -136,6 +136,22 @@ describe('la bandeja · contrato visual', () => {
     expect(errorCompacta).toBe(horaCompacta + 14);
   });
 
+  it('en la ficha a pantalla completa, el estado se alinea con el cuerpo (20 px)', () => {
+    const css = sinComentarios(
+      estilos(leer('components/admin-reservas/DetalleReserva.vue'))
+    );
+    const cabecera = css.match(
+      /\.detalle--pantalla \.detalle__cabecera \{[^}]*padding: 0 (\d+)px 0 (\d+)px;/
+    );
+    const cuerpo = css.match(
+      /\.detalle--pantalla \.detalle__cuerpo \{[^}]*padding: \d+px (\d+)px/
+    );
+
+    // El «← Reservas» lleva 12 px de relleno propio: 8 + 12 = 20.
+    expect(Number(cabecera?.[1])).toBe(Number(cuerpo?.[1]));
+    expect(Number(cabecera?.[2]) + 12).toBe(Number(cuerpo?.[1]));
+  });
+
   it('nadie usa ya el filtro viejo del panel', () => {
     const fuentes = (dir: string): string[] =>
       readdirSync(dir).flatMap((nombre) => {
