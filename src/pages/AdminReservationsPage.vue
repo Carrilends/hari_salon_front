@@ -314,15 +314,22 @@ const esEscritorio = useConsultaMedios('(min-width: 1024px)', true);
 const esMovil = useConsultaMedios(CONSULTA_MOVIL_RESERVAS, false);
 
 const pestana = ref<PestanaBandeja>('pendientes');
-// «Hoy» se recalcula con cada lista nueva: una pestaña abierta de un día para
-// otro no se queda en ayer.
+/**
+ * «Hoy» no puede quedarse en ayer con la página abierta de un día para otro.
+ * Se recalcula con cada respuesta del servidor (`dataUpdatedAt`: un refresco
+ * idéntico conserva la misma referencia de `data` y no la delata), cada minuto
+ * y al volver a la pestaña del navegador. El reloj y el oyente se ponen en
+ * `onMounted` (nada de `document` en `setup`, por el SSG).
+ */
 const hoy = ref(getSalonNowParts().ymd);
-watch(
-  () => query.data.value,
-  () => {
-    hoy.value = getSalonNowParts().ymd;
-  }
-);
+function ponerHoyAlDia() {
+  hoy.value = getSalonNowParts().ymd;
+}
+watch(() => [query.data.value, query.dataUpdatedAt.value], ponerHoyAlDia);
+let relojDeHoy: ReturnType<typeof setInterval> | undefined;
+function alVolverALaPestana() {
+  if (document.visibilityState === 'visible') ponerHoyAlDia();
+}
 
 const todas = computed(() => ordenarPorHora(query.data.value ?? []));
 const cuentas = computed(() => contarPorPestana(todas.value, hoy.value));
@@ -516,9 +523,17 @@ function descartar(id: number) {
   vivos.descartar(id);
 }
 
-// Con la bandeja a la vista, el aviso en tiempo real solo se fija (A5).
-onMounted(() => vivos.marcarBandeja(true));
-onBeforeUnmount(() => vivos.marcarBandeja(false));
+onMounted(() => {
+  // Con la bandeja a la vista, el aviso en tiempo real solo se fija (A5).
+  vivos.marcarBandeja(true);
+  relojDeHoy = setInterval(ponerHoyAlDia, 60_000);
+  document.addEventListener('visibilitychange', alVolverALaPestana);
+});
+onBeforeUnmount(() => {
+  vivos.marcarBandeja(false);
+  clearInterval(relojDeHoy);
+  document.removeEventListener('visibilitychange', alVolverALaPestana);
+});
 </script>
 
 <style lang="scss" scoped>

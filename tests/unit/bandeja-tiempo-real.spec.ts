@@ -55,6 +55,7 @@ jest.mock('@tanstack/vue-query', () => {
       isLoading: vue.ref(false),
       isError: vue.ref(false),
       isFetching: vue.ref(false),
+      dataUpdatedAt: vue.ref(0),
       refetch: jest.fn(),
     }),
     useMutation: () => ({ mutateAsync: jest.fn(), isPending: vue.ref(false) }),
@@ -138,7 +139,9 @@ describe('la bandeja en tiempo real', () => {
     });
     montada = true;
     fakeSocket.emit('connect');
-    jest.runAllTimers();
+    // `runOnlyPendingTimers` y no `runAllTimers`: la página tiene un reloj de
+    // cada minuto (para que «Hoy» no se quede en ayer) que nunca se acaba.
+    jest.runOnlyPendingTimers();
     await nextTick();
   });
 
@@ -165,7 +168,7 @@ describe('la bandeja en tiempo real', () => {
     );
 
     // El coalescedor invalida → la lista se vuelve a pedir → la fila se va.
-    jest.runAllTimers();
+    jest.runOnlyPendingTimers();
     await nextTick();
     expect(wrapper.find('[data-id="res-1"]').exists()).toBe(false);
     expect(
@@ -186,7 +189,7 @@ describe('la bandeja en tiempo real', () => {
 
     servidor.reservas = sinAndrea();
     fakeSocket.emit('reservation.cancelled', canceladaPorAndrea);
-    jest.runAllTimers();
+    jest.runOnlyPendingTimers();
     await nextTick();
     await nextTick();
 
@@ -198,7 +201,7 @@ describe('la bandeja en tiempo real', () => {
     servidor.reservas = bandeja().filter((r) => r.id !== 'res-2');
 
     fakeSocket.emit('connect');
-    jest.runAllTimers();
+    jest.runOnlyPendingTimers();
     await nextTick();
 
     expect(wrapper.find('[data-id="res-2"]').exists()).toBe(false);

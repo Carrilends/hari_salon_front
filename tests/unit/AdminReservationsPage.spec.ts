@@ -15,6 +15,7 @@ const mockAdmin = {
     isLoading: ref(false),
     isError: ref(false),
     isFetching: ref(false),
+    dataUpdatedAt: ref(0),
     refetch: jest.fn(),
   },
   confirm: { mutateAsync: jest.fn(), isPending: ref(false) },
@@ -26,13 +27,16 @@ jest.mock('src/composables/reservations/useAdminReservations', () => ({
   useAdminReservations: () => mockAdmin,
 }));
 jest.mock('src/api/reservations-api', () => ({}));
+/** El reloj del salón; una prueba lo pasa al día siguiente. */
+let mockHoy = '2026-10-07';
+const mockReloj = jest.fn(() => ({
+  ymd: mockHoy,
+  qDate: mockHoy.replace(/-/g, '/'),
+  minOfDay: 600,
+}));
 jest.mock('src/helpers/businessHours', () => ({
   ...jest.requireActual('src/helpers/businessHours'),
-  getSalonNowParts: () => ({
-    ymd: '2026-10-07',
-    qDate: '2026/10/07',
-    minOfDay: 600,
-  }),
+  getSalonNowParts: () => mockReloj(),
 }));
 jest.mock('src/components/reservations/CambiarFechaDialog.vue', () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -108,7 +112,9 @@ beforeEach(() => {
   mockAdmin.query.data.value = bandeja();
   mockAdmin.query.isLoading.value = false;
   mockAdmin.query.isError.value = false;
+  mockAdmin.query.dataUpdatedAt.value = 0;
   mockAdmin.query.refetch.mockReset();
+  mockHoy = '2026-10-07';
   mockAdmin.confirm.mutateAsync.mockReset();
   mockAdmin.cancel.mutateAsync.mockReset();
   mockAdmin.refrescar.mockClear();
@@ -227,6 +233,75 @@ describe('la bandeja · lista (A1–A2)', () => {
     expect(w.find('[data-test="en-vivo"]').text()).toContain('Sin tiempo real');
     await w.find('[data-test="actualizar"]').trigger('click');
     expect(mockAdmin.refrescar).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('la bandeja · «Hoy» no se queda en ayer', () => {
+  const cuentaHoy = (w: Montada) =>
+    w.find('[data-test="pestana-hoy"] [data-test="cuenta"]').text();
+  const primerDia = (w: Montada) =>
+    w.findAll('[data-test="titulo-dia"]').map((t) => t.text())[0];
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('un refresco con la misma lista (misma referencia) en un día nuevo la pone al día', async () => {
+    const w = montar();
+    expect(cuentaHoy(w)).toBe('1');
+    expect(primerDia(w)).toBe('Mañana · jueves 8 de octubre');
+
+    // Pasa la medianoche con la página abierta; el refresco trae lo mismo y
+    // TanStack conserva la referencia: solo cambia `dataUpdatedAt`.
+    mockHoy = '2026-10-08';
+    mockAdmin.query.dataUpdatedAt.value = 1;
+    await nextTick();
+
+    expect(cuentaHoy(w)).toBe('2');
+    expect(primerDia(w)).toBe('Hoy · jueves 8 de octubre');
+  });
+
+  it('sin refrescos, el reloj de cada minuto la pone al día', async () => {
+    jest.useFakeTimers();
+    const w = montar();
+    expect(cuentaHoy(w)).toBe('1');
+
+    mockHoy = '2026-10-08';
+    jest.advanceTimersByTime(60_000);
+    await nextTick();
+
+    expect(cuentaHoy(w)).toBe('2');
+  });
+
+  it('al volver a la pestaña del navegador la pone al día', async () => {
+    const w = montar();
+
+    mockHoy = '2026-10-08';
+    document.dispatchEvent(new Event('visibilitychange'));
+    await nextTick();
+
+    expect(cuentaHoy(w)).toBe('2');
+  });
+
+  it('al desmontarse deja de mirar el reloj', () => {
+    const programar = jest.spyOn(window, 'setInterval');
+    const parar = jest.spyOn(window, 'clearInterval');
+    const escuchar = jest.spyOn(document, 'addEventListener');
+    const dejar = jest.spyOn(document, 'removeEventListener');
+    const w = montar();
+    const reloj = programar.mock.results[0]?.value;
+    const oyente = escuchar.mock.calls.find(
+      ([evento]) => evento === 'visibilitychange'
+    )?.[1];
+    expect(reloj).toBeDefined();
+    expect(oyente).toBeDefined();
+
+    w.unmount();
+
+    expect(parar).toHaveBeenCalledWith(reloj);
+    expect(dejar).toHaveBeenCalledWith('visibilitychange', oyente);
+    for (const espia of [programar, parar, escuchar, dejar])
+      espia.mockRestore();
   });
 });
 
