@@ -339,6 +339,17 @@ const BOTONES: Boton[] = [
   { archivo: 'components/preguntas/PreguntaDialog.vue', clase: 'pregunta-dialogo__boton--macizo' },
   { archivo: 'components/preguntas/BorrarPreguntaDialog.vue', clase: 'borrar-pregunta__boton', claro: true },
   { archivo: 'components/preguntas/BorrarPreguntaDialog.vue', clase: 'borrar-pregunta__boton--peligro', claro: true },
+  // Mi cuenta (plan 6): acciones de los formularios, reenviar, enlaces, crear contraseña y salir.
+  { archivo: 'components/cuenta/AccionesCuenta.vue', clase: 'acciones-cuenta__guardar' },
+  { archivo: 'components/cuenta/AccionesCuenta.vue', clase: 'acciones-cuenta__descartar', claro: true },
+  { archivo: 'components/cuenta/AvisoVerificacion.vue', clase: 'aviso-verificacion__boton', claro: true },
+  { archivo: 'components/cuenta/IndiceCuenta.vue', clase: 'indice__entrada', claro: true },
+  { archivo: 'components/cuenta/SeccionCorreo.vue', clase: 'correo__enlace', claro: true },
+  { archivo: 'components/cuenta/SeccionContrasena.vue', clase: 'contrasena__enlace', claro: true },
+  { archivo: 'components/cuenta/SeccionContrasena.vue', clase: 'contrasena__crear' },
+  { archivo: 'components/cuenta/SeccionSesion.vue', clase: 'sesion__boton', claro: true },
+  { archivo: 'components/cuenta/SeccionSesion.vue', clase: 'sesion__boton--macizo' },
+  { archivo: 'pages/MyAccountPage.vue', clase: 'cuenta__volver', claro: true },
 ];
 
 /** El bloque de estilos de un SFC dentro de las consultas de puntero fino. */
