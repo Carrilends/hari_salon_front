@@ -44,6 +44,7 @@
             type="button"
             class="estilistas__agregar"
             aria-label="Agregar estilista"
+            ref="botonAgregar"
             data-test="agregar-estilista"
             @click="abrirCrear"
           >
@@ -139,7 +140,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import StrokeIcon from 'src/components/shared/StrokeIcon.vue';
 import TablaSemana from 'src/components/estilistas/TablaSemana.vue';
@@ -263,49 +264,76 @@ function moverSemana(dias: number) {
   lunes.value = sumarDias(lunes.value, dias);
 }
 
+/**
+ * Generación del panel: sube con cada apertura y cada cierre. Un resultado
+ * tardío solo se pinta si la generación no cambió (ni otra estilista, ni el
+ * mismo panel cerrado y vuelto a abrir).
+ */
+let generacion = 0;
+/** Quién tenía el foco al abrir el panel, para devolvérselo al cerrarlo. */
+let origenDelFoco: HTMLElement | null = null;
+const botonAgregar = ref<HTMLButtonElement | null>(null);
+
+function recordarFoco() {
+  const activo = document.activeElement;
+  origenDelFoco = activo instanceof HTMLElement ? activo : null;
+}
+
+function devolverFoco() {
+  const origen = origenDelFoco;
+  origenDelFoco = null;
+  // Tras el refresco: la fila de origen puede haber desaparecido con la estilista.
+  void nextTick(() => {
+    const destino = origen && origen.isConnected ? origen : botonAgregar.value;
+    destino?.focus();
+  });
+}
+
 function abrirCrear() {
+  recordarFoco();
+  generacion += 1;
   limpiarMensajes();
   panel.value = { modo: 'crear' };
 }
 
 function abrirEditar(id: string) {
+  recordarFoco();
+  generacion += 1;
   limpiarMensajes();
   panel.value = { modo: 'editar', id };
 }
 
 function cerrarPanel() {
+  const eraEnLinea = Boolean(panel.value) && panelEnLinea.value;
+  generacion += 1;
   panel.value = null;
   limpiarMensajes();
+  // Con el diálogo, QDialog ya devuelve el foco; en línea, lo hacemos nosotros.
+  if (eraEnLinea) devolverFoco();
 }
 
 function alCambiarDialogo(abierto: boolean) {
   if (!abierto) cerrarPanel();
 }
 
-/** Identidad del panel: un resultado tardío solo vale si sigue siendo el mismo. */
-function claveDelPanel(): string | null {
-  const estado = panel.value;
-  if (!estado) return null;
-  return estado.modo === 'crear' ? 'crear' : estado.id;
-}
-
 async function guardar(nombre: string) {
   const estado = panel.value;
   if (!estado || enviando) return;
-  const clave = claveDelPanel();
+  const clave = generacion;
   enviando = true;
   exito.value = null;
   errorGuardar.value = null;
   try {
     if (estado.modo === 'crear') {
       await crear.mutateAsync({ name: nombre });
-      if (claveDelPanel() === clave) exito.value = `Se agregó a ${nombre}.`;
+      if (generacion === clave) exito.value = `Se agregó a ${nombre}.`;
     } else {
       await renombrar.mutateAsync({ id: estado.id, body: { name: nombre } });
-      if (claveDelPanel() === clave) exito.value = 'Cambios guardados.';
+      if (generacion === clave) exito.value = 'Cambios guardados.';
     }
   } catch (err) {
-    if (claveDelPanel() === clave) errorGuardar.value = mensajeAlGuardar(err);
+    if (generacion === clave) errorGuardar.value = mensajeAlGuardar(err);
+    else aviso.fallo(`${nombre}: ${mensajeAlGuardar(err)}`);
   } finally {
     enviando = false;
   }
@@ -314,16 +342,17 @@ async function guardar(nombre: string) {
 async function eliminarElegida() {
   const estilista = elegida.value;
   if (!estilista || estilista.isDefault || enviando) return;
-  const clave = claveDelPanel();
+  const clave = generacion;
   enviando = true;
   errorEliminar.value = null;
   try {
     await eliminar.mutateAsync(estilista.id);
-    // Si la dueña ya pasó a otra estilista, ese panel no se toca.
-    if (claveDelPanel() === clave) cerrarPanel();
+    // Si el panel ya es otro, no se toca.
+    if (generacion === clave) cerrarPanel();
     aviso.logro(`Se eliminó a ${estilista.name}.`);
   } catch (err) {
-    if (claveDelPanel() === clave) errorEliminar.value = mensajeAlEliminar(err);
+    if (generacion === clave) errorEliminar.value = mensajeAlEliminar(err);
+    else aviso.fallo(`${estilista.name}: ${mensajeAlEliminar(err)}`);
   } finally {
     enviando = false;
   }

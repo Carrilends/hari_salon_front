@@ -14,8 +14,9 @@ import { reservaDePrueba, semanaDePrueba } from './fixtures/estilistas';
 jest.mock('src/composables/seo/useSeo', () => ({ useSeo: () => undefined }));
 
 const mockLogro = jest.fn();
+const mockFallo = jest.fn();
 jest.mock('src/composables/shared/useAviso', () => ({
-  useAviso: () => ({ logro: mockLogro, fallo: jest.fn(), atencion: jest.fn() }),
+  useAviso: () => ({ logro: mockLogro, fallo: mockFallo, atencion: jest.fn() }),
 }));
 
 const mockReplace = jest.fn();
@@ -83,6 +84,7 @@ beforeEach(() => {
   fijarViewport({ ancho: 1280 });
   mockAuth.isAdmin = true;
   mockLogro.mockReset();
+  mockFallo.mockReset();
   mockReplace.mockReset();
   mockSemana.respuesta = {
     semana: ref(semanaDePrueba()),
@@ -442,5 +444,124 @@ describe('WorkersPage · resultados tardíos', () => {
 
     expect(pagina.get('[data-test="panel-titulo"]').text()).toBe('Alejandro');
     expect(mockLogro).toHaveBeenCalledWith('Se eliminó a Sonia s.');
+  });
+
+  it('un error de guardado tardío, con otro panel abierto, se dice con un aviso', async () => {
+    let rechazar: (e: unknown) => void = () => {};
+    mockMutaciones.actual!.renombrar.mutateAsync.mockImplementation(
+      () => new Promise((_, r) => (rechazar = r))
+    );
+    const pagina = await montar();
+    await elegir(pagina, 1);
+    await pagina.get('[data-test="campo-nombre"]').setValue('Mónica');
+    await pagina.get('[data-test="panel-estilista"] form').trigger('submit');
+
+    await elegir(pagina, 0);
+    rechazar({ message: 'Network Error' });
+    await flushPromises();
+
+    expect(pagina.find('[data-test="error-guardar"]').exists()).toBe(false);
+    expect(mockFallo).toHaveBeenCalledWith(expect.stringContaining('Mónica'));
+  });
+
+  it('un 409 de borrado tardío se dice con un aviso, sin tocar el panel de B', async () => {
+    let rechazar: (e: unknown) => void = () => {};
+    mockMutaciones.actual!.eliminar.mutateAsync.mockImplementation(
+      () => new Promise((_, r) => (rechazar = r))
+    );
+    const pagina = await montar();
+    await elegir(pagina, 2);
+    await pagina.get('[data-test="eliminar-estilista"]').trigger('click');
+    await pagina.get('[data-test="confirmar-eliminar"]').trigger('click');
+
+    await elegir(pagina, 0);
+    rechazar({ response: { status: 409 } });
+    await flushPromises();
+
+    expect(mockFallo).toHaveBeenCalledWith(
+      'Sonia s: No se puede eliminar: tiene reservas registradas'
+    );
+    expect(pagina.find('[data-test="error-eliminar"]').exists()).toBe(false);
+  });
+
+  it('crear, cerrar y reabrir «Agregar»: la respuesta tardía no pisa lo que se escribe', async () => {
+    let resolver: (v: unknown) => void = () => {};
+    mockMutaciones.actual!.crear.mutateAsync.mockImplementation(
+      () => new Promise((r) => (resolver = r))
+    );
+    const pagina = await montar();
+    await pagina.get('[data-test="agregar-estilista"]').trigger('click');
+    await pagina.get('[data-test="campo-nombre"]').setValue('Ana');
+    await pagina.get('[data-test="panel-estilista"] form').trigger('submit');
+    await pagina.get('[data-test="cerrar-panel"]').trigger('click');
+    await pagina.get('[data-test="agregar-estilista"]').trigger('click');
+    await pagina.get('[data-test="campo-nombre"]').setValue('Bea');
+
+    resolver({ id: 'w-new', name: 'Ana', isDefault: false });
+    await flushPromises();
+
+    expect(pagina.find('[data-test="exito-estilista"]').exists()).toBe(false);
+    expect(
+      pagina.get<HTMLInputElement>('[data-test="campo-nombre"]').element.value
+    ).toBe('Bea');
+  });
+});
+
+describe('WorkersPage · el foco al cerrar el panel en línea', () => {
+  it('devuelve el foco a la fila que lo abrió', async () => {
+    const pagina = mount(WorkersPage, {
+      attachTo: document.body,
+      global: {
+        stubs: {
+          'q-page': { template: '<main><slot /></main>' },
+          'q-dialog': QDialogDoble,
+          RouterLink: RouterLinkStub,
+        },
+      },
+    });
+    await nextTick();
+    const fila = pagina.findAll('[data-test="elegir-estilista"]')[1]
+      .element as HTMLElement;
+    fila.focus();
+    await pagina.findAll('[data-test="elegir-estilista"]')[1].trigger('click');
+
+    await pagina.get('[data-test="cerrar-panel"]').trigger('click');
+    await flushPromises();
+
+    expect(document.activeElement).toBe(fila);
+    pagina.unmount();
+  });
+
+  it('si la fila ya no existe, el foco va a «Agregar estilista»', async () => {
+    const pagina = mount(WorkersPage, {
+      attachTo: document.body,
+      global: {
+        stubs: {
+          'q-page': { template: '<main><slot /></main>' },
+          'q-dialog': QDialogDoble,
+          RouterLink: RouterLinkStub,
+        },
+      },
+    });
+    await nextTick();
+    const fila = pagina.findAll('[data-test="elegir-estilista"]')[2];
+    (fila.element as HTMLElement).focus();
+    await fila.trigger('click');
+    // Al borrar, la semana se refresca sin ella antes de que la mutación resuelva.
+    mockMutaciones.actual!.eliminar.mutateAsync.mockImplementation(async () => {
+      mockSemana.respuesta!.semana.value = semanaDePrueba({
+        workers: semanaDePrueba().workers.filter((w) => w.id !== 'w-son'),
+      });
+      await nextTick();
+      return { deleted: true };
+    });
+    await pagina.get('[data-test="eliminar-estilista"]').trigger('click');
+    await pagina.get('[data-test="confirmar-eliminar"]').trigger('click');
+    await flushPromises();
+
+    expect(document.activeElement).toBe(
+      pagina.get('[data-test="agregar-estilista"]').element
+    );
+    pagina.unmount();
   });
 });
