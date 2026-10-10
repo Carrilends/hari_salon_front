@@ -1,6 +1,7 @@
 import { computed } from 'vue';
 import { useQuery } from '@tanstack/vue-query';
 import { servicesApi } from 'src/api/services-api';
+import { queryKeys } from 'src/api/query-keys';
 import type { ReviewItem } from 'src/api/apiTypes';
 
 const getReviews = async (): Promise<ReviewItem[]> => {
@@ -10,7 +11,7 @@ const getReviews = async (): Promise<ReviewItem[]> => {
 
 export const useReviews = () => {
   const { data, isLoading, isFetching, refetch } = useQuery<ReviewItem[]>({
-    queryKey: ['reviews'],
+    queryKey: queryKeys.reviews.all,
     queryFn: getReviews,
     staleTime: 1000 * 60,
   });

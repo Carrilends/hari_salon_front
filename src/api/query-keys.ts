@@ -29,4 +29,8 @@ export const queryKeys = {
     /** Horas libres de cada estilista para un día `YYYY-MM-DD`. */
     day: (ymd: string) => ['worker-availability', ymd] as const,
   },
+  reviews: {
+    /** Reseñas públicas (GET /reviews): Testimonios y la banda del inicio. */
+    all: ['reviews'] as const,
+  },
 };
