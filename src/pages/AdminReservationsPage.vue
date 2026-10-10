@@ -200,7 +200,11 @@
       maximized
       transition-show="slide-left"
       transition-hide="slide-right"
+      @hide="() => void recogerFoco()"
     >
+      <!-- Al acabar de salir (`hide`), Quasar devuelve el foco a la fila que la
+           abrió; si la fila ya no está (la cancelaron), cae al body y lo
+           recoge la lista. -->
       <!-- La capa tiene alto definido y es la que se desplaza: así la ficha
            (`min-height: 100%`) llena la pantalla y sus acciones se pegan abajo. -->
       <div class="bandeja__pantalla">

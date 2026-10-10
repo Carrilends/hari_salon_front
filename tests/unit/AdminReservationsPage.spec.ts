@@ -642,4 +642,31 @@ describe('la bandeja · móvil (390)', () => {
     const hoja = w.find('[data-test="cancelar-reserva"]').element.parentElement;
     expect(hoja?.getAttribute('data-posicion')).toBe('bottom');
   });
+
+  it('si la ficha a pantalla completa se cierra y el foco cae al body, lo recoge la lista (Foco 1)', async () => {
+    fijarViewport({ ancho: 390 });
+    const w = mount(AdminReservationsPage, {
+      attachTo: document.body,
+      global: { components: { QPage, QDialog } },
+    });
+    await nextTick();
+    await abrir(w, 'res-1');
+
+    // La clienta la cancela con la ficha abierta: la ficha sale con la
+    // transición del diálogo y, al acabar (`hide`), el foco ya no tiene dónde
+    // estar.
+    mockAdmin.query.data.value = bandeja().filter((r) => r.id !== 'res-1');
+    await flushPromises();
+    (document.activeElement as HTMLElement | null)?.blur();
+    const ficha = w
+      .findAllComponents(QDialog)
+      .find((d) => d.props('maximized') !== undefined);
+    ficha?.vm.$emit('hide');
+    await flushPromises();
+
+    expect((document.activeElement as HTMLElement | null)?.id).toBe(
+      'bandeja-panel'
+    );
+    w.unmount();
+  });
 });
