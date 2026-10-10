@@ -1,122 +1,199 @@
 <template>
   <q-dialog
     v-model="dialog"
-    :maximized="maximized"
-    :backdrop-filter="backdropFilter"
-    :transition-show="maximized ? 'slide-up' : 'scale'"
-    :transition-hide="maximized ? 'slide-down' : 'scale'"
+    class="horarios-dialogo"
+    :position="esMovil ? 'bottom' : 'standard'"
+    :transition-show="esMovil ? 'slide-up' : 'scale'"
+    :transition-hide="esMovil ? 'slide-down' : 'scale'"
+    aria-label="Horarios"
   >
-    <q-card
-      class="contact-dialog relative-position"
-      :class="{ 'contact-dialog--maximized': maximized }"
-      flat
-      bordered
+    <section
+      class="horarios"
+      :class="{ 'horarios--hoja': esMovil }"
+      data-test="horarios"
     >
-      <q-btn
-        v-close-popup
-        class="contact-dialog__close"
-        icon="close"
-        flat
-        round
-        dense
-        color="grey-7"
-        aria-label="Cerrar"
+      <span
+        v-if="esMovil"
+        class="horarios__tirador"
+        data-test="tirador"
+        aria-hidden="true"
       />
 
-      <q-card-section class="contact-dialog__schedule">
-        <div class="schedule-layout">
-          <div class="schedule-layout__img">
-            <q-img
-              src="src/assets/places/hair_salon.jpg"
-              :ratio="4 / 3"
-              fit="cover"
-              class="schedule-img rounded-borders"
-              spinner-color="primary"
-              spinner-size="28px"
-            />
-          </div>
-          <div class="schedule-layout__content">
-            <div class="schedule-title">Horarios de atención</div>
-            <div class="schedule-block">
-              <div class="schedule-block__label">
-                {{ BUSINESS_SCHEDULE_COPY.weekdayLabel }}
-              </div>
-              <div class="schedule-block__hours">
-                {{ BUSINESS_SCHEDULE_COPY.weekdayRange }}
-              </div>
-            </div>
-            <div class="schedule-block">
-              <div class="schedule-block__label">
-                {{ BUSINESS_SCHEDULE_COPY.weekendLabel }}
-              </div>
-              <div class="schedule-block__hours">
-                {{ BUSINESS_SCHEDULE_COPY.weekendRange }}
-              </div>
-            </div>
-          </div>
+      <header class="horarios__cabecera">
+        <div class="horarios__titulos">
+          <p class="horarios__antetitulo">Horarios</p>
+          <h2 class="horarios__titulo">Cuándo atendemos</h2>
         </div>
-      </q-card-section>
-
-      <q-separator class="contact-dialog__sep" />
-
-      <q-card-section class="contact-dialog__footer">
-        <div class="footer-title">Contáctanos</div>
-        <p class="footer-tagline">
-          Peluquería Marlene está a tu servicio
+        <p class="horarios__estado">
+          <span class="horarios__pildora" data-test="estado-salon">
+            <span class="horarios__punto" aria-hidden="true" />
+            {{ textoEstado }}
+          </span>
         </p>
-        <div class="contact-row">
-          <a class="contact-phone" :href="phoneTelHref">
-            {{ phoneDisplay }}
-          </a>
-          <q-btn
-            class="whatsapp-btn"
-            tag="a"
-            :href="whatsappHref"
-            target="_blank"
-            rel="noopener noreferrer"
-            round
-            unelevated
-            color="positive"
-            icon="lab la-whatsapp"
-            size="md"
-            aria-label="Abrir WhatsApp"
-          />
-        </div>
-      </q-card-section>
-    </q-card>
+        <button
+          type="button"
+          class="horarios__cerrar m-boton-plano"
+          aria-label="Cerrar"
+          data-test="cerrar-horarios"
+          @click="cerrar"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+      </header>
+
+      <ul class="horarios__semana" data-test="semana">
+        <li
+          v-for="fila in filas"
+          :key="fila.fecha"
+          class="horarios__fila"
+          :class="{ 'horarios__fila--hoy': fila.esHoy }"
+          :aria-current="fila.esHoy ? 'date' : undefined"
+          data-test="fila-dia"
+        >
+          <span class="horarios__dia">
+            {{ fila.dia }}
+            <span
+              v-if="fila.esHoy"
+              class="horarios__marca"
+              data-test="marca-hoy"
+              >Hoy</span
+            >
+            <span
+              v-if="fila.esFestivo"
+              class="horarios__marca horarios__marca--festivo"
+              data-test="marca-festivo"
+              >Festivo</span
+            >
+          </span>
+          <span class="horarios__horas"
+            >{{ fila.abre }} – {{ fila.cierra }}</span
+          >
+        </li>
+      </ul>
+      <p class="horarios__festivos" data-test="linea-festivos">
+        Los festivos atendemos de {{ festivos.abre }} a {{ festivos.cierra }}.
+      </p>
+
+      <footer class="horarios__pie">
+        <p class="horarios__direccion" data-test="direccion">
+          <svg
+            width="17"
+            height="17"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path
+              d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"
+            />
+            <path d="M14.4 10a2.4 2.4 0 1 1-4.8 0 2.4 2.4 0 0 1 4.8 0" />
+          </svg>
+          {{ SALON_STREET }}, {{ SALON_LOCALITY }}
+        </p>
+        <a
+          class="horarios__whatsapp m-boton m-boton--ancho"
+          data-test="whatsapp"
+          :href="whatsappHref"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path
+              d="M20.5 11.6a8.5 8.5 0 0 1-12.4 7.6L3.5 20.5l1.4-4.4A8.5 8.5 0 1 1 20.5 11.6z"
+            />
+          </svg>
+          Escríbenos por WhatsApp
+        </a>
+      </footer>
+    </section>
   </q-dialog>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { useDialog } from 'src/composables/dialogs/useDialogService';
+import { useConsultaMedios } from 'src/composables/shared/useConsultaMedios';
 import {
-  DialogEmits,
-  useDialog,
-} from 'src/composables/dialogs/useDialogService';
-import { useDialogMaximizedBelow } from 'src/composables/dialogs/useDialogMaximizedBelow';
-import { BUSINESS_SCHEDULE_COPY } from 'src/helpers/businessHours';
+  getSalonNowParts,
+  isColombianHolidayQDate,
+} from 'src/helpers/businessHours';
+import {
+  estadoDelSalon,
+  horarioDeFestivos,
+  semanaDelSalon,
+  textoEstadoSalon,
+} from 'src/helpers/estado-salon';
+import { SALON_LOCALITY, SALON_STREET } from 'src/constants/salon-location';
 import { WHATSAPP_PHONE } from 'src/constants/whatsapp-phone';
-import { formatSalonPhone, telHref } from 'src/helpers/phone';
-
-const props = defineProps<{ dialog: boolean }>();
-const emit = defineEmits<DialogEmits>();
-
-const { dialog } = useDialog(props, emit);
-const { maximized } = useDialogMaximizedBelow();
 
 /**
- * El teléfono sale de un solo sitio (`VITE_WHATSAPP_PHONE`, con el número del
- * negocio por defecto), así que lo escrito y lo que se abre al pulsar no pueden
- * separarse.
+ * El diálogo de Horarios (S3, tablero HorariosSemanaTinta). Lo abre el menú
+ * «Más» del armazón con `v-model:dialog`; esa interfaz no cambia.
+ *
+ * El teléfono ya no se escribe: la regla del portal es el botón verde de
+ * WhatsApp y nada más. El número sale de `whatsapp-phone` (un solo sitio).
  */
-const phoneDisplay = formatSalonPhone(WHATSAPP_PHONE);
-const phoneTelHref = telHref(WHATSAPP_PHONE);
+const props = defineProps<{ dialog: boolean }>();
+/* Inline y no `DialogEmits`: vue3-jest no resuelve tipos importados en
+   `defineEmits` (sin opción `fs`). Es la misma firma que `DialogEmits`. */
+const emit = defineEmits<{ (e: 'update:dialog', value: boolean): void }>();
+
+const { dialog } = useDialog(props, emit);
+
+/** Mismo corte que la cabecera y el menú: por debajo, hoja inferior. */
+const esMovil = useConsultaMedios('(max-width: 699px)', false);
+
+/**
+ * La hora se lee al ABRIR, no solo al montar: el armazón monta este diálogo una
+ * vez por visita, y una pestaña abierta desde la mañana diría «Abierto ahora»
+ * por la noche.
+ */
+const ahora = ref(getSalonNowParts());
+watch(dialog, (abierto) => {
+  if (abierto) ahora.value = getSalonNowParts();
+});
+
+const textoEstado = computed(() =>
+  textoEstadoSalon(
+    estadoDelSalon(ahora.value),
+    isColombianHolidayQDate(ahora.value.qDate)
+  )
+);
+const filas = computed(() => semanaDelSalon(ahora.value));
+const festivos = horarioDeFestivos();
 const whatsappHref = `https://wa.me/${WHATSAPP_PHONE}`;
 
-/** Desenfoque del velo detrás del modal; en móvil va maximizado, sin blur. */
-const backdropFilter = computed(() =>
-  maximized.value ? undefined : 'blur(10px)',
-);
+function cerrar(): void {
+  dialog.value = false;
+}
 
 defineOptions({
   name: 'ourContact',
@@ -124,156 +201,303 @@ defineOptions({
 </script>
 
 <style scoped lang="scss">
-.contact-dialog {
-  width: min(100%, 520px);
-  max-height: min(90vh, 640px);
-  overflow: auto;
-  border-radius: 20px;
-  background: #fdfaf8;
-  border-color: rgba(61, 61, 61, 0.08);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
-}
-
-.contact-dialog__close {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  z-index: 2;
-}
-
-.contact-dialog__schedule {
-  padding: 2.25rem 1.5rem 1.5rem;
-}
-
-.schedule-layout {
+/**
+ * Tablero HorariosSemanaTinta: 760 px en tinta en escritorio; hoja inferior en
+ * móvil. Pares medidos: píldora rosa sobre carbón 9,41:1; «Hoy» oro sobre
+ * carbón 4,75:1; días piedra clara sobre tinta 10,39:1.
+ */
+.horarios {
+  /* Quasar quita los clics a `.q-dialog__inner` y solo los devuelve a sus
+     hijos `<div>`: sin esto, cada clic atraviesa el diálogo. */
+  pointer-events: all;
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 760px;
+  max-width: calc(100vw - 32px);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--m-tinta);
+  color: var(--m-hueso);
+  border-radius: var(--m-radio-tarjeta);
+  font-family: var(--m-font-sans);
+}
+
+.horarios--hoja {
+  width: 100%;
+  max-width: 100%;
+  max-height: 85vh;
+  border-radius: var(--m-radio-panel) var(--m-radio-panel) 0 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.horarios__tirador {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 4px;
+  margin: 10px auto 0;
+  border-radius: var(--m-radio-pildora);
+  background: var(--m-piedra-clara);
+}
+
+.horarios__cabecera {
+  display: flex;
   align-items: flex-start;
-  gap: 1.25rem 1.5rem;
+  gap: 14px;
+  padding: 28px 36px 18px;
 }
 
-.schedule-layout__img {
-  flex: 1 1 140px;
-  max-width: 220px;
-  min-width: 120px;
-}
-
-.schedule-img {
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
-}
-
-.schedule-layout__content {
-  flex: 1 1 200px;
+.horarios__titulos {
+  flex: 1 1 auto;
   min-width: 0;
 }
 
-.schedule-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: #3d3d3d;
-  margin-bottom: 1.125rem;
-  line-height: 1.35;
-}
-
-.schedule-block {
-  margin-bottom: 1rem;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-}
-
-.schedule-block__label {
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+.horarios__antetitulo {
+  margin: 0 0 8px;
+  font-size: 10.5px;
+  letter-spacing: var(--m-tracking-etiqueta);
   text-transform: uppercase;
-  color: #8a8580;
-  margin-bottom: 0.25rem;
+  color: var(--m-oro);
 }
 
-.schedule-block__hours {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #c2185b;
-  line-height: 1.45;
+.horarios__titulo {
+  margin: 0;
+  font-family: var(--m-font-display);
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.1;
+  color: var(--m-hueso);
 }
 
-.contact-dialog__sep {
-  background: rgba(61, 61, 61, 0.08);
+.horarios__estado {
+  flex: 0 0 auto;
+  align-self: center;
+  margin: 0;
 }
 
-.contact-dialog__footer {
-  padding: 1.25rem 1.5rem 1.5rem;
-  background: linear-gradient(
-    165deg,
-    #f8f4f6 0%,
-    #f0e8ec 55%,
-    #e8dfe5 100%
-  );
+.horarios__pildora {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 14px;
+  border-radius: var(--m-radio-pildora);
+  background: var(--m-carbon);
+  font-size: 13px;
+  color: var(--m-rosa);
 }
 
-.footer-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #2c2c2c;
-  margin-bottom: 0.35rem;
+.horarios__punto {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--m-rosa);
 }
 
-.footer-tagline {
-  margin: 0 0 1rem;
-  font-size: 0.875rem;
-  line-height: 1.5;
-  color: #5c5652;
-}
-
-.contact-row {
+.horarios__cerrar {
+  flex: 0 0 auto;
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  width: var(--m-tactil-min);
+  height: var(--m-tactil-min);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--m-hueso);
+  cursor: pointer;
+}
+
+.horarios__semana {
+  list-style: none;
+  margin: 0;
+  padding: 0 36px;
+  font-size: 14.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.horarios__fila {
+  display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem 1rem;
+  gap: 12px;
+  min-height: 38px;
+  padding: 0 12px;
+  border-top: var(--m-filete-grosor) solid var(--m-carbon);
+  color: var(--m-piedra-clara);
 }
 
-.contact-phone {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #2c2c2c;
-  text-decoration: none;
-  letter-spacing: 0.02em;
-  transition: color 0.2s ease;
-
-  &:hover {
-    color: #ad1457;
-  }
+.horarios__fila:last-child {
+  border-bottom: var(--m-filete-grosor) solid var(--m-carbon);
 }
 
-.whatsapp-btn {
-  box-shadow: 0 2px 10px rgba(37, 211, 102, 0.35);
+.horarios__fila--hoy {
+  background: var(--m-carbon);
+  font-weight: 500;
+  color: var(--m-hueso);
 }
 
-.contact-dialog--maximized {
-  width: 100%;
-  max-width: 100%;
-  height: 100%;
-  min-height: 100%;
-  max-height: none;
-  border-radius: 0;
+.horarios__dia {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.horarios__marca {
+  padding: 2px 8px;
+  border: var(--m-filete-grosor) solid var(--m-oro);
+  border-radius: var(--m-radio-pildora);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: var(--m-tracking-etiqueta);
+  text-transform: uppercase;
+  color: var(--m-oro);
+}
+
+.horarios__marca--festivo {
+  border-color: var(--m-filete-oscuro);
+  color: var(--m-piedra-clara);
+}
+
+.horarios__horas {
+  color: var(--m-hueso);
+}
+
+.horarios__festivos {
+  margin: 10px 48px 0;
+  font-size: 13px;
+  color: var(--m-piedra-clara);
+}
+
+.horarios__pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 24px;
+  padding: 16px 36px;
+  border-top: var(--m-filete-grosor) solid var(--m-filete-oscuro);
+}
+
+.horarios__direccion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--m-piedra-clara);
+}
+
+.horarios__whatsapp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 0 22px;
+  border-radius: var(--m-radio-pildora);
+  background: var(--m-whatsapp);
+  color: var(--m-whatsapp-texto);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: var(--m-tracking-nav);
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.horarios__cerrar:focus-visible,
+.horarios__whatsapp:focus-visible {
+  outline: 2px solid var(--m-hueso);
+  outline-offset: 2px;
+}
+
+/* Móvil: la hoja del tablero. La píldora baja a su propia línea. */
+.horarios--hoja .horarios__cabecera {
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 10px 12px 0 20px;
+}
+
+.horarios--hoja .horarios__antetitulo {
+  margin-bottom: 4px;
+  font-size: 10px;
+}
+
+.horarios--hoja .horarios__titulo {
+  font-size: 22px;
+}
+
+.horarios--hoja .horarios__estado {
+  order: 3;
+  flex: 1 0 100%;
+  margin: 2px 0 14px;
+}
+
+.horarios--hoja .horarios__pildora {
+  min-height: 30px;
+  padding: 0 12px;
+  font-size: 12.5px;
+}
+
+.horarios--hoja .horarios__semana {
+  padding: 0 20px;
+}
+
+.horarios--hoja .horarios__fila {
+  min-height: var(--m-tactil-min);
+  padding: 0 10px;
+}
+
+.horarios--hoja .horarios__festivos {
+  margin: 10px 30px 0;
+  font-size: 12.5px;
+}
+
+.horarios--hoja .horarios__pie {
   flex-direction: column;
-  box-shadow: none;
-  overflow: hidden;
+  align-items: stretch;
+  gap: 10px;
+  padding: 14px 20px 22px;
+}
 
-  .contact-dialog__schedule {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+.horarios--hoja .horarios__direccion {
+  font-size: 12.5px;
+}
+
+.horarios--hoja .horarios__whatsapp {
+  min-height: 50px;
+}
+
+/**
+ * Realce al pasar (solo puntero fino): el COLOR. El movimiento es global, en
+ * `app.scss` («Realce y hundido»).
+ */
+@media (hover: hover) and (pointer: fine) {
+  .horarios__cerrar:hover {
+    color: var(--m-oro);
   }
 
-  .contact-dialog__footer {
-    flex-shrink: 0;
+  .horarios__whatsapp:hover {
+    background: var(--m-whatsapp-realce);
   }
+}
+</style>
+
+<!--
+  Sin `scoped` a propósito: el velo lo pinta QDialog, cuyos nodos no llevan el
+  atributo de ámbito. La clase `horarios-dialogo` viaja a la raíz del diálogo,
+  así que la regla no se escapa a otro.
+-->
+<style lang="scss">
+.horarios-dialogo .q-dialog__backdrop {
+  background: var(--m-velo);
+}
+
+.horarios-dialogo .q-dialog__inner--bottom {
+  padding-left: 0;
+  padding-right: 0;
 }
 </style>

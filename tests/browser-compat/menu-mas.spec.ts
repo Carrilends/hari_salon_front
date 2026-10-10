@@ -194,9 +194,9 @@ test.describe('menú «Más» · escritorio 1280', () => {
     await disparador(page).click();
     await entrada(page, 'horarios').click();
     await expect(page.locator('.more-menu')).toBeHidden();
-    await expect(page.locator('.contact-dialog')).toBeVisible();
+    await expect(page.locator('[data-test="horarios"]')).toBeVisible();
     await page.keyboard.press('Escape');
-    await expect(page.locator('.contact-dialog')).toBeHidden();
+    await expect(page.locator('[data-test="horarios"]')).toBeHidden();
 
     await disparador(page).click();
     await entrada(page, 'quienes-somos').click();
@@ -314,7 +314,7 @@ test.describe('menú «Más» · móvil 390', () => {
     await entrada(page, 'horarios').click();
 
     await expect(page.locator('[data-test="menu-hoja"]')).toBeHidden();
-    await expect(page.locator('.contact-dialog')).toBeVisible();
+    await expect(page.locator('[data-test="horarios"]')).toBeVisible();
   });
 
   test('un festivo muestra el horario reducido', async ({ page }) => {
