@@ -22,8 +22,8 @@
         </svg>
       </span>
       <p class="aviso-verificacion__texto">
-        <strong>Tu correo aún no está confirmado.</strong>
-        <span class="aviso-verificacion__detalle"
+        <strong>Tu correo aún no está confirmado.</strong>{{ ' '
+        }}<span class="aviso-verificacion__detalle"
           >Abre el enlace que te enviamos, o pide uno nuevo.</span
         >
       </p>

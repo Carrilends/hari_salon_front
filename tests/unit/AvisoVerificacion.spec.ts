@@ -34,6 +34,14 @@ describe('AvisoVerificacion', () => {
     expect(boton.attributes('type')).toBe('button');
   });
 
+  it('separa con un espacio la frase en negrita del detalle', () => {
+    const w = montar();
+
+    expect(w.find('p').text()).toContain(
+      'confirmado. Abre el enlace que te enviamos'
+    );
+  });
+
   it('reenvía al correo de la cuenta y lo dice en línea', async () => {
     reenviarApi.mockResolvedValue({ message: 'ok' });
     const w = montar();
