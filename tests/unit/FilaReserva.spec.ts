@@ -118,12 +118,15 @@ describe('FilaReserva', () => {
     );
   });
 
-  it('un error de la acción se lee en la fila', () => {
+  it('un error de la acción se lee en la fila, sin anunciarse dos veces', () => {
     const error = montar({
       error: 'Esta reserva ya no estaba pendiente.',
     }).find('[data-test="error-fila"]');
 
-    expect(error.attributes('role')).toBe('alert');
+    // Lo anuncia una sola voz: la línea viva de la página (`aviso-accion`),
+    // que es la que sobrevive al refresco.
+    expect(error.attributes('role')).toBeUndefined();
+    expect(error.attributes('aria-live')).toBeUndefined();
     expect(error.text()).toBe('Esta reserva ya no estaba pendiente.');
   });
 

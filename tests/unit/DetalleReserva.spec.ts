@@ -116,12 +116,14 @@ describe('DetalleReserva', () => {
     expect(texto(w, 'cancelar-detalle')).toBe('Cancelar');
   });
 
-  it('un error se lee en el panel', () => {
+  it('un error se lee en el panel, sin anunciarse dos veces', () => {
     const error = montar({ error: 'No se pudo confirmar.' }).find(
       '[data-test="error-detalle"]'
     );
 
-    expect(error.attributes('role')).toBe('alert');
+    // Lo anuncia una sola voz: la línea viva de la página (`aviso-accion`).
+    expect(error.attributes('role')).toBeUndefined();
+    expect(error.attributes('aria-live')).toBeUndefined();
     expect(error.text()).toBe('No se pudo confirmar.');
   });
 

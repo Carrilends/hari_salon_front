@@ -85,12 +85,8 @@
         Al confirmar, al mover o al cancelar, la clienta recibe el aviso por
         WhatsApp si dejó su teléfono.
       </p>
-      <p
-        v-if="error"
-        class="detalle__error"
-        role="alert"
-        data-test="error-detalle"
-      >
+      <!-- Sin región viva: lo anuncia la línea de la página (`aviso-accion`). -->
+      <p v-if="error" class="detalle__error" data-test="error-detalle">
         {{ error }}
       </p>
       <button

@@ -52,7 +52,9 @@
       }}
     </button>
 
-    <p v-if="error" class="fila__error" role="alert" data-test="error-fila">
+    <!-- Sin región viva: lo anuncia la línea de la página (`aviso-accion`),
+         que sobrevive al refresco; dos voces leerían el mismo fallo dos veces. -->
+    <p v-if="error" class="fila__error" data-test="error-fila">
       {{ error }}
     </p>
   </article>

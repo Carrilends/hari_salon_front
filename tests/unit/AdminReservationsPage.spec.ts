@@ -319,6 +319,25 @@ describe('la bandeja · acciones (A2–A3)', () => {
     expect(w.find('[data-test="aviso-accion"]').exists()).toBe(false);
   });
 
+  it('un fallo se anuncia una sola vez aunque se pinte en la fila, la ficha y la lista', async () => {
+    mockAdmin.confirm.mutateAsync.mockRejectedValue(errorDeRed());
+    const w = montar();
+    await abrir(w, 'res-1');
+
+    await w.find('[data-test="confirmar-detalle"]').trigger('click');
+    await flushPromises();
+
+    const mensaje =
+      'No se pudo confirmar: revisa la conexión e inténtalo de nuevo.';
+    expect(w.find('[data-test="error-fila"]').text()).toBe(mensaje);
+    expect(w.find('[data-test="error-detalle"]').text()).toBe(mensaje);
+    const voces = w
+      .findAll('[role="alert"], [role="status"], [aria-live]')
+      .filter((v) => v.text().includes(mensaje));
+    expect(voces).toHaveLength(1);
+    expect(voces[0].find('[data-test="aviso-accion"]').exists()).toBe(true);
+  });
+
   it('el aviso del fallo se va con la acción siguiente', async () => {
     mockAdmin.confirm.mutateAsync
       .mockRejectedValueOnce(errorDeRed())

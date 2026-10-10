@@ -4,6 +4,8 @@
     :class="{ 'avisos--vacio': avisos.length === 0 }"
     role="status"
     aria-live="polite"
+    aria-atomic="false"
+    aria-relevant="additions"
     aria-label="Avisos en tiempo real"
     data-test="avisos-fijados"
   >
@@ -59,7 +61,9 @@ import type { AvisoEnVivo } from 'src/composables/notifications/avisosEnVivo';
  * Los avisos en tiempo real de la bandeja (spec §3, A5; tablero «Llegan
  * avisos»): fijados sobre la lista, no flotantes. La región existe siempre —
  * vacía, sin alto— porque un lector de pantalla solo anuncia lo que entra en
- * una región viva que ya estaba en la página.
+ * una región viva que ya estaba en la página. `role="status"` implica
+ * `aria-atomic="true"`: se anula para que cada aviso nuevo se anuncie solo, sin
+ * releer los que ya estaban.
  */
 defineProps<{ avisos: AvisoEnVivo[]; idsEnLista: string[] }>();
 

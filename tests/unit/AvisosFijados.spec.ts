@@ -35,6 +35,17 @@ describe('AvisosFijados', () => {
     expect(w.findAll('[data-test="aviso"]')).toHaveLength(0);
   });
 
+  it('cada aviso nuevo se anuncia solo: la región no relee los que ya estaban', () => {
+    const region = montar([nueva, cancelada]).find(
+      '[data-test="avisos-fijados"]'
+    );
+
+    // `role="status"` trae `aria-atomic="true"`: sin esto, cada aviso nuevo
+    // (y la aparición de «Ver») haría releer la pila entera.
+    expect(region.attributes('aria-atomic')).toBe('false');
+    expect(region.attributes('aria-relevant')).toBe('additions');
+  });
+
   it('pinta mensaje y detalle en el orden que recibe', () => {
     const w = montar([nueva, cancelada]);
     const avisos = w.findAll('[data-test="aviso"]');
