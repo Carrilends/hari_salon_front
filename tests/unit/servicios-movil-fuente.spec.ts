@@ -63,16 +63,22 @@ describe('plan 9 · guarda de fuente', () => {
     expect(leer(ruta)).not.toMatch(/\$q\.notify/);
   });
 
-  it.each(ARCHIVOS)('%s no trae botones, campos ni tarjetas de Quasar', (ruta) => {
-    expect(plantilla(leer(ruta))).not.toMatch(/<q-(btn|input|card)\b/);
-  });
+  it.each(ARCHIVOS)(
+    '%s no trae botones, campos ni tarjetas de Quasar',
+    (ruta) => {
+      expect(plantilla(leer(ruta))).not.toMatch(/<q-(btn|input|card)\b/);
+    }
+  );
 
-  it.each(ARCHIVOS)('%s respeta Safari 13.1: ni `inset` ni `:has()`', (ruta) => {
-    const css = estilos(leer(ruta));
+  it.each(ARCHIVOS)(
+    '%s respeta Safari 13.1: ni `inset` ni `:has()`',
+    (ruta) => {
+      const css = estilos(leer(ruta));
 
-    expect(css).not.toMatch(/(?<![\w-])inset(-[a-z]+)?\s*:/);
-    expect(css).not.toMatch(/:has\(/);
-  });
+      expect(css).not.toMatch(/(?<![\w-])inset(-[a-z]+)?\s*:/);
+      expect(css).not.toMatch(/:has\(/);
+    }
+  );
 
   it.each(ARCHIVOS)('%s no usa `rgba(` en sus estilos', (ruta) => {
     expect(estilos(leer(ruta))).not.toMatch(/rgba?\(/);
@@ -83,14 +89,17 @@ describe('plan 9 · guarda de fuente', () => {
    * única excepción es la fila de la lista: su borde reacciona al puntero Y al
    * foco del teclado (`:focus-within`), y no hay equivalente táctil que dañar.
    */
-  it.each(ARCHIVOS)('%s no tiene `:hover` fuera de la consulta de puntero fino', (ruta) => {
-    const fuera = fueraDePunteroFino(estilos(leer(ruta))).replace(
-      /\.fila-servicio:hover,\s*\.fila-servicio:focus-within\s*\{/,
-      ''
-    );
+  it.each(ARCHIVOS)(
+    '%s no tiene `:hover` fuera de la consulta de puntero fino',
+    (ruta) => {
+      const fuera = fueraDePunteroFino(estilos(leer(ruta))).replace(
+        /\.fila-servicio:hover,\s*\.fila-servicio:focus-within\s*\{/,
+        ''
+      );
 
-    expect(fuera).not.toMatch(/:hover/);
-  });
+      expect(fuera).not.toMatch(/:hover/);
+    }
+  );
 
   /** El foco se vigila por control, no por archivo: un control nuevo sin foco falla. */
   it.each([
@@ -99,7 +108,10 @@ describe('plan 9 · guarda de fuente', () => {
     ['components/dialogs/serviceDialog.vue', 'ficha__cerrar-pie'],
     ['components/dialogs/ServicePromotionDialog.vue', 'promo__boton'],
     ['components/dialogs/ServicePromotionDialog.vue', 'promo__entrada'],
-    ['components/servicePage/ServiceCardAdminActions.vue', 'acciones-admin__boton'],
+    [
+      'components/servicePage/ServiceCardAdminActions.vue',
+      'acciones-admin__boton',
+    ],
     ['components/index/MobileActionBar.vue', 'mobile-bar__crear'],
     ['components/servicePage/ServiceToolbar.vue', 'barra__boton'],
     ['components/servicePage/ServiceRow.vue', 'fila-servicio__enlace'],
@@ -133,14 +145,24 @@ describe('plan 9 · guarda de fuente', () => {
    * oro profundo dan 2,1:1, 2,1:1 y 2,5:1. Ningún archivo del plan los usa
    * (el sufijo `-sobre-tinta` es otro token y no cuenta).
    */
-  it.each(ARCHIVOS)('%s no usa los tokens de fondo claro como color', (ruta) => {
-    const css = estilos(leer(ruta));
+  it.each(ARCHIVOS)(
+    '%s no usa los tokens de fondo claro como color',
+    (ruta) => {
+      const css = estilos(leer(ruta));
 
-    for (const token of ['--m-peligro', '--m-rosa-profundo', '--m-oro-profundo']) {
-      expect({ token, usa: new RegExp(`var\\(${token}(?![\\w-])`).test(css) }).toEqual({
-        token,
-        usa: false,
-      });
+      for (const token of [
+        '--m-peligro',
+        '--m-rosa-profundo',
+        '--m-oro-profundo',
+      ]) {
+        expect({
+          token,
+          usa: new RegExp(`var\\(${token}(?![\\w-])`).test(css),
+        }).toEqual({
+          token,
+          usa: false,
+        });
+      }
     }
-  });
+  );
 });

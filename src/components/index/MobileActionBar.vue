@@ -57,7 +57,9 @@
           stroke-linejoin="round"
           aria-hidden="true"
         >
-          <path d="M20.5 11.6a8.5 8.5 0 0 1-12.4 7.6L3.5 20.5l1.4-4.4A8.5 8.5 0 1 1 20.5 11.6z" />
+          <path
+            d="M20.5 11.6a8.5 8.5 0 0 1-12.4 7.6L3.5 20.5l1.4-4.4A8.5 8.5 0 1 1 20.5 11.6z"
+          />
           <path
             d="M9 9.2c.3-.7.6-.7.9-.7h.6c.2 0 .5 0 .7.5l.7 1.6c.1.3 0 .5-.1.7l-.4.5c-.1.2-.2.3 0 .6a6 6 0 0 0 2.8 2.3c.3.1.5.1.7-.1l.5-.6c.2-.2.4-.2.6-.1l1.6.8c.3.1.4.3.4.5v.5c-.1.5-.6 1-1.2 1.1-1.1.2-2.6-.3-4.2-1.4a9.4 9.4 0 0 1-3.3-3.8c-.5-1.1-.5-2-.3-2.4z"
           />
@@ -100,7 +102,7 @@ onUnmounted(() => document.body.classList.remove(MARCA));
 
 const enlaceWhatsApp = buildWhatsAppUrl(
   WHATSAPP_PHONE,
-  'Hola, quiero pedir una cita en la Peluquería Marlene.',
+  'Hola, quiero pedir una cita en la Peluquería Marlene.'
 );
 
 defineOptions({ name: 'MobileActionBar' });
