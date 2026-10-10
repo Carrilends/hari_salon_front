@@ -4,6 +4,8 @@
  * lee. Tampoco calcula cajas: `getBoundingClientRect` se dobla para que cada
  * fila mida 60 px y vaya debajo de la anterior.
  */
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { flushPromises, mount } from '@vue/test-utils';
 import ListaPreguntasDuena from 'src/components/preguntas/ListaPreguntasDuena.vue';
 import type { FaqItem } from 'src/api/apiTypes';
@@ -55,10 +57,14 @@ describe('ListaPreguntasDuena · la fila', () => {
       'Mover «¿Puedo cambiar o cancelar mi cita?». Arrastra, o usa las flechas del teclado'
     );
     expect(
-      wrapper.findAll('[data-test="editar-pregunta"]')[1].attributes('aria-label')
+      wrapper
+        .findAll('[data-test="editar-pregunta"]')[1]
+        .attributes('aria-label')
     ).toBe('Editar «¿Puedo cambiar o cancelar mi cita?»');
     expect(
-      wrapper.findAll('[data-test="borrar-pregunta"]')[1].attributes('aria-label')
+      wrapper
+        .findAll('[data-test="borrar-pregunta"]')[1]
+        .attributes('aria-label')
     ).toBe('Borrar «¿Puedo cambiar o cancelar mi cita?»');
   });
 
@@ -128,7 +134,9 @@ describe('ListaPreguntasDuena · con el teclado', () => {
     await asa(wrapper, 0).trigger('keydown', { key: 'ArrowUp' });
 
     expect(wrapper.emitted('reordenar')).toBeUndefined();
-    expect(anuncio(wrapper)).toBe('«¿Cómo reservo una cita?» ya es la primera.');
+    expect(anuncio(wrapper)).toBe(
+      '«¿Cómo reservo una cita?» ya es la primera.'
+    );
   });
 
   it('↓ en la última no reordena y lo dice', async () => {
@@ -258,5 +266,89 @@ describe('ListaPreguntasDuena · arrastrando', () => {
     await asa(wrapper, 0).trigger('keydown', { key: 'ArrowDown' });
 
     expect(wrapper.emitted('reordenar')).toBeUndefined();
+  });
+});
+
+describe('ListaPreguntasDuena · arrastre robusto', () => {
+  it('captura el puntero en el asa', async () => {
+    filasDeSesentaPx();
+    const captura = jest.fn();
+    (
+      HTMLElement.prototype as unknown as Record<string, unknown>
+    ).setPointerCapture = captura;
+    const wrapper = montar();
+
+    await asa(wrapper, 0).trigger('pointerdown', { clientY: 30, pointerId: 1 });
+
+    expect(captura).toHaveBeenCalledWith(1);
+    delete (HTMLElement.prototype as unknown as Record<string, unknown>)
+      .setPointerCapture;
+  });
+
+  it('si la lista cambia a mitad del arrastre, lo cancela y no reordena', async () => {
+    filasDeSesentaPx();
+    const wrapper = montar();
+
+    await asa(wrapper, 0).trigger('pointerdown', { clientY: 30 });
+    await asa(wrapper, 0).trigger('pointermove', { clientY: 170 });
+    await wrapper.setProps({
+      preguntas: [PREGUNTAS[2], PREGUNTAS[0], PREGUNTAS[1]],
+    });
+    await flushPromises();
+    await asa(wrapper, 0).trigger('pointerup', { clientY: 170 });
+
+    expect(wrapper.emitted('reordenar')).toBeUndefined();
+    expect(wrapper.findAll('.fila--arrastrada')).toHaveLength(0);
+  });
+
+  it('si la lista se acorta a mitad del arrastre, no lanza ni reordena', async () => {
+    filasDeSesentaPx();
+    const wrapper = montar();
+
+    await asa(wrapper, 2).trigger('pointerdown', { clientY: 150 });
+    await wrapper.setProps({ preguntas: [PREGUNTAS[0]] });
+    await flushPromises();
+    await asa(wrapper, 0).trigger('pointerup', { clientY: 10 });
+
+    expect(wrapper.emitted('reordenar')).toBeUndefined();
+    expect(anuncio(wrapper)).toContain('¿Cuál es el horario?');
+  });
+
+  it('un segundo puntero no le quita el arrastre al primero', async () => {
+    filasDeSesentaPx();
+    const wrapper = montar();
+
+    await asa(wrapper, 0).trigger('pointerdown', { clientY: 30, pointerId: 1 });
+    await asa(wrapper, 1).trigger('pointerdown', { clientY: 90, pointerId: 2 });
+    await asa(wrapper, 1).trigger('pointerup', { clientY: 90, pointerId: 2 });
+
+    expect(filas(wrapper)[0].classes()).toContain('fila--arrastrada');
+    expect(wrapper.emitted('reordenar')).toBeUndefined();
+
+    await asa(wrapper, 0).trigger('pointermove', {
+      clientY: 170,
+      pointerId: 1,
+    });
+    await asa(wrapper, 0).trigger('pointerup', { clientY: 170, pointerId: 1 });
+    expect(wrapper.emitted('reordenar')).toHaveLength(1);
+  });
+
+  it('perder la captura del puntero cancela el arrastre', async () => {
+    filasDeSesentaPx();
+    const wrapper = montar();
+
+    await asa(wrapper, 0).trigger('pointerdown', { clientY: 30 });
+    await asa(wrapper, 0).trigger('lostpointercapture');
+
+    expect(wrapper.findAll('.fila--arrastrada')).toHaveLength(0);
+    expect(wrapper.emitted('reordenar')).toBeUndefined();
+  });
+
+  it('el asa lleva touch-action: none', () => {
+    const fuente = readFileSync(
+      join(__dirname, '../../src/components/preguntas/ListaPreguntasDuena.vue'),
+      'utf8'
+    );
+    expect(fuente).toMatch(/\.fila__asa\s*\{[^}]*touch-action:\s*none/);
   });
 });

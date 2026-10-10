@@ -38,7 +38,8 @@
             @pointerdown="alPresionar($event, indice)"
             @pointermove="alMover"
             @pointerup="alSoltar"
-            @pointercancel="cancelar"
+            @pointercancel="alCancelarPuntero"
+            @lostpointercapture="alCancelarPuntero"
             @keydown="alPulsarTecla($event, indice)"
           >
             <StrokeIcon nombre="asa" :tamano="20" />
@@ -115,6 +116,10 @@ const emit = defineEmits<{
 }>();
 
 type Arrastre = {
+  /** La pregunta que se arrastra: su id y su texto, por si la lista cambia. */
+  id: string;
+  titulo: string;
+  pointerId: number | null;
   desde: number;
   destino: number;
   yInicial: number;
@@ -206,6 +211,13 @@ function alPulsarTecla(evento: KeyboardEvent, indice: number) {
 watch(
   () => props.preguntas,
   async () => {
+    // Si la lista cambia a mitad de un arrastre (reversión, refresco, borrado),
+    // los índices guardados ya no apuntan a la misma pregunta: se cancela.
+    if (arrastre.value) {
+      const { titulo } = arrastre.value;
+      arrastre.value = null;
+      anuncio.value = `Orden sin cambios: la lista cambió mientras movías «${titulo}».`;
+    }
     if (!asaPorEnfocar) return;
     const id = asaPorEnfocar;
     asaPorEnfocar = null;
@@ -220,6 +232,8 @@ watch(
 function alPresionar(evento: PointerEvent, indice: number) {
   // Solo el botón principal (el dedo y el lápiz también son 0).
   if (typeof evento.button === 'number' && evento.button !== 0) return;
+  // Un segundo puntero (otro dedo) no le quita el arrastre al primero.
+  if (arrastre.value || evento.isPrimary === false) return;
   const filas = Array.from(
     listaRef.value?.querySelectorAll<HTMLElement>(
       '[data-test="fila-pregunta"]'
@@ -240,6 +254,9 @@ function alPresionar(evento: PointerEvent, indice: number) {
     asa.setPointerCapture(evento.pointerId);
   }
   arrastre.value = {
+    id: props.preguntas[indice].id,
+    titulo: props.preguntas[indice].question,
+    pointerId: typeof evento.pointerId === 'number' ? evento.pointerId : null,
     desde: indice,
     destino: indice,
     yInicial: evento.clientY,
@@ -249,9 +266,15 @@ function alPresionar(evento: PointerEvent, indice: number) {
   anuncio.value = `Arrastrando «${props.preguntas[indice].question}», puesto ${indice + 1} de ${total.value}.`;
 }
 
+/** ¿El evento es del puntero que empezó el arrastre? */
+const esDelArrastre = (evento: PointerEvent, actual: Arrastre) =>
+  actual.pointerId === null ||
+  typeof evento.pointerId !== 'number' ||
+  evento.pointerId === actual.pointerId;
+
 function alMover(evento: PointerEvent) {
   const actual = arrastre.value;
-  if (!actual) return;
+  if (!actual || !esDelArrastre(evento, actual)) return;
   actual.desplazamiento = evento.clientY - actual.yInicial;
   actual.destino = destinoDeArrastre(
     actual.mitades,
@@ -261,22 +284,27 @@ function alMover(evento: PointerEvent) {
   anuncio.value = `Suelta para dejarla en el puesto ${actual.destino + 1}`;
 }
 
-function alSoltar() {
+function alSoltar(evento: PointerEvent) {
   const actual = arrastre.value;
-  if (!actual) return;
+  if (!actual || !esDelArrastre(evento, actual)) return;
   arrastre.value = null;
   if (actual.destino === actual.desde) {
-    anuncio.value = `«${props.preguntas[actual.desde].question}» se queda en el puesto ${actual.desde + 1}.`;
+    anuncio.value = `«${actual.titulo}» se queda en el puesto ${actual.desde + 1}.`;
     return;
   }
   mover(actual.desde, actual.destino);
+}
+
+function alCancelarPuntero(evento: PointerEvent) {
+  const actual = arrastre.value;
+  if (actual && esDelArrastre(evento, actual)) cancelar();
 }
 
 function cancelar() {
   const actual = arrastre.value;
   if (!actual) return;
   arrastre.value = null;
-  anuncio.value = `Orden sin cambios: «${props.preguntas[actual.desde].question}» se queda en el puesto ${actual.desde + 1}.`;
+  anuncio.value = `Orden sin cambios: «${actual.titulo}» se queda en el puesto ${actual.desde + 1}.`;
 }
 
 defineOptions({ name: 'ListaPreguntasDuena' });
