@@ -168,3 +168,34 @@ describe('enfocarCampo', () => {
     expect(() => enfocarCampo('no-existe')).not.toThrow();
   });
 });
+
+describe('useFormularioAcceso · reiniciar (plan 6, Mi cuenta)', () => {
+  it('vuelve a los valores dados y olvida lo tocado y el intento de envío', () => {
+    const f = crear();
+    f.valores.correo.value = 'ana';
+    f.tocar('correo');
+    f.validarTodo();
+    expect(f.errores.value.correo).toBe('Correo no válido.');
+
+    f.reiniciar({ correo: 'ana@correo.com' });
+
+    expect(f.valores.correo.value).toBe('ana@correo.com');
+    expect(f.valores.contrasena.value).toBe('');
+    expect(f.errores.value).toEqual({
+      correo: '',
+      contrasena: '',
+      repetida: '',
+    });
+  });
+
+  it('sin argumentos deja todo vacío y sin errores visibles', () => {
+    const f = crear();
+    f.valores.contrasena.value = 'x';
+    f.validarTodo();
+
+    f.reiniciar();
+
+    expect(f.valores.contrasena.value).toBe('');
+    expect(f.errores.value.contrasena).toBe('');
+  });
+});

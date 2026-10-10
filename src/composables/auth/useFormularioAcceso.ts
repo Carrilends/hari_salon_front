@@ -20,6 +20,12 @@ export type FormularioAcceso<K extends string> = {
   tocar: (campo: K) => void;
   validarTodo: () => K | null;
   esValido: ComputedRef<boolean>;
+  /**
+   * Vuelve a empezar: pone esos valores (o vacío), olvida lo tocado y el
+   * intento de envío. Lo usa Mi cuenta (plan 6) para «Descartar» y tras
+   * guardar; el acceso no lo necesita.
+   */
+  reiniciar: (nuevos?: Partial<Record<K, string>>) => void;
 };
 
 export function useFormularioAcceso<K extends string>(
@@ -68,7 +74,15 @@ export function useFormularioAcceso<K extends string>(
     return primero ?? null;
   }
 
-  return { valores, errores, tocar, validarTodo, esValido };
+  function reiniciar(nuevos: Partial<Record<K, string>> = {}): void {
+    campos.forEach((campo) => {
+      valores[campo].value = nuevos[campo] ?? '';
+    });
+    tocados.value = [];
+    intentoEnviar.value = false;
+  }
+
+  return { valores, errores, tocar, validarTodo, esValido, reiniciar };
 }
 
 /**
