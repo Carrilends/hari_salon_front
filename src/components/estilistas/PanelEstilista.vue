@@ -326,7 +326,9 @@ defineOptions({ name: 'PanelEstilista' });
   box-sizing: border-box;
   width: 100%;
   min-height: 100%;
-  padding: 24px 26px;
+  /* Abajo se deja sitio al lanzador del asistente (fijo, 18 px + 48 px de alto):
+     sin él tapa «Sí, eliminar» con el panel a 900 px de alto. */
+  padding: 24px 26px calc(var(--m-tactil-min) + 40px);
   border-left: var(--m-filete-grosor) solid var(--m-filete-oscuro);
   background: var(--m-carbon);
   color: var(--m-hueso);

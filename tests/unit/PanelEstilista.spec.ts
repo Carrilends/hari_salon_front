@@ -273,4 +273,15 @@ describe('PanelEstilista · fix', () => {
     const regla = /\.panel-estilista__enlace\s*\{([^}]*)\}/.exec(fuente);
     expect(regla?.[1]).toContain('min-height: var(--m-tactil-min)');
   });
+
+  it('deja sitio abajo para el lanzador del asistente (no tapa «Sí, eliminar»)', () => {
+    const fuente = readFileSync(
+      join(__dirname, '../../src/components/estilistas/PanelEstilista.vue'),
+      'utf8'
+    );
+    const regla = /\.panel-estilista\s*\{([^}]*)\}/.exec(fuente);
+    expect(regla?.[1]).toContain(
+      'padding: 24px 26px calc(var(--m-tactil-min) + 40px)'
+    );
+  });
 });
