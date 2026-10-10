@@ -65,43 +65,60 @@ describe('cabecera del portal', () => {
   });
 
   /**
-   * El inicio ya ofrece «Deja la tuya» en su banda de reseñas, y la regla
-   * acordada es un solo flotante en pantalla: el del asistente. Dos burbujas
-   * compiten y, en el inicio, tapaban el pie y la barra fija de móvil.
+   * Movida (plan 7, R2): aquí se vigilaba que la burbuja verde de reseña la
+   * decidiera cada ruta por `meta.sinFabResena`. La burbuja ya no existe —un
+   * solo flotante, el del asistente— y la marca de ruta se fue con ella. A la
+   * reseña se llega por «Deja la tuya →» (inicio), Testimonios y Mis reservas;
+   * el diálogo lo monta `ResenaDialog` y su regla la prueba `ResenaDialog.spec.ts`.
    */
-  it('el flotante verde de reseña lo decide la ruta, por su `meta`', () => {
-    const flotante = LAYOUT.slice(LAYOUT.indexOf('class="review-fab"') - 300);
-    expect(flotante.slice(0, 300)).toContain('mostrarFabResena');
+  it('no queda la burbuja verde de reseña ni su regla de ruta', () => {
+    expect(LAYOUT).not.toContain('review-fab');
+    expect(LAYOUT).not.toContain('Agregar reseña');
+    expect(LAYOUT).not.toContain('mostrarFabResena');
+    expect(LAYOUT).not.toContain('showReviewButton');
+    expect(LAYOUT).not.toContain('sinFabResena');
+  });
 
-    const regla = LAYOUT.slice(LAYOUT.indexOf('const mostrarFabResena'));
-    expect(regla.slice(0, 160)).toMatch(
-      /showReviewButton\.value && !route\.meta\.sinFabResena/
+  it('ninguna ruta lleva ya la marca `sinFabResena`', () => {
+    const router = createRouter({ history: createMemoryHistory(), routes });
+    for (const ruta of [
+      '/',
+      '/services',
+      '/services/',
+      '/testimonios',
+      '/mi-cuenta',
+    ]) {
+      expect(router.resolve(ruta).meta).not.toHaveProperty('sinFabResena');
+    }
+  });
+
+  it('monta el diálogo de reseña nuevo fuera de router-view, sin formulario propio', () => {
+    expect(PLANTILLA).toMatch(/<ResenaDialog\s*\/>/);
+    expect(PLANTILLA.indexOf('<ResenaDialog')).toBeGreaterThan(
+      PLANTILLA.indexOf('</q-page-container>')
     );
-    expect(LAYOUT).not.toContain('RUTAS_SIN_FAB_RESENA');
+    expect(PLANTILLA).not.toMatch(/<q-(select|input|card)\b/);
+    expect(SCRIPT).not.toContain('submitReview');
+    expect(SCRIPT).not.toContain('useQuasar');
+    expect(LAYOUT).not.toContain('$q.notify');
   });
 
   /**
-   * Tampoco en `/services`: allí el pie con el paginador está siempre a la
-   * vista y la burbuja, abajo a la izquierda, se le sentaba encima. Por `meta`
-   * y no por `route.path`: Netlify sirve `/services/` con barra final.
+   * Contrato §4.4: sin la burbuja, a la reseña se llega solo por `solicitar()`
+   * («Deja la tuya →», Testimonios, Mis reservas), y la política que atiende
+   * esa llamada la sigue registrando el armazón. La conducta de la política la
+   * prueban `resena.spec.ts` y `ResenaDialog.spec.ts`; aquí, que se registra y
+   * con qué.
    */
-  describe('qué rutas llevan la marca de «sin flotante de reseña»', () => {
-    const router = createRouter({ history: createMemoryHistory(), routes });
-    const sinFab = (ruta: string) =>
-      Boolean(router.resolve(ruta).meta.sinFabResena);
+  it('sigue registrando la política de reseña: solicitar() funciona sin la burbuja', () => {
+    expect(SCRIPT).toMatch(/registrarSolicitud\(\s*politicaDeResena\(\{/);
+    const politica = SCRIPT.slice(SCRIPT.indexOf('politicaDeResena({'));
+    const cuerpo = politica.slice(0, politica.indexOf('})'));
 
-    it.each(['/', '/services', '/services/'])('%s la lleva', (ruta) => {
-      expect(sinFab(ruta)).toBe(true);
-    });
-
-    it.each([
-      '/testimonios',
-      '/testimonios/',
-      '/preguntas-frecuentes',
-      '/mi-cuenta',
-    ])('%s no la lleva: allí la burbuja sigue saliendo', (ruta) => {
-      expect(sinFab(ruta)).toBe(false);
-    });
+    expect(cuerpo).toContain('sesion: () => authStore');
+    expect(cuerpo).toMatch(/name: 'login'/);
+    expect(cuerpo).toContain("redirect: route.fullPath || '/services'");
+    expect(politica).toMatch(/abrir: abrirResena/);
   });
 
   it('oculta el flotante del asistente en el inicio', () => {

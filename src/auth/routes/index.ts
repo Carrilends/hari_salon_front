@@ -6,7 +6,7 @@ import { RouteRecordRaw } from 'vue-router';
  *   (entrar y verificar correo);
  * - 'barra': barra de 56 px con «← Entrar» y la marca (crear cuenta, recuperar
  *   y restablecer).
- * Va en `meta`, como `sinFabResena`: el armazón no compara rutas.
+ * Va en `meta`: el armazón no compara rutas.
  */
 export type CabeceraAcceso = 'foto' | 'barra';
 

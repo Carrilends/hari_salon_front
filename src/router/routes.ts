@@ -8,21 +8,13 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
     children: [
-      /*
-       * `sinFabResena`: aquí no sale la burbuja verde de reseña del armazón (un
-       * solo flotante por pantalla, el del asistente). Va en `meta` y no en una
-       * lista de rutas: Netlify sirve `/services/` con barra final y el router
-       * casa las dos formas con este mismo registro.
-       */
       {
         path: '',
         component: () => import('pages/IndexPage.vue'),
-        meta: { sinFabResena: true },
       },
       {
         path: '/services',
         component: () => import('pages/ServicePage.vue'),
-        meta: { sinFabResena: true },
       },
       {
         path: '/testimonios',

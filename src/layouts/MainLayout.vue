@@ -117,68 +117,7 @@
       <router-view />
     </q-page-container>
 
-    <q-btn
-      v-if="mostrarFabResena"
-      class="review-fab"
-      color="positive"
-      icon="chat"
-      round
-      size="lg"
-      aria-label="Agregar reseña"
-      @click="onReviewClick"
-    />
-
-    <q-dialog v-model="reviewDialog">
-      <q-card class="review-dialog q-pa-sm">
-        <q-card-section class="q-pb-none">
-          <div class="text-h6">Tu reseña</div>
-          <div class="text-caption text-grey-7">
-            Cuéntanos tu experiencia y deja una puntuación
-          </div>
-        </q-card-section>
-
-        <q-card-section class="q-gutter-md">
-          <q-input
-            v-model="reviewForm.name"
-            outlined
-            label="Nombre"
-            :rules="[
-              (val) => !!val || 'Requerido',
-              (val) => val.trim().length >= 2 || 'Mínimo 2 caracteres',
-            ]"
-          />
-          <q-input
-            v-model="reviewForm.description"
-            outlined
-            type="textarea"
-            autogrow
-            label="Descripción"
-            :rules="[
-              (val) => !!val || 'Requerido',
-              (val) => val.trim().length >= 5 || 'Mínimo 5 caracteres',
-            ]"
-          />
-          <q-select
-            v-model="reviewForm.score"
-            outlined
-            label="Puntaje"
-            :options="scoreOptions"
-            emit-value
-            map-options
-          />
-        </q-card-section>
-
-        <q-card-actions align="right">
-          <q-btn flat label="Cancelar" v-close-popup />
-          <q-btn
-            color="positive"
-            label="Enviar reseña"
-            :loading="isSendingReview"
-            @click="submitReview"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <ResenaDialog />
 
     <whoWeAreDialog v-model:dialog="whoWeAreDialogComponent" />
     <ourContact v-model:dialog="ourContactDialog" />
@@ -197,13 +136,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch, onMounted } from 'vue';
+import { computed, ref, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useQuasar } from 'quasar';
 import ourContact from 'src/components/dialogs/ourContact.vue';
 import whoWeAreDialog from 'src/components/dialogs/whoWeAreDialog.vue';
 import BookingDialog from 'src/components/dialogs/bookingDialog.vue';
 import AssistantLauncher from 'src/components/assistant/AssistantLauncher.vue';
+import ResenaDialog from 'src/components/resena/ResenaDialog.vue';
 import StrokeIcon from 'src/components/shared/StrokeIcon.vue';
 import MenuMasContenido from 'src/components/shared/MenuMasContenido.vue';
 import MenuMasHoja from 'src/components/shared/MenuMasHoja.vue';
@@ -216,9 +155,8 @@ import {
   type EntradaMenu,
 } from 'src/composables/shared/menuMas';
 import { horarioDeHoy } from 'src/helpers/businessHours';
-import { adminServiceApi } from 'src/api/services-api';
+import { politicaDeResena } from 'src/helpers/resena';
 import { authApi } from 'src/api/auth-api';
-import type { CreateReviewBody, CreateReviewResponse } from 'src/api/apiTypes';
 
 type HeaderActionButton = {
   icon: string;
@@ -229,7 +167,6 @@ type HeaderActionButton = {
 
 const bookingStore = useBookStore();
 const authStore = useAuthStore();
-const $q = useQuasar();
 
 const BREAKPOINT_LABELS_PX = 1171;
 
@@ -243,105 +180,39 @@ const CONSULTA_MENU_MOVIL = '(max-width: 699px)';
 const route = useRoute();
 const router = useRouter();
 
-const { abierto: reviewDialog, abrir: abrirResena, registrarSolicitud } =
-  useReviewDialog();
-
-// La banda de reseñas del inicio pide por aquí: la regla de quién puede dejar
-// una reseña se escribe una sola vez, y es esta.
-registrarSolicitud(onReviewClick);
-const isSendingReview = ref(false);
-const scoreOptions = [1, 2, 3, 4, 5].map((score) => ({
-  label: `${score}`,
-  value: score,
-}));
-
-const reviewForm = reactive<CreateReviewBody>({
-  name: '',
-  description: '',
-  score: 5,
-});
+const { abrir: abrirResena, registrarSolicitud } = useReviewDialog();
 
 /**
- * El inicio ofrece «Deja la tuya» dentro de su banda de reseñas, y la regla de
- * la remodelación es un solo flotante en pantalla (el del asistente). Aquí la
- * burbuja verde tapaba el pie y la barra fija de móvil.
+ * La política de la reseña la registra el armazón, que es donde viven la sesión
+ * y el router (contrato §4.4). La ejecuta `solicitar()`, que llaman «Deja la
+ * tuya →» del inicio, Testimonios y Mis reservas: sin la burbuja verde, esas
+ * son todas las entradas. Rellenar el nombre lo hace el diálogo al abrirse.
  */
-/**
- * El flotante del asistente tampoco sale en el inicio: allí la banda de reseñas
- * ya ofrece el asistente con sus chips, y un botón más en esa esquina sería
- * ruido. Solo se oculta el botón — el panel sigue montado, porque esos chips
- * son justamente los que lo abren.
- */
-const mostrarFlotanteAsistente = computed(() => route.path !== '/');
-
-/**
- * Tampoco en `/services`: allí el pie con el paginador está siempre a la vista
- * y la burbuja, abajo a la izquierda, se le sentaba encima. Mismo criterio que
- * en el inicio: un solo flotante por pantalla, el del asistente. Lo marca cada
- * ruta con `meta.sinFabResena` (`src/router/routes.ts`) y no una comparación
- * de `route.path`, que en producción vale `/services/` con barra final.
- */
-const mostrarFabResena = computed(
-  () => showReviewButton.value && !route.meta.sinFabResena,
+registrarSolicitud(
+  politicaDeResena({
+    sesion: () => authStore,
+    irAlLogin: () => {
+      void router.push({
+        name: 'login',
+        query: { redirect: route.fullPath || '/services' },
+      });
+    },
+    abrir: abrirResena,
+  })
 );
 
-const showReviewButton = computed(() => {
-  if (!authStore.isLoggedIn) return true;
-  if (authStore.isAdmin) return false;
-  return (
-    authStore.roles.length === 0 ||
-    authStore.roles.every((role) => role === 'user')
-  );
-});
-
-function resetReviewForm() {
-  reviewForm.name = authStore.fullname || '';
-  reviewForm.description = '';
-  reviewForm.score = 5;
-}
-
-function onReviewClick() {
-  if (!authStore.isLoggedIn) {
-    router.push({
-      name: 'login',
-      query: {
-        redirect: route.fullPath || '/services',
-      },
-    });
-    return;
-  }
-
-  resetReviewForm();
-  abrirResena();
-}
-
-async function submitReview() {
-  if (!authStore.isLoggedIn || isSendingReview.value) return;
-  if (!reviewForm.name.trim() || !reviewForm.description.trim()) return;
-
-  isSendingReview.value = true;
-  try {
-    await adminServiceApi.post<CreateReviewResponse>('/reviews', {
-      name: reviewForm.name.trim(),
-      description: reviewForm.description.trim(),
-      score: reviewForm.score,
-    });
-
-    reviewDialog.value = false;
-    $q.notify({
-      type: 'positive',
-      message: 'Reseña enviada correctamente',
-    });
-    resetReviewForm();
-  } catch {
-    $q.notify({
-      type: 'negative',
-      message: 'No se pudo enviar la reseña',
-    });
-  } finally {
-    isSendingReview.value = false;
-  }
-}
+/**
+ * El flotante del asistente no sale en el inicio: allí la banda de reseñas ya
+ * ofrece el asistente con sus chips, y un botón más en esa esquina sería
+ * ruido. Solo se oculta el botón — el panel sigue montado, porque esos chips
+ * son justamente los que lo abren.
+ *
+ * Es el ÚNICO flotante del portal (R2 de la especificación de 2026-10-09): la
+ * burbuja verde de reseña se quitó. A la reseña se llega por «Deja la tuya →»
+ * del inicio, Testimonios y Mis reservas; el diálogo lo monta `ResenaDialog`,
+ * que decide también quién puede abrirlo.
+ */
+const mostrarFlotanteAsistente = computed(() => route.path !== '/');
 
 async function onLogout() {
   // Revoca el refresh en el servidor y limpia la cookie; sin esto la cookie
@@ -636,19 +507,6 @@ defineOptions({
   line-height: 1;
   z-index: 10;
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
-}
-
-.review-fab {
-  position: fixed;
-  left: 18px;
-  bottom: 18px;
-  z-index: 2500;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-}
-
-.review-dialog {
-  width: min(92vw, 460px);
-  border-radius: 14px;
 }
 
 /**
