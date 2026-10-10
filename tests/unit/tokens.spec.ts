@@ -201,3 +201,32 @@ describe('utilidad de texto para lector de pantalla', () => {
     expect(APP).not.toMatch(/\.sr \{[^}]*display: none/);
   });
 });
+
+/**
+ * Plan 9 — servicios en móvil (spec §9, V4). «Borrar» va escrito sobre carbón
+ * en la franja de la dueña, y `--m-peligro` ahí da 2,1:1: no se lee. El token
+ * nuevo lleva su contraste medido y dice dónde no se usa.
+ */
+describe('plan 9 · el rosa de «Borrar» sobre tinta', () => {
+  it('declara el rosa legible sobre fondo oscuro', () => {
+    expect(valorDe('m-peligro-sobre-tinta')).toBe('#e2a3bc');
+  });
+
+  it('anota su contraste medido sobre carbón y sobre tinta, y que no va sobre claro', () => {
+    const [, comentario] =
+      TOKENS.match(/((?:\s*\/\/\/[^\n]*\n)+)\s*--m-peligro-sobre-tinta:/) ?? [];
+
+    expect(comentario).toMatch(/7,4:1/);
+    expect(comentario).toMatch(/9,0:1/);
+    expect(comentario).toMatch(/nunca sobre hueso/i);
+  });
+
+  it('va en el bloque del plan 9, al final, sin tocar lo que había', () => {
+    const bloque = TOKENS.indexOf('/// Plan 9 —');
+
+    expect(bloque).toBeGreaterThan(TOKENS.indexOf('--m-flotante-despeje:'));
+    expect(TOKENS.indexOf('--m-peligro-sobre-tinta:')).toBeGreaterThan(bloque);
+    // El peligro de siempre no cambia: sigue siendo el de los fondos claros.
+    expect(valorDe('m-peligro')).toBe('#8e3b5c');
+  });
+});

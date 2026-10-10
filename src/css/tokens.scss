@@ -244,4 +244,13 @@
   /// contra ella (calculado): se lee como filete. No es color de texto: el
   /// texto va en `--m-rosa` (11,5:1 sobre tinta).
   --m-filete-rosa-oscuro: rgba(248, 187, 208, 0.45);
+
+  /// Plan 9 — servicios en móvil (spec §9, V4).
+  /// «Borrar» escrito sobre carbón o tinta: la franja de acciones de la dueña
+  /// en el renglón de móvil, y el error del porcentaje en la hoja de la
+  /// promoción. `--m-peligro` (#8e3b5c) da ahí 2,1:1 y no se lee. Este rosa
+  /// claro da 7,4:1 sobre `--m-carbon` y 9,0:1 sobre `--m-tinta` (medido,
+  /// WCAG 2.1; es el que dibujó el tablero AdminMostradorMovil). Solo texto e
+  /// icono sobre fondo oscuro: nunca sobre hueso (1,8:1) ni como fondo.
+  --m-peligro-sobre-tinta: #e2a3bc;
 }
