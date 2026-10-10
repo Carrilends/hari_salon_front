@@ -37,15 +37,25 @@
           </p>
         </div>
       </Transition>
-      <div v-if="!resena && cargando" class="review-band__esqueleto" data-test="esqueleto" aria-hidden="true">
+      <div
+        v-if="!resena && (cargando || pendiente)"
+        class="review-band__esqueleto"
+        data-test="esqueleto"
+        aria-hidden="true"
+      >
         <span class="review-band__barra" />
         <span class="review-band__barra review-band__barra--corta" />
       </div>
+      <!--
+        `pendiente` además de `cargando`: sin red la consulta queda en pausa
+        (pendiente, sin cargar ni fallar) y no se puede afirmar «no hay».
+      -->
       <p v-else-if="!resena" class="review-band__vacio">
         Todavía no hay reseñas publicadas. La tuya puede ser la primera.
       </p>
 
       <button
+        v-if="puedeResenar"
         type="button"
         class="review-band__dejar m-boton-plano"
         data-test="dejar-resena"
@@ -109,6 +119,8 @@ import { computed } from 'vue';
 import { useRotatingReview } from 'src/composables/reviews/useRotatingReview';
 import { useAssistantPanel } from 'src/composables/assistant/useAssistantPanel';
 import { useReviewDialog } from 'src/composables/reviews/useReviewDialog';
+import { useReviews } from 'src/composables/reviews/useReviews';
+import { useAuthStore } from 'src/stores/auth-store';
 import { INTENT_CHIPS } from 'src/composables/assistant/intentChips';
 
 /**
@@ -120,6 +132,12 @@ const MAX_PUNTOS = 6;
 const { resena, indice, total, cargando, pausar, reanudar } = useRotatingReview();
 const { abrir: abrirAsistente, abrirCon } = useAssistantPanel();
 const { solicitar: pedirResena } = useReviewDialog();
+
+// Misma caché por clave que `useRotatingReview`: no duplica la petición.
+const { isPending: pendiente } = useReviews();
+const authStore = useAuthStore();
+// La dueña no reseña su propio salón: la regla del armazón la ignoraría.
+const puedeResenar = computed(() => !authStore.isAdmin);
 
 const hayPuntos = computed(() => total.value > 1 && total.value <= MAX_PUNTOS);
 

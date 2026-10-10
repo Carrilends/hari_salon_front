@@ -36,6 +36,16 @@ jest.mock('src/composables/reviews/useRotatingReview', () => ({
   }),
 }));
 
+// Estado de la consulta compartida (`useReviews`) y de la sesión. Con `isPending`
+// verdadero y `cargando` falso se reproduce la consulta pausada sin red.
+const mockConsulta = { pendiente: false };
+jest.mock('src/composables/reviews/useReviews', () => ({
+  useReviews: () => ({ isPending: computed(() => mockConsulta.pendiente) }),
+}));
+
+const mockAuth = { isAdmin: false };
+jest.mock('src/stores/auth-store', () => ({ useAuthStore: () => mockAuth }));
+
 const RESENA = {
   id: 'r1',
   name: 'Daniel',
@@ -48,6 +58,8 @@ beforeEach(() => {
   estado.resena = RESENA;
   estado.total = 4;
   estado.cargando = false;
+  mockConsulta.pendiente = false;
+  mockAuth.isAdmin = false;
   useAssistantPanel().cerrar();
   useReviewDialog().cerrar();
 });
@@ -140,6 +152,32 @@ describe('ReviewAssistantBand', () => {
 
     expect(wrapper.find('[data-test="esqueleto"]').exists()).toBe(true);
     expect(wrapper.text()).not.toContain('Todavía no hay reseñas');
+  });
+
+  it('con la consulta pausada sin red no afirma que no hay reseñas', () => {
+    estado.cargando = false;
+    mockConsulta.pendiente = true;
+    estado.resena = null;
+    estado.total = 0;
+
+    const wrapper = mount(ReviewAssistantBand);
+
+    expect(wrapper.find('[data-test="esqueleto"]').exists()).toBe(true);
+    expect(wrapper.text()).not.toContain('Todavía no hay reseñas');
+  });
+
+  it('con sesión de la dueña no ofrece «Deja la tuya»', () => {
+    mockAuth.isAdmin = true;
+
+    expect(
+      mount(ReviewAssistantBand).find('[data-test="dejar-resena"]').exists()
+    ).toBe(false);
+  });
+
+  it('sin ser la dueña sí ofrece «Deja la tuya»', () => {
+    expect(
+      mount(ReviewAssistantBand).find('[data-test="dejar-resena"]').exists()
+    ).toBe(true);
   });
 
   it('cuando ya respondió y no hay ninguna, entonces sí lo dice', () => {
