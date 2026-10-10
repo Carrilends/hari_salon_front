@@ -57,7 +57,7 @@
         <span v-for="n in 5" :key="n" class="preguntas__esqueleto" />
       </div>
       <div
-        v-else-if="isError"
+        v-else-if="isError && !faqs.length"
         class="preguntas__aviso"
         data-test="preguntas-error"
       >

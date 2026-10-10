@@ -121,8 +121,9 @@ describe('FaqPage · la clienta', () => {
     ).toBe('true');
   });
 
-  it('si la carga falla lo dice y deja reintentar', async () => {
+  it('si la carga falla y no hay nada que mostrar, lo dice y deja reintentar', async () => {
     estado.isError = true;
+    estado.faqs = [];
     const wrapper = montar();
 
     expect(wrapper.get('[data-test="preguntas-error"]').text()).toContain(
@@ -130,6 +131,14 @@ describe('FaqPage · la clienta', () => {
     );
     await wrapper.get('[data-test="reintentar"]').trigger('click');
     expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('si un refresco falla pero ya hay preguntas, sigue enseñando la lista', () => {
+    estado.isError = true;
+    const wrapper = montar();
+
+    expect(wrapper.find('[data-test="preguntas-error"]').exists()).toBe(false);
+    expect(wrapper.findAll('[data-test="pregunta-boton"]')).toHaveLength(3);
   });
 
   it('sin preguntas, a la clienta le dice que vuelva pronto', () => {
@@ -248,6 +257,31 @@ describe('FaqPage · la dueña', () => {
     await wrapper.get('[data-test="formulario-pregunta"]').trigger('submit');
 
     expect(crear).toHaveBeenCalledTimes(1);
+  });
+
+  it('tras un fallo al crear, un segundo envío vuelve a llegar a la mutación', async () => {
+    crear.mockRejectedValue(new Error('red'));
+    const wrapper = montar();
+
+    await wrapper.get('[data-test="agregar-pregunta"]').trigger('click');
+    await rellenarYEnviar(wrapper, '¿Hay parqueadero?', 'Sí, en la calle.');
+    await wrapper.get('[data-test="formulario-pregunta"]').trigger('submit');
+    await flushPromises();
+
+    expect(crear).toHaveBeenCalledTimes(2);
+  });
+
+  it('tras un fallo al borrar, confirmar de nuevo vuelve a llegar a la mutación', async () => {
+    borrar.mockRejectedValue(new Error('500'));
+    const wrapper = montar();
+
+    await wrapper.findAll('[data-test="borrar-pregunta"]')[0].trigger('click');
+    await wrapper.get('[data-test="confirmar-borrado"]').trigger('click');
+    await flushPromises();
+    await wrapper.get('[data-test="confirmar-borrado"]').trigger('click');
+    await flushPromises();
+
+    expect(borrar).toHaveBeenCalledTimes(2);
   });
 
   it('borrar pide confirmación, borra por id y lo dice', async () => {
