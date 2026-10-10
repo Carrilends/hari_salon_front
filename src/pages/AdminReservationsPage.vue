@@ -1,190 +1,671 @@
 <template>
-  <q-page class="q-pa-md admin-reservations">
-    <div class="row items-center q-mb-md q-gutter-sm">
-      <div class="text-h5">Reservas</div>
-      <q-space />
-      <q-select
-        v-model="statusFilter"
-        :options="filterOptions"
-        emit-value
-        map-options
-        dense
-        outlined
-        options-dense
-        style="min-width: 180px"
-        label="Estado"
-      />
-      <q-btn
-        flat
-        round
-        dense
-        icon="refresh"
-        :loading="query.isFetching.value"
-        @click="() => query.refetch()"
-      >
-        <q-tooltip>Actualizar</q-tooltip>
-      </q-btn>
-    </div>
-
-    <!-- Carga -->
-    <div v-if="query.isLoading.value" class="flex flex-center q-pa-xl">
-      <q-spinner color="primary" size="42px" />
-    </div>
-
-    <!-- Error -->
-    <q-banner v-else-if="query.isError.value" class="bg-red-1 text-red-9">
-      No se pudieron cargar las reservas. Reintenta en unos segundos.
-      <template #action>
-        <q-btn flat label="Reintentar" @click="() => query.refetch()" />
-      </template>
-    </q-banner>
-
-    <!-- Vacío -->
-    <div
-      v-else-if="filtered.length === 0"
-      class="flex flex-center column q-pa-xl text-grey-6"
-    >
-      <q-icon name="event_busy" size="42px" class="q-mb-sm" />
-      <div>No hay reservas {{ emptyLabel }}.</div>
-    </div>
-
-    <!-- Lista -->
-    <div v-else class="q-gutter-md">
-      <q-card v-for="res in filtered" :key="res.id" flat bordered>
-        <q-card-section class="row items-center q-col-gutter-md">
-          <div class="col-12 col-sm">
-            <div class="text-subtitle1 text-weight-medium">
-              {{ formatSalonDateTime(res.scheduledAt) }}
-            </div>
-            <div class="text-caption text-grey-7">
-              {{ res.worker?.name || 'Sin estilista' }} ·
-              {{ res.totalDurationMinutes }} min
-            </div>
-            <div class="q-mt-xs">
-              <q-icon name="person" size="16px" class="q-mr-xs" />
-              <span>{{ res.contact?.name || 'Cliente registrado' }}</span>
-              <span v-if="res.contact?.phone" class="text-grey-7">
-                · {{ res.contact.phone }}</span
-              >
-            </div>
-            <div class="q-mt-xs text-grey-8">
-              <q-icon name="content_cut" size="16px" class="q-mr-xs" />
-              <span>{{ serviceNames(res) }}</span>
-            </div>
-          </div>
-
-          <div
-            class="col-12 col-sm-auto row items-center justify-end q-gutter-sm"
+  <q-page class="bandeja" :class="{ 'bandeja--escritorio': esEscritorio }">
+    <section class="bandeja__principal" aria-labelledby="bandeja-titulo">
+      <header class="bandeja__cabecera">
+        <div>
+          <p class="bandeja__antetitulo">Vigentes · de hoy en adelante</p>
+          <h1 id="bandeja-titulo" class="bandeja__titulo">Reservas</h1>
+        </div>
+        <div class="bandeja__vivo" data-test="en-vivo">
+          <span
+            class="bandeja__punto"
+            :class="{ 'bandeja__punto--apagado': !enVivo }"
+            aria-hidden="true"
+          />
+          <span>{{ enVivo ? 'En vivo' : 'Sin tiempo real' }}</span>
+          <button
+            v-if="!enVivo"
+            type="button"
+            class="bandeja__boton"
+            data-test="actualizar"
+            :disabled="query.isFetching.value"
+            @click="() => refrescar()"
           >
-            <EstadoReserva :estado="res.status" />
-            <q-btn
-              v-if="res.status === 'pendiente'"
-              color="positive"
-              icon="check"
-              label="Confirmar"
-              dense
-              no-caps
-              :loading="confirm.isPending.value && pendingId === res.id"
-              @click="onConfirm(res)"
+            Actualizar
+          </button>
+        </div>
+      </header>
+
+      <PestanasBandeja
+        :activa="pestana"
+        :cuentas="cuentas"
+        @elegir="elegirPestana"
+      />
+
+      <AvisosFijados
+        :avisos="avisos"
+        :ids-en-lista="idsEnLista"
+        @ver="verAviso"
+        @descartar="descartar"
+      />
+
+      <!--
+        Foco 3: el error de confirmar/cancelar se pinta en la fila, el panel o
+        el diálogo, pero el refresco que dispara se los suele llevar (la fila
+        sale de «Pendientes», el diálogo se cierra). Esta línea sobrevive: se va
+        con la acción siguiente o cuando la dueña la cierra. La región existe
+        siempre para que el lector de pantalla anuncie lo que entra en ella.
+      -->
+      <div class="bandeja__region-accion" role="status" aria-live="polite">
+        <p
+          v-if="avisoAccion"
+          class="bandeja__aviso-accion"
+          data-test="aviso-accion"
+        >
+          <StrokeIcon
+            class="bandeja__aviso-icono"
+            nombre="alerta"
+            :tamano="16"
+          />
+          <span class="bandeja__aviso-texto">{{ avisoAccion }}</span>
+          <button
+            type="button"
+            class="bandeja__aviso-cerrar m-boton-plano"
+            data-test="cerrar-aviso-accion"
+            aria-label="Cerrar el aviso"
+            @click="avisoAccion = null"
+          >
+            <StrokeIcon nombre="cerrar" :tamano="16" />
+          </button>
+        </p>
+      </div>
+
+      <div
+        id="bandeja-panel"
+        class="bandeja__lista"
+        role="tabpanel"
+        :aria-labelledby="`pestana-${pestana}`"
+        tabindex="0"
+      >
+        <div
+          v-if="query.isLoading.value"
+          class="bandeja__cargando"
+          data-test="bandeja-cargando"
+          aria-busy="true"
+          aria-label="Cargando las reservas"
+        >
+          <span v-for="n in 3" :key="n" class="bandeja__esqueleto" />
+        </div>
+
+        <div
+          v-else-if="query.isError.value"
+          class="bandeja__error"
+          role="alert"
+          data-test="bandeja-error"
+        >
+          <p class="bandeja__error-texto">
+            No se pudieron cargar las reservas.
+          </p>
+          <button
+            type="button"
+            class="bandeja__boton"
+            data-test="reintentar"
+            @click="() => query.refetch()"
+          >
+            Reintentar
+          </button>
+        </div>
+
+        <template v-else>
+          <p
+            v-if="grupos.length === 0"
+            class="bandeja__vacio"
+            data-test="bandeja-vacia"
+          >
+            {{ TEXTO_VACIO[pestana] }}
+          </p>
+          <section
+            v-for="grupo in grupos"
+            :key="grupo.ymd"
+            class="bandeja__grupo"
+            data-test="grupo-dia"
+            :aria-labelledby="`dia-${grupo.ymd}`"
+          >
+            <h2
+              :id="`dia-${grupo.ymd}`"
+              class="bandeja__dia"
+              data-test="titulo-dia"
+            >
+              {{ grupo.titulo }}
+            </h2>
+            <FilaReserva
+              v-for="r in grupo.reservas"
+              :key="r.id"
+              :reserva="r"
+              :seleccionada="r.id === seleccionadaId"
+              :nueva="nuevas.includes(r.id)"
+              :compacta="esMovil"
+              :confirmando="ocupadaDe(r.id) === 'confirmar'"
+              :error="errorDe(r.id)"
+              @abrir="abrir"
+              @confirmar="confirmar"
             />
-            <q-btn
-              v-if="res.status === 'pendiente' || res.status === 'confirmada'"
-              color="negative"
-              icon="close"
-              label="Cancelar"
-              dense
-              no-caps
-              outline
-              :loading="cancel.isPending.value && pendingId === res.id"
-              @click="onCancel(res)"
-            />
-          </div>
-        </q-card-section>
-      </q-card>
-    </div>
+          </section>
+          <p class="bandeja__pie" data-test="bandeja-pie">
+            <StrokeIcon
+              class="bandeja__pie-icono"
+              nombre="check"
+              :tamano="16"
+            />{{ grupos.length ? textoDelPie(pestana) : NOTA_CANCELADAS }}
+          </p>
+        </template>
+      </div>
+    </section>
+
+    <aside
+      v-if="esEscritorio"
+      class="bandeja__detalle"
+      aria-label="Reserva seleccionada"
+    >
+      <DetalleReserva
+        v-if="seleccionada"
+        variante="panel"
+        :reserva="seleccionada"
+        :ocupada="ocupadaDe(seleccionada.id)"
+        :error="errorDe(seleccionada.id)"
+        @confirmar="confirmar"
+        @mover="moverAbierto = true"
+        @cancelar="pedirCancelar"
+      />
+      <p v-else class="bandeja__sin-seleccion" data-test="detalle-vacio">
+        Elige una reserva de la lista para ver su detalle.
+      </p>
+    </aside>
+
+    <q-dialog
+      v-else
+      v-model="detalleMovilAbierto"
+      maximized
+      transition-show="slide-left"
+      transition-hide="slide-right"
+    >
+      <!-- La capa tiene alto definido y es la que se desplaza: así la ficha
+           (`min-height: 100%`) llena la pantalla y sus acciones se pegan abajo. -->
+      <div class="bandeja__pantalla">
+        <DetalleReserva
+          v-if="seleccionada"
+          variante="pantalla"
+          :reserva="seleccionada"
+          :ocupada="ocupadaDe(seleccionada.id)"
+          :error="errorDe(seleccionada.id)"
+          @confirmar="confirmar"
+          @mover="moverAbierto = true"
+          @cancelar="pedirCancelar"
+          @volver="seleccionadaId = null"
+        />
+      </div>
+    </q-dialog>
+
+    <!--
+      A3: la dueña mueve con la misma pieza que la clienta (plan 2). Sin
+      estilista: `PATCH /reschedule` solo acepta `scheduledAt`; la estilista la
+      conserva quien la eligió y la vuelve a repartir el sistema si no.
+    -->
+    <CambiarFechaDialog
+      v-if="seleccionada"
+      v-model="moverAbierto"
+      :reserva="seleccionada"
+      :permitir-estilista="false"
+      @reprogramada="alReprogramar"
+    />
+
+    <!-- Un solo cerrojo para toda la página: con cualquier acción en vuelo,
+         «Cancelar la cita» espera apagado. -->
+    <CancelarReservaBandeja
+      v-model="cancelarAbierto"
+      :reserva="seleccionada"
+      :hoja="esMovil"
+      :ocupada="ocupada !== null"
+      :error="errorCancelar"
+      @confirmar="cancelarSeleccionada"
+    />
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { useQuasar } from 'quasar';
-import { useAdminReservations } from 'src/composables/reservations/useAdminReservations';
-import EstadoReserva from 'src/components/reservations/EstadoReserva.vue';
-import type { ReservationDto } from 'src/interfaces/booking';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import AvisosFijados from 'src/components/admin-reservas/AvisosFijados.vue';
+import CancelarReservaBandeja from 'src/components/admin-reservas/CancelarReservaBandeja.vue';
+import DetalleReserva from 'src/components/admin-reservas/DetalleReserva.vue';
+import FilaReserva from 'src/components/admin-reservas/FilaReserva.vue';
+import PestanasBandeja from 'src/components/admin-reservas/PestanasBandeja.vue';
+import CambiarFechaDialog from 'src/components/reservations/CambiarFechaDialog.vue';
+import StrokeIcon from 'src/components/shared/StrokeIcon.vue';
 import {
-  ADMIN_RESERVATION_FILTERS,
-  filterAdminReservations,
-  type AdminReservationFilter,
+  useAvisosEnVivo,
+  type AvisoEnVivo,
+} from 'src/composables/notifications/avisosEnVivo';
+import { useAdminReservations } from 'src/composables/reservations/useAdminReservations';
+import { useConsultaMedios } from 'src/composables/shared/useConsultaMedios';
+import {
+  falloDeAccion,
+  type AccionBandeja,
+} from 'src/helpers/acciones-bandeja';
+import {
+  NOTA_CANCELADAS,
+  TEXTO_VACIO,
+  agruparPorDia,
+  contarPorPestana,
+  filtrarPorPestana,
+  ordenarPorHora,
+  textoDelPie,
+  type PestanaBandeja,
 } from 'src/helpers/admin-reservation-filter';
+import { getSalonNowParts } from 'src/helpers/businessHours';
+import { CONSULTA_MOVIL_RESERVAS } from 'src/helpers/my-reservations';
 
+/**
+ * «La bandeja»: la página de reservas de la dueña (spec §3, A1–A5; tablero
+ * `AdminReservasB`). Lista las vigentes por pestaña y por día, abre la ficha a
+ * la derecha (escritorio, ≥ 1024 px) o a pantalla completa, y fija encima los
+ * avisos en tiempo real que recibe `useAdminNotifications`.
+ *
+ * Toda acción pasa por los casos de uso del backend (confirmar, reprogramar,
+ * cancelar), que son los que disparan los cuatro avisos: la página no
+ * reproduce ninguna regla, solo traduce sus errores.
+ */
 defineOptions({ name: 'AdminReservationsPage' });
 
-const $q = useQuasar();
-const { query, confirm, cancel } = useAdminReservations();
+const { query, confirm, cancel, refrescar } = useAdminReservations();
+const vivos = useAvisosEnVivo();
+const { avisos, enVivo } = vivos;
 
-// El botón que se muestra "cargando" es el de la fila en curso.
-const pendingId = ref<string | null>(null);
+const esEscritorio = useConsultaMedios('(min-width: 1024px)', true);
+// El mismo corte que los diálogos de «Mis reservas» (plan 2): hoja por debajo de 700.
+const esMovil = useConsultaMedios(CONSULTA_MOVIL_RESERVAS, false);
 
-// La lista es de reservas vigentes (ver `admin-reservation-filter.ts`): las
-// canceladas desaparecen de ella —de eso avisa el canal en tiempo real— y las
-// cumplidas ya pasaron, así que el filtro no las ofrece.
-const statusFilter = ref<AdminReservationFilter>('pendiente');
-const filterOptions = ADMIN_RESERVATION_FILTERS;
-
-const filtered = computed<ReservationDto[]>(() =>
-  filterAdminReservations(query.data.value ?? [], statusFilter.value)
+const pestana = ref<PestanaBandeja>('pendientes');
+// «Hoy» se recalcula con cada lista nueva: una pestaña abierta de un día para
+// otro no se queda en ayer.
+const hoy = ref(getSalonNowParts().ymd);
+watch(
+  () => query.data.value,
+  () => {
+    hoy.value = getSalonNowParts().ymd;
+  }
 );
 
-const emptyLabel = computed(() =>
-  statusFilter.value === 'todas'
-    ? 'para mostrar'
-    : `en estado «${statusFilter.value}»`
+const todas = computed(() => ordenarPorHora(query.data.value ?? []));
+const cuentas = computed(() => contarPorPestana(todas.value, hoy.value));
+const grupos = computed(() =>
+  agruparPorDia(
+    filtrarPorPestana(todas.value, pestana.value, hoy.value),
+    hoy.value
+  )
+);
+const idsEnLista = computed(() => todas.value.map((r) => r.id));
+const nuevas = computed(() =>
+  avisos.value
+    .filter((a) => a.evento === 'reservation.created')
+    .map((a) => a.reservationId)
 );
 
-function serviceNames(res: ReservationDto): string {
-  const names = (res.services ?? []).map((s) => s.name);
-  return names.length ? names.join(', ') : 'Sin servicios';
+// La ficha se busca en la lista viva: si la reserva sale de ella (la cancelaron
+// por WhatsApp, terminó su hora), la ficha se suelta sola (Foco 1).
+const seleccionadaId = ref<string | null>(null);
+const seleccionada = computed(
+  () => todas.value.find((r) => r.id === seleccionadaId.value) ?? null
+);
+const detalleMovilAbierto = computed({
+  get: () => !esEscritorio.value && seleccionada.value !== null,
+  set: (abierto: boolean) => {
+    if (!abierto) seleccionadaId.value = null;
+  },
+});
+
+const ocupada = ref<{ id: string; accion: AccionBandeja } | null>(null);
+const errorAccion = ref<{ id: string; mensaje: string } | null>(null);
+/**
+ * El último fallo de confirmar o cancelar, sobre la lista (Foco 3). Regla: se
+ * va al empezar la acción siguiente o al cerrarlo; cambiar de pestaña no lo
+ * borra («la lista se actualizó» vale para todas).
+ */
+const avisoAccion = ref<string | null>(null);
+const cancelarAbierto = ref(false);
+const errorCancelar = ref<string | null>(null);
+const moverAbierto = ref(false);
+
+watch(seleccionada, (reserva) => {
+  if (reserva) return;
+  cancelarAbierto.value = false;
+  moverAbierto.value = false;
+});
+
+function ocupadaDe(id: string): AccionBandeja | null {
+  return ocupada.value?.id === id ? ocupada.value.accion : null;
 }
 
-function formatSalonDateTime(iso: string): string {
-  return new Intl.DateTimeFormat('es-CO', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone: 'America/Bogota',
-  }).format(new Date(iso));
+function errorDe(id: string): string | null {
+  return errorAccion.value?.id === id ? errorAccion.value.mensaje : null;
 }
 
-async function onConfirm(res: ReservationDto) {
-  pendingId.value = res.id;
+function elegirPestana(nueva: PestanaBandeja) {
+  pestana.value = nueva;
+}
+
+function abrir(id: string) {
+  seleccionadaId.value = id;
+}
+
+async function confirmar(id: string) {
+  // Una acción a la vez: el segundo clic de un doble clic no manda otro PATCH.
+  if (ocupada.value) return;
+  ocupada.value = { id, accion: 'confirmar' };
+  errorAccion.value = null;
+  avisoAccion.value = null;
   try {
-    await confirm.mutateAsync(res.id);
-    $q.notify({ type: 'positive', message: 'Reserva confirmada.' });
-  } catch {
-    $q.notify({ type: 'negative', message: 'No se pudo confirmar.' });
+    await confirm.mutateAsync(id);
+  } catch (err) {
+    const fallo = falloDeAccion(err, 'confirmar');
+    errorAccion.value = { id, mensaje: fallo.mensaje };
+    avisoAccion.value = fallo.mensaje;
+    if (fallo.refrescar) void refrescar();
   } finally {
-    pendingId.value = null;
+    ocupada.value = null;
   }
 }
 
-function onCancel(res: ReservationDto) {
-  $q.dialog({
-    title: 'Cancelar reserva',
-    message: `¿Seguro que quieres cancelar la reserva de ${
-      res.contact?.name || 'este cliente'
-    }?`,
-    cancel: { label: 'Volver', flat: true },
-    ok: { label: 'Cancelar reserva', color: 'negative' },
-    persistent: true,
-  }).onOk(async () => {
-    pendingId.value = res.id;
-    try {
-      await cancel.mutateAsync(res.id);
-      $q.notify({ type: 'positive', message: 'Reserva cancelada.' });
-    } catch {
-      $q.notify({ type: 'negative', message: 'No se pudo cancelar.' });
-    } finally {
-      pendingId.value = null;
-    }
-  });
+function pedirCancelar() {
+  errorCancelar.value = null;
+  cancelarAbierto.value = true;
 }
+
+async function cancelarSeleccionada() {
+  const objetivo = seleccionada.value;
+  if (!objetivo) {
+    cancelarAbierto.value = false;
+    return;
+  }
+  if (ocupada.value) return;
+  ocupada.value = { id: objetivo.id, accion: 'cancelar' };
+  errorCancelar.value = null;
+  avisoAccion.value = null;
+  try {
+    await cancel.mutateAsync(objetivo.id);
+    cancelarAbierto.value = false;
+    seleccionadaId.value = null;
+  } catch (err) {
+    const fallo = falloDeAccion(err, 'cancelar');
+    errorCancelar.value = fallo.mensaje;
+    avisoAccion.value = fallo.mensaje;
+    if (fallo.refrescar) void refrescar();
+  } finally {
+    ocupada.value = null;
+  }
+}
+
+/**
+ * `CambiarFechaDialog` avisa con `(id, workerId)`; la mutación del plan 2 ya
+ * invalida la lista, y refrescar otra vez no cuesta nada.
+ */
+function alReprogramar() {
+  void refrescar();
+}
+
+function verAviso(aviso: AvisoEnVivo) {
+  const reserva = todas.value.find((r) => r.id === aviso.reservationId);
+  if (!reserva) return;
+  if (filtrarPorPestana([reserva], pestana.value, hoy.value).length === 0) {
+    pestana.value = 'todas';
+  }
+  seleccionadaId.value = reserva.id;
+  vivos.descartar(aviso.id);
+}
+
+function descartar(id: number) {
+  vivos.descartar(id);
+}
+
+// Con la bandeja a la vista, el aviso en tiempo real solo se fija (A5).
+onMounted(() => vivos.marcarBandeja(true));
+onBeforeUnmount(() => vivos.marcarBandeja(false));
 </script>
+
+<style lang="scss" scoped>
+/* Tablero `AdminReservasB`: página tinta; en escritorio, lista a la izquierda
+   con 32 px de margen y la ficha clara de 400 px a la derecha. */
+.bandeja {
+  min-height: 100%;
+  background: var(--m-tinta);
+  color: var(--m-hueso);
+  font-family: var(--m-font-sans);
+}
+
+.bandeja--escritorio {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  column-gap: 32px;
+  align-items: start;
+}
+
+.bandeja__principal {
+  min-width: 0;
+  padding: 0 var(--m-banda-margen-movil) 32px;
+}
+
+.bandeja--escritorio .bandeja__principal {
+  padding: 0 0 48px 32px;
+}
+
+.bandeja__cabecera {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0 10px;
+}
+
+.bandeja--escritorio .bandeja__cabecera {
+  align-items: center;
+  min-height: 92px;
+  padding: 0;
+}
+
+.bandeja__antetitulo {
+  display: none;
+  margin: 0 0 8px;
+  color: var(--m-oro);
+  font-size: 11px;
+  letter-spacing: var(--m-tracking-marca);
+  text-transform: uppercase;
+}
+
+.bandeja--escritorio .bandeja__antetitulo {
+  display: block;
+}
+
+.bandeja__titulo {
+  margin: 0;
+  font-family: var(--m-font-display);
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.bandeja--escritorio .bandeja__titulo {
+  font-size: 28px;
+}
+
+.bandeja__vivo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--m-piedra-clara);
+  font-size: 12px;
+}
+
+.bandeja__punto {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: var(--m-oro);
+  box-shadow: 0 0 0 3px var(--m-filete-oscuro);
+}
+
+.bandeja__punto--apagado {
+  border: var(--m-filete-grosor) solid var(--m-piedra-clara);
+  background: transparent;
+  box-shadow: none;
+}
+
+.bandeja__boton {
+  min-height: var(--m-tactil-min);
+  padding: 0 14px;
+  border: var(--m-filete-grosor) solid var(--m-filete-oscuro);
+  border-radius: var(--m-radio-pildora);
+  background: transparent;
+  color: var(--m-hueso);
+  font-family: var(--m-font-sans);
+  font-size: 11px;
+  letter-spacing: var(--m-tracking-nav);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.bandeja__boton:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+/* El fallo de una acción, sobre tinta: texto hueso, acento rosa (el único de
+   la pantalla) en el filete y el icono. */
+.bandeja__aviso-accion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 0;
+  padding: 0 4px 0 14px;
+  border: var(--m-filete-grosor) solid var(--m-filete-oscuro);
+  border-left: 3px solid var(--m-rosa);
+  border-radius: var(--m-radio-tarjeta);
+  background: var(--m-carbon);
+  color: var(--m-hueso);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.bandeja__aviso-icono {
+  flex-shrink: 0;
+  color: var(--m-rosa);
+}
+
+.bandeja__aviso-texto {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 0;
+}
+
+.bandeja__aviso-cerrar {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--m-tactil-min);
+  height: var(--m-tactil-min);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--m-piedra-clara);
+  cursor: pointer;
+}
+
+.bandeja__dia {
+  margin: 18px 0 10px;
+  color: var(--m-oro);
+  font-family: var(--m-font-sans);
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: var(--m-tracking-etiqueta);
+  text-transform: uppercase;
+}
+
+.bandeja__esqueleto {
+  display: block;
+  height: 86px;
+  margin: 18px 0 10px;
+  border-radius: var(--m-radio-tarjeta);
+  background: var(--m-carbon);
+}
+
+.bandeja__error {
+  margin-top: 26px;
+}
+
+.bandeja__error-texto {
+  margin: 0 0 12px;
+  font-size: 14px;
+}
+
+.bandeja__vacio {
+  margin: 26px 0 0;
+  font-family: var(--m-font-display);
+  font-size: 20px;
+}
+
+.bandeja__pie {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 26px 0 0;
+  color: var(--m-piedra-clara);
+  font-size: 13px;
+}
+
+.bandeja__pie-icono {
+  flex-shrink: 0;
+  color: var(--m-oro);
+}
+
+/* La ficha se queda a la vista al desplazar la lista, justo bajo la cabecera
+   del sitio, que es fija. */
+.bandeja__detalle {
+  position: sticky;
+  top: var(--m-cabecera-alto);
+  height: calc(100vh - var(--m-cabecera-alto));
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 26px 30px;
+  background: var(--m-hueso);
+  color: var(--m-tinta);
+}
+
+.bandeja__sin-seleccion {
+  margin: 0;
+  color: var(--m-piedra);
+  font-size: 14px;
+}
+
+/* Móvil: la capa del diálogo maximizado, con alto definido; es ella la que
+   se desplaza, para que la ficha llene la pantalla y sus acciones se peguen
+   abajo. */
+.bandeja__pantalla {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--m-hueso);
+}
+
+.bandeja__lista:focus-visible,
+.bandeja__boton:focus-visible,
+.bandeja__aviso-cerrar:focus-visible {
+  outline: 2px solid var(--m-hueso);
+  outline-offset: 2px;
+}
+
+/**
+ * Realce al pasar (solo puntero fino): el COLOR. El movimiento es global, en
+ * `app.scss` («Realce y hundido»).
+ */
+@media (hover: hover) and (pointer: fine) {
+  .bandeja__boton:hover:not(:disabled) {
+    border-color: var(--m-oro);
+  }
+
+  .bandeja__aviso-cerrar:hover {
+    color: var(--m-hueso);
+  }
+}
+</style>
