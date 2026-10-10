@@ -1,5 +1,6 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { nextTick } from 'vue';
 import { mount, RouterLinkStub } from '@vue/test-utils';
 import PanelEstilista from 'src/components/estilistas/PanelEstilista.vue';
 import { MENSAJE_CON_RESERVAS } from 'src/helpers/semana-estilistas';
@@ -263,6 +264,42 @@ describe('PanelEstilista · fix', () => {
       .get('[data-test="panel-estilista"]')
       .trigger('keydown', { key: 'Escape' });
     expect(panel.emitted('cerrar')).toHaveLength(1);
+  });
+
+  it('Escape detiene la propagación solo mientras se confirma', async () => {
+    const panel = montar();
+    const raiz = panel.get('[data-test="panel-estilista"]').element;
+    const esc = () =>
+      new KeyboardEvent('keydown', {
+        key: 'Escape',
+        bubbles: true,
+        cancelable: true,
+      });
+    const alWindow = jest.fn();
+    window.addEventListener('keydown', alWindow);
+    document.body.appendChild(panel.element);
+
+    await panel.get('[data-test="eliminar-estilista"]').trigger('click');
+    raiz.dispatchEvent(esc());
+    await nextTick();
+    expect(alWindow).not.toHaveBeenCalled();
+
+    raiz.dispatchEvent(esc());
+    expect(alWindow).toHaveBeenCalledTimes(1);
+
+    window.removeEventListener('keydown', alWindow);
+    panel.element.remove();
+  });
+
+  it('el subrayado del enlace va en el texto, no en la caja', () => {
+    const fuente = readFileSync(
+      join(__dirname, '../../src/components/estilistas/PanelEstilista.vue'),
+      'utf8'
+    );
+    const regla = /\.panel-estilista__enlace\s*\{([^}]*)\}/.exec(fuente);
+    expect(regla?.[1]).toContain('text-decoration: underline');
+    expect(regla?.[1]).toContain('text-underline-offset');
+    expect(regla?.[1]).not.toContain('border-bottom');
   });
 
   it('el enlace a Reservas mide al menos el mínimo táctil', () => {

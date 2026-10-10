@@ -43,6 +43,9 @@
             :data-test="cabeceras[i]?.esHoy ? 'letra-hoy' : 'letra-dia'"
             >{{ cabeceras[i]?.inicial }}{{ cabeceras[i]?.numero }}</span
           >
+          <span v-if="cabeceras[i]?.esHoy" class="sr" data-test="hoy-texto"
+            >hoy</span
+          >
         </span>
       </span>
     </button>
@@ -91,7 +94,7 @@ import {
  * La semana en tarjetas (móvil, < 900 px): cada estilista es un botón entero
  * con su total y siete mini-barras. Las mini-barras se esconden del lector de
  * pantalla: la tarjeta se nombra con su total («Editar a Alejandro · 22 h en
- * la semana») y el detalle día a día está en el panel.
+ * la semana»); el panel solo muestra el total semanal, no el detalle por día.
  */
 const props = defineProps<{
   semana: WorkersWeekResponse;
@@ -210,9 +213,13 @@ defineOptions({ name: 'TarjetasSemana' });
   letter-spacing: 0.1em;
 }
 
-/* Hoy: el único acento, y además tiene su número (no solo color). */
+/* Hoy: el único acento (rosa), y además negrita y subrayado: nunca solo color. */
 .tarjetas-semana__letra--hoy {
   color: var(--m-rosa);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: var(--m-filete-grosor);
+  text-underline-offset: 3px;
 }
 
 .tarjetas-semana__defecto {

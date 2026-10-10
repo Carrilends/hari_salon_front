@@ -123,6 +123,7 @@
       full-height
       class="estilistas__dialogo"
       @update:model-value="alCambiarDialogo"
+      @hide="alOcultarDialogo"
     >
       <div
         class="estilistas__hoja"
@@ -311,6 +312,15 @@ function cerrarPanel() {
   limpiarMensajes();
   // Con el diálogo, QDialog ya devuelve el foco; en línea, lo hacemos nosotros.
   if (eraEnLinea) devolverFoco();
+}
+
+/** Con el diálogo, QDialog devuelve el foco a la fila; si ya no existe, a «Agregar». */
+function alOcultarDialogo() {
+  const origen = origenDelFoco;
+  origenDelFoco = null;
+  if (origen && !origen.isConnected) {
+    void nextTick(() => botonAgregar.value?.focus());
+  }
 }
 
 function alCambiarDialogo(abierto: boolean) {

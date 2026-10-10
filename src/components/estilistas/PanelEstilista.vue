@@ -297,8 +297,10 @@ watch(
 );
 
 /** Escape deshace primero el paso interior (la confirmación) y luego cierra el panel. */
-function alEscape() {
+function alEscape(evt: KeyboardEvent) {
   if (confirmando.value) {
+    // Que no suba hasta window: Quasar cerraría el diálogo entero al soltar la tecla.
+    evt.stopPropagation();
     confirmando.value = false;
     return;
   }
@@ -516,11 +518,13 @@ defineOptions({ name: 'PanelEstilista' });
   min-height: var(--m-tactil-min);
   align-self: flex-start;
   margin-top: 10px;
-  padding-bottom: 2px;
-  border-bottom: var(--m-filete-grosor) solid var(--m-filete-oscuro);
   color: var(--m-oro);
   font-size: 0.78rem;
-  text-decoration: none;
+  /* El subrayado va en el texto, no en la caja de 44 px. */
+  text-decoration: underline;
+  text-decoration-color: var(--m-filete-oscuro);
+  text-decoration-thickness: var(--m-filete-grosor);
+  text-underline-offset: 4px;
 }
 
 .panel-estilista__pie {

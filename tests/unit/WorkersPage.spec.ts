@@ -73,7 +73,7 @@ import WorkersPage from 'src/pages/WorkersPage.vue';
 const QDialogDoble = {
   name: 'QDialog',
   props: ['modelValue', 'maximized', 'position', 'fullHeight'],
-  emits: ['update:modelValue'],
+  emits: ['update:modelValue', 'hide'],
   template: '<div v-if="modelValue" data-test="dialogo-panel"><slot /></div>',
 };
 
@@ -564,6 +564,65 @@ describe('WorkersPage · el foco al cerrar el panel en línea', () => {
     expect(document.activeElement).toBe(
       pagina.get('[data-test="agregar-estilista"]').element
     );
+    pagina.unmount();
+  });
+});
+
+describe('WorkersPage · el foco al cerrar el diálogo', () => {
+  async function montarEnDialogo() {
+    fijarViewport({ ancho: 1000 });
+    const pagina = mount(WorkersPage, {
+      attachTo: document.body,
+      global: {
+        stubs: {
+          'q-page': { template: '<main><slot /></main>' },
+          'q-dialog': QDialogDoble,
+          RouterLink: RouterLinkStub,
+        },
+      },
+    });
+    await nextTick();
+    return pagina;
+  }
+
+  it('tras borrar, si la fila ya no existe, el foco va a «Agregar estilista»', async () => {
+    const pagina = await montarEnDialogo();
+    const fila = pagina.findAll('[data-test="elegir-estilista"]')[2];
+    (fila.element as HTMLElement).focus();
+    await fila.trigger('click');
+    mockMutaciones.actual!.eliminar.mutateAsync.mockImplementation(async () => {
+      mockSemana.respuesta!.semana.value = semanaDePrueba({
+        workers: semanaDePrueba().workers.filter((w) => w.id !== 'w-son'),
+      });
+      await nextTick();
+      return { deleted: true };
+    });
+    await pagina.get('[data-test="eliminar-estilista"]').trigger('click');
+    await pagina.get('[data-test="confirmar-eliminar"]').trigger('click');
+    await flushPromises();
+    (document.activeElement as HTMLElement | null)?.blur();
+
+    pagina.findComponent({ name: 'QDialog' }).vm.$emit('hide');
+    await flushPromises();
+
+    expect(document.activeElement).toBe(
+      pagina.get('[data-test="agregar-estilista"]').element
+    );
+    pagina.unmount();
+  });
+
+  it('si la fila sigue ahí, no le quita el foco a QDialog', async () => {
+    const pagina = await montarEnDialogo();
+    const fila = pagina.findAll('[data-test="elegir-estilista"]')[1];
+    (fila.element as HTMLElement).focus();
+    await fila.trigger('click');
+    await pagina.get('[data-test="cerrar-panel"]').trigger('click');
+    (fila.element as HTMLElement).focus();
+
+    pagina.findComponent({ name: 'QDialog' }).vm.$emit('hide');
+    await flushPromises();
+
+    expect(document.activeElement).toBe(fila.element);
     pagina.unmount();
   });
 });

@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { mount } from '@vue/test-utils';
 import TarjetasSemana from 'src/components/estilistas/TarjetasSemana.vue';
 import { HOY, diasCon, semanaDePrueba } from './fixtures/estilistas';
@@ -8,6 +10,22 @@ const montar = (props: Record<string, unknown> = {}) =>
   });
 
 describe('TarjetasSemana', () => {
+  it('hoy se marca por más que el color: subrayado, negrita y texto «hoy»', () => {
+    const tarjeta = montar().findAll('[data-test="tarjeta-estilista"]')[0];
+
+    expect(tarjeta.findAll('[data-test="hoy-texto"]')).toHaveLength(1);
+    expect(tarjeta.get('[data-test="hoy-texto"]').text()).toBe('hoy');
+    expect(tarjeta.get('[data-test="hoy-texto"]').classes()).toContain('sr');
+    const fuente = readFileSync(
+      join(__dirname, '../../src/components/estilistas/TarjetasSemana.vue'),
+      'utf8'
+    );
+    const regla = /\.tarjetas-semana__letra--hoy\s*\{([^}]*)\}/.exec(fuente);
+    expect(regla?.[1]).toContain('var(--m-rosa)');
+    expect(regla?.[1]).toContain('text-decoration: underline');
+    expect(regla?.[1]).toContain('font-weight');
+  });
+
   it('una tarjeta por estilista asignable, que se nombra entera', () => {
     const tarjetas = montar().findAll('[data-test="tarjeta-estilista"]');
 
