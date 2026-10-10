@@ -2,11 +2,11 @@
  * El texto legal de la política (S4: «el texto legal no cambia»), copiado del
  * `PrivacyPolicyPage.vue` vigente el 2026-10-09 —versión 1.1—, sin etiquetas y
  * con los espacios colapsados. Cada pieza es un `<p>` o un `<li>` de las
- * secciones, en orden.
+ * secciones, en orden. La versión 1.2 (2026-10-10) solo corrigió el teléfono.
  *
- * El teléfono no se fija: el número correcto es el de `SALON_PHONE`, y la
- * corrección de la política (versión 1.2) va en un commit aparte. Se fija su
- * forma. Si la política cambia de verdad, este fichero cambia con ella.
+ * Aquí se fija la forma del teléfono, no sus dígitos: que sea el de
+ * `SALON_PHONE` lo fija `PrivacyPolicyPage.spec.ts`. Si la política cambia de
+ * verdad, este fichero cambia con ella.
  */
 export type PiezaLegal = { etiqueta: 'p' | 'li'; texto: string | RegExp };
 

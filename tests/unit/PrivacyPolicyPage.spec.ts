@@ -10,6 +10,7 @@ import { nextTick } from 'vue';
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils';
 import PrivacyPolicyPage from 'src/pages/PrivacyPolicyPage.vue';
 import { useSeo } from 'src/composables/seo/useSeo';
+import { SALON_PHONE, SALON_PHONE_E164 } from 'src/constants/salon-location';
 import { TEXTO_LEGAL, TITULOS_SECCIONES } from './fixtures/politica-texto';
 import {
   ObservadorFalso,
@@ -108,6 +109,13 @@ describe('Política · el texto legal', () => {
     );
   });
 
+  it('el teléfono es el del salón: si SALON_PHONE cambia, la política también', () => {
+    const tel = montar().get('[data-test="seccion"] a[href^="tel:"]');
+
+    expect(tel.text()).toBe(SALON_PHONE);
+    expect(tel.attributes('href')).toBe(`tel:+${SALON_PHONE_E164}`);
+  });
+
   it('el correo del responsable abre el correo', () => {
     const correo = montar().get('a[href="mailto:lcarrionalvarez@gmail.com"]');
 
@@ -119,13 +127,13 @@ describe('Política · el texto legal', () => {
 
     const ficha = wrapper.get('[data-test="version-ficha"]');
     expect(ficha.get('[data-test="version-etiqueta"]').text()).toBe(
-      'Versión 1.1'
+      'Versión 1.2'
     );
     expect(ficha.get('[data-test="version-fecha"]').text()).toBe(
-      'Actualizada el 30 de septiembre de 2026'
+      'Actualizada el 10 de octubre de 2026'
     );
     expect(normal(wrapper.get('[data-test="version-linea"]').text())).toBe(
-      'Versión 1.1 · actualizada el 30 de septiembre de 2026'
+      'Versión 1.2 · actualizada el 10 de octubre de 2026'
     );
   });
 });

@@ -139,8 +139,8 @@
             <li>
               <strong>Teléfono / WhatsApp:</strong>&nbsp;<a
                 class="politica__enlace-texto"
-                href="tel:+573208977571"
-                >+57 320 897 7571</a
+                href="tel:+573208977471"
+                >+57 320 897 7471</a
               >
             </li>
           </ul>
@@ -455,8 +455,8 @@ import { useSeo } from 'src/composables/seo/useSeo';
  * `tests/unit/PrivacyPolicyPage.spec.ts`). Si cambia, sube `POLICY_VERSION`, la
  * fecha y `tests/unit/fixtures/politica-texto.ts` en el mismo commit.
  */
-const POLICY_VERSION = '1.1';
-const LAST_UPDATED_LABEL = '30 de septiembre de 2026';
+const POLICY_VERSION = '1.2';
+const LAST_UPDATED_LABEL = '10 de octubre de 2026';
 
 /** El índice. Los títulos son los mismos de cada `<h2>` (lo vigila la prueba). */
 const SECCIONES = [
