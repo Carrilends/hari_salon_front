@@ -25,7 +25,7 @@
 
       <div class="about-hero">
         <q-img
-          src="src/assets/places/salon.jpg"
+          src="/people/salon.jpg"
           :ratio="16 / 9"
           fit="cover"
           class="about-hero__img"

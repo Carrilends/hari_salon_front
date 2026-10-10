@@ -14,11 +14,13 @@ import { join } from 'node:path';
 
 import {
   ANCHOS_CARTA as ANCHOS_CARTA_MARCADO,
+  ANCHOS_FICHA as ANCHOS_FICHA_MARCADO,
   ANCHOS_PORTADA as ANCHOS_PORTADA_MARCADO,
 } from 'src/constants/anchos-de-foto';
 
 import {
   ANCHOS_CARTA,
+  ANCHOS_FICHA,
   ANCHOS_PORTADA,
   RECETAS,
   ficherosEsperados,
@@ -26,14 +28,24 @@ import {
 } from '../../scripts/recetas-imagenes.mjs';
 
 describe('la receta de las variantes', () => {
-  it('cubre las cinco fotos que quedan', () => {
+  it('cubre las seis fotos que quedan', () => {
     expect(Object.keys(RECETAS).sort()).toEqual([
       'make-up-face-design.jpg',
       'man_hairdress.jpg',
       'nails-design.jpg',
       'rainbow_hair.jpg',
+      'salon.jpg',
       'women-hair-cut.jpg',
     ]);
+  });
+
+  /**
+   * La foto de «¿Quiénes somos?» se pinta a 380 px en la ficha de escritorio y a
+   * lo ancho del teléfono (390) en móvil: 760 cubre las pantallas de 2x.
+   */
+  it('la del salón llega a 760: se pinta a 380', () => {
+    expect(ANCHOS_FICHA).toEqual([400, 760]);
+    expect(RECETAS['salon.jpg'].anchos).toEqual(ANCHOS_FICHA);
   });
 
   it('la portada llega a 1440 px, que es lo que pide una pantalla de 2x', () => {
@@ -72,6 +84,7 @@ describe('la receta de las variantes', () => {
   it('el marcado pide exactamente los anchos que el script genera', () => {
     expect(ANCHOS_PORTADA_MARCADO).toEqual(ANCHOS_PORTADA);
     expect(ANCHOS_CARTA_MARCADO).toEqual(ANCHOS_CARTA);
+    expect(ANCHOS_FICHA_MARCADO).toEqual(ANCHOS_FICHA);
   });
 
   /**

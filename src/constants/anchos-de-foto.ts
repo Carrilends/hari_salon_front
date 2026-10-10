@@ -14,3 +14,6 @@ export const ANCHOS_PORTADA = [420, 760, 1440];
 
 /** Las tarjetas de la carta: 283 px en escritorio, 165 en móvil. */
 export const ANCHOS_CARTA = [200, 360, 600];
+
+/** La foto del salón en «¿Quiénes somos?»: 380 px en escritorio, a lo ancho en móvil. */
+export const ANCHOS_FICHA = [400, 760];

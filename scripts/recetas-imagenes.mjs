@@ -18,6 +18,9 @@ export const ANCHOS_PORTADA = [420, 760, 1440];
 /** Las tarjetas de la carta: 283 px en escritorio, 165 en móvil. */
 export const ANCHOS_CARTA = [200, 360, 600];
 
+/** La foto del salón en «¿Quiénes somos?»: 380 px en escritorio, a lo ancho en móvil. */
+export const ANCHOS_FICHA = [400, 760];
+
 export const RECETAS = {
   // `women-hair-cut` sale en dos sitios —la portada y la segunda tarjeta de la
   // carta (`src/constants/index-sections.ts`)—, así que su receta es la unión de
@@ -29,6 +32,7 @@ export const RECETAS = {
   'man_hairdress.jpg': { anchos: ANCHOS_CARTA },
   'make-up-face-design.jpg': { anchos: ANCHOS_CARTA },
   'nails-design.jpg': { anchos: ANCHOS_CARTA },
+  'salon.jpg': { anchos: ANCHOS_FICHA },
   // Fondo de CSS a pantalla completa: sin `<picture>`, solo un JPEG sensato. No
   // genera variantes numeradas —un `background-image` no las usaría— así que de
   // esta solo sale el respaldo, con su nombre de siempre.
