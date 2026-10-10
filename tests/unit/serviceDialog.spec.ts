@@ -805,9 +805,13 @@ describe('ficha del servicio · el contrato visual', () => {
     expect(ESTILOS).not.toContain('object-fit: cover');
   });
 
-  it('maximizada en una ventana bajita, la foto cede alto a la lectura', () => {
+  /**
+   * V1: la foto mide 340 px de pie (tablero DetalleMovil) y se va al desplazar;
+   * tumbada, media pantalla, para que el nombre asome sin buscarlo.
+   */
+  it('a pantalla completa la foto mide 340 px, y tumbada cede a media pantalla', () => {
     expect(ESTILOS).toMatch(
-      /\.ficha--amplia \{[\s\S]*?\.ficha__galeria \{\s*height: min\(240px, 34vh\);/
+      /\.ficha--amplia \{[\s\S]*?\.ficha__galeria \{\s*flex: none;\s*height: min\(340px, 50vh\);/
     );
   });
 
@@ -872,5 +876,196 @@ describe('ficha del servicio · el contrato visual', () => {
 
     expect(focos.length).toBeGreaterThanOrEqual(4);
     expect(ESTILOS).toContain('outline: 2px solid var(--m-oro)');
+  });
+});
+
+/**
+ * Plan 9, V1 (tablero DetalleMovil): en pantalla completa la foto y la lectura
+ * desplazan juntas dentro de una caja, el pie se queda abajo y, cuando la foto
+ * se va por arriba, aparece una cabecera fija con el nombre. jsdom no maqueta:
+ * el alto de la foto y la posición de la caja se fijan a mano.
+ */
+describe('ficha del servicio · móvil: una caja que desplaza y la cabecera fija', () => {
+  const desplazar = async (
+    wrapper: ReturnType<typeof montar>['wrapper'],
+    { altoFoto, arriba }: { altoFoto: number; arriba: number }
+  ) => {
+    Object.defineProperty(
+      wrapper.get('[data-test="galeria"]').element,
+      'offsetHeight',
+      { configurable: true, value: altoFoto }
+    );
+    const caja = wrapper.get('[data-test="desplazable"]');
+    Object.defineProperty(caja.element, 'scrollTop', {
+      configurable: true,
+      value: arriba,
+    });
+    await caja.trigger('scroll');
+  };
+
+  it('la foto y la lectura van en la misma caja; el pie, fuera', () => {
+    anchoVentana = 390;
+    const { wrapper } = montar();
+    const caja = wrapper.get('[data-test="desplazable"]');
+
+    expect(caja.find('[data-test="galeria"]').exists()).toBe(true);
+    expect(caja.find('[data-test="descripcion"]').exists()).toBe(true);
+    expect(caja.find('[data-test="pie-acciones"]').exists()).toBe(false);
+  });
+
+  it('mientras queda foto a la vista no hay cabecera fija', async () => {
+    anchoVentana = 390;
+    const { wrapper } = montar();
+
+    await desplazar(wrapper, { altoFoto: 340, arriba: 100 });
+
+    expect(wrapper.find('[data-test="barra-fija"]').exists()).toBe(false);
+  });
+
+  it('cuando la foto se va por arriba aparece la cabecera con el nombre', async () => {
+    anchoVentana = 390;
+    const { wrapper } = montar();
+
+    await desplazar(wrapper, { altoFoto: 340, arriba: 280 });
+
+    const barra = wrapper.get('[data-test="barra-fija"]');
+    expect(barra.text()).toBe('Fade bajo clásico');
+    // El nombre de verdad es el `<h2>`: la cabecera no se oye dos veces.
+    expect(barra.attributes('aria-hidden')).toBe('true');
+  });
+
+  it('al volver arriba la cabecera se va', async () => {
+    anchoVentana = 390;
+    const { wrapper } = montar();
+
+    await desplazar(wrapper, { altoFoto: 340, arriba: 300 });
+    await desplazar(wrapper, { altoFoto: 340, arriba: 0 });
+
+    expect(wrapper.find('[data-test="barra-fija"]').exists()).toBe(false);
+  });
+
+  it('con la cabecera puesta sigue habiendo una sola X, y cierra con «cancel»', async () => {
+    anchoVentana = 390;
+    const { wrapper } = montar();
+
+    await desplazar(wrapper, { altoFoto: 340, arriba: 300 });
+    const equis = wrapper.findAll('[data-test="cerrar"]');
+
+    expect(equis).toHaveLength(1);
+    expect(equis[0].classes()).toContain('ficha__cerrar--en-barra');
+
+    await equis[0].trigger('click');
+    expect(wrapper.emitted('ok')?.[0]).toEqual(['cancel']);
+  });
+
+  /** Foco de revisión 1: sin foto medida el umbral sería 0 − 60. */
+  it('sin la foto medida no se enciende, aunque llegue un scroll', async () => {
+    anchoVentana = 390;
+    const { wrapper } = montar();
+
+    await desplazar(wrapper, { altoFoto: 0, arriba: 300 });
+
+    expect(wrapper.find('[data-test="barra-fija"]').exists()).toBe(false);
+  });
+
+  /** Foco de revisión 1: en escritorio la caja no desplaza; un scroll suelto no cuenta. */
+  it('en escritorio no hay cabecera fija aunque llegue un scroll', async () => {
+    const { wrapper } = montar();
+
+    await desplazar(wrapper, { altoFoto: 640, arriba: 600 });
+
+    expect(wrapper.find('[data-test="barra-fija"]').exists()).toBe(false);
+    expect(wrapper.get('[data-test="cerrar"]').classes()).not.toContain(
+      'ficha__cerrar--en-barra'
+    );
+  });
+
+  it('el teclado desplaza la caja en móvil, y la descripción en escritorio', () => {
+    anchoVentana = 390;
+    const movil = montar().wrapper;
+
+    expect(movil.get('[data-test="desplazable"]').attributes('tabindex')).toBe(
+      '0'
+    );
+    expect(
+      movil.get('[data-test="descripcion"]').attributes('tabindex')
+    ).toBeUndefined();
+
+    anchoVentana = 1280;
+    const escritorio = montar().wrapper;
+
+    expect(
+      escritorio.get('[data-test="desplazable"]').attributes('tabindex')
+    ).toBeUndefined();
+    expect(
+      escritorio.get('[data-test="descripcion"]').attributes('tabindex')
+    ).toBe('0');
+  });
+
+  /** Corrige el tablero 2: la ficha es persistente; «Cerrar» no se quita. */
+  it('con la bolsa vacía el pie sigue ofreciendo «Cerrar»', () => {
+    anchoVentana = 390;
+    const { wrapper } = montar();
+
+    expect(wrapper.get('[data-test="resumen-bolsa"]').text()).toBe(
+      'Tu reserva está vacía.'
+    );
+    expect(wrapper.find('[data-test="cerrar-pie"]').exists()).toBe(true);
+  });
+});
+
+describe('ficha del servicio · el contrato visual de móvil', () => {
+  const FUENTE = readFileSync(
+    join(__dirname, '../../src/components/dialogs/serviceDialog.vue'),
+    'utf8'
+  );
+  const ESTILOS = FUENTE.slice(FUENTE.indexOf('<style'));
+
+  it('en escritorio la caja no pinta nada: sus hijas siguen en la rejilla', () => {
+    expect(ESTILOS).toMatch(/\.ficha__desplazable \{\s*display: contents;/);
+  });
+
+  it('en pantalla completa la caja es lo único que desplaza', () => {
+    expect(ESTILOS).toMatch(
+      /\.ficha--amplia \{[^}]*display: flex;[^}]*flex-direction: column;/
+    );
+    expect(ESTILOS).toMatch(
+      /\.ficha--amplia \{[\s\S]*?\.ficha__desplazable \{[^}]*overflow-y: auto;/
+    );
+  });
+
+  /** Corrige el tablero 1: nada de un scroll dentro de otro en un teléfono. */
+  it('en pantalla completa la descripción no tiene scroll propio', () => {
+    expect(ESTILOS).toMatch(
+      /\.ficha--amplia \{[\s\S]*?\.ficha__descripcion \{[^}]*overflow: visible;/
+    );
+  });
+
+  /** Foco de revisión 5: un nombre largo no empuja la X. */
+  it('la cabecera fija mide 60 px, deja sitio a la X y corta un nombre largo', () => {
+    expect(ESTILOS).toMatch(
+      /\.ficha__barra \{[^}]*position: absolute;[^}]*height: 60px;[^}]*padding: 0 60px 0 var\(--m-banda-margen-movil\);/
+    );
+    expect(ESTILOS).toMatch(
+      /\.ficha__barra-nombre \{[^}]*overflow: hidden;[^}]*white-space: nowrap;[^}]*text-overflow: ellipsis;/
+    );
+  });
+
+  it('las miniaturas bajan a la esquina inferior y miden 52 px', () => {
+    expect(ESTILOS).toMatch(
+      /\.ficha--amplia \{[\s\S]*?\.ficha__miniaturas \{\s*top: auto;\s*bottom: 14px;/
+    );
+    expect(ESTILOS).toMatch(
+      /\.ficha--amplia \{[\s\S]*?\.ficha__miniatura \{\s*width: 52px;\s*height: 52px;/
+    );
+  });
+
+  it('nombre a 27 px y precio a 24 px, como el tablero', () => {
+    expect(ESTILOS).toMatch(
+      /\.ficha--amplia \{[\s\S]*?\.ficha__nombre \{\s*font-size: 27px;/
+    );
+    expect(ESTILOS).toMatch(
+      /\.ficha--amplia \{[\s\S]*?\.ficha__precio \{\s*font-size: 24px;/
+    );
   });
 });

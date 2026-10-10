@@ -14,9 +14,30 @@
       :class="{ 'ficha--amplia': maximized }"
       data-test="ficha"
     >
+      <!--
+        Plan 9, V1 (tablero DetalleMovil): en pantalla completa, cuando la foto
+        ya se fue por arriba, una cabecera fija repite el nombre. Solo a la
+        vista: el nombre de verdad es el `<h2>` de la lectura, así que el lector
+        de pantalla no lo oye dos veces.
+      -->
+      <header
+        v-if="maximized && barraVisible"
+        class="ficha__barra"
+        data-test="barra-fija"
+        aria-hidden="true"
+      >
+        <p class="ficha__barra-nombre">{{ props.service.name }}</p>
+      </header>
+
+      <!--
+        Una sola X. Cuelga de la ficha y no de la caja que desplaza, así que no
+        se va con la foto: sobre la foto lleva velo y, con la cabecera fija
+        puesta, se posa en ella sin fondo.
+      -->
       <button
         type="button"
         class="ficha__cerrar"
+        :class="{ 'ficha__cerrar--en-barra': maximized && barraVisible }"
         data-test="cerrar"
         aria-label="Cerrar la ficha del servicio"
         @click="cerrar"
@@ -35,109 +56,130 @@
         </svg>
       </button>
 
+      <!--
+        Foto y lectura en una caja. En escritorio no pinta nada (`display:
+        contents`) y sus dos hijas siguen siendo celdas de la rejilla; en
+        pantalla completa es lo único que desplaza, con la foto dentro, y el pie
+        se queda abajo.
+      -->
       <div
-        ref="galeria"
-        class="ficha__galeria"
-        :class="{ 'm-foto-cargando': cargando(fotoGrande) }"
-        data-test="galeria"
+        class="ficha__desplazable"
+        data-test="desplazable"
+        :tabindex="maximized ? 0 : undefined"
+        @scroll="alDesplazar"
       >
-        <img
-          class="ficha__foto m-foto-fundido"
-          :class="{ 'm-foto-fundido--esperando': cargando(fotoGrande) }"
-          data-test="foto"
-          :src="fotoGrande"
-          :alt="props.service.name"
-          decoding="async"
-          @load="alCargar"
-          @error="alFallar"
-        />
+        <div
+          ref="galeria"
+          class="ficha__galeria"
+          :class="{ 'm-foto-cargando': cargando(fotoGrande) }"
+          data-test="galeria"
+        >
+          <img
+            class="ficha__foto m-foto-fundido"
+            :class="{ 'm-foto-fundido--esperando': cargando(fotoGrande) }"
+            data-test="foto"
+            :src="fotoGrande"
+            :alt="props.service.name"
+            decoding="async"
+            @load="alCargar"
+            @error="alFallar"
+          />
 
-        <ul v-if="fotos.length > 1" class="ficha__miniaturas">
-          <li v-for="(imagen, i) in fotos" :key="imagen.id ?? i">
-            <button
-              type="button"
-              class="ficha__miniatura"
-              :class="{
-                'ficha__miniatura--elegida': i === elegida,
-                'm-foto-cargando': cargando(miniatura(imagen.url)),
-              }"
-              data-test="miniatura"
-              :aria-label="`Ver foto ${i + 1} de ${fotos.length}`"
-              :aria-current="i === elegida ? 'true' : undefined"
-              @click="elegida = i"
-            >
-              <img
-                class="m-foto-fundido"
+          <ul v-if="fotos.length > 1" class="ficha__miniaturas">
+            <li v-for="(imagen, i) in fotos" :key="imagen.id ?? i">
+              <button
+                type="button"
+                class="ficha__miniatura"
                 :class="{
-                  'm-foto-fundido--esperando': cargando(miniatura(imagen.url)),
+                  'ficha__miniatura--elegida': i === elegida,
+                  'm-foto-cargando': cargando(miniatura(imagen.url)),
                 }"
-                :src="miniatura(imagen.url)"
-                alt=""
-                width="56"
-                height="56"
-                loading="lazy"
-                decoding="async"
-                @load="alCargar"
-                @error="alFallar"
-              />
-            </button>
-          </li>
-        </ul>
-      </div>
-
-      <div class="ficha__cuerpo">
-        <p v-if="categoria" class="ficha__categoria" data-test="categoria">
-          {{ categoria }}
-        </p>
-
-        <h2 class="ficha__nombre" data-test="nombre">
-          {{ props.service.name }}
-        </h2>
-
-        <p class="ficha__cifras">
-          <span class="ficha__precio" data-test="precio">${{ precio }}</span>
-          <template v-if="enPromocion">
-            <span class="ficha__precio-base" data-test="precio-base">
-              <!-- El tachado solo se ve: el lector de pantalla oye «antes». -->
-              <span class="sr">antes</span>
-              ${{ precioBase }}
-            </span>
-            <span class="ficha__promo" data-test="promo-pildora">
-              -{{ descuento }} %
-            </span>
-          </template>
-          <span v-if="duracion" class="ficha__duracion" data-test="duracion">
-            {{ duracion }}
-          </span>
-        </p>
-
-        <hr class="ficha__filete" />
-
-        <p class="ficha__rotulo">Descripción</p>
-        <!--
-          `tabindex="0"` para que quien navega con teclado pueda desplazar la
-          descripción: es el único panel con scroll de la ficha.
-        -->
-        <div class="ficha__descripcion" data-test="descripcion" tabindex="0">
-          <p class="ficha__texto">{{ descripcion }}</p>
+                data-test="miniatura"
+                :aria-label="`Ver foto ${i + 1} de ${fotos.length}`"
+                :aria-current="i === elegida ? 'true' : undefined"
+                @click="elegida = i"
+              >
+                <img
+                  class="m-foto-fundido"
+                  :class="{
+                    'm-foto-fundido--esperando': cargando(
+                      miniatura(imagen.url)
+                    ),
+                  }"
+                  :src="miniatura(imagen.url)"
+                  alt=""
+                  width="56"
+                  height="56"
+                  loading="lazy"
+                  decoding="async"
+                  @load="alCargar"
+                  @error="alFallar"
+                />
+              </button>
+            </li>
+          </ul>
         </div>
 
-        <ul v-if="chips.length" class="ficha__tags" data-test="tags">
-          <li
-            v-for="chip in chips"
-            :key="chip"
-            class="ficha__tag"
-            data-test="tag"
-          >
-            {{ chip }}
-          </li>
-        </ul>
+        <div class="ficha__cuerpo">
+          <p v-if="categoria" class="ficha__categoria" data-test="categoria">
+            {{ categoria }}
+          </p>
 
-        <p v-if="rostros.length" class="ficha__rostros" data-test="rostros">
-          <StrokeIcon nombre="rostro" :tamano="18" />
-          <span>Favorece a rostros: {{ rostros.join(' · ') }}</span>
-        </p>
+          <h2 class="ficha__nombre" data-test="nombre">
+            {{ props.service.name }}
+          </h2>
+
+          <p class="ficha__cifras">
+            <span class="ficha__precio" data-test="precio">${{ precio }}</span>
+            <template v-if="enPromocion">
+              <span class="ficha__precio-base" data-test="precio-base">
+                <!-- El tachado solo se ve: el lector de pantalla oye «antes». -->
+                <span class="sr">antes</span>
+                ${{ precioBase }}
+              </span>
+              <span class="ficha__promo" data-test="promo-pildora">
+                -{{ descuento }} %
+              </span>
+            </template>
+            <span v-if="duracion" class="ficha__duracion" data-test="duracion">
+              {{ duracion }}
+            </span>
+          </p>
+
+          <hr class="ficha__filete" />
+
+          <p class="ficha__rotulo">Descripción</p>
+          <!--
+            En escritorio, `tabindex="0"` para que quien navega con teclado pueda
+            desplazar la descripción: allí es el único panel con scroll. En
+            pantalla completa no desplaza por su cuenta; el foco es de la caja.
+          -->
+          <div
+            class="ficha__descripcion"
+            data-test="descripcion"
+            :tabindex="maximized ? undefined : 0"
+          >
+            <p class="ficha__texto">{{ descripcion }}</p>
+          </div>
+
+          <ul v-if="chips.length" class="ficha__tags" data-test="tags">
+            <li
+              v-for="chip in chips"
+              :key="chip"
+              class="ficha__tag"
+              data-test="tag"
+            >
+              {{ chip }}
+            </li>
+          </ul>
+
+          <p v-if="rostros.length" class="ficha__rostros" data-test="rostros">
+            <StrokeIcon nombre="rostro" :tamano="18" />
+            <span>Favorece a rostros: {{ rostros.join(' · ') }}</span>
+          </p>
+        </div>
       </div>
+
       <footer
         v-if="!props.isFromBooking"
         class="ficha__pie"
@@ -175,7 +217,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useDialogPluginComponent } from 'quasar';
 import { useDialogMaximizedBelow } from 'src/composables/dialogs/useDialogMaximizedBelow';
 import { escucharConsulta } from 'src/helpers/escuchar-consulta';
@@ -346,6 +388,31 @@ const miniatura = (url: string) => {
   const pedida = miniaturaPedida(url);
   return fallida(pedida) ? PLACEHOLDER_IMAGE : pedida;
 };
+
+/**
+ * Plan 9, V1 · la cabecera fija. Entra cuando lo que queda de foto cabría
+ * debajo de ella: 60 px es su alto en el tablero DetalleMovil. Se mide en cada
+ * `scroll` de la caja —ni `window` ni `matchMedia` en `setup`— y solo cuenta en
+ * pantalla completa: en escritorio la caja no desplaza (`display: contents`).
+ *
+ * Sin la foto medida (alto 0, aún sin maquetar) no se enciende: con `0 − 60`
+ * como umbral, cualquier posición la encendería.
+ */
+const ALTO_BARRA_PX = 60;
+const barraVisible = ref(false);
+
+const alDesplazar = (evento: Event) => {
+  const caja = evento.target as HTMLElement;
+  const altoFoto = galeria.value?.offsetHeight ?? 0;
+  barraVisible.value =
+    altoFoto > 0 && caja.scrollTop >= altoFoto - ALTO_BARRA_PX;
+};
+
+// Al girar el teléfono la ficha puede dejar de ir a pantalla completa: la
+// cabecera se apaga y la vuelve a encender el siguiente `scroll`.
+watch(maximized, () => {
+  barraVisible.value = false;
+});
 
 /**
  * D3: la cifra grande es el precio que de verdad se va a cobrar. `price` llega
@@ -570,6 +637,52 @@ const rostros = computed<string[]>(() =>
   outline-offset: 2px;
 }
 
+/* --- La caja que desplaza y la cabecera fija (plan 9, V1) ---------------- */
+
+/*
+ * En escritorio la caja no existe para la maquetación: sus dos hijas (la foto
+ * y la lectura) siguen siendo celdas de la rejilla de `.ficha`. Safari 13.1
+ * entiende `display: contents` (desde 11.1), y en un `<div>` sin papel no se
+ * pierde nada para el lector de pantalla.
+ */
+.ficha__desplazable {
+  display: contents;
+}
+
+.ficha__desplazable:focus-visible {
+  outline: 2px solid var(--m-oro);
+  outline-offset: -2px;
+}
+
+/* 60 px, carbón y filete abajo (tablero DetalleMovil). A la derecha deja sitio
+   a la X, que es la de siempre: 44 + 8 de margen + 8 de aire. */
+.ficha__barra {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: 60px;
+  padding: 0 60px 0 var(--m-banda-margen-movil);
+  background: var(--m-carbon);
+  border-bottom: var(--m-filete-grosor) solid var(--m-filete-oscuro);
+}
+
+.ficha__barra-nombre {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--m-font-display);
+  font-size: 18px;
+  line-height: 1.2;
+  color: var(--m-hueso);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 /* --- La columna de la lectura -------------------------------------------- */
 
 .ficha__cuerpo {
@@ -777,45 +890,89 @@ const rostros = computed<string[]>(() =>
   outline-offset: 2px;
 }
 
-/* --- Pantalla completa por debajo de 500 px ------------------------------- */
+/* --- Pantalla completa por debajo de 500 px (plan 9, V1) ------------------ */
 
+/**
+ * Tablero DetalleMovil. Tres pisos en columna: la caja que desplaza (foto y
+ * lectura juntas), el pie fijo abajo y, por encima, la cabecera fija cuando la
+ * foto se ha ido. La rejilla de escritorio no sirve aquí: la foto ya no es una
+ * celda quieta, se va con el dedo.
+ */
 .ficha--amplia {
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  grid-template-areas:
-    'foto'
-    'cuerpo'
-    'pie';
+  display: flex;
+  flex-direction: column;
   width: 100%;
   height: 100%;
   border: 0;
   border-radius: 0;
 
-  // 240 px en un teléfono de pie; tumbado (390 px de alto) la foto cede hasta
-  // un tercio de la ventana para que el nombre y el precio sigan a la vista.
-  .ficha__galeria {
-    height: min(240px, 34vh);
+  .ficha__desplazable {
+    display: block;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
-  // Sobre una foto de 240 px la tira cabe mejor tumbada.
+  // 340 px de pie (tablero). Tumbada no se come la pantalla: media, y se va
+  // al desplazar.
+  .ficha__galeria {
+    flex: none;
+    height: min(340px, 50vh);
+  }
+
+  // Tumbada, en la esquina de abajo, a 52 px.
   .ficha__miniaturas {
+    top: auto;
+    bottom: 14px;
+    left: 14px;
     flex-direction: row;
   }
 
+  .ficha__miniatura {
+    width: 52px;
+    height: 52px;
+  }
+
   .ficha__cuerpo {
-    padding: 18px var(--m-banda-margen-movil) 10px;
+    overflow: visible;
+    padding: 20px var(--m-banda-margen-movil) 24px;
+  }
+
+  // Sin panel propio: un scroll dentro de otro en un teléfono es un dedo que
+  // nunca sabe qué arrastra. Crece a su alto y desplaza la ficha entera.
+  .ficha__descripcion {
+    flex: none;
+    overflow: visible;
+    padding-right: 0;
   }
 
   .ficha__pie {
-    padding: 12px var(--m-banda-margen-movil) 18px;
+    flex: none;
+    padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+
+  // Sobre la foto, con velo; ya no se va con ella porque cuelga de la ficha.
+  .ficha__cerrar {
+    top: 8px;
+    right: 8px;
+    background: var(--m-velo-accion);
+  }
+
+  // Con la cabecera fija debajo: sin fondo ni filete, trazo piedra clara.
+  .ficha__cerrar--en-barra {
+    background: transparent;
+    border-color: transparent;
+    color: var(--m-piedra-clara);
   }
 
   .ficha__nombre {
-    font-size: 23px;
+    font-size: 27px;
   }
 
   .ficha__precio {
-    font-size: 22px;
+    font-size: 24px;
   }
 }
 
