@@ -28,6 +28,11 @@ export const queryKeys = {
     all: ['worker-availability'] as const,
     /** Horas libres de cada estilista para un día `YYYY-MM-DD`. */
     day: (ymd: string) => ['worker-availability', ymd] as const,
+    /**
+     * Carga de la semana de cada estilista («Mis estilistas»), por su lunes
+     * `YYYY-MM-DD`. Cuelga de `all`: invalidar la raíz la refresca.
+     */
+    week: (lunes: string) => ['worker-availability', 'semana', lunes] as const,
   },
   reviews: {
     /** Reseñas públicas (GET /reviews): Testimonios y la banda del inicio. */

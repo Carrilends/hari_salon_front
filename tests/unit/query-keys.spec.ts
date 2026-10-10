@@ -25,6 +25,19 @@ describe('registro de claves de consulta', () => {
     expect(key).toEqual(['worker-availability', '2026-09-15']);
   });
 
+  /**
+   * La semana de «Mis estilistas» cuelga de la raíz de disponibilidad: el canal
+   * en tiempo real ya la invalida con cada reserva creada, movida o cancelada,
+   * así la tabla de la dueña se refresca sola.
+   */
+  it('la semana de estilistas extiende a la raíz de disponibilidad', () => {
+    const root = queryKeys.workerAvailability.all;
+    const key = queryKeys.workerAvailability.week('2026-10-05');
+    expect(key.slice(0, root.length)).toEqual([...root]);
+    expect(key).toEqual(['worker-availability', 'semana', '2026-10-05']);
+  });
+
+
   it('las tres raíces son distintas entre sí', () => {
     const roots = [
       queryKeys.reservations.all[0],
