@@ -396,8 +396,17 @@ function elegirPestana(nueva: PestanaBandeja) {
   pestana.value = nueva;
 }
 
+/**
+ * Abrirla es haberla visto: su aviso de «Nueva» (y con él la etiqueta de la
+ * fila) se descarta, igual que con «Ver». Los demás avisos de esa reserva se
+ * quedan.
+ */
 function abrir(id: string) {
   seleccionadaId.value = id;
+  for (const aviso of avisos.value) {
+    if (aviso.evento === 'reservation.created' && aviso.reservationId === id)
+      vivos.descartar(aviso.id);
+  }
 }
 
 async function confirmar(id: string) {

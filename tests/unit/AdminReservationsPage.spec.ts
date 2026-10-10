@@ -606,6 +606,28 @@ describe('la bandeja · avisos fijados (A5)', () => {
     ).toBe(false);
   });
 
+  it('abrir la fila de una reserva nueva también le quita «Nueva» y su aviso', async () => {
+    const w = montar();
+    registrar({
+      ...createdEvent,
+      reservationId: 'res-5',
+      customerName: 'Paula R.',
+    });
+    // Otro aviso de la misma reserva que no es «Nueva»: ese se queda.
+    registrar({ ...confirmedEvent, reservationId: 'res-5' });
+    await nextTick();
+
+    await abrir(w, 'res-5');
+
+    expect(w.find('[data-test="detalle-nombre"]').text()).toBe('Paula R.');
+    expect(
+      w.find('[data-id="res-5"] [data-test="etiqueta-nueva"]').exists()
+    ).toBe(false);
+    expect(
+      w.findAll('[data-test="aviso"]').map((a) => a.attributes('data-evento'))
+    ).toEqual(['reservation.confirmed']);
+  });
+
   it('«Ver» cambia a «Todas» si la reserva no está en la pestaña', async () => {
     const w = montar();
     registrar({ ...confirmedEvent, reservationId: 'res-4' });
