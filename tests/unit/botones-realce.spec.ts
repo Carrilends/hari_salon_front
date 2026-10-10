@@ -350,6 +350,19 @@ const BOTONES: Boton[] = [
   { archivo: 'components/cuenta/SeccionSesion.vue', clase: 'sesion__boton', claro: true },
   { archivo: 'components/cuenta/SeccionSesion.vue', clase: 'sesion__boton--macizo' },
   { archivo: 'pages/MyAccountPage.vue', clase: 'cuenta__volver', claro: true },
+  // Mis estilistas (plan 8): cabecera, tabla, tarjetas y panel. Todo sobre
+  // tinta o carbón: ninguno es `claro`.
+  { archivo: 'pages/WorkersPage.vue', clase: 'estilistas__flecha' },
+  { archivo: 'pages/WorkersPage.vue', clase: 'estilistas__agregar' },
+  { archivo: 'pages/WorkersPage.vue', clase: 'estilistas__reintentar' },
+  { archivo: 'components/estilistas/TablaSemana.vue', clase: 'tabla-semana__estilista' },
+  { archivo: 'components/estilistas/TarjetasSemana.vue', clase: 'tarjetas-semana__tarjeta' },
+  { archivo: 'components/estilistas/PanelEstilista.vue', clase: 'panel-estilista__cerrar' },
+  { archivo: 'components/estilistas/PanelEstilista.vue', clase: 'panel-estilista__guardar' },
+  { archivo: 'components/estilistas/PanelEstilista.vue', clase: 'panel-estilista__eliminar' },
+  { archivo: 'components/estilistas/PanelEstilista.vue', clase: 'panel-estilista__cancelar' },
+  { archivo: 'components/estilistas/PanelEstilista.vue', clase: 'panel-estilista__confirmar' },
+  { archivo: 'components/estilistas/PanelEstilista.vue', clase: 'panel-estilista__enlace' },
 ];
 
 /** El bloque de estilos de un SFC dentro de las consultas de puntero fino. */
