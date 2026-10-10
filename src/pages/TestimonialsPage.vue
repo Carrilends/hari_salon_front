@@ -33,15 +33,21 @@
                   :valor="Number(destacada.score)"
                   :tamano="13"
                 />
-                <span class="testimonios__fecha">{{
-                  fechaCorta(destacada.createdAt)
-                }}</span>
+                <time
+                  class="testimonios__fecha"
+                  :datetime="destacada.createdAt"
+                  >{{ fechaCorta(destacada.createdAt) }}</time
+                >
               </figcaption>
             </figure>
           </Transition>
         </div>
+        <!--
+          `isPending` y no `isLoading`: sin red la consulta queda en pausa
+          (pendiente, sin cargar ni fallar) y no se puede afirmar «no hay».
+        -->
         <div
-          v-else-if="cargando"
+          v-else-if="isPending"
           class="testimonios__esqueleto"
           data-test="destacada-cargando"
           aria-hidden="true"
@@ -113,7 +119,12 @@
 
     <section class="testimonios__muro" aria-labelledby="testimonios-muro">
       <div class="testimonios__muro-cabecera">
-        <h2 id="testimonios-muro" class="testimonios__muro-titulo">
+        <h2
+          id="testimonios-muro"
+          ref="tituloMuro"
+          class="testimonios__muro-titulo"
+          tabindex="-1"
+        >
           Todas las reseñas
         </h2>
         <span v-if="reviews.length" class="testimonios__orden"
@@ -130,8 +141,12 @@
         </button>
       </div>
 
+      <!-- Los esqueletos callan; esto es lo que oye el lector de pantalla. -->
+      <p class="sr" role="status" aria-live="polite" data-test="anuncio-carga">
+        {{ isPending ? 'Cargando reseñas…' : '' }}
+      </p>
       <div
-        v-if="isLoading"
+        v-if="isPending"
         class="testimonios__rejilla"
         data-test="muro-cargando"
         aria-hidden="true"
@@ -169,7 +184,7 @@
           data-test="reintentar"
           :disabled="isFetching"
           :aria-busy="isFetching"
-          @click="refetch()"
+          @click="reintentar"
         >
           Reintentar
         </button>
@@ -193,7 +208,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import EstrellasValoracion from 'src/components/testimonios/EstrellasValoracion.vue';
 import TarjetaResena from 'src/components/testimonios/TarjetaResena.vue';
 import { useReviews } from 'src/composables/reviews/useReviews';
@@ -214,14 +229,19 @@ import { useAuthStore } from 'src/stores/auth-store';
  * pasar o enfocar, respeta el movimiento reducido, no rota con menos de tres y
  * con SSG se prerenderiza fija (el temporizador arranca en `onMounted`).
  */
-const { reviews, isLoading, isError, isFetching, refetch } = useReviews();
-const {
-  resena: destacada,
-  indice,
-  cargando,
-  pausar,
-  reanudar,
-} = useRotatingReview();
+const { reviews, isPending, isError, isFetching, refetch } = useReviews();
+const { resena: destacada, indice, pausar, reanudar } = useRotatingReview();
+
+/**
+ * Al reintentar sin datos, la consulta vuelve a `pending` y el aviso —con
+ * este botón dentro— se desmonta: el foco caería al `<body>`. Se lleva al
+ * título del muro, que sigue ahí, para que el teclado no vuelva a empezar.
+ */
+const tituloMuro = ref<HTMLElement | null>(null);
+const reintentar = () => {
+  tituloMuro.value?.focus();
+  void refetch();
+};
 
 /**
  * Se pide al armazón, que tiene la regla de quién puede reseñar (sin sesión →
@@ -486,6 +506,11 @@ defineOptions({
   letter-spacing: var(--m-tracking-etiqueta);
   text-transform: uppercase;
   color: var(--m-oro-profundo);
+}
+
+/* Foco programático (tabindex="-1"): no se alcanza con el teclado. */
+.testimonios__muro-titulo:focus {
+  outline: none;
 }
 
 .testimonios__orden {
@@ -757,7 +782,7 @@ defineOptions({
     border-bottom-color: var(--m-rosa-profundo);
   }
 
-  .testimonios__reintentar:hover {
+  .testimonios__reintentar:hover:not(:disabled) {
     border-color: var(--m-oro);
   }
 }

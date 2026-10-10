@@ -10,7 +10,7 @@ const getReviews = async (): Promise<ReviewItem[]> => {
 };
 
 export const useReviews = () => {
-  const { data, isLoading, isError, isFetching, refetch } = useQuery<
+  const { data, isPending, isLoading, isError, isFetching, refetch } = useQuery<
     ReviewItem[]
   >({
     queryKey: queryKeys.reviews.all,
@@ -28,6 +28,13 @@ export const useReviews = () => {
   return {
     reviews,
     averageScore,
+    /**
+     * Sin datos todavía: cargando O en pausa sin red (TanStack v5,
+     * `networkMode: 'online'`, deja la consulta en `pending` con
+     * `fetchStatus: 'paused'`, y entonces `isLoading` es `false`). Quien
+     * tenga que distinguir «vacío» de «aún no sé» mira esto, no `isLoading`.
+     */
+    isPending,
     isLoading,
     isError,
     isFetching,

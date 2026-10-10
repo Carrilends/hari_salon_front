@@ -7,28 +7,37 @@
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { nextTick, unref } from 'vue';
+import { nextTick, reactive, unref } from 'vue';
 import { mount } from '@vue/test-utils';
 import type { ReviewItem } from 'src/api/apiTypes';
 import TestimonialsPage from 'src/pages/TestimonialsPage.vue';
 import { useReviewDialog } from 'src/composables/reviews/useReviewDialog';
 import { useSeo } from 'src/composables/seo/useSeo';
 
-const mockResenas = {
+/**
+ * El doble imita a TanStack v5: `estado` es el `status` de la consulta y
+ * `buscando` su `fetchStatus === 'fetching'`. De ahí salen las banderas, igual
+ * que en la librería: `isPending` = sin datos todavía (cargando O en pausa sin
+ * red), `isLoading` = `isPending && isFetching`. Es reactivo para que un
+ * `refetch` pueda cambiar el estado con la página montada.
+ */
+const mockResenas = reactive({
   lista: [] as ReviewItem[],
-  cargando: false,
-  fallo: false,
+  estado: 'success' as 'pending' | 'error' | 'success',
   buscando: false,
   refetch: jest.fn(),
-};
+});
 jest.mock('src/composables/reviews/useReviews', () => {
   const { computed } = jest.requireActual<typeof import('vue')>('vue');
   return {
     useReviews: () => ({
       reviews: computed(() => mockResenas.lista),
       averageScore: computed(() => 0),
-      isLoading: computed(() => mockResenas.cargando),
-      isError: computed(() => mockResenas.fallo),
+      isPending: computed(() => mockResenas.estado === 'pending'),
+      isLoading: computed(
+        () => mockResenas.estado === 'pending' && mockResenas.buscando
+      ),
+      isError: computed(() => mockResenas.estado === 'error'),
       isFetching: computed(() => mockResenas.buscando),
       refetch: mockResenas.refetch,
     }),
@@ -62,10 +71,9 @@ const politica = jest.fn();
 beforeEach(() => {
   jest.useFakeTimers();
   mockResenas.lista = [resena(1, 5), resena(2, 5), resena(3, 4), resena(4, 4)];
-  mockResenas.cargando = false;
-  mockResenas.fallo = false;
+  mockResenas.estado = 'success';
   mockResenas.buscando = false;
-  mockResenas.refetch.mockClear();
+  mockResenas.refetch.mockReset();
   mockAuth.isAdmin = false;
   politica.mockClear();
   useReviewDialog().registrarSolicitud(politica);
@@ -88,6 +96,13 @@ describe('Testimonios · con reseñas', () => {
       'Clienta 1'
     );
     expect(wrapper.get('h1').text()).toBe('Testimonios');
+  });
+
+  it('la fecha de la destacada es un <time> con su instante, como en la tarjeta', () => {
+    const fecha = montar().get('[data-test="autor-destacado"] time');
+
+    expect(fecha.attributes('datetime')).toBe('2026-05-18T15:00:00.000Z');
+    expect(fecha.text()).toBe('18 may 2026');
   });
 
   it('la nota: media con coma, total y barras de 5 a 1', () => {
@@ -146,7 +161,8 @@ describe('Testimonios · estados', () => {
   /** Con SSG este es el HTML publicado: no puede afirmar que no hay reseñas. */
   it('cargando: esqueletos en la banda y en el muro, sin afirmar nada', () => {
     mockResenas.lista = [];
-    mockResenas.cargando = true;
+    mockResenas.estado = 'pending';
+    mockResenas.buscando = true;
     const wrapper = montar();
 
     expect(wrapper.find('[data-test="destacada-cargando"]').exists()).toBe(
@@ -155,6 +171,42 @@ describe('Testimonios · estados', () => {
     expect(wrapper.findAll('[data-test="tarjeta-cargando"]')).toHaveLength(6);
     expect(wrapper.text()).not.toContain('Todavía no hay reseñas');
     expect(wrapper.find('[data-test="nota"]').exists()).toBe(false);
+  });
+
+  /**
+   * Sin red, TanStack v5 (`networkMode: 'online'`) deja la consulta en
+   * `pending` con `fetchStatus: 'paused'`: ni `isLoading` ni `isError`. La
+   * página no puede tomar eso por «no hay reseñas».
+   */
+  it('en pausa sin red: sigue en esqueleto, no afirma que no hay reseñas', () => {
+    mockResenas.lista = [];
+    mockResenas.estado = 'pending';
+    mockResenas.buscando = false;
+    const wrapper = montar();
+
+    expect(wrapper.find('[data-test="destacada-cargando"]').exists()).toBe(
+      true
+    );
+    expect(wrapper.findAll('[data-test="tarjeta-cargando"]')).toHaveLength(6);
+    expect(wrapper.text()).not.toContain('Todavía no hay reseñas');
+    expect(wrapper.find('[data-test="destacada-vacia"]').exists()).toBe(false);
+    expect(wrapper.find('[data-test="muro-vacio"]').exists()).toBe(false);
+  });
+
+  it('los esqueletos se esconden al lector, pero «Cargando reseñas…» se anuncia', () => {
+    mockResenas.lista = [];
+    mockResenas.estado = 'pending';
+    mockResenas.buscando = true;
+    const anuncio = montar().get('[data-test="anuncio-carga"]');
+
+    expect(anuncio.text()).toBe('Cargando reseñas…');
+    expect(anuncio.attributes('role')).toBe('status');
+    expect(anuncio.attributes('aria-live')).toBe('polite');
+    expect(anuncio.classes()).toContain('sr');
+  });
+
+  it('con las reseñas ya cargadas, el anuncio queda vacío', () => {
+    expect(montar().get('[data-test="anuncio-carga"]').text()).toBe('');
   });
 
   it('sin reseñas: invita a ser la primera y no pinta la nota', () => {
@@ -172,7 +224,7 @@ describe('Testimonios · estados', () => {
   /** Foco de revisión 1. */
   it('si la petición falla, lo dice y deja reintentar; no finge que no hay reseñas', async () => {
     mockResenas.lista = [];
-    mockResenas.fallo = true;
+    mockResenas.estado = 'error';
     const wrapper = montar();
 
     expect(wrapper.find('[data-test="destacada-error"]').exists()).toBe(true);
@@ -184,9 +236,39 @@ describe('Testimonios · estados', () => {
     expect(mockResenas.refetch).toHaveBeenCalledTimes(1);
   });
 
+  /**
+   * Al reintentar sin datos, TanStack v5 vuelve a `pending` y el aviso (con
+   * su botón) se desmonta: el foco no puede caer al `<body>`. Va al título
+   * del muro, que sigue montado.
+   */
+  it('al reintentar, el foco va al título del muro y no se pierde', async () => {
+    mockResenas.lista = [];
+    mockResenas.estado = 'error';
+    mockResenas.refetch.mockImplementation(() => {
+      mockResenas.estado = 'pending';
+      mockResenas.buscando = true;
+    });
+    const wrapper = mount(TestimonialsPage, {
+      global: { stubs },
+      attachTo: document.body,
+    });
+
+    const boton = wrapper.get('[data-test="reintentar"]');
+    (boton.element as HTMLButtonElement).focus();
+    await boton.trigger('click');
+    await nextTick();
+
+    expect(wrapper.find('[data-test="reintentar"]').exists()).toBe(false);
+    expect(wrapper.find('[data-test="muro-cargando"]').exists()).toBe(true);
+    const titulo = wrapper.get('#testimonios-muro');
+    expect(document.activeElement).toBe(titulo.element);
+    expect(titulo.attributes('tabindex')).toBe('-1');
+    wrapper.unmount();
+  });
+
   it('mientras reintenta, «Reintentar» se desactiva y lo anuncia', () => {
     mockResenas.lista = [];
-    mockResenas.fallo = true;
+    mockResenas.estado = 'error';
     mockResenas.buscando = true;
     const boton = montar().get('[data-test="reintentar"]');
 
@@ -199,7 +281,7 @@ describe('Testimonios · estados', () => {
    * conserva `data`: el muro sigue pintando lo que tiene, sin aviso de error.
    */
   it('si falla un refresco con reseñas en caché, el muro las sigue pintando', () => {
-    mockResenas.fallo = true;
+    mockResenas.estado = 'error';
     const wrapper = montar();
 
     expect(
@@ -281,6 +363,15 @@ describe('Testimonios · la fuente', () => {
       /\.testimonios__comillas\s*\{[^}]*color: var\(--m-rosa\);/
     );
     expect(css.match(/var\(--m-rosa\)/g)).toHaveLength(1);
+  });
+
+  it('«Reintentar» desactivado no se aclara al pasar el puntero', () => {
+    const css = estilos(PAGINA);
+
+    expect(css).toMatch(
+      /@media \(hover: hover\) and \(pointer: fine\)\s*\{[^@]*\.testimonios__reintentar:hover:not\(:disabled\)\s*\{/
+    );
+    expect(css).not.toMatch(/\.testimonios__reintentar:hover\s*\{/);
   });
 
   it('respeta el movimiento reducido en el cruce de la destacada', () => {
