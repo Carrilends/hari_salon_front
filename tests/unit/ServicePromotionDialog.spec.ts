@@ -33,10 +33,17 @@ jest.mock('quasar', () => {
 import { mount } from '@vue/test-utils';
 import ServicePromotionDialog from 'src/components/dialogs/ServicePromotionDialog.vue';
 import type Service from 'src/interfaces/service';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { fijarViewport } from '../viewportMock';
 
-/** Pasarela del `q-dialog`: deja ver lo que lleva dentro. */
+/**
+ * Pasarela del `q-dialog`: deja ver lo que lleva dentro y declara las props
+ * que la hoja inferior le pasa, para poder leerlas.
+ */
 const QDialog = {
   name: 'QDialog',
+  props: ['position', 'persistent', 'transitionShow', 'transitionHide'],
   template: '<div class="q-dialog"><slot /></div>',
 };
 
@@ -71,7 +78,11 @@ const montar = (service: Service = SERVICIO) =>
     global: { components: { QDialog } },
   });
 
-beforeEach(() => ocultar.mockReset());
+beforeEach(() => {
+  ocultar.mockReset();
+  // El diálogo lee el ancho al montarse (`useDialogMaximizedBelow`).
+  fijarViewport({ ancho: 1280, alto: 900 });
+});
 
 describe('ServicePromotionDialog · poner promoción', () => {
   it('ofrece un campo numérico con su rótulo, no un cuadro suelto', () => {
@@ -167,5 +178,167 @@ describe('ServicePromotionDialog · quitar promoción', () => {
 
     expect(wrapper.emitted('quitar')).toHaveLength(1);
     expect(wrapper.emitted('ok')?.[0]).toEqual([0]);
+  });
+});
+
+/** Un servicio con categoría traducible y sin etiquetas que la pisen. */
+const CORTE = {
+  ...SERVICIO,
+  type: 'hair-women',
+  tags: [],
+} as unknown as Service;
+
+const FOTO = {
+  id: 'i1',
+  url: 'https://res.cloudinary.com/demo/image/upload/v1/marlene/bob.jpg',
+  isPrincipal: true,
+  publicId: 'marlene/bob',
+  version: '1',
+};
+
+describe('ServicePromotionDialog · hoja inferior en móvil (V2)', () => {
+  it('por debajo de 700 px sube como hoja inferior, con tirador', () => {
+    fijarViewport({ ancho: 390, alto: 844 });
+    const wrapper = montar();
+    const dialogo = wrapper.findComponent({ name: 'QDialog' });
+
+    expect(dialogo.props('position')).toBe('bottom');
+    expect(dialogo.props('transitionShow')).toBe('slide-up');
+    expect(wrapper.get('[data-test="dialogo-promocion"]').classes()).toContain(
+      'promo--hoja'
+    );
+    expect(wrapper.find('[data-test="promo-tirador"]').exists()).toBe(true);
+  });
+
+  it('en escritorio es el diálogo centrado de siempre, sin tirador', () => {
+    const wrapper = montar();
+
+    expect(wrapper.findComponent({ name: 'QDialog' }).props('position')).toBe(
+      'standard'
+    );
+    expect(
+      wrapper.get('[data-test="dialogo-promocion"]').classes()
+    ).not.toContain('promo--hoja');
+    expect(wrapper.find('[data-test="promo-tirador"]').exists()).toBe(false);
+  });
+
+  it('enseña de qué servicio se habla: nombre, categoría y precio de lista', () => {
+    const ficha = montar(CORTE).get('[data-test="promo-servicio"]');
+
+    expect(ficha.text()).toContain('Bob clásico');
+    expect(ficha.text()).toContain('Cortes de dama · $45.000');
+  });
+
+  it('sin categoría la línea solo dice el precio', () => {
+    const sinCategoria = { ...CORTE, type: '' } as unknown as Service;
+
+    expect(
+      montar(sinCategoria).get('[data-test="promo-servicio"]').text()
+    ).toContain('$45.000');
+    expect(
+      montar(sinCategoria).get('[data-test="promo-servicio"]').text()
+    ).not.toContain(' · ');
+  });
+
+  it('sin foto pinta el sustituto; con foto la pide a Cloudinary a 92 px', () => {
+    const sin = montar(CORTE).get('[data-test="promo-servicio"] img');
+    const con = montar({ ...CORTE, images: [FOTO] } as unknown as Service).get(
+      '[data-test="promo-servicio"] img'
+    );
+
+    expect(sin.attributes('src')).toMatch(/^data:image\/svg\+xml/);
+    expect(con.attributes('src')).toContain(
+      '/upload/f_auto,q_auto,w_92,c_limit/'
+    );
+    expect(con.attributes('alt')).toBe('');
+  });
+
+  it('una foto que no carga cae en el sustituto', async () => {
+    const wrapper = montar({ ...CORTE, images: [FOTO] } as unknown as Service);
+
+    await wrapper.get('[data-test="promo-servicio"] img').trigger('error');
+
+    expect(
+      wrapper.get('[data-test="promo-servicio"] img').attributes('src')
+    ).toMatch(/^data:image\/svg\+xml/);
+  });
+
+  it('el rótulo dice el rango que se acepta', () => {
+    expect(montar().get('label').text()).toBe('Descuento (1–100)');
+  });
+
+  it('junto al precio resultante enseña el de antes, tachado y dicho', async () => {
+    const wrapper = montar(CORTE);
+
+    await wrapper.get('[data-test="porcentaje"]').setValue('20');
+
+    expect(wrapper.get('[data-test="precio-resultante"]').text()).toContain(
+      '$36.000'
+    );
+    expect(wrapper.get('[data-test="promo-precio-base"]').text()).toBe(
+      'antes $45.000'
+    );
+  });
+
+  it('al quitar también enseña la ficha del servicio', () => {
+    const quitar = { ...CORTE, havePromotion: true, porcentageDiscount: '30' };
+
+    expect(
+      montar(quitar as unknown as Service)
+        .get('[data-test="promo-servicio"]')
+        .text()
+    ).toContain('Bob clásico');
+  });
+});
+
+/**
+ * La paleta: carbón, como los dos tableros que la dibujan (AdminMostradorMovil
+ * y AdminDialogosCortos). El CSS no existe en Jest: se lee la fuente.
+ */
+describe('ServicePromotionDialog · el contrato visual', () => {
+  const FUENTE = readFileSync(
+    join(__dirname, '../../src/components/dialogs/ServicePromotionDialog.vue'),
+    'utf8'
+  );
+  const ESTILOS = FUENTE.slice(FUENTE.indexOf('<style'));
+
+  it('la caja va en carbón con texto hueso y filete oro', () => {
+    expect(ESTILOS).toMatch(
+      /\.promo \{[^}]*pointer-events: all;[^}]*border: var\(--m-filete-grosor\) solid var\(--m-oro\);[^}]*background: var\(--m-carbon\);[^}]*color: var\(--m-hueso\);/
+    );
+  });
+
+  /** Foco de revisión 2: sobre carbón, los tokens de fondo claro no se leen. */
+  it('no usa como texto ningún token pensado para fondo claro', () => {
+    expect(ESTILOS).not.toContain('var(--m-rosa-profundo)');
+    expect(ESTILOS).not.toContain('var(--m-oro-profundo)');
+    expect(ESTILOS).not.toMatch(/var\(--m-filete\)/);
+    expect(ESTILOS).not.toMatch(/var\(--m-peligro\)/);
+  });
+
+  it('el error del porcentaje va en el rosa legible sobre tinta', () => {
+    expect(ESTILOS).toMatch(
+      /\.promo__error \{[^}]*color: var\(--m-peligro-sobre-tinta\);/
+    );
+  });
+
+  it('la hoja va de borde a borde, con la esquina del panel y el área segura', () => {
+    expect(ESTILOS).toMatch(
+      /\.promo--hoja \{[^}]*width: 100%;[^}]*max-width: 100%;[^}]*border-radius: var\(--m-radio-panel\) var\(--m-radio-panel\) 0 0;[^}]*padding-bottom: env\(safe-area-inset-bottom, 0px\);/
+    );
+    const global = FUENTE.slice(FUENTE.lastIndexOf('<style lang="scss">'));
+    expect(global).toMatch(
+      /\.promo-dialogo \.q-dialog__inner--bottom \{[^}]*padding-left: 0;[^}]*padding-right: 0;/
+    );
+    expect(global).toContain('.promo-dialogo .q-dialog__backdrop');
+  });
+
+  it('el foco de los controles se dibuja en hueso', () => {
+    expect(ESTILOS).toMatch(
+      /\.promo__boton:focus-visible \{[^}]*outline: 2px solid var\(--m-hueso\);/
+    );
+    expect(ESTILOS).toMatch(
+      /\.promo__entrada:focus-visible \{[^}]*outline: 2px solid var\(--m-hueso\);/
+    );
   });
 });
