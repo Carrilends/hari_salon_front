@@ -10,7 +10,9 @@ const getReviews = async (): Promise<ReviewItem[]> => {
 };
 
 export const useReviews = () => {
-  const { data, isLoading, isFetching, refetch } = useQuery<ReviewItem[]>({
+  const { data, isLoading, isError, isFetching, refetch } = useQuery<
+    ReviewItem[]
+  >({
     queryKey: queryKeys.reviews.all,
     queryFn: getReviews,
     staleTime: 1000 * 60,
@@ -27,6 +29,7 @@ export const useReviews = () => {
     reviews,
     averageScore,
     isLoading,
+    isError,
     isFetching,
     refetch,
   };
