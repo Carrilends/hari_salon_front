@@ -48,9 +48,10 @@
       </div>
       <!--
         `pendiente` además de `cargando`: sin red la consulta queda en pausa
-        (pendiente, sin cargar ni fallar) y no se puede afirmar «no hay».
+        (pendiente, sin cargar ni fallar) y no se puede afirmar «no hay». Si
+        falló, tampoco: un error de la API no es una lista vacía.
       -->
-      <p v-else-if="!resena" class="review-band__vacio">
+      <p v-else-if="!resena && !fallo" class="review-band__vacio">
         Todavía no hay reseñas publicadas. La tuya puede ser la primera.
       </p>
 
@@ -134,7 +135,7 @@ const { abrir: abrirAsistente, abrirCon } = useAssistantPanel();
 const { solicitar: pedirResena } = useReviewDialog();
 
 // Misma caché por clave que `useRotatingReview`: no duplica la petición.
-const { isPending: pendiente } = useReviews();
+const { isPending: pendiente, isError: fallo } = useReviews();
 const authStore = useAuthStore();
 // La dueña no reseña su propio salón: la regla del armazón la ignoraría.
 const puedeResenar = computed(() => !authStore.isAdmin);

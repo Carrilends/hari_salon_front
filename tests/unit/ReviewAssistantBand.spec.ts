@@ -37,10 +37,14 @@ jest.mock('src/composables/reviews/useRotatingReview', () => ({
 }));
 
 // Estado de la consulta compartida (`useReviews`) y de la sesión. Con `isPending`
-// verdadero y `cargando` falso se reproduce la consulta pausada sin red.
-const mockConsulta = { pendiente: false };
+// verdadero y `cargando` falso se reproduce la consulta pausada sin red; con
+// `isError`, la petición que falló.
+const mockConsulta = { pendiente: false, error: false };
 jest.mock('src/composables/reviews/useReviews', () => ({
-  useReviews: () => ({ isPending: computed(() => mockConsulta.pendiente) }),
+  useReviews: () => ({
+    isPending: computed(() => mockConsulta.pendiente),
+    isError: computed(() => mockConsulta.error),
+  }),
 }));
 
 const mockAuth = { isAdmin: false };
@@ -59,6 +63,7 @@ beforeEach(() => {
   estado.total = 4;
   estado.cargando = false;
   mockConsulta.pendiente = false;
+  mockConsulta.error = false;
   mockAuth.isAdmin = false;
   useAssistantPanel().cerrar();
   useReviewDialog().cerrar();
@@ -163,6 +168,19 @@ describe('ReviewAssistantBand', () => {
     const wrapper = mount(ReviewAssistantBand);
 
     expect(wrapper.find('[data-test="esqueleto"]').exists()).toBe(true);
+    expect(wrapper.text()).not.toContain('Todavía no hay reseñas');
+  });
+
+  /** Un fallo de la API no es «no hay reseñas»: la portada no lo afirma. */
+  it('si la consulta falló no afirma que no hay reseñas', () => {
+    estado.cargando = false;
+    mockConsulta.error = true;
+    estado.resena = null;
+    estado.total = 0;
+
+    const wrapper = mount(ReviewAssistantBand);
+
+    expect(wrapper.find('[data-test="esqueleto"]').exists()).toBe(false);
     expect(wrapper.text()).not.toContain('Todavía no hay reseñas');
   });
 
