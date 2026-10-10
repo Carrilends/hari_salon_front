@@ -1,6 +1,6 @@
 jest.mock('src/api/services-api', () => ({
   servicesApi: { post: jest.fn() },
-  adminServiceApi: { post: jest.fn(), patch: jest.fn() },
+  adminServiceApi: { post: jest.fn(), patch: jest.fn(), get: jest.fn() },
 }));
 
 import { authApi } from 'src/api/auth-api';
@@ -8,11 +8,15 @@ import { servicesApi, adminServiceApi } from 'src/api/services-api';
 
 const post = servicesApi.post as jest.Mock;
 const patch = adminServiceApi.patch as jest.Mock;
+const adminPost = adminServiceApi.post as jest.Mock;
+const adminGet = adminServiceApi.get as jest.Mock;
 
 describe('authApi client', () => {
   beforeEach(() => {
     post.mockReset();
     patch.mockReset();
+    adminPost.mockReset();
+    adminGet.mockReset();
   });
 
   test('forgotPassword posts the email and returns the message body', async () => {
@@ -81,5 +85,33 @@ describe('authApi client', () => {
       currentPassword: 'old',
       newPassword: 'New-1234!',
     });
+  });
+});
+
+describe('authApi · Mi cuenta (plan 6)', () => {
+  beforeEach(() => {
+    post.mockReset();
+    adminPost.mockReset();
+    adminGet.mockReset();
+  });
+
+  test('logoutAll cierra todas las sesiones con la instancia que lleva el Bearer', async () => {
+    adminPost.mockResolvedValue({ data: '' });
+
+    await expect(authApi.logoutAll()).resolves.toBeUndefined();
+
+    expect(adminPost).toHaveBeenCalledWith('/auth/logout-all');
+    expect(post).not.toHaveBeenCalled();
+  });
+
+  test('checkStatus pide la sesión fresca, con hasPassword', async () => {
+    adminGet.mockResolvedValue({
+      data: { id: 'u-1', token: 't', hasPassword: false },
+    });
+
+    const sesion = await authApi.checkStatus();
+
+    expect(adminGet).toHaveBeenCalledWith('/auth/check-status');
+    expect(sesion.hasPassword).toBe(false);
   });
 });

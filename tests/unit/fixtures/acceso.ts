@@ -59,6 +59,7 @@ export function respuestaSesion(
     roles: ['user'],
     isActive: true,
     emailVerified: false,
+    hasPassword: true,
     token: 'token-de-acceso',
     expiresIn: 900,
     ...cambios,

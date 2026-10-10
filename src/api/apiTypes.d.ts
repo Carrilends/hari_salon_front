@@ -13,6 +13,11 @@ export interface AuthResponse {
   roles: string[];
   isActive: boolean;
   emailVerified: boolean;
+  /**
+   * `false` si la cuenta se creó con Google y aún no tiene contraseña local.
+   * Mi cuenta enseña entonces «Entras con Google» (plan 6, C3).
+   */
+  hasPassword: boolean;
   token: string;
   /** Segundos de vida del access token; el cliente renueva antes de que expire. */
   expiresIn: number;

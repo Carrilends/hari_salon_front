@@ -1,5 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { useAuthStore } from 'src/stores/auth-store';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 function makeJwtWithExp(expSeconds: number): string {
   const header = btoa(JSON.stringify({ alg: 'none', typ: 'JWT' }));
@@ -109,3 +111,65 @@ describe('auth-store', () => {
   });
 });
 
+
+describe('auth-store · hasPassword (plan 6)', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
+  const jwt = () => makeJwtWithExp(Math.floor((Date.now() + 60_000) / 1000));
+
+  test('setSession guarda hasPassword de la respuesta', () => {
+    const store = useAuthStore();
+
+    store.setSession(jwt(), {
+      fullName: 'Ana',
+      email: 'a@b.com',
+      roles: ['user'],
+      hasPassword: false,
+    });
+
+    expect(store.hasPassword).toBe(false);
+  });
+
+  test('una respuesta sin hasPassword lo deja en null: no se sabe', () => {
+    const store = useAuthStore();
+
+    store.setSession(jwt(), {
+      fullName: 'Ana',
+      email: 'a@b.com',
+      roles: ['user'],
+      hasPassword: true,
+    });
+    store.setSession(jwt(), {
+      fullName: 'Ana',
+      email: 'a@b.com',
+      roles: ['user'],
+    });
+
+    expect(store.hasPassword).toBeNull();
+  });
+
+  test('cerrar sesión lo olvida', () => {
+    const store = useAuthStore();
+    store.setSession(jwt(), {
+      fullName: 'Ana',
+      email: 'a@b.com',
+      roles: ['user'],
+      hasPassword: false,
+    });
+
+    store.logout();
+
+    expect(store.hasPassword).toBeNull();
+  });
+
+  test('se persiste con el perfil, para no parpadear al recargar', () => {
+    const fuente = readFileSync(
+      join(__dirname, '../../src/stores/auth-store.ts'),
+      'utf8'
+    );
+
+    expect(fuente).toMatch(/pick: \[[^\]]*'hasPassword'[^\]]*\]/);
+  });
+});

@@ -69,4 +69,17 @@ export const authApi = {
     servicesApi
       .post<AuthResponse>('/auth/google', { idToken, dataPolicyAccepted })
       .then((r) => r.data),
+
+  // Plan 6 · Mi cuenta. La sesión fresca al abrir la página: trae
+  // `hasPassword` y `emailVerified` al día aunque el perfil persistido sea de
+  // otro dispositivo o de antes de crear la contraseña.
+  checkStatus: () =>
+    adminServiceApi
+      .get<AuthResponse>('/auth/check-status')
+      .then((r) => r.data),
+
+  // Cierra la sesión en todos los dispositivos: el backend revoca todos los
+  // refresh de la cuenta y limpia la cookie. Lleva Bearer (`@Auth()`).
+  logoutAll: (): Promise<void> =>
+    adminServiceApi.post<void>('/auth/logout-all').then(() => undefined),
 };

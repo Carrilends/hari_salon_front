@@ -31,6 +31,11 @@ export const useAuthStore = defineStore(
     // Por defecto true: las sesiones persistidas antes de la Fase 3a no traen
     // este campo, y asumir `true` evita mostrarles un aviso que nunca pidieron.
     const emailVerified = ref(true);
+    // Plan 6: ¿la cuenta tiene contraseña local? `null` = no se sabe todavía:
+    // el login, el registro y Google de las páginas del acceso no lo pasan, y
+    // las sesiones persistidas de antes no lo traen. La renovación sí (pasa la
+    // sesión entera) y Mi cuenta lo pregunta al abrir (`checkStatus`).
+    const hasPassword = ref<boolean | null>(null);
 
     const isExpired = computed(
       () => !!expiresAt.value && Date.now() >= expiresAt.value
@@ -47,6 +52,7 @@ export const useAuthStore = defineStore(
         email: string;
         roles: string[];
         emailVerified?: boolean;
+        hasPassword?: boolean;
       },
       expMs?: number
     ) {
@@ -56,6 +62,7 @@ export const useAuthStore = defineStore(
       roles.value = profile.roles ?? [];
       // undefined solo en respuestas antiguas: asumir verificado (ver arriba).
       emailVerified.value = profile.emailVerified ?? true;
+      hasPassword.value = profile.hasPassword ?? null;
       // si el back no manda exp, se decodifica del JWT
       const decoded = expMs && expMs > 0 ? expMs : decodeJwtExpMs(newToken);
       expiresAt.value = decoded || 0;
@@ -74,6 +81,7 @@ export const useAuthStore = defineStore(
       roles.value = [];
       expiresAt.value = 0;
       emailVerified.value = true;
+      hasPassword.value = null;
     }
 
     function sweepIfExpired() {
@@ -87,6 +95,7 @@ export const useAuthStore = defineStore(
       roles,
       expiresAt,
       emailVerified,
+      hasPassword,
       isExpired,
       isLoggedIn,
       isAdmin,
@@ -99,6 +108,8 @@ export const useAuthStore = defineStore(
     // S7: el access token deja de persistirse (vive en memoria y se recupera con
     // una renovación silenciosa al arrancar). El perfil sí se persiste para
     // evitar el parpadeo de "sesión cerrada" al recargar.
-    persist: { pick: ['fullname', 'email', 'roles', 'emailVerified'] },
+    persist: {
+      pick: ['fullname', 'email', 'roles', 'emailVerified', 'hasPassword'],
+    },
   }
 );
