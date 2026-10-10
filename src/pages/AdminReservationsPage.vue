@@ -601,6 +601,9 @@ onBeforeUnmount(() => vivos.marcarBandeja(false));
   font-family: var(--m-font-sans);
   font-size: 10.5px;
   font-weight: 400;
+  /* Sin esto hereda el `line-height: 3.75rem` del h2 de Quasar: 60 px de
+     alto para una etiqueta de 10,5 px. */
+  line-height: 1.4;
   letter-spacing: var(--m-tracking-etiqueta);
   text-transform: uppercase;
 }

@@ -79,6 +79,16 @@ describe('la bandeja · contrato visual', () => {
     expect(despachador).not.toMatch(/type:\s*'(positive|warning|info|negative)'/);
   });
 
+  it('el título del día fija su interlineado (el h2 de Quasar trae 60 px)', () => {
+    const css = sinComentarios(
+      estilos(leer('pages/AdminReservationsPage.vue'))
+    );
+    const regla = css.match(/\.bandeja__dia \{[^}]*\}/);
+
+    expect(regla).not.toBeNull();
+    expect(regla?.[0]).toMatch(/line-height: [0-9.]+;/);
+  });
+
   it('nadie usa ya el filtro viejo del panel', () => {
     const fuentes = (dir: string): string[] =>
       readdirSync(dir).flatMap((nombre) => {
