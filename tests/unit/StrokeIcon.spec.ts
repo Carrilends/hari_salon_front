@@ -84,3 +84,13 @@ describe('StrokeIcon', () => {
     expect(trazos[0].attributes('d')).toContain('a6.4 8.6');
   });
 });
+
+describe('StrokeIcon · la bandeja de reservas (plan 3)', () => {
+  const montarIcono = (nombre: string) => mount(StrokeIcon, { props: { nombre } });
+
+  it('trae mover y cita cancelada', () => {
+    for (const nombre of ['mover-cita', 'cita-cancelada']) {
+      expect(montarIcono(nombre).findAll('path').length).toBeGreaterThan(0);
+    }
+  });
+});

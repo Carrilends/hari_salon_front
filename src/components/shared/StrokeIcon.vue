@@ -144,6 +144,20 @@ const TRAZOS: Record<string, string[]> = {
   actualizar: ['M19.5 12a7.5 7.5 0 1 1-2.2-5.3', 'M19.5 4.5v4h-4'],
   /** Desplegable cerrado: «Pasadas» de Mis reservas (gira al abrirse). */
   'chevron-abajo': ['M6 9l6 6 6-6'],
+  /** Plan 3 · bandeja: «Mover» (calendario con flecha) y el aviso de una cita movida. */
+  'mover-cita': [
+    'M4.5 6.5h15v13h-15z',
+    'M4.5 10.5h15',
+    'M8.5 4v4M15.5 4v4',
+    'M10 15h5M13 13l2 2-2 2',
+  ],
+  /** Plan 3 · bandeja: el aviso de una cita cancelada (calendario con aspa). */
+  'cita-cancelada': [
+    'M4.5 6.5h15v13h-15z',
+    'M4.5 10.5h15',
+    'M8.5 4v4M15.5 4v4',
+    'M10 13.5l4 4M14 13.5l-4 4',
+  ],
 };
 
 const props = withDefaults(defineProps<{ nombre: string; tamano?: number }>(), {
