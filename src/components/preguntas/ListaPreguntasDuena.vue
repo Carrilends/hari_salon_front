@@ -121,6 +121,8 @@ type Arrastre = {
   /** La pregunta que se arrastra: su id y su texto, por si la lista cambia. */
   id: string;
   titulo: string;
+  /** El orden de los ids al empezar: si cambia a mitad del gesto, se cancela. */
+  orden: string;
   pointerId: number | null;
   desde: number;
   destino: number;
@@ -136,6 +138,12 @@ const anuncio = ref('');
 const abiertas = ref<string[]>([]);
 /** El asa que debe recuperar el foco cuando llegue el orden nuevo. */
 let asaPorEnfocar: string | null = null;
+/** El asa que tenía el foco justo antes de que llegara una lista nueva. */
+let asaFocada: string | null = null;
+/** Este componente acaba de emitir un orden y espera verlo de vuelta. */
+let movimientoLocal = false;
+const ordenDe = (lista: FaqItem[]) => lista.map((faq) => faq.id).join();
+let ordenVisto = ordenDe(props.preguntas);
 
 const total = computed(() => props.preguntas.length);
 const totalTexto = computed(
@@ -175,6 +183,7 @@ function mover(desde: number, hasta: number) {
   anuncio.value = `«${faq.question}» está ahora en el puesto ${hasta + 1} de ${
     total.value
   }.`;
+  movimientoLocal = true;
   emit(
     'reordenar',
     nueva.map((item) => item.id)
@@ -208,23 +217,57 @@ function alPulsarTecla(evento: KeyboardEvent, indice: number) {
 }
 
 /**
+ * Antes de que Vue pinte la lista nueva, se apunta qué asa tiene el foco: al
+ * mover el nodo de la fila el navegador lo suelta sobre `body`.
+ */
+watch(
+  () => props.preguntas,
+  () => {
+    const enfocado =
+      typeof document === 'undefined' ? null : document.activeElement;
+    asaFocada =
+      enfocado && listaRef.value?.contains(enfocado)
+        ? enfocado.getAttribute('data-asa')
+        : null;
+  },
+  { flush: 'pre' }
+);
+
+/**
  * Al llegar el orden nuevo Vue mueve el nodo de la fila, y mover el nodo
  * enfocado le quita el foco: la siguiente flecha ya no haría nada. Se le
  * devuelve a su asa. `flush: 'post'` para buscarla con el DOM ya movido.
  */
 watch(
   () => props.preguntas,
-  async () => {
-    // Si la lista cambia a mitad de un arrastre (reversión, refresco, borrado),
-    // los índices guardados ya no apuntan a la misma pregunta: se cancela.
-    if (arrastre.value) {
+  async (nuevas) => {
+    const orden = ordenDe(nuevas);
+    const cambioElOrden = orden !== ordenVisto;
+    ordenVisto = orden;
+    const fueLocal = movimientoLocal;
+    if (cambioElOrden) movimientoLocal = false;
+
+    // Si el orden cambia a mitad de un arrastre (reversión, refresco, borrado),
+    // los índices guardados ya no apuntan a la misma pregunta: se cancela. Una
+    // lista nueva con el mismo orden (la respuesta de un guardado anterior)
+    // no toca el gesto.
+    let anunciado = false;
+    if (arrastre.value && arrastre.value.orden !== orden) {
       const { titulo } = arrastre.value;
       arrastre.value = null;
       anuncio.value = `Orden sin cambios: la lista cambió mientras movías «${titulo}».`;
+      anunciado = true;
     }
-    if (!asaPorEnfocar) return;
-    const id = asaPorEnfocar;
+    // Un orden que no salió de aquí (reversión tras un fallo) deja el aviso
+    // viejo —«está ahora en el puesto 2»— diciendo algo falso.
+    if (cambioElOrden && !fueLocal && !anunciado) {
+      anuncio.value = 'El orden de la lista cambió.';
+    }
+
+    const id = asaPorEnfocar ?? (cambioElOrden ? asaFocada : null);
     asaPorEnfocar = null;
+    asaFocada = null;
+    if (!id) return;
     await nextTick();
     listaRef.value?.querySelector<HTMLElement>(`[data-asa="${id}"]`)?.focus();
   },
@@ -258,6 +301,7 @@ function alPresionar(evento: PointerEvent, indice: number) {
   arrastre.value = {
     id: props.preguntas[indice].id,
     titulo: props.preguntas[indice].question,
+    orden: ordenDe(props.preguntas),
     pointerId: typeof evento.pointerId === 'number' ? evento.pointerId : null,
     desde: indice,
     destino: indice,
@@ -349,6 +393,11 @@ defineOptions({ name: 'ListaPreguntasDuena' });
 .lista-duena__anuncio {
   color: var(--m-piedra);
   font-size: 12.5px;
+  /* Reserva de sitio: al aparecer «Arrastrando…» (en móvil ocupa su propia
+     línea) la lista no se corre y las mitades medidas siguen valiendo. */
+  display: block;
+  min-height: 2.6em;
+  line-height: 1.3;
 }
 
 .lista-duena__filas {

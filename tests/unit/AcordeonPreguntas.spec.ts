@@ -1,6 +1,6 @@
 /**
  * F1: el acordeón público. Las respuestas están en el DOM desde el principio
- * (la ruta se prerenderiza: así las leen los buscadores), pero escondidas con
+ * (una vez cargadas las preguntas), pero escondidas con
  * `v-show` hasta que la clienta abre su pregunta.
  */
 import { mount } from '@vue/test-utils';

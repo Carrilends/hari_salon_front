@@ -49,8 +49,10 @@ import type { FaqItem } from 'src/api/apiTypes';
  * `PreguntasIndiceTinta`): preguntas en Marcellus sobre hueso, un «+» en oro
  * profundo que pasa a «−» al abrir. Sin la línea «Orden: N» de antes.
  *
- * Las respuestas se esconden con `v-show` y no con `v-if`: la ruta se
- * prerenderiza y así el texto está en el HTML que leen los buscadores.
+ * Las respuestas se esconden con `v-show` y no con `v-if`: una vez cargadas
+ * las preguntas, el texto de todas está en el DOM y abrir una no vuelve a
+ * montar nada. (No hay precarga en el servidor: el prerenderizado no las
+ * trae, así que esto no pone las respuestas en el HTML estático.)
  */
 const props = defineProps<{ preguntas: FaqItem[] }>();
 

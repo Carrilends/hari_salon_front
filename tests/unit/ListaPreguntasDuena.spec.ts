@@ -174,6 +174,31 @@ describe('ListaPreguntasDuena · con el teclado', () => {
   });
 });
 
+describe('ListaPreguntasDuena · tras una reversión', () => {
+  it('un orden que no salió de aquí borra el aviso viejo y conserva el foco', async () => {
+    const wrapper = montar(PREGUNTAS, document.body);
+    (asa(wrapper, 1).element as HTMLElement).focus();
+    await asa(wrapper, 1).trigger('keydown', { key: 'ArrowUp' });
+    expect(anuncio(wrapper)).toContain('puesto 1 de 3');
+    const nuevo = wrapper.emitted('reordenar')![0][0] as string[];
+    const porId = (ids: string[]) =>
+      ids.map((id) => PREGUNTAS.find((p) => p.id === id)!);
+    await wrapper.setProps({ preguntas: porId(nuevo) });
+    await flushPromises();
+
+    // El guardado falló: el padre devuelve el orden original.
+    await wrapper.setProps({ preguntas: PREGUNTAS });
+    await flushPromises();
+
+    expect(anuncio(wrapper)).not.toContain('puesto 1 de 3');
+    expect(anuncio(wrapper)).toBe('El orden de la lista cambió.');
+    expect(document.activeElement?.getAttribute('data-asa')).toBe(
+      PREGUNTAS[1].id
+    );
+    wrapper.unmount();
+  });
+});
+
 describe('ListaPreguntasDuena · arrastrando', () => {
   it('arrastrar hacia abajo levanta la fila, marca el destino y al soltar reordena', async () => {
     filasDeSesentaPx();
@@ -301,6 +326,24 @@ describe('ListaPreguntasDuena · arrastre robusto', () => {
     expect(wrapper.findAll('.fila--arrastrada')).toHaveLength(0);
   });
 
+  it('mismo orden con objetos nuevos (respuesta de un guardado): el arrastre sigue y soltar reordena', async () => {
+    filasDeSesentaPx();
+    const wrapper = montar();
+
+    await asa(wrapper, 0).trigger('pointerdown', { clientY: 30 });
+    await asa(wrapper, 0).trigger('pointermove', { clientY: 170 });
+    await wrapper.setProps({
+      preguntas: PREGUNTAS.map((faq) => ({ ...faq, updatedAt: 'otra' })),
+    });
+    await flushPromises();
+    expect(wrapper.findAll('.fila--arrastrada')).toHaveLength(1);
+    await asa(wrapper, 0).trigger('pointerup', { clientY: 170 });
+
+    expect(wrapper.emitted('reordenar')).toEqual([
+      [['p-cambiar', 'p-horario', 'p-reservar']],
+    ]);
+  });
+
   it('si la lista se acorta a mitad del arrastre, no lanza ni reordena', async () => {
     filasDeSesentaPx();
     const wrapper = montar();
@@ -342,6 +385,14 @@ describe('ListaPreguntasDuena · arrastre robusto', () => {
 
     expect(wrapper.findAll('.fila--arrastrada')).toHaveLength(0);
     expect(wrapper.emitted('reordenar')).toBeUndefined();
+  });
+
+  it('el anuncio reserva su altura para que la lista no se corra', () => {
+    const fuente = readFileSync(
+      join(__dirname, '../../src/components/preguntas/ListaPreguntasDuena.vue'),
+      'utf8'
+    );
+    expect(fuente).toMatch(/\.lista-duena__anuncio\s*\{[^}]*min-height:/);
   });
 
   it('el asa lleva touch-action: none', () => {

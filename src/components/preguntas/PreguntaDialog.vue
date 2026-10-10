@@ -146,7 +146,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, nextTick, reactive, ref, watch } from 'vue';
 import StrokeIcon from 'src/components/shared/StrokeIcon.vue';
 import type { FaqItem } from 'src/api/apiTypes';
 import { useConsultaMedios } from 'src/composables/shared/useConsultaMedios';
@@ -235,14 +235,16 @@ function alCambiarModelo(valor: boolean) {
   emit('update:abierto', valor);
 }
 
-function enviar() {
+async function enviar() {
   if (props.guardando) return;
   intentado.value = true;
   const conError = (['pregunta', 'respuesta'] as const).find(
     (campo) => errores.value[campo]
   );
   if (conError) {
-    // Manejador de evento: aquí sí hay `document`.
+    // Primero que Vue pinte `aria-invalid` y `aria-describedby`: así el lector
+    // anuncia el campo con su error. Manejador de evento: aquí sí hay `document`.
+    await nextTick();
     document.getElementById(`campo-${conError}`)?.focus();
     return;
   }

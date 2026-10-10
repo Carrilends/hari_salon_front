@@ -116,6 +116,23 @@ describe('PreguntaDialog · crear', () => {
     wrapper.unmount();
   });
 
+  it('el foco llega cuando el campo ya muestra su error', async () => {
+    const wrapper = montar({}, document.body);
+    const visto: Array<string | null> = [];
+    const espia = jest
+      .spyOn(HTMLElement.prototype, 'focus')
+      .mockImplementation(function (this: HTMLElement) {
+        visto.push(this.getAttribute('aria-invalid'));
+      });
+
+    await wrapper.get('[data-test="formulario-pregunta"]').trigger('submit');
+
+    expect(espia).toHaveBeenCalled();
+    expect(visto[visto.length - 1]).toBe('true');
+    espia.mockRestore();
+    wrapper.unmount();
+  });
+
   it('menos de 5 caracteres tras recortar no vale', async () => {
     const wrapper = montar();
 
