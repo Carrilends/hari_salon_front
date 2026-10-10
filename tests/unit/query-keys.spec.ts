@@ -37,7 +37,6 @@ describe('registro de claves de consulta', () => {
     expect(key).toEqual(['worker-availability', 'semana', '2026-10-05']);
   });
 
-
   it('las tres raíces son distintas entre sí', () => {
     const roots = [
       queryKeys.reservations.all[0],
