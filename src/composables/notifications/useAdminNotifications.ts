@@ -61,18 +61,26 @@ export function useAdminNotifications() {
   const router = useRouter();
   const vivos = useAvisosEnVivo();
 
+  // Los flotantes que siguen en pantalla: al abrir la bandeja sobran, porque
+  // el mismo aviso ya está fijado encima de la lista.
+  const flotantes = new Set<() => void>();
+
   const coalescer = createInvalidationCoalescer((keys) => {
-    for (const queryKey of keys) void queryClient.invalidateQueries({ queryKey });
+    for (const queryKey of keys)
+      void queryClient.invalidateQueries({ queryKey });
   });
 
   function dispatch(event: ReservationEvent) {
     const { notice, invalidate } = reservationEventEffects(event);
     vivos.registrar(event, notice);
     if (!vivos.bandejaAbierta.value) {
-      $q.notify({
+      const cerrar = $q.notify({
         message: notice.message,
         caption: notice.caption,
         icon: notice.icon,
+        // Explícito: si falta, Quasar pone `text-white` (con !important) y el
+        // hueso de `ESTILO_AVISO` no llega al texto ni al icono.
+        textColor: undefined,
         position: POSICION_AVISO,
         timeout: 8000,
         attrs: {
@@ -83,12 +91,17 @@ export function useAdminNotifications() {
         actions: [
           {
             label: 'Ver',
-            // Sin `color`: la acción hereda el hueso del aviso (el blanco de
-            // Quasar no está en la paleta).
+            // Sin `color` (el blanco de Quasar no está en la paleta) y con
+            // estilo propio: si no, toma `--q-primary`, el rosa viejo. Oro,
+            // como el «Ver» del aviso fijado (5,8:1 sobre tinta).
+            style: 'color: var(--m-oro)',
             handler: () => void router.push('/reservas'),
           },
         ],
+        onDismiss: () => flotantes.delete(cerrar),
       });
+      // Los dobles de las pruebas no devuelven con qué cerrarlo.
+      if (typeof cerrar === 'function') flotantes.add(cerrar);
     }
     // El panel se refresca solo: invalidar las consultas basta.
     coalescer.add(invalidate);
@@ -142,6 +155,11 @@ export function useAdminNotifications() {
     // Un cambio de token cubre login, renovación (token nuevo → reconecta) y
     // cierre de sesión (token vacío → desconecta); isAdmin cubre cambios de rol.
     watch(() => [auth.token, auth.isAdmin], sync);
+    watch(vivos.bandejaAbierta, (abierta) => {
+      if (!abierta) return;
+      for (const cerrar of Array.from(flotantes)) cerrar();
+      flotantes.clear();
+    });
   }
 
   function stop() {

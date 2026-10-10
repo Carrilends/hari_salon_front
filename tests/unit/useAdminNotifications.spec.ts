@@ -40,6 +40,7 @@ jest.mock('src/api/realtime', () => ({
   disconnectAdminSocket: jest.fn(),
 }));
 
+import { nextTick } from 'vue';
 import { useAdminNotifications } from 'src/composables/notifications/useAdminNotifications';
 import { useAvisosEnVivo } from 'src/composables/notifications/avisosEnVivo';
 import { queryKeys } from 'src/api/query-keys';
@@ -118,7 +119,9 @@ describe('useAdminNotifications — despachador de los cuatro eventos', () => {
     fakeSocket.emit('reservation.confirmed', confirmedEvent);
     jest.runAllTimers();
 
-    expect(keysInvalidated()).toEqual([{ queryKey: queryKeys.reservations.all }]);
+    expect(keysInvalidated()).toEqual([
+      { queryKey: queryKeys.reservations.all },
+    ]);
   });
 
   it('una ráfaga de eventos invalida cada clave una sola vez', () => {
@@ -143,9 +146,34 @@ describe('useAdminNotifications — despachador de los cuatro eventos', () => {
 
   it('el aviso flotante lleva la acción «Ver» que lleva al panel de reservas', () => {
     fakeSocket.emit('reservation.created', createdEvent);
-    const actions = notify.mock.calls[0][0].actions as { handler: () => void }[];
+    const actions = notify.mock.calls[0][0].actions as {
+      handler: () => void;
+    }[];
     actions[0]?.handler();
     expect(push).toHaveBeenCalledWith('/reservas');
+  });
+
+  it('el flotante no hereda el blanco de Quasar: texto en hueso y «Ver» en oro', () => {
+    fakeSocket.emit('reservation.created', createdEvent);
+    const aviso = notify.mock.calls[0][0];
+
+    // Quasar pone `textColor: 'white'` (clase `text-white`, con !important)
+    // salvo que la opción venga explícita: así manda el hueso de `ESTILO_AVISO`.
+    expect(Object.prototype.hasOwnProperty.call(aviso, 'textColor')).toBe(true);
+    expect(aviso.textColor).toBeUndefined();
+    // Sin estilo propio, la acción toma `--q-primary` (el rosa viejo).
+    expect(String(aviso.actions[0].style)).toContain('var(--m-oro)');
+  });
+
+  it('al abrir la bandeja se cierran los flotantes que quedaban: el aviso ya está fijado', async () => {
+    const cerrar = jest.fn();
+    notify.mockReturnValueOnce(cerrar);
+    fakeSocket.emit('reservation.created', createdEvent);
+
+    useAvisosEnVivo().marcarBandeja(true);
+    await nextTick();
+
+    expect(cerrar).toHaveBeenCalledTimes(1);
   });
 
   it('cada evento queda fijado en los avisos en vivo (A5)', () => {
