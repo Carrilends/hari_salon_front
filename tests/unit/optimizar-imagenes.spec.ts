@@ -40,11 +40,13 @@ describe('la receta de las variantes', () => {
   });
 
   /**
-   * La foto de «¿Quiénes somos?» se pinta a 380 px en la ficha de escritorio y a
-   * lo ancho del teléfono (390) en móvil: 760 cubre las pantallas de 2x.
+   * La foto de «¿Quiénes somos?» llena un hueco de 380 × 600 px en la ficha de
+   * escritorio con `object-fit: cover`: la foto es 3:2, así que se pinta a unos
+   * 900 px de ancho y se recorta. 1400 la cubre sin estirarla; 400 y 760 sirven
+   * al ancho del teléfono (390) en 1x y 2x.
    */
-  it('la del salón llega a 760: se pinta a 380', () => {
-    expect(ANCHOS_FICHA).toEqual([400, 760]);
+  it('la del salón llega a 1400: en escritorio se pinta a unos 900', () => {
+    expect(ANCHOS_FICHA).toEqual([400, 760, 1400]);
     expect(RECETAS['salon.jpg'].anchos).toEqual(ANCHOS_FICHA);
   });
 

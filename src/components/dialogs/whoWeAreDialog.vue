@@ -44,7 +44,7 @@
           foto="/people/salon.jpg"
           alt="El salón de la Peluquería Marlene por dentro"
           :anchos="ANCHOS_FICHA"
-          medidas="(max-width: 699px) 100vw, 380px"
+          medidas="(max-width: 699px) 100vw, 900px"
         />
         <div class="quienes__placa" data-test="placa-direccion">
           <p class="quienes__placa-etiqueta">Dónde estamos</p>

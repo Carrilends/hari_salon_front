@@ -80,6 +80,22 @@ describe('¿Quiénes somos?', () => {
     ).toContain('/people/salon-760.webp 760w');
   });
 
+  /**
+   * En escritorio el hueco mide 380 × 600 y la foto (3:2) lo cubre recortada:
+   * se pinta a unos 900 px de ancho. Un `sizes` de 380 haría que el navegador
+   * eligiera la de 400 y la estirara más del doble.
+   */
+  it('pide la foto al ancho al que se pinta de verdad, no al del hueco', () => {
+    const fuente = montar().get(
+      '[data-test="foto-salon"] source[type="image/webp"]'
+    );
+
+    expect(fuente.attributes('sizes')).toBe('(max-width: 699px) 100vw, 900px');
+    expect(fuente.attributes('srcset')).toContain(
+      '/people/salon-1400.webp 1400w'
+    );
+  });
+
   it('el mapa sigue siendo el de OpenStreetMap, con su atribución', () => {
     const wrapper = montar();
 
