@@ -141,6 +141,116 @@ describe('useSeccionVisible', () => {
     expect(activa.value).toBe('s3');
   });
 
+  /**
+   * Al llegar abajo puede no cambiar ninguna intersección en los últimos
+   * píxeles: sin escuchar el desplazamiento, «10 Vigencia» no se marcaría.
+   */
+  describe('el final de la página sin aviso del observador', () => {
+    let rafReal: typeof window.requestAnimationFrame;
+
+    beforeEach(() => {
+      rafReal = window.requestAnimationFrame;
+      // Un cuadro de animación inmediato: el desplazamiento se mira en el acto.
+      window.requestAnimationFrame = (alListo: FrameRequestCallback) => {
+        alListo(0);
+        return 1;
+      };
+    });
+
+    afterEach(() => {
+      window.requestAnimationFrame = rafReal;
+    });
+
+    function llegarAlFinal(): void {
+      Object.defineProperty(document.documentElement, 'scrollHeight', {
+        configurable: true,
+        value: 2000,
+      });
+      Object.assign(window, { innerHeight: 800, scrollY: 1200 });
+      window.dispatchEvent(new Event('scroll'));
+    }
+
+    it('al desplazarse hasta abajo marca la última', () => {
+      quitar = instalarObservadorFalso();
+      const { activa } = montar();
+      ObservadorFalso.ultimo?.emitir([['s2', true]]);
+      expect(activa.value).toBe('s2');
+
+      llegarAlFinal();
+
+      expect(activa.value).toBe('s4');
+    });
+
+    it('cada nueva tanda de desplazamiento vuelve a mirar el final', () => {
+      quitar = instalarObservadorFalso();
+      const { activa, marcar } = montar();
+      ObservadorFalso.ultimo?.emitir([['s2', true]]);
+      llegarAlFinal();
+      marcar('s1');
+
+      llegarAlFinal();
+
+      expect(activa.value).toBe('s4');
+    });
+
+    it('a media página el desplazamiento no mueve la marca', () => {
+      quitar = instalarObservadorFalso();
+      const { activa, marcar } = montar();
+      ObservadorFalso.ultimo?.emitir([['s2', true]]);
+      marcar('s3');
+      Object.assign(window, { innerHeight: 800, scrollY: 300 });
+      Object.defineProperty(document.documentElement, 'scrollHeight', {
+        configurable: true,
+        value: 2000,
+      });
+
+      window.dispatchEvent(new Event('scroll'));
+
+      expect(activa.value).toBe('s3');
+    });
+
+    it('tampoco pisa una sección pulsada que no puede llegar arriba', () => {
+      quitar = instalarObservadorFalso();
+      const { activa, marcar } = montar();
+      ObservadorFalso.ultimo?.emitir([['s2', true]]);
+      marcar('s3');
+
+      llegarAlFinal();
+
+      expect(activa.value).toBe('s3');
+    });
+
+    it('al desmontar deja de escuchar el desplazamiento', () => {
+      quitar = instalarObservadorFalso();
+      const pone = jest.spyOn(window, 'addEventListener');
+      const quita = jest.spyOn(window, 'removeEventListener');
+      const { activa } = montar();
+      const escucha = pone.mock.calls.find(([tipo]) => tipo === 'scroll');
+      expect(escucha?.[2]).toEqual({ passive: true });
+
+      envoltorio?.unmount();
+      envoltorio = null;
+      llegarAlFinal();
+
+      expect(quita).toHaveBeenCalledWith('scroll', escucha?.[1]);
+      expect(activa.value).toBe('s1');
+      pone.mockRestore();
+      quita.mockRestore();
+    });
+
+    /** Foco de revisión 5: sin observador (SSG, jsdom) todo sigue igual. */
+    it('sin IntersectionObserver no escucha el desplazamiento', () => {
+      const pone = jest.spyOn(window, 'addEventListener');
+      const { activa } = montar();
+
+      llegarAlFinal();
+
+      expect(pone.mock.calls.some(([tipo]) => tipo === 'scroll')).toBe(false);
+      expect(activa.value).toBe('s1');
+      pone.mockRestore();
+    });
+  });
+
   /** Foco de revisión 5. */
   it('al desmontar desconecta el observador', () => {
     quitar = instalarObservadorFalso();

@@ -14,11 +14,14 @@ export interface SeccionVisible {
  * secciones que la tocan manda la primera en el orden del documento. Si no
  * queda ninguna (un hueco entre dos), se conserva la anterior. Al final de la
  * página manda la última (una sección corta del final no llega nunca arriba),
- * salvo que la persona haya pulsado una posterior a la primera visible.
+ * salvo que la persona haya pulsado una posterior a la primera visible. Esa
+ * regla se mira también al desplazarse (un cuadro por tanda): al llegar abajo
+ * puede no cambiar ninguna intersección y el observador no avisaría.
  *
- * El observador se crea en `onMounted` y solo si existe: la página se
- * prerenderiza en Node (SSG) y jsdom no lo trae. Sin él, el índice marca la
- * primera y sigue funcionando por clics (`marcar`). Al desmontar se desconecta.
+ * El observador y la escucha del desplazamiento se crean en `onMounted` y solo
+ * si el observador existe: la página se prerenderiza en Node (SSG) y jsdom no
+ * lo trae. Sin él, el índice marca la primera y sigue funcionando por clics
+ * (`marcar`). Al desmontar se desconecta y se deja de escuchar.
  */
 export function useSeccionVisible(
   ids: readonly string[],
@@ -27,6 +30,8 @@ export function useSeccionVisible(
   const activa = ref(ids[0] ?? '');
   const visibles = new Set<string>();
   let observador: IntersectionObserver | null = null;
+  let esperandoCuadro = false;
+  let cuadro = 0;
 
   const alFinalDeLaPagina = (): boolean => {
     const alto = document.documentElement.scrollHeight;
@@ -48,6 +53,16 @@ export function useSeccionVisible(
       return;
     }
     if (primera) activa.value = primera;
+  };
+
+  /** Solo la regla del final: a media página manda el observador. */
+  const alDesplazar = (): void => {
+    if (esperandoCuadro) return;
+    esperandoCuadro = true;
+    cuadro = window.requestAnimationFrame(() => {
+      esperandoCuadro = false;
+      if (alFinalDeLaPagina()) recalcular();
+    });
   };
 
   onMounted(() => {
@@ -72,11 +87,18 @@ export function useSeccionVisible(
       const seccion = document.getElementById(id);
       if (seccion) observador.observe(seccion);
     }
+    window.addEventListener('scroll', alDesplazar, { passive: true });
   });
 
   onUnmounted(() => {
-    observador?.disconnect();
+    if (!observador) return;
+    observador.disconnect();
     observador = null;
+    window.removeEventListener('scroll', alDesplazar);
+    if (esperandoCuadro) {
+      window.cancelAnimationFrame(cuadro);
+      esperandoCuadro = false;
+    }
   });
 
   return {
