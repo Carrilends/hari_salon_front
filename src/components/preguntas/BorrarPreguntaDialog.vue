@@ -2,7 +2,8 @@
   <q-dialog
     :model-value="abierta"
     :position="esMovil ? 'bottom' : 'standard'"
-    @update:model-value="emit('update:abierta', $event)"
+    :persistent="borrando"
+    @update:model-value="alCambiarModelo"
   >
     <section
       class="borrar-pregunta"
@@ -46,7 +47,8 @@
           type="button"
           class="borrar-pregunta__boton m-boton--ancho"
           data-test="cancelar-borrado"
-          @click="emit('update:abierta', false)"
+          :disabled="borrando"
+          @click="cancelar"
         >
           Cancelar
         </button>
@@ -80,6 +82,17 @@ const emit = defineEmits<{
 }>();
 
 const esMovil = useConsultaMedios('(max-width: 699px)', false);
+
+/** Mientras se borra no se cierra: si falla, el error se vería en un diálogo cerrado. */
+function cancelar() {
+  if (props.borrando) return;
+  emit('update:abierta', false);
+}
+
+function alCambiarModelo(valor: boolean) {
+  if (!valor && props.borrando) return;
+  emit('update:abierta', valor);
+}
 
 function confirmar() {
   if (props.borrando) return;
@@ -175,6 +188,11 @@ defineOptions({ name: 'BorrarPreguntaDialog' });
 }
 
 .borrar-pregunta__boton--peligro:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.borrar-pregunta__boton:disabled {
   opacity: 0.6;
   cursor: progress;
 }

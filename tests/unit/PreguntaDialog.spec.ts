@@ -19,7 +19,7 @@ type Props = {
 
 const QDialog = {
   name: 'QDialog',
-  props: ['modelValue', 'maximized', 'position'],
+  props: ['modelValue', 'maximized', 'position', 'persistent'],
   emits: ['update:modelValue'],
   template: '<div v-if="modelValue" class="q-dialog"><slot /></div>',
 };
@@ -160,6 +160,32 @@ describe('PreguntaDialog · crear', () => {
     expect(
       wrapper.get('[data-test="cerrar-dialogo"]').attributes('aria-label')
     ).toBe('Cerrar sin guardar');
+  });
+});
+
+describe('PreguntaDialog · mientras guarda', () => {
+  it('la X y Cancelar se desactivan y el cierre del q-dialog no emite', async () => {
+    const wrapper = montar({ guardando: true });
+
+    expect(
+      wrapper.get('[data-test="cerrar-dialogo"]').attributes('disabled')
+    ).toBeDefined();
+    expect(
+      wrapper.get('[data-test="cancelar-pregunta"]').attributes('disabled')
+    ).toBeDefined();
+    await wrapper.get('[data-test="cancelar-pregunta"]').trigger('click');
+    wrapper.getComponent(QDialog).vm.$emit('update:modelValue', false);
+
+    expect(wrapper.emitted('update:abierto')).toBeUndefined();
+    expect(wrapper.getComponent(QDialog).props('persistent')).toBe(true);
+  });
+
+  it('sin guardar, el cierre del q-dialog sí se emite', () => {
+    const wrapper = montar();
+
+    wrapper.getComponent(QDialog).vm.$emit('update:modelValue', false);
+
+    expect(wrapper.emitted('update:abierto')).toEqual([[false]]);
   });
 });
 

@@ -12,7 +12,7 @@ type Props = {
 
 const QDialog = {
   name: 'QDialog',
-  props: ['modelValue', 'maximized', 'position'],
+  props: ['modelValue', 'maximized', 'position', 'persistent'],
   emits: ['update:modelValue'],
   template: '<div v-if="modelValue" class="q-dialog"><slot /></div>',
 };
@@ -76,5 +76,18 @@ describe('BorrarPreguntaDialog', () => {
 
     expect(fallo.text()).toBe('No se pudo borrar la pregunta.');
     expect(fallo.attributes('role')).toBe('alert');
+  });
+
+  it('mientras borra, Cancelar se desactiva y el cierre del q-dialog no emite', async () => {
+    const wrapper = montar({ borrando: true });
+
+    expect(
+      wrapper.get('[data-test="cancelar-borrado"]').attributes('disabled')
+    ).toBeDefined();
+    await wrapper.get('[data-test="cancelar-borrado"]').trigger('click');
+    wrapper.getComponent(QDialog).vm.$emit('update:modelValue', false);
+
+    expect(wrapper.emitted('update:abierta')).toBeUndefined();
+    expect(wrapper.getComponent(QDialog).props('persistent')).toBe(true);
   });
 });

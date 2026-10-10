@@ -2,7 +2,8 @@
   <q-dialog
     :model-value="abierto"
     :maximized="esMovil"
-    @update:model-value="emit('update:abierto', $event)"
+    :persistent="guardando"
+    @update:model-value="alCambiarModelo"
   >
     <section
       class="pregunta-dialogo"
@@ -19,6 +20,7 @@
           class="pregunta-dialogo__cerrar"
           data-test="cerrar-dialogo"
           aria-label="Cerrar sin guardar"
+          :disabled="guardando"
           @click="cerrar"
         >
           <StrokeIcon nombre="cerrar" :tamano="20" />
@@ -124,6 +126,7 @@
             type="button"
             class="pregunta-dialogo__boton"
             data-test="cancelar-pregunta"
+            :disabled="guardando"
             @click="cerrar"
           >
             Cancelar
@@ -221,8 +224,15 @@ function descritoPor(campo: CampoPregunta) {
     : `contador-${campo}`;
 }
 
+/** Mientras se guarda no se cierra: si falla, se perdería lo escrito. */
 function cerrar() {
+  if (props.guardando) return;
   emit('update:abierto', false);
+}
+
+function alCambiarModelo(valor: boolean) {
+  if (!valor && props.guardando) return;
+  emit('update:abierto', valor);
 }
 
 function enviar() {
@@ -291,6 +301,12 @@ defineOptions({ name: 'PreguntaDialog' });
   background: none;
   color: var(--m-hueso);
   cursor: pointer;
+}
+
+.pregunta-dialogo__cerrar:disabled,
+.pregunta-dialogo__boton:disabled {
+  opacity: 0.6;
+  cursor: progress;
 }
 
 .pregunta-dialogo__cerrar:focus-visible {
