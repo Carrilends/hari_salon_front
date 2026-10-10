@@ -1,176 +1,161 @@
 <template>
-  <q-page class="faq-page q-px-md q-py-lg">
-    <section class="faq-wrap">
-      <div class="faq-header">
-        <div>
-          <h1 class="text-h4 text-weight-bold q-my-none">Preguntas frecuentes</h1>
-          <p class="text-grey-7 q-mt-sm q-mb-none">
-            Resolvemos las dudas más comunes para que reserves con confianza.
-          </p>
-        </div>
-        <div class="faq-header__actions">
-          <div class="text-caption text-grey-7">
-            {{ faqs.length }} pregunta{{ faqs.length === 1 ? '' : 's' }}
-          </div>
-          <q-btn
-            v-if="authStore.isAdmin"
-            color="indigo-5"
-            icon="add"
-            :label="isCompactAction ? undefined : 'Agregar pregunta'"
-            :round="isCompactAction"
-            :rounded="!isCompactAction"
-            :aria-label="'Agregar pregunta frecuente'"
-            @click="openCreateDialog"
-          />
-        </div>
+  <q-page class="preguntas" :padding="false">
+    <header class="preguntas__cabeza" data-test="cabeza-preguntas">
+      <p class="preguntas__antetitulo">
+        Preguntas frecuentes<template v-if="esDuena">
+          · vista de la dueña</template
+        >
+      </p>
+      <h1 class="preguntas__titulo">Lo que más nos preguntan</h1>
+      <p class="preguntas__lede">
+        Resolvemos las dudas más comunes para que reserves con confianza.
+      </p>
+      <div v-if="esDuena" class="preguntas__alta">
+        <button
+          type="button"
+          class="preguntas__agregar m-boton--ancho"
+          data-test="agregar-pregunta"
+          @click="abrirAlta"
+        >
+          <StrokeIcon nombre="mas" :tamano="18" />
+          Agregar pregunta
+        </button>
+        <p class="preguntas__pista">
+          Arrastra las filas por el asa, o usa las flechas del teclado sobre
+          ella, para cambiar el orden en que las ven las clientas.
+        </p>
       </div>
+    </header>
 
-      <q-scroll-area
-        class="faq-scroll-area"
-        :thumb-style="scrollThumbStyle"
-        :bar-style="scrollBarStyle"
-        visible
+    <section
+      class="preguntas__lista"
+      aria-label="Preguntas"
+      :aria-busy="isLoading ? 'true' : 'false'"
+    >
+      <p
+        class="preguntas__estado"
+        role="status"
+        data-test="estado-preguntas"
       >
-        <div class="faq-scroll-content">
-          <div v-if="isLoading" class="faq-loading-list">
-            <q-card v-for="index in 5" :key="index" class="faq-item">
-              <q-card-section>
-                <q-skeleton type="text" width="70%" />
-                <q-skeleton type="text" class="q-mt-sm" />
-                <q-skeleton type="text" width="45%" />
-              </q-card-section>
-            </q-card>
-          </div>
+        {{ logro }}
+      </p>
+      <p
+        v-if="falloOrden"
+        class="preguntas__fallo"
+        role="alert"
+        data-test="fallo-orden"
+      >
+        {{ falloOrden }}
+      </p>
 
-          <div v-else-if="!faqs.length" class="empty-state">
-            <q-icon name="help_outline" size="48px" color="grey-6" />
-            <div class="text-subtitle1 text-weight-medium q-mt-sm">
-              Aún no hay preguntas frecuentes
-            </div>
-            <div class="text-caption text-grey-7">
-              {{
-                authStore.isAdmin
-                  ? 'Agrega la primera pregunta para tus clientes.'
-                  : 'Vuelve pronto para conocer más información.'
-              }}
-            </div>
-          </div>
-
-          <q-list v-else class="faq-list">
-            <q-expansion-item
-              v-for="faq in faqs"
-              :key="faq.id"
-              class="faq-item"
-              expand-separator
-              switch-toggle-side
-            >
-              <template #header>
-                <q-item-section>
-                  <q-item-label class="text-weight-medium faq-question">{{ faq.question }}</q-item-label>
-                  <q-item-label class="text-caption text-grey-7">
-                    Orden: {{ faq.sortOrder }}
-                  </q-item-label>
-                </q-item-section>
-                <q-item-section v-if="authStore.isAdmin" side class="faq-admin-actions">
-                  <div class="row items-center no-wrap q-gutter-xs">
-                    <q-btn
-                      flat
-                      round
-                      dense
-                      icon="edit"
-                      color="primary"
-                      aria-label="Editar pregunta frecuente"
-                      @click.stop="openEditDialog(faq)"
-                    />
-                    <q-btn
-                      flat
-                      round
-                      dense
-                      icon="delete"
-                      color="negative"
-                      aria-label="Eliminar pregunta frecuente"
-                      @click.stop="confirmDelete(faq)"
-                    />
-                  </div>
-                </q-item-section>
-              </template>
-
-              <q-card-section class="faq-answer">
-                {{ faq.answer }}
-              </q-card-section>
-            </q-expansion-item>
-          </q-list>
-        </div>
-      </q-scroll-area>
+      <div
+        v-if="isLoading"
+        class="preguntas__cargando"
+        data-test="preguntas-cargando"
+        aria-hidden="true"
+      >
+        <span v-for="n in 5" :key="n" class="preguntas__esqueleto" />
+      </div>
+      <div
+        v-else-if="isError"
+        class="preguntas__aviso"
+        data-test="preguntas-error"
+      >
+        <p class="preguntas__aviso-texto">
+          No pudimos cargar las preguntas. Revisa tu conexión e inténtalo otra
+          vez.
+        </p>
+        <button
+          type="button"
+          class="preguntas__reintentar"
+          data-test="reintentar"
+          @click="refetch()"
+        >
+          Reintentar
+        </button>
+      </div>
+      <p
+        v-else-if="!faqs.length"
+        class="preguntas__aviso preguntas__aviso-texto"
+        data-test="preguntas-vacio"
+      >
+        {{ textoVacio }}
+      </p>
+      <ListaPreguntasDuena
+        v-else-if="esDuena"
+        :preguntas="faqs"
+        @editar="abrirEdicion"
+        @borrar="pedirBorrado"
+        @reordenar="alReordenar"
+      />
+      <AcordeonPreguntas v-else :preguntas="faqs" />
     </section>
 
-    <q-dialog v-model="faqDialogOpen">
-      <q-card class="faq-dialog q-pa-sm">
-        <q-card-section class="q-pb-none">
-          <div class="text-h6">
-            {{ isEditMode ? 'Editar pregunta frecuente' : 'Agregar pregunta frecuente' }}
-          </div>
-          <div class="text-caption text-grey-7">
-            Completa la pregunta y su respuesta para mostrarla a tus clientes.
-          </div>
-        </q-card-section>
+    <aside class="preguntas__ayuda" aria-label="Ayuda">
+      <AyudaPreguntas />
+    </aside>
 
-        <q-card-section class="q-gutter-md">
-          <q-input
-            v-model="faqForm.question"
-            outlined
-            label="Pregunta"
-            :rules="[
-              (val) => !!val || 'Requerido',
-              (val) => val.trim().length >= 5 || 'Mínimo 5 caracteres',
-            ]"
-          />
-          <q-input
-            v-model="faqForm.answer"
-            outlined
-            type="textarea"
-            autogrow
-            label="Respuesta"
-            :rules="[
-              (val) => !!val || 'Requerido',
-              (val) => val.trim().length >= 5 || 'Mínimo 5 caracteres',
-            ]"
-          />
-          <q-input
-            v-model.number="faqForm.sortOrder"
-            outlined
-            type="number"
-            min="0"
-            label="Orden"
-          />
-        </q-card-section>
-
-        <q-card-actions align="right">
-          <q-btn flat label="Cancelar" v-close-popup />
-          <q-btn
-            color="positive"
-            :label="isEditMode ? 'Guardar cambios' : 'Crear pregunta'"
-            :loading="isSubmitting"
-            @click="submitFaq"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <template v-if="esDuena">
+      <PreguntaDialog
+        v-model:abierto="formularioAbierto"
+        :pregunta="enEdicion"
+        :puesto="puestoEnEdicion"
+        :total="faqs.length"
+        :guardando="guardandoPregunta"
+        :error="errorFormulario"
+        @guardar="guardarPregunta"
+      />
+      <BorrarPreguntaDialog
+        v-model:abierta="borradoAbierto"
+        :pregunta="porBorrar"
+        :borrando="borrandoPregunta"
+        :error="errorBorrado"
+        @confirmar="confirmarBorrado"
+      />
+    </template>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
-import { useQuasar } from 'quasar';
+import { computed, ref } from 'vue';
+import type { FaqItem } from 'src/api/apiTypes';
+import AcordeonPreguntas from 'src/components/preguntas/AcordeonPreguntas.vue';
+import AyudaPreguntas from 'src/components/preguntas/AyudaPreguntas.vue';
+import BorrarPreguntaDialog from 'src/components/preguntas/BorrarPreguntaDialog.vue';
+import ListaPreguntasDuena from 'src/components/preguntas/ListaPreguntasDuena.vue';
+import PreguntaDialog from 'src/components/preguntas/PreguntaDialog.vue';
+import StrokeIcon from 'src/components/shared/StrokeIcon.vue';
 import { useFaqs } from 'src/composables/faqs/useFaqs';
-import { useAuthStore } from 'src/stores/auth-store';
-import type { CreateFaqBody, FaqItem } from 'src/api/apiTypes';
-import { useSeo } from 'src/composables/seo/useSeo';
 import { faqPageSchema } from 'src/composables/seo/structuredData';
+import { useSeo } from 'src/composables/seo/useSeo';
+import { useAuthStore } from 'src/stores/auth-store';
+
+/**
+ * Preguntas frecuentes (especificación §5; tableros `PreguntasIndiceTinta` y
+ * `PreguntasDuenaA`). La clienta ve el acordeón; la dueña, la lista con asa,
+ * editar y borrar. Esta página solo compone y orquesta: cada pieza vive en
+ * `src/components/preguntas/` y el HTTP, en `useFaqs` → `faqs-api`.
+ *
+ * Errores y éxitos en línea: el del formulario y el del borrado dentro de su
+ * diálogo; el del orden y los «hecho», en la cabecera de la lista.
+ */
+const FALLO_GUARDAR =
+  'No se pudo guardar la pregunta. Revisa la conexión e inténtalo otra vez.';
+const FALLO_BORRAR = 'No se pudo borrar la pregunta. Inténtalo otra vez.';
+const FALLO_ORDEN =
+  'No se pudo guardar el orden. La lista volvió a como estaba; inténtalo otra vez.';
 
 const authStore = useAuthStore();
-const $q = useQuasar();
-const { faqs, isLoading, createFaqMutation, updateFaqMutation, removeFaqMutation } = useFaqs();
+const {
+  faqs,
+  isLoading,
+  isError,
+  refetch,
+  createFaqMutation,
+  updateFaqMutation,
+  removeFaqMutation,
+  reordenar,
+} = useFaqs();
 
 useSeo({
   title: 'Preguntas frecuentes | Peluquería Marlene',
@@ -179,259 +164,344 @@ useSeo({
   path: '/preguntas-frecuentes',
   jsonLd: computed(() =>
     faqPageSchema(
-      (faqs.value || []).map((faq) => ({
+      faqs.value.map((faq) => ({
         question: faq.question,
         answer: faq.answer,
-      })),
-    ),
+      }))
+    )
   ),
 });
 
-const scrollThumbStyle = {
-  right: '2px',
-  borderRadius: '8px',
-  backgroundColor: 'rgba(80, 80, 80, 0.22)',
-  width: '6px',
-  opacity: '0.9',
-};
+const esDuena = computed(() => authStore.isAdmin);
 
-const scrollBarStyle = {
-  right: '2px',
-  borderRadius: '8px',
-  backgroundColor: 'rgba(0, 0, 0, 0.08)',
-  width: '6px',
-  opacity: '0.25',
-};
-
-const faqDialogOpen = ref(false);
-const isEditMode = ref(false);
-const editingFaqId = ref('');
-const isCompactAction = ref(
-  typeof window !== 'undefined' ? window.matchMedia('(max-width: 680px)').matches : false,
+const textoVacio = computed(() =>
+  esDuena.value
+    ? 'Todavía no hay preguntas. Agrega la primera con «Agregar pregunta».'
+    : 'Aún no hay preguntas frecuentes. Vuelve pronto.'
 );
 
-const faqForm = reactive<CreateFaqBody>({
-  question: '',
-  answer: '',
-  sortOrder: 0,
+/** Último «hecho» (región `status`) y fallo del orden (región `alert`). */
+const logro = ref('');
+const falloOrden = ref('');
+
+// --- Crear y editar ----------------------------------------------------------
+
+const formularioAbierto = ref(false);
+const enEdicion = ref<FaqItem | null>(null);
+const guardandoPregunta = ref(false);
+const errorFormulario = ref<string | null>(null);
+
+/** Puesto 1-based de la pregunta en edición, para la pista del diálogo. */
+const puestoEnEdicion = computed(() => {
+  const actual = enEdicion.value;
+  if (!actual) return null;
+  const indice = faqs.value.findIndex((faq) => faq.id === actual.id);
+  return indice === -1 ? null : indice + 1;
 });
 
-const isSubmitting = computed(
-  () => createFaqMutation.isPending.value || updateFaqMutation.isPending.value,
-);
+function abrirAlta() {
+  enEdicion.value = null;
+  errorFormulario.value = null;
+  formularioAbierto.value = true;
+}
 
-const resetForm = () => {
-  faqForm.question = '';
-  faqForm.answer = '';
-  faqForm.sortOrder = 0;
-  editingFaqId.value = '';
-  isEditMode.value = false;
-};
+function abrirEdicion(faq: FaqItem) {
+  enEdicion.value = faq;
+  errorFormulario.value = null;
+  formularioAbierto.value = true;
+}
 
-const openCreateDialog = () => {
-  if (!authStore.isAdmin) return;
-  resetForm();
-  faqDialogOpen.value = true;
-};
-
-const openEditDialog = (faq: FaqItem) => {
-  if (!authStore.isAdmin) return;
-  faqForm.question = faq.question;
-  faqForm.answer = faq.answer;
-  faqForm.sortOrder = faq.sortOrder;
-  editingFaqId.value = faq.id;
-  isEditMode.value = true;
-  faqDialogOpen.value = true;
-};
-
-const submitFaq = async () => {
-  if (!authStore.isAdmin || isSubmitting.value) return;
-
-  const payload: CreateFaqBody = {
-    question: faqForm.question.trim(),
-    answer: faqForm.answer.trim(),
-    sortOrder: Number(faqForm.sortOrder ?? 0),
-  };
-
-  if (!payload.question || payload.question.length < 5) return;
-  if (!payload.answer || payload.answer.length < 5) return;
-
+/**
+ * Sin `sortOrder`: una pregunta nueva entra al final (lo decide el backend) y
+ * el orden de una existente solo se cambia con el asa.
+ */
+async function guardarPregunta(cuerpo: { question: string; answer: string }) {
+  if (guardandoPregunta.value) return;
+  guardandoPregunta.value = true;
+  errorFormulario.value = null;
   try {
-    if (isEditMode.value && editingFaqId.value) {
+    if (enEdicion.value) {
       await updateFaqMutation.mutateAsync({
-        id: editingFaqId.value,
-        body: payload,
+        id: enEdicion.value.id,
+        body: cuerpo,
       });
-      $q.notify({
-        type: 'positive',
-        message: 'Pregunta frecuente actualizada',
-      });
+      logro.value = 'Pregunta guardada.';
     } else {
-      await createFaqMutation.mutateAsync(payload);
-      $q.notify({
-        type: 'positive',
-        message: 'Pregunta frecuente creada',
-      });
+      await createFaqMutation.mutateAsync(cuerpo);
+      logro.value = 'Pregunta añadida al final de la lista.';
     }
-
-    faqDialogOpen.value = false;
-    resetForm();
+    formularioAbierto.value = false;
   } catch {
-    $q.notify({
-      type: 'negative',
-      message: 'No se pudo guardar la pregunta frecuente',
-    });
+    errorFormulario.value = FALLO_GUARDAR;
+  } finally {
+    guardandoPregunta.value = false;
   }
-};
+}
 
-const confirmDelete = (faq: FaqItem) => {
-  if (!authStore.isAdmin || removeFaqMutation.isPending.value) return;
+// --- Borrar ------------------------------------------------------------------
 
-  $q.dialog({
-    title: 'Eliminar pregunta',
-    message: `¿Deseas eliminar "${faq.question}"?`,
-    cancel: true,
-    persistent: true,
-  }).onOk(async () => {
-    try {
-      await removeFaqMutation.mutateAsync(faq.id);
-      $q.notify({
-        type: 'positive',
-        message: 'Pregunta frecuente eliminada',
-      });
-    } catch {
-      $q.notify({
-        type: 'negative',
-        message: 'No se pudo eliminar la pregunta frecuente',
-      });
-    }
-  });
-};
+const borradoAbierto = ref(false);
+const porBorrar = ref<FaqItem | null>(null);
+const borrandoPregunta = ref(false);
+const errorBorrado = ref<string | null>(null);
 
-let mediaQuery: MediaQueryList | null = null;
-const syncActionButton = () => {
-  if (!mediaQuery) return;
-  isCompactAction.value = mediaQuery.matches;
-};
+function pedirBorrado(faq: FaqItem) {
+  porBorrar.value = faq;
+  errorBorrado.value = null;
+  borradoAbierto.value = true;
+}
 
-onMounted(() => {
-  mediaQuery = window.matchMedia('(max-width: 680px)');
-  syncActionButton();
-  mediaQuery.addEventListener('change', syncActionButton);
-});
+async function confirmarBorrado() {
+  const faq = porBorrar.value;
+  if (!faq || borrandoPregunta.value) return;
+  borrandoPregunta.value = true;
+  errorBorrado.value = null;
+  try {
+    await removeFaqMutation.mutateAsync(faq.id);
+    borradoAbierto.value = false;
+    logro.value = `Pregunta borrada: «${faq.question}».`;
+  } catch {
+    errorBorrado.value = FALLO_BORRAR;
+  } finally {
+    borrandoPregunta.value = false;
+  }
+}
 
-onUnmounted(() => {
-  mediaQuery?.removeEventListener('change', syncActionButton);
-});
+// --- Reordenar ---------------------------------------------------------------
 
-defineOptions({
-  name: 'FaqPage',
-});
+/** El pintado ya es optimista en `useFaqs`; aquí solo se dice si no se guardó. */
+async function alReordenar(ids: string[]) {
+  falloOrden.value = '';
+  const guardado = await reordenar(ids);
+  if (!guardado) falloOrden.value = FALLO_ORDEN;
+}
+
+defineOptions({ name: 'FaqPage' });
 </script>
 
 <style scoped lang="scss">
-.faq-page {
-  background: linear-gradient(
-    160deg,
-    rgba(255, 255, 255, 0.52) 0%,
-    rgba(245, 245, 245, 0.48) 45%,
-    rgba(250, 248, 250, 0.55) 100%
-  );
-}
-
-.faq-wrap {
-  width: min(1120px, 100%);
-  margin: 0 auto;
-}
-
-.faq-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 18px;
-  margin-bottom: 18px;
-  background: rgba(255, 255, 255, 0.86);
-  border-radius: 14px;
-  padding: 18px;
-}
-
-.faq-header__actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.faq-loading-list {
+/**
+ * Tres áreas. En móvil, una columna: banda tinta, lista sobre hueso y la caja
+ * de ayuda. Desde 900 px, la cabeza y la ayuda forman la columna tinta de la
+ * izquierda (400 px) y la lista ocupa el resto; la fila de la ayuda se estira
+ * (`1fr`) para que la tinta llegue hasta abajo. Todo CSS: la ruta se
+ * prerenderiza y no hay `window` que consultar.
+ */
+.preguntas {
   display: grid;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'cabeza'
+    'lista'
+    'ayuda';
+  background: var(--m-hueso);
+  color: var(--m-tinta);
+  font-family: var(--m-font-sans);
 }
 
-.faq-scroll-area {
-  height: clamp(320px, calc(100vh - 290px), 760px);
+.preguntas__cabeza {
+  grid-area: cabeza;
+  padding: 28px var(--m-banda-margen-movil) 26px;
+  background: var(--m-tinta);
+  color: var(--m-hueso);
 }
 
-.faq-scroll-content {
-  padding-right: 8px;
+.preguntas__antetitulo {
+  margin: 0 0 10px;
+  color: var(--m-oro);
+  font-size: 10px;
+  letter-spacing: var(--m-tracking-etiqueta);
+  text-transform: uppercase;
 }
 
-.faq-list {
-  display: grid;
-  gap: 12px;
+.preguntas__titulo {
+  margin: 0 0 8px;
+  font-family: var(--m-font-display);
+  font-size: 29px;
+  font-weight: 400;
+  line-height: 1.12;
 }
 
-.faq-item {
-  border-radius: 14px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-}
-
-.faq-item :deep(.q-item) {
-  min-height: 68px;
-}
-
-.faq-question {
-  line-height: 1.35;
-}
-
-.faq-admin-actions {
-  margin-left: 12px;
-}
-
-.faq-answer {
-  color: #333;
+.preguntas__lede {
+  margin: 0;
+  color: var(--m-piedra-clara);
+  font-size: 14px;
   line-height: 1.6;
-  white-space: pre-wrap;
 }
 
-.empty-state {
-  min-height: 240px;
+.preguntas__alta {
+  margin-top: 18px;
+}
+
+/* Oro macizo con rótulo tinta (5,8:1). */
+.preguntas__agregar {
+  width: 100%;
+  min-height: 46px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 14px;
+  gap: 10px;
+  border: 0;
+  border-radius: var(--m-radio-pildora);
+  background: var(--m-oro);
+  color: var(--m-tinta);
+  cursor: pointer;
+  font-family: var(--m-font-sans);
+  font-size: 11.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 }
 
-.faq-dialog {
-  width: min(92vw, 560px);
-  border-radius: 14px;
+.preguntas__agregar:focus-visible {
+  outline: 2px solid var(--m-hueso);
+  outline-offset: 2px;
 }
 
-@media (max-width: 680px) {
-  .faq-header {
-    flex-direction: column;
-    align-items: flex-start;
+.preguntas__pista {
+  margin: 12px 0 0;
+  color: var(--m-piedra-clara);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.preguntas__lista {
+  grid-area: lista;
+  min-width: 0;
+  padding: 6px var(--m-banda-margen-movil) 0;
+}
+
+.preguntas__ayuda {
+  grid-area: ayuda;
+  padding: 22px var(--m-banda-margen-movil) var(--m-flotante-despeje);
+}
+
+.preguntas__estado {
+  margin: 0;
+  color: var(--m-piedra);
+  font-size: 12.5px;
+}
+
+.preguntas__fallo {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border: var(--m-filete-grosor) solid var(--m-filete);
+  border-radius: var(--m-radio-tarjeta);
+  background: var(--m-aviso-fondo);
+  color: var(--m-tinta);
+  font-size: 13.5px;
+}
+
+.preguntas__cargando {
+  border-top: var(--m-filete-grosor) solid var(--m-filete);
+}
+
+.preguntas__esqueleto {
+  height: 58px;
+  display: flex;
+  align-items: center;
+  border-bottom: var(--m-filete-grosor) solid var(--m-filete);
+}
+
+.preguntas__esqueleto::before {
+  content: '';
+  width: 60%;
+  height: 12px;
+  border-radius: var(--m-radio-tarjeta);
+  background: var(--m-filete);
+}
+
+.preguntas__aviso {
+  margin: 24px 0;
+}
+
+.preguntas__aviso-texto {
+  color: var(--m-piedra);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.preguntas__reintentar {
+  min-height: var(--m-tactil-min);
+  margin-top: 12px;
+  padding: 0 20px;
+  border: var(--m-filete-grosor) solid var(--m-tinta);
+  border-radius: var(--m-radio-pildora);
+  background: none;
+  color: var(--m-tinta);
+  cursor: pointer;
+  font-family: var(--m-font-sans);
+  font-size: 12px;
+  letter-spacing: var(--m-tracking-nav);
+  text-transform: uppercase;
+}
+
+.preguntas__reintentar:focus-visible {
+  outline: 2px solid var(--m-tinta);
+  outline-offset: 2px;
+}
+
+@media (min-width: 900px) {
+  .preguntas {
+    grid-template-columns: 400px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      'cabeza lista'
+      'ayuda lista';
   }
 
-  .faq-header__actions {
-    width: 100%;
-    justify-content: space-between;
+  .preguntas__cabeza {
+    padding: 64px 40px 0 var(--m-banda-margen);
   }
 
-  .faq-scroll-area {
-    height: clamp(280px, calc(100vh - 300px), 680px);
+  .preguntas__antetitulo {
+    margin-bottom: 14px;
+    font-size: 11px;
+  }
+
+  .preguntas__titulo {
+    margin-bottom: 16px;
+    font-size: 42px;
+    line-height: 1.1;
+  }
+
+  .preguntas__lede {
+    margin-bottom: 36px;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .preguntas__alta {
+    margin: 0 0 26px;
+    padding-bottom: 26px;
+    border-bottom: var(--m-filete-grosor) solid var(--m-filete-oscuro);
+  }
+
+  .preguntas__agregar {
+    min-height: 50px;
+    font-size: 12px;
+  }
+
+  .preguntas__lista {
+    padding: 64px var(--m-banda-margen) var(--m-flotante-despeje) 64px;
+  }
+
+  .preguntas__ayuda {
+    padding: 0 40px 64px var(--m-banda-margen);
+    background: var(--m-tinta);
+  }
+}
+
+/**
+ * Realce al pasar (solo puntero fino): el COLOR. El movimiento es global, en
+ * `app.scss` («Realce y hundido»).
+ */
+@media (hover: hover) and (pointer: fine) {
+  .preguntas__agregar:hover {
+    background: var(--m-oro-claro);
+  }
+
+  .preguntas__reintentar:hover {
+    border-color: var(--m-oro);
   }
 }
 </style>
