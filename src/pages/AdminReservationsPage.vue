@@ -462,9 +462,11 @@ onBeforeUnmount(() => vivos.marcarBandeja(false));
   align-items: start;
 }
 
+/* Abajo, el hueco del lanzador del asistente (fijo en la esquina): sin él,
+   la píldora tapa el pie de la lista al llegar al final. */
 .bandeja__principal {
   min-width: 0;
-  padding: 0 var(--m-banda-margen-movil) 32px;
+  padding: 0 var(--m-banda-margen-movil) calc(32px + var(--m-flotante-despeje));
 }
 
 .bandeja--escritorio .bandeja__principal {
@@ -668,7 +670,9 @@ onBeforeUnmount(() => vivos.marcarBandeja(false));
   height: calc(100vh - var(--m-cabecera-alto));
   overflow-y: auto;
   box-sizing: border-box;
-  padding: 26px 30px;
+  /* Las acciones van al pie de la ficha, justo donde flota el lanzador del
+     asistente: sin este hueco, la píldora tapa «Cancelar». */
+  padding: 26px 30px var(--m-flotante-despeje);
   background: var(--m-hueso);
   color: var(--m-tinta);
 }

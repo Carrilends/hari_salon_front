@@ -43,16 +43,21 @@ describe('la bandeja · contrato visual', () => {
   it.each(ARCHIVOS)('%s tiene foco visible de 2 px', (archivo) => {
     const css = estilos(leer(archivo));
 
-    expect(css).toMatch(/:focus-visible[^{]*\{[^}]*outline: 2px solid var\(--m-/);
+    expect(css).toMatch(
+      /:focus-visible[^{]*\{[^}]*outline: 2px solid var\(--m-/
+    );
   });
 
-  it.each(ARCHIVOS)('%s pone el color de :hover solo con puntero fino', (archivo) => {
-    const css = sinComentarios(estilos(leer(archivo)));
-    const corte = css.indexOf(MEDIA_FINA);
-    const antes = corte === -1 ? css : css.slice(0, corte);
+  it.each(ARCHIVOS)(
+    '%s pone el color de :hover solo con puntero fino',
+    (archivo) => {
+      const css = sinComentarios(estilos(leer(archivo)));
+      const corte = css.indexOf(MEDIA_FINA);
+      const antes = corte === -1 ? css : css.slice(0, corte);
 
-    expect(antes).not.toMatch(/:hover/);
-  });
+      expect(antes).not.toMatch(/:hover/);
+    }
+  );
 
   it.each(ARCHIVOS)('%s respeta Safari 13.1 (sin inset ni :has)', (archivo) => {
     const css = sinComentarios(estilos(leer(archivo)));
@@ -72,11 +77,15 @@ describe('la bandeja · contrato visual', () => {
   });
 
   it('el único aviso flotante que queda lleva la paleta', () => {
-    const despachador = leer('composables/notifications/useAdminNotifications.ts');
+    const despachador = leer(
+      'composables/notifications/useAdminNotifications.ts'
+    );
 
     expect(despachador.match(/\$q\.notify\(/g)).toHaveLength(1);
     expect(despachador).toContain('ESTILO_AVISO.logro');
-    expect(despachador).not.toMatch(/type:\s*'(positive|warning|info|negative)'/);
+    expect(despachador).not.toMatch(
+      /type:\s*'(positive|warning|info|negative)'/
+    );
   });
 
   it('el título del día fija su interlineado (el h2 de Quasar trae 60 px)', () => {
@@ -89,6 +98,17 @@ describe('la bandeja · contrato visual', () => {
     expect(regla?.[0]).toMatch(/line-height: [0-9.]+;/);
   });
 
+  it('el lanzador del asistente no tapa el final de la lista ni las acciones de la ficha', () => {
+    const css = sinComentarios(
+      estilos(leer('pages/AdminReservationsPage.vue'))
+    );
+    const principal = css.match(/\n\.bandeja__principal \{[^}]*\}/)?.[0];
+    const detalle = css.match(/\n\.bandeja__detalle \{[^}]*\}/)?.[0];
+
+    expect(principal).toMatch(/padding:[^;]*var\(--m-flotante-despeje\)/);
+    expect(detalle).toMatch(/padding:[^;]*var\(--m-flotante-despeje\)/);
+  });
+
   it('nadie usa ya el filtro viejo del panel', () => {
     const fuentes = (dir: string): string[] =>
       readdirSync(dir).flatMap((nombre) => {
@@ -98,7 +118,9 @@ describe('la bandeja · contrato visual', () => {
       });
 
     for (const texto of fuentes(SRC)) {
-      expect(texto).not.toMatch(/ADMIN_RESERVATION_FILTERS|filterAdminReservations/);
+      expect(texto).not.toMatch(
+        /ADMIN_RESERVATION_FILTERS|filterAdminReservations/
+      );
     }
   });
 });
