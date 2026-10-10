@@ -1,166 +1,180 @@
 <template>
-  <q-page class="workers-page q-px-md q-py-lg">
-    <section class="workers-wrap">
-      <div class="workers-header">
-        <div>
-          <h1 class="text-h4 text-weight-bold q-my-none">Mis estilistas</h1>
-          <p class="text-grey-7 q-mt-sm q-mb-none">
-            Gestiona el equipo que atiende a tus clientes.
-          </p>
-        </div>
-        <div class="workers-header__actions">
-          <div class="text-caption text-grey-7">
-            {{ workers.length }} estilista{{ workers.length === 1 ? '' : 's' }}
-          </div>
-          <q-btn
-            v-if="authStore.isAdmin"
-            color="indigo-5"
-            icon="add"
-            :label="isCompactAction ? undefined : 'Agregar estilista'"
-            :round="isCompactAction"
-            :rounded="!isCompactAction"
-            aria-label="Agregar estilista"
-            @click="openCreateDialog"
-          />
-        </div>
-      </div>
-
-      <q-scroll-area
-        class="workers-scroll-area"
-        :thumb-style="scrollThumbStyle"
-        :bar-style="scrollBarStyle"
-        visible
+  <q-page class="estilistas" data-test="pagina-estilistas">
+    <div class="estilistas__cuerpo">
+      <section
+        class="estilistas__principal"
+        aria-labelledby="estilistas-titulo"
       >
-        <div class="workers-scroll-content">
-          <div v-if="isLoading" class="workers-grid">
-            <q-card v-for="index in 6" :key="index" class="worker-card">
-              <q-card-section>
-                <div class="row items-center justify-between">
-                  <div class="row items-center q-col-gutter-sm no-wrap">
-                    <div class="col-auto">
-                      <q-skeleton type="QAvatar" size="42px" />
-                    </div>
-                    <div class="col">
-                      <q-skeleton type="text" width="65%" />
-                      <q-skeleton type="text" width="35%" />
-                    </div>
-                  </div>
-                </div>
-              </q-card-section>
-            </q-card>
+        <header class="estilistas__cabecera">
+          <div class="estilistas__titulos">
+            <p class="estilistas__antetitulo" data-test="antetitulo">
+              {{ antetitulo }}
+            </p>
+            <h1 id="estilistas-titulo" class="estilistas__titulo">
+              Mis estilistas
+            </h1>
           </div>
-
-          <div v-else-if="!workers.length" class="empty-state">
-            <q-icon name="groups" size="48px" color="grey-6" />
-            <div class="text-subtitle1 text-weight-medium q-mt-sm">
-              Aún no tienes estilistas registrados
-            </div>
-            <div class="text-caption text-grey-7">
-              Agrega el primero para comenzar a organizar el equipo.
-            </div>
+          <div class="estilistas__semana">
+            <button
+              type="button"
+              class="estilistas__flecha"
+              aria-label="Semana anterior"
+              data-test="semana-anterior"
+              @click="moverSemana(-7)"
+            >
+              <StrokeIcon nombre="anterior" :tamano="18" />
+            </button>
+            <span
+              class="estilistas__rotulo"
+              data-test="rotulo-semana"
+              aria-live="polite"
+              >{{ rotuloCorto }}</span
+            >
+            <button
+              type="button"
+              class="estilistas__flecha"
+              aria-label="Semana siguiente"
+              data-test="semana-siguiente"
+              @click="moverSemana(7)"
+            >
+              <StrokeIcon nombre="siguiente" :tamano="18" />
+            </button>
           </div>
+          <button
+            type="button"
+            class="estilistas__agregar"
+            aria-label="Agregar estilista"
+            data-test="agregar-estilista"
+            @click="abrirCrear"
+          >
+            <StrokeIcon nombre="mas" :tamano="17" />
+            <span class="estilistas__agregar-texto">Agregar</span>
+          </button>
+        </header>
 
-          <div v-else class="workers-grid">
-            <q-card v-for="worker in workers" :key="worker.id" class="worker-card">
-              <q-card-section>
-                <div class="row items-center justify-between q-col-gutter-md">
-                  <div class="row items-center q-col-gutter-sm no-wrap">
-                    <div class="col-auto">
-                      <q-avatar color="primary" text-color="white">
-                        {{ getInitial(worker.name) }}
-                      </q-avatar>
-                    </div>
-                    <div class="col">
-                      <div class="text-weight-medium">{{ worker.name }}</div>
-                      <div class="q-mt-xs">
-                        <q-chip
-                          v-if="worker.isDefault"
-                          dense
-                          color="blue-grey-2"
-                          text-color="blue-grey-9"
-                          size="sm"
-                        >
-                          Predeterminado
-                        </q-chip>
-                        <span v-else class="text-caption text-grey-7">Estilista activo</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="row items-center no-wrap q-gutter-xs">
-                    <q-btn
-                      flat
-                      round
-                      dense
-                      icon="edit"
-                      color="primary"
-                      aria-label="Editar estilista"
-                      @click="openEditDialog(worker)"
-                    />
-                    <q-btn
-                      flat
-                      round
-                      dense
-                      icon="delete"
-                      color="negative"
-                      :disable="worker.isDefault"
-                      aria-label="Eliminar estilista"
-                      @click="confirmDelete(worker)"
-                    />
-                  </div>
-                </div>
-              </q-card-section>
-            </q-card>
-          </div>
+        <p
+          v-if="!semana && cargando"
+          class="estilistas__estado"
+          role="status"
+          data-test="cargando-semana"
+        >
+          Cargando la semana…
+        </p>
+        <div
+          v-else-if="!semana && error"
+          class="estilistas__estado"
+          role="alert"
+          data-test="error-semana"
+        >
+          <p class="estilistas__estado-texto">No se pudo cargar la semana.</p>
+          <button
+            type="button"
+            class="estilistas__reintentar"
+            data-test="reintentar"
+            @click="reintentar()"
+          >
+            Reintentar
+          </button>
         </div>
-      </q-scroll-area>
-    </section>
-
-    <q-dialog v-model="workerDialogOpen">
-      <q-card class="worker-dialog q-pa-sm">
-        <q-card-section class="q-pb-none">
-          <div class="text-h6">
-            {{ isEditMode ? 'Editar estilista' : 'Agregar estilista' }}
-          </div>
-          <div class="text-caption text-grey-7">
-            Escribe el nombre para {{ isEditMode ? 'actualizar' : 'crear' }} el estilista.
-          </div>
-        </q-card-section>
-
-        <q-card-section>
-          <q-input
-            v-model="workerForm.name"
-            outlined
-            label="Nombre"
-            :rules="[
-              (val) => !!val || 'Requerido',
-              (val) => val.trim().length >= 2 || 'Mínimo 2 caracteres',
-            ]"
+        <template v-else-if="semana">
+          <p
+            v-if="!nombradas.length"
+            class="estilistas__vacio"
+            data-test="sin-estilistas"
+          >
+            Aún no hay estilistas. Agrega la primera: las clientas la verán al
+            reservar.
+          </p>
+          <TarjetasSemana
+            v-if="esMovil"
+            :semana="semana"
+            :hoy="hoy"
+            :seleccionada="idSeleccionada"
+            @elegir="abrirEditar"
           />
-        </q-card-section>
-
-        <q-card-actions align="right">
-          <q-btn flat label="Cancelar" v-close-popup />
-          <q-btn
-            color="positive"
-            :label="isEditMode ? 'Guardar cambios' : 'Crear estilista'"
-            :loading="isSubmitting"
-            @click="submitWorker"
+          <TablaSemana
+            v-else
+            :semana="semana"
+            :hoy="hoy"
+            :seleccionada="idSeleccionada"
+            @elegir="abrirEditar"
           />
-        </q-card-actions>
-      </q-card>
+          <p v-if="esMovil && nombradas.length" class="estilistas__pista">
+            Toca una estilista para editarla y ver sus citas de hoy.
+          </p>
+        </template>
+      </section>
+
+      <div v-if="panel && panelEnLinea" class="estilistas__lateral">
+        <PanelEstilista
+          v-bind="propsPanel"
+          @guardar="guardar"
+          @eliminar="eliminarElegida"
+          @cerrar="cerrarPanel"
+        />
+      </div>
+    </div>
+
+    <q-dialog
+      :model-value="dialogoAbierto"
+      :maximized="esMovil"
+      :position="esMovil ? 'standard' : 'right'"
+      full-height
+      @update:model-value="alCambiarDialogo"
+    >
+      <div
+        class="estilistas__hoja"
+        :class="{ 'estilistas__hoja--completa': esMovil }"
+      >
+        <PanelEstilista
+          v-if="panel"
+          v-bind="propsPanel"
+          @guardar="guardar"
+          @eliminar="eliminarElegida"
+          @cerrar="cerrarPanel"
+        />
+      </div>
     </q-dialog>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { useQuasar } from 'quasar';
-import { useWorkers } from 'src/composables/workers/useWorkers';
-import { useAuthStore } from 'src/stores/auth-store';
-import type { WorkerItem } from 'src/api/workers-api';
+import StrokeIcon from 'src/components/shared/StrokeIcon.vue';
+import TablaSemana from 'src/components/estilistas/TablaSemana.vue';
+import TarjetasSemana from 'src/components/estilistas/TarjetasSemana.vue';
+import PanelEstilista from 'src/components/estilistas/PanelEstilista.vue';
 import { useSeo } from 'src/composables/seo/useSeo';
+import { useAviso } from 'src/composables/shared/useAviso';
+import { useConsultaMedios } from 'src/composables/shared/useConsultaMedios';
+import { useWorkers } from 'src/composables/workers/useWorkers';
+import { useSemanaEstilistas } from 'src/composables/workers/useSemanaEstilistas';
+import { useReservasDeHoy } from 'src/composables/workers/useReservasDeHoy';
+import { useAuthStore } from 'src/stores/auth-store';
+import { getSalonNowParts } from 'src/helpers/businessHours';
+import {
+  cabecerasDeDias,
+  citasDeHoy,
+  lunesDe,
+  mensajeAlEliminar,
+  mensajeAlGuardar,
+  rotuloCortoSemana,
+  rotuloLargoSemana,
+  sumarDias,
+} from 'src/helpers/semana-estilistas';
+
+/**
+ * «Mis estilistas», la «tabla con la semana» (spec §8, tablero EstilistasB).
+ *
+ * - ≥ 900 px tabla; por debajo, tarjetas. ≥ 1120 px el panel va al lado; por
+ *   debajo, en un `q-dialog` (a la derecha, o a pantalla completa en móvil).
+ * - Errores y éxitos en línea, en el panel. Solo el borrado, que cierra el
+ *   panel, lo cuenta con un aviso (`useAviso`).
+ * - La ruta no tiene guarda de admin (`routes.ts` es de otro plan): sin sesión
+ *   de dueña se vuelve a servicios y las consultas ni se encienden.
+ */
+type EstadoPanel = { modo: 'crear' } | { modo: 'editar'; id: string };
 
 useSeo({
   title: 'Mis estilistas | Peluquería Marlene',
@@ -169,250 +183,369 @@ useSeo({
   noindex: true,
 });
 
-interface ApiError {
-  response?: {
-    data?: {
-      message?: string | string[];
-    };
-  };
+const router = useRouter();
+const authStore = useAuthStore();
+const aviso = useAviso();
+const esAdmin = computed(() => Boolean(authStore.isAdmin));
+
+/** Hoy en Bogotá. No toca `window`: es un cálculo de reloj. */
+const hoy = getSalonNowParts().ymd;
+const lunes = ref(lunesDe(hoy));
+
+const { semana, cargando, error, reintentar } = useSemanaEstilistas(
+  lunes,
+  esAdmin
+);
+const { reservas } = useReservasDeHoy(esAdmin);
+const { crear, renombrar, eliminar } = useWorkers();
+
+const esMovil = useConsultaMedios('(max-width: 899px)', false);
+const panelEnLinea = useConsultaMedios('(min-width: 1120px)', true);
+
+const panel = ref<EstadoPanel | null>(null);
+const exito = ref<string | null>(null);
+const errorGuardar = ref<string | null>(null);
+const errorEliminar = ref<string | null>(null);
+/**
+ * Candado propio contra el doble envío: `isPending` de Vue Query se entera en
+ * otra tarea, y dos `Enter` seguidos llegarían antes.
+ */
+let enviando = false;
+
+const nombradas = computed(
+  () => semana.value?.workers.filter((w) => !w.isDefault) ?? []
+);
+const antetitulo = computed(() => {
+  const n = nombradas.value.length;
+  return `${n === 1 ? '1 estilista' : `${n} estilistas`} · ${rotuloLargoSemana(
+    lunes.value
+  )}`;
+});
+const rotuloCorto = computed(() => rotuloCortoSemana(lunes.value));
+const idSeleccionada = computed(() =>
+  panel.value?.modo === 'editar' ? panel.value.id : null
+);
+const elegida = computed(() => {
+  const id = idSeleccionada.value;
+  return id ? semana.value?.workers.find((w) => w.id === id) ?? null : null;
+});
+const hoyRotulo = computed(() => {
+  const [dia] = cabecerasDeDias([hoy], hoy);
+  return `Hoy · ${dia.nombreLargo} ${dia.numero}`;
+});
+const citas = computed(() =>
+  elegida.value ? citasDeHoy(reservas.value, elegida.value.id, hoy) : []
+);
+const dialogoAbierto = computed(
+  () => Boolean(panel.value) && !panelEnLinea.value
+);
+
+const propsPanel = computed(() => ({
+  modo: panel.value?.modo ?? ('crear' as const),
+  estilista: elegida.value,
+  semanaRotulo: rotuloCorto.value,
+  hoyRotulo: hoyRotulo.value,
+  citasHoy: citas.value,
+  guardando: crear.isPending.value || renombrar.isPending.value,
+  eliminando: eliminar.isPending.value,
+  exito: exito.value,
+  errorGuardar: errorGuardar.value,
+  errorEliminar: errorEliminar.value,
+}));
+
+function limpiarMensajes() {
+  exito.value = null;
+  errorGuardar.value = null;
+  errorEliminar.value = null;
 }
 
-const router = useRouter();
-const $q = useQuasar();
-const authStore = useAuthStore();
-const {
-  workers,
-  isLoading,
-  createWorkerMutation,
-  updateWorkerMutation,
-  removeWorkerMutation,
-} = useWorkers();
+function moverSemana(dias: number) {
+  lunes.value = sumarDias(lunes.value, dias);
+}
 
-const scrollThumbStyle = {
-  right: '2px',
-  borderRadius: '8px',
-  backgroundColor: 'rgba(80, 80, 80, 0.22)',
-  width: '6px',
-  opacity: '0.9',
-};
+function abrirCrear() {
+  limpiarMensajes();
+  panel.value = { modo: 'crear' };
+}
 
-const scrollBarStyle = {
-  right: '2px',
-  borderRadius: '8px',
-  backgroundColor: 'rgba(0, 0, 0, 0.08)',
-  width: '6px',
-  opacity: '0.25',
-};
+function abrirEditar(id: string) {
+  limpiarMensajes();
+  panel.value = { modo: 'editar', id };
+}
 
-const workerDialogOpen = ref(false);
-const isEditMode = ref(false);
-const editingWorkerId = ref('');
-const isCompactAction = ref(
-  typeof window !== 'undefined' ? window.matchMedia('(max-width: 680px)').matches : false,
-);
+function cerrarPanel() {
+  panel.value = null;
+  limpiarMensajes();
+}
 
-const workerForm = reactive({
-  name: '',
-});
+function alCambiarDialogo(abierto: boolean) {
+  if (!abierto) cerrarPanel();
+}
 
-const isSubmitting = computed(
-  () => createWorkerMutation.isPending.value || updateWorkerMutation.isPending.value,
-);
+/** Identidad del panel: un resultado tardío solo vale si sigue siendo el mismo. */
+function claveDelPanel(): string | null {
+  const estado = panel.value;
+  if (!estado) return null;
+  return estado.modo === 'crear' ? 'crear' : estado.id;
+}
 
-const resetForm = () => {
-  workerForm.name = '';
-  editingWorkerId.value = '';
-  isEditMode.value = false;
-};
-
-const getInitial = (name: string) => (name?.trim()?.charAt(0) || '?').toUpperCase();
-
-const getErrorMessage = (err: unknown, fallback: string) => {
-  const msg = (err as ApiError)?.response?.data?.message;
-  if (Array.isArray(msg)) return msg.join(', ');
-  return msg || fallback;
-};
-
-const openCreateDialog = () => {
-  if (!authStore.isAdmin) return;
-  resetForm();
-  workerDialogOpen.value = true;
-};
-
-const openEditDialog = (worker: WorkerItem) => {
-  if (!authStore.isAdmin) return;
-  workerForm.name = worker.name;
-  editingWorkerId.value = worker.id;
-  isEditMode.value = true;
-  workerDialogOpen.value = true;
-};
-
-const submitWorker = async () => {
-  if (!authStore.isAdmin || isSubmitting.value) return;
-
-  const payload = {
-    name: workerForm.name.trim(),
-  };
-  if (!payload.name || payload.name.length < 2) return;
-
+async function guardar(nombre: string) {
+  const estado = panel.value;
+  if (!estado || enviando) return;
+  const clave = claveDelPanel();
+  enviando = true;
+  exito.value = null;
+  errorGuardar.value = null;
   try {
-    if (isEditMode.value && editingWorkerId.value) {
-      await updateWorkerMutation.mutateAsync({
-        id: editingWorkerId.value,
-        body: payload,
-      });
-      $q.notify({
-        type: 'positive',
-        message: 'Estilista actualizado',
-      });
+    if (estado.modo === 'crear') {
+      await crear.mutateAsync({ name: nombre });
+      if (claveDelPanel() === clave) exito.value = `Se agregó a ${nombre}.`;
     } else {
-      await createWorkerMutation.mutateAsync(payload);
-      $q.notify({
-        type: 'positive',
-        message: 'Estilista creado',
-      });
+      await renombrar.mutateAsync({ id: estado.id, body: { name: nombre } });
+      if (claveDelPanel() === clave) exito.value = 'Cambios guardados.';
     }
-
-    workerDialogOpen.value = false;
-    resetForm();
   } catch (err) {
-    $q.notify({
-      type: 'negative',
-      message: getErrorMessage(err, 'No se pudo guardar el estilista'),
-    });
+    if (claveDelPanel() === clave) errorGuardar.value = mensajeAlGuardar(err);
+  } finally {
+    enviando = false;
   }
-};
+}
 
-const confirmDelete = (worker: WorkerItem) => {
-  if (!authStore.isAdmin || worker.isDefault || removeWorkerMutation.isPending.value) return;
+async function eliminarElegida() {
+  const estilista = elegida.value;
+  if (!estilista || estilista.isDefault || enviando) return;
+  const clave = claveDelPanel();
+  enviando = true;
+  errorEliminar.value = null;
+  try {
+    await eliminar.mutateAsync(estilista.id);
+    // Si la dueña ya pasó a otra estilista, ese panel no se toca.
+    if (claveDelPanel() === clave) cerrarPanel();
+    aviso.logro(`Se eliminó a ${estilista.name}.`);
+  } catch (err) {
+    if (claveDelPanel() === clave) errorEliminar.value = mensajeAlEliminar(err);
+  } finally {
+    enviando = false;
+  }
+}
 
-  $q.dialog({
-    title: 'Eliminar estilista',
-    message: `¿Deseas eliminar a "${worker.name}"?`,
-    cancel: true,
-    persistent: true,
-  }).onOk(async () => {
-    try {
-      await removeWorkerMutation.mutateAsync(worker.id);
-      $q.notify({
-        type: 'positive',
-        message: 'Estilista eliminado',
-      });
-    } catch (err) {
-      $q.notify({
-        type: 'negative',
-        message: getErrorMessage(err, 'No se pudo eliminar el estilista'),
-      });
-    }
-  });
-};
-
-let mediaQuery: MediaQueryList | null = null;
-const syncActionButton = () => {
-  if (!mediaQuery) return;
-  isCompactAction.value = mediaQuery.matches;
-};
+/** Si la estilista que se edita deja de existir (otra pestaña la borró), el panel se cierra. */
+watch(semana, (actual) => {
+  const id = idSeleccionada.value;
+  if (actual && id && !actual.workers.some((w) => w.id === id)) cerrarPanel();
+});
 
 onMounted(() => {
-  if (!authStore.isAdmin) {
-    void router.replace('/services');
-    return;
-  }
-
-  mediaQuery = window.matchMedia('(max-width: 680px)');
-  syncActionButton();
-  mediaQuery.addEventListener('change', syncActionButton);
+  if (!authStore.isAdmin) void router.replace('/services');
 });
 
-onUnmounted(() => {
-  mediaQuery?.removeEventListener('change', syncActionButton);
-});
-
-defineOptions({
-  name: 'WorkersPage',
-});
+defineOptions({ name: 'WorkersPage' });
 </script>
 
-<style scoped lang="scss">
-.workers-page {
-  background: linear-gradient(
-    160deg,
-    rgba(255, 255, 255, 0.52) 0%,
-    rgba(245, 245, 245, 0.48) 45%,
-    rgba(250, 248, 250, 0.55) 100%
-  );
+<style lang="scss" scoped>
+.estilistas {
+  background: var(--m-tinta);
+  color: var(--m-hueso);
+  font-family: var(--m-font-sans);
 }
 
-.workers-wrap {
-  width: min(1120px, 100%);
-  margin: 0 auto;
-}
-
-.workers-header {
+.estilistas__cuerpo {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 18px;
-  margin-bottom: 18px;
-  background: rgba(255, 255, 255, 0.86);
-  border-radius: 14px;
-  padding: 18px;
+  min-height: inherit;
 }
 
-.workers-header__actions {
+.estilistas__principal {
+  flex-grow: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 26px 32px 48px var(--m-banda-margen);
+}
+
+.estilistas__lateral {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-shrink: 0;
+  width: 360px;
 }
 
-.workers-scroll-area {
-  height: clamp(320px, calc(100vh - 290px), 760px);
-}
-
-.workers-scroll-content {
-  padding-right: 8px;
-}
-
-.workers-grid {
+.estilistas__cabecera {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas: 'titulos semana agregar';
+  align-items: end;
+  column-gap: 10px;
+  margin-bottom: 22px;
 }
 
-.worker-card {
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+.estilistas__titulos {
+  grid-area: titulos;
 }
 
-.empty-state {
-  min-height: 240px;
+.estilistas__antetitulo {
+  margin: 0 0 9px;
+  color: var(--m-oro);
+  font-size: 0.6875rem;
+  letter-spacing: var(--m-tracking-marca);
+  text-transform: uppercase;
+}
+
+.estilistas__titulo {
+  margin: 0;
+  font-family: var(--m-font-display);
+  font-size: 1.875rem;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.estilistas__semana {
   display: flex;
-  flex-direction: column;
+  grid-area: semana;
+  align-items: center;
+  gap: 10px;
+}
+
+.estilistas__rotulo {
+  min-width: 120px;
+  color: var(--m-piedra-clara);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.estilistas__flecha {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 14px;
+  width: var(--m-tactil-min);
+  height: var(--m-tactil-min);
+  padding: 0;
+  border: var(--m-filete-grosor) solid var(--m-filete-oscuro);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--m-hueso);
+  cursor: pointer;
 }
 
-.worker-dialog {
-  width: min(92vw, 460px);
-  border-radius: 14px;
+.estilistas__agregar {
+  display: inline-flex;
+  grid-area: agregar;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--m-tactil-min);
+  margin-left: 8px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: var(--m-radio-pildora);
+  background: var(--m-oro);
+  color: var(--m-tinta);
+  font-family: var(--m-font-sans);
+  font-size: 0.6875rem;
+  letter-spacing: var(--m-tracking-nav);
+  text-transform: uppercase;
+  cursor: pointer;
 }
 
-@media (max-width: 680px) {
-  .workers-header {
-    flex-direction: column;
-    align-items: flex-start;
+.estilistas__estado,
+.estilistas__vacio,
+.estilistas__pista {
+  margin: 0 0 16px;
+  color: var(--m-piedra-clara);
+  font-size: 0.8rem;
+}
+
+.estilistas__pista {
+  margin-top: 14px;
+}
+
+.estilistas__estado-texto {
+  margin: 0 0 12px;
+}
+
+.estilistas__reintentar {
+  min-height: var(--m-tactil-min);
+  padding: 0 20px;
+  border: var(--m-filete-grosor) solid var(--m-oro);
+  border-radius: var(--m-radio-pildora);
+  background: transparent;
+  color: var(--m-hueso);
+  font-family: var(--m-font-sans);
+  font-size: 0.6875rem;
+  letter-spacing: var(--m-tracking-nav);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+/* Raíz del q-dialog: un <div> (Quasar le devuelve los clics); el panel la llena. */
+.estilistas__hoja {
+  display: flex;
+  width: 360px;
+  max-width: 100vw;
+  height: 100%;
+  background: var(--m-carbon);
+  pointer-events: all;
+}
+
+.estilistas__hoja--completa {
+  width: 100%;
+}
+
+.estilistas__flecha:focus-visible,
+.estilistas__agregar:focus-visible,
+.estilistas__reintentar:focus-visible {
+  outline: 2px solid var(--m-hueso);
+  outline-offset: 2px;
+}
+
+/** Realce al pasar: el COLOR. El movimiento es global (`app.scss`). */
+@media (hover: hover) and (pointer: fine) {
+  .estilistas__flecha:hover {
+    border-color: var(--m-oro);
   }
 
-  .workers-header__actions {
-    width: 100%;
+  .estilistas__agregar:hover {
+    background: var(--m-oro-claro);
+  }
+
+  .estilistas__reintentar:hover {
+    border-color: var(--m-oro-claro);
+  }
+}
+
+@media (max-width: 899px) {
+  .estilistas__principal {
+    padding: 18px var(--m-banda-margen-movil) 32px;
+  }
+
+  .estilistas__cabecera {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'titulos agregar'
+      'semana semana';
+    row-gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .estilistas__antetitulo {
+    font-size: 0.625rem;
+  }
+
+  .estilistas__titulo {
+    font-size: 1.5625rem;
+  }
+
+  .estilistas__semana {
     justify-content: space-between;
   }
 
-  .workers-scroll-area {
-    height: clamp(280px, calc(100vh - 300px), 680px);
+  .estilistas__agregar {
+    justify-content: center;
+    width: var(--m-tactil-min);
+    margin-left: 0;
+    padding: 0;
+    border-radius: 50%;
+  }
+
+  .estilistas__agregar-texto {
+    display: none;
   }
 }
 </style>
