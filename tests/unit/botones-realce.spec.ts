@@ -839,3 +839,30 @@ describe('plan 7 · reseña y 404', () => {
     expect(tarjetas).toHaveLength(2);
   });
 });
+
+/**
+ * Plan 9 — servicios en móvil: los dos botones con clase propia que añade.
+ * Mismo criterio que la lista `BOTONES`: cada uno cambia de color al pasar,
+ * con un token, dentro de la consulta de puntero fino.
+ */
+describe('plan 9 · los botones nuevos de servicios en móvil', () => {
+  it.each([
+    ['components/servicePage/ServiceCardAdminActions.vue', 'acciones-admin__boton--borrar'],
+    ['components/index/MobileActionBar.vue', 'mobile-bar__crear'],
+  ])('%s · %s cambia de color al pasar', (archivo, clase) => {
+    const patron = new RegExp(`\\.${clase}(?![\\w-])[^,{]*:hover`);
+    const cuerpo = cuerposDe(bloquesFinos(archivo), patron);
+
+    expect(cuerpo).toMatch(
+      /(^|\s)(color|border-color|background|background-color): var\(--m-[\w-]+\);/
+    );
+  });
+
+  it('«Crear servicio» de la barra es ancho: se hunde 1 px en vez de encoger', () => {
+    const plantilla = leer('components/index/MobileActionBar.vue').split(
+      '<script'
+    )[0];
+
+    expect(plantilla).toContain('class="mobile-bar__crear m-boton--ancho"');
+  });
+});
