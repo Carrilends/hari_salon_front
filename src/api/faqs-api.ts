@@ -1,9 +1,5 @@
 import { adminServiceApi, servicesApi } from 'src/api/services-api';
-import type {
-  CreateFaqBody,
-  FaqItem,
-  UpdateFaqBody,
-} from 'src/api/apiTypes';
+import type { CreateFaqBody, FaqItem, UpdateFaqBody } from 'src/api/apiTypes';
 
 /**
  * Las preguntas frecuentes contra el backend (`hair_salon_back/src/faqs`).

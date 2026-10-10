@@ -35,7 +35,9 @@ describe('la página de preguntas y sus piezas', () => {
   });
 
   it.each(ARCHIVOS)('%s no trae un solo hexadecimal de color', (archivo) => {
-    expect(sinComentarios(estilos(archivo)).match(/#[0-9a-fA-F]{3,8}\b/g)).toBeNull();
+    expect(
+      sinComentarios(estilos(archivo)).match(/#[0-9a-fA-F]{3,8}\b/g)
+    ).toBeNull();
   });
 
   it.each(ARCHIVOS)(
@@ -69,14 +71,18 @@ describe('la página de preguntas y sus piezas', () => {
 
   /** Foco de revisión, extra: con el dedo en el asa, el gesto es nuestro. */
   it('el asa no deja que el navegador desplace la página al arrastrar', () => {
-    const css = sinComentarios(estilos('components/preguntas/ListaPreguntasDuena.vue'));
+    const css = sinComentarios(
+      estilos('components/preguntas/ListaPreguntasDuena.vue')
+    );
     const asa = css.match(/\.fila__asa\s*\{([^}]*)\}/)?.[1] ?? '';
 
     expect(asa).toMatch(/touch-action: none;/);
   });
 
   it('el botón que borra va en --m-peligro con su texto', () => {
-    const css = sinComentarios(estilos('components/preguntas/BorrarPreguntaDialog.vue'));
+    const css = sinComentarios(
+      estilos('components/preguntas/BorrarPreguntaDialog.vue')
+    );
     const peligro =
       css.match(/\.borrar-pregunta__boton--peligro\s*\{([^}]*)\}/)?.[1] ?? '';
 
@@ -85,7 +91,9 @@ describe('la página de preguntas y sus piezas', () => {
   });
 
   it('el texto sobre el verde de WhatsApp va oscuro', () => {
-    const css = sinComentarios(estilos('components/preguntas/AyudaPreguntas.vue'));
+    const css = sinComentarios(
+      estilos('components/preguntas/AyudaPreguntas.vue')
+    );
     const verde = css.match(/\.ayuda__whatsapp\s*\{([^}]*)\}/)?.[1] ?? '';
 
     expect(verde).toMatch(/color: var\(--m-whatsapp-texto\);/);

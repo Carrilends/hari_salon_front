@@ -32,11 +32,7 @@
       aria-label="Preguntas"
       :aria-busy="isLoading ? 'true' : 'false'"
     >
-      <p
-        class="preguntas__estado"
-        role="status"
-        data-test="estado-preguntas"
-      >
+      <p class="preguntas__estado" role="status" data-test="estado-preguntas">
         {{ logro }}
       </p>
       <p

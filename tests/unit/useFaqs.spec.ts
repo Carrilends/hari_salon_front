@@ -228,7 +228,10 @@ describe('useFaqs · lo de siempre', () => {
   it('crear pasa por faqs-api y vuelve a pedir la lista', async () => {
     const nueva = pregunta('p-nueva', '¿Hay parqueadero?', 3);
     crearApi.mockResolvedValue(nueva);
-    const cuerpo = { question: '¿Hay parqueadero?', answer: 'Sí, en la calle.' };
+    const cuerpo = {
+      question: '¿Hay parqueadero?',
+      answer: 'Sí, en la calle.',
+    };
 
     await useFaqs().createFaqMutation.mutateAsync(cuerpo);
 

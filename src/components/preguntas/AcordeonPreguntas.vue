@@ -31,7 +31,9 @@
         role="region"
         :aria-labelledby="`pregunta-${faq.id}`"
         data-test="respuesta"
-      >{{ faq.answer }}</div>
+      >
+        {{ faq.answer }}
+      </div>
     </div>
     <p class="acordeon__total" data-test="total-preguntas">{{ totalTexto }}</p>
   </div>

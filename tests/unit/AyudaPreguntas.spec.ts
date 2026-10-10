@@ -18,7 +18,9 @@ describe('AyudaPreguntas', () => {
   });
 
   it('es un botón, no un enlace a «#»', () => {
-    const boton = mount(AyudaPreguntas).get('[data-test="preguntar-asistente"]');
+    const boton = mount(AyudaPreguntas).get(
+      '[data-test="preguntar-asistente"]'
+    );
 
     expect(boton.element.tagName).toBe('BUTTON');
     expect(boton.attributes('type')).toBe('button');

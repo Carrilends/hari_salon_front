@@ -57,7 +57,10 @@ const QDialog = {
   emits: ['update:modelValue'],
   template: '<div v-if="modelValue" class="q-dialog"><slot /></div>',
 };
-const QPage = { name: 'QPage', template: '<main class="q-page"><slot /></main>' };
+const QPage = {
+  name: 'QPage',
+  template: '<main class="q-page"><slot /></main>',
+};
 
 const montar = () =>
   mount(FaqPage, { global: { components: { QDialog, QPage } } });
@@ -115,7 +118,9 @@ describe('FaqPage · la clienta', () => {
     estado.isLoading = true;
     const wrapper = montar();
 
-    expect(wrapper.find('[data-test="preguntas-cargando"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="preguntas-cargando"]').exists()).toBe(
+      true
+    );
     expect(
       wrapper.get('section[aria-label="Preguntas"]').attributes('aria-busy')
     ).toBe('true');
@@ -241,7 +246,8 @@ describe('FaqPage · la dueña', () => {
       'No se pudo guardar la pregunta. Revisa la conexión e inténtalo otra vez.'
     );
     expect(
-      (wrapper.get('[data-test="campo-pregunta"]').element as HTMLInputElement).value
+      (wrapper.get('[data-test="campo-pregunta"]').element as HTMLInputElement)
+        .value
     ).toBe('¿Hay parqueadero?');
   });
 
@@ -251,8 +257,12 @@ describe('FaqPage · la dueña', () => {
     const wrapper = montar();
 
     await wrapper.get('[data-test="agregar-pregunta"]').trigger('click');
-    await wrapper.get('[data-test="campo-pregunta"]').setValue('¿Hay parqueadero?');
-    await wrapper.get('[data-test="campo-respuesta"]').setValue('Sí, en la calle.');
+    await wrapper
+      .get('[data-test="campo-pregunta"]')
+      .setValue('¿Hay parqueadero?');
+    await wrapper
+      .get('[data-test="campo-respuesta"]')
+      .setValue('Sí, en la calle.');
     await wrapper.get('[data-test="formulario-pregunta"]').trigger('submit');
     await wrapper.get('[data-test="formulario-pregunta"]').trigger('submit');
 
@@ -326,7 +336,11 @@ describe('FaqPage · la dueña', () => {
     });
     await flushPromises();
 
-    expect(reordenar).toHaveBeenCalledWith(['p-cambiar', 'p-reservar', 'p-horario']);
+    expect(reordenar).toHaveBeenCalledWith([
+      'p-cambiar',
+      'p-reservar',
+      'p-horario',
+    ]);
     expect(wrapper.find('[data-test="fallo-orden"]').exists()).toBe(false);
   });
 

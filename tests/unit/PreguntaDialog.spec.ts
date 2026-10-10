@@ -45,7 +45,8 @@ describe('PreguntaDialog · crear', () => {
 
     expect(wrapper.get('h2').text()).toBe('Nueva pregunta');
     expect(
-      (wrapper.get('[data-test="campo-pregunta"]').element as HTMLInputElement).value
+      (wrapper.get('[data-test="campo-pregunta"]').element as HTMLInputElement)
+        .value
     ).toBe('');
     expect(wrapper.get('[data-test="pista-puesto"]').text()).toContain(
       'Las nuevas se añaden al final'
@@ -59,18 +60,28 @@ describe('PreguntaDialog · crear', () => {
     const wrapper = montar();
 
     expect(wrapper.get('label[for="campo-pregunta"]').text()).toBe('Pregunta');
-    expect(wrapper.get('label[for="campo-respuesta"]').text()).toBe('Respuesta');
+    expect(wrapper.get('label[for="campo-respuesta"]').text()).toBe(
+      'Respuesta'
+    );
     expect(wrapper.get('#campo-pregunta').attributes('maxlength')).toBe('180');
-    expect(wrapper.get('#campo-respuesta').attributes('maxlength')).toBe('5000');
+    expect(wrapper.get('#campo-respuesta').attributes('maxlength')).toBe(
+      '5000'
+    );
   });
 
   it('los contadores siguen lo que se escribe', async () => {
     const wrapper = montar();
 
-    await wrapper.get('[data-test="campo-pregunta"]').setValue('¿Hay parqueadero?');
+    await wrapper
+      .get('[data-test="campo-pregunta"]')
+      .setValue('¿Hay parqueadero?');
 
-    expect(wrapper.get('[data-test="contador-pregunta"]').text()).toBe('17 / 180');
-    expect(wrapper.get('[data-test="contador-respuesta"]').text()).toBe('0 / 5000');
+    expect(wrapper.get('[data-test="contador-pregunta"]').text()).toBe(
+      '17 / 180'
+    );
+    expect(wrapper.get('[data-test="contador-respuesta"]').text()).toBe(
+      '0 / 5000'
+    );
   });
 
   it('enviar vacío muestra los errores en línea y no guarda', async () => {
@@ -96,7 +107,9 @@ describe('PreguntaDialog · crear', () => {
   it('el primer campo con error recibe el foco', async () => {
     const wrapper = montar({}, document.body);
 
-    await wrapper.get('[data-test="campo-pregunta"]').setValue('¿Hay parqueadero?');
+    await wrapper
+      .get('[data-test="campo-pregunta"]')
+      .setValue('¿Hay parqueadero?');
     await wrapper.get('[data-test="formulario-pregunta"]').trigger('submit');
 
     expect(document.activeElement?.id).toBe('campo-respuesta');
@@ -107,7 +120,9 @@ describe('PreguntaDialog · crear', () => {
     const wrapper = montar();
 
     await wrapper.get('[data-test="campo-pregunta"]').setValue('  ¿Si?  ');
-    await wrapper.get('[data-test="campo-respuesta"]').setValue('Sí, claro que sí.');
+    await wrapper
+      .get('[data-test="campo-respuesta"]')
+      .setValue('Sí, claro que sí.');
     await wrapper.get('[data-test="formulario-pregunta"]').trigger('submit');
 
     expect(wrapper.get('[data-test="error-pregunta"]').text()).toBe(
@@ -119,8 +134,12 @@ describe('PreguntaDialog · crear', () => {
   it('con datos válidos emite guardar con los textos recortados', async () => {
     const wrapper = montar();
 
-    await wrapper.get('[data-test="campo-pregunta"]').setValue('  ¿Hay parqueadero?  ');
-    await wrapper.get('[data-test="campo-respuesta"]').setValue(' Sí, en la calle. ');
+    await wrapper
+      .get('[data-test="campo-pregunta"]')
+      .setValue('  ¿Hay parqueadero?  ');
+    await wrapper
+      .get('[data-test="campo-respuesta"]')
+      .setValue(' Sí, en la calle. ');
     await wrapper.get('[data-test="formulario-pregunta"]').trigger('submit');
 
     expect(wrapper.emitted('guardar')).toEqual([
@@ -131,8 +150,12 @@ describe('PreguntaDialog · crear', () => {
   it('mientras guarda, el botón se desactiva y no emite otra vez', async () => {
     const wrapper = montar({ guardando: true });
 
-    await wrapper.get('[data-test="campo-pregunta"]').setValue('¿Hay parqueadero?');
-    await wrapper.get('[data-test="campo-respuesta"]').setValue('Sí, en la calle.');
+    await wrapper
+      .get('[data-test="campo-pregunta"]')
+      .setValue('¿Hay parqueadero?');
+    await wrapper
+      .get('[data-test="campo-respuesta"]')
+      .setValue('Sí, en la calle.');
     await wrapper.get('[data-test="formulario-pregunta"]').trigger('submit');
 
     expect(
@@ -195,10 +218,15 @@ describe('PreguntaDialog · editar', () => {
 
     expect(wrapper.get('h2').text()).toBe('Editar pregunta');
     expect(
-      (wrapper.get('[data-test="campo-pregunta"]').element as HTMLInputElement).value
+      (wrapper.get('[data-test="campo-pregunta"]').element as HTMLInputElement)
+        .value
     ).toBe('¿Puedo cambiar o cancelar mi cita?');
-    expect(wrapper.get('[data-test="contador-pregunta"]').text()).toBe('34 / 180');
-    expect(wrapper.get('[data-test="contador-respuesta"]').text()).toBe('74 / 5000');
+    expect(wrapper.get('[data-test="contador-pregunta"]').text()).toBe(
+      '34 / 180'
+    );
+    expect(wrapper.get('[data-test="contador-respuesta"]').text()).toBe(
+      '74 / 5000'
+    );
     expect(wrapper.get('[data-test="pista-puesto"]').text()).toContain(
       'Está en el puesto 2 de 3.'
     );
@@ -214,10 +242,15 @@ describe('PreguntaDialog · editar', () => {
     expect(wrapper.find('[data-test="error-pregunta"]').exists()).toBe(true);
 
     await wrapper.setProps({ abierto: false });
-    await wrapper.setProps({ abierto: true, pregunta: PREGUNTAS[2], puesto: 3 });
+    await wrapper.setProps({
+      abierto: true,
+      pregunta: PREGUNTAS[2],
+      puesto: 3,
+    });
 
     expect(
-      (wrapper.get('[data-test="campo-pregunta"]').element as HTMLInputElement).value
+      (wrapper.get('[data-test="campo-pregunta"]').element as HTMLInputElement)
+        .value
     ).toBe('¿Cuál es el horario?');
     expect(wrapper.find('[data-test="error-pregunta"]').exists()).toBe(false);
   });

@@ -47,7 +47,10 @@ describe('validar-pregunta', () => {
       erroresDePregunta({ pregunta: '¿Hay parqueadero?', respuesta: '' })
     ).toEqual({ respuesta: 'Escribe la respuesta.' });
     expect(
-      erroresDePregunta({ pregunta: '¿Hay parqueadero?', respuesta: 'Sí, cerca.' })
+      erroresDePregunta({
+        pregunta: '¿Hay parqueadero?',
+        respuesta: 'Sí, cerca.',
+      })
     ).toEqual({});
   });
 });

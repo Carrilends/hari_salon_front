@@ -51,7 +51,10 @@ describe('faqs-api', () => {
     post.mockResolvedValue({ data: PREGUNTAS[0] });
     patch.mockResolvedValue({ data: PREGUNTAS[1] });
     borrar.mockResolvedValue({ data: { deleted: true } });
-    const cuerpo = { question: '¿Hay parqueadero?', answer: 'Sí, en la calle.' };
+    const cuerpo = {
+      question: '¿Hay parqueadero?',
+      answer: 'Sí, en la calle.',
+    };
 
     expect(await crearPregunta(cuerpo)).toBe(PREGUNTAS[0]);
     expect(await editarPregunta('p-cambiar', cuerpo)).toBe(PREGUNTAS[1]);

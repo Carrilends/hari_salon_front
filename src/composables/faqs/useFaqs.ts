@@ -1,9 +1,5 @@
 import { computed, ref } from 'vue';
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/vue-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
 import type { CreateFaqBody, UpdateFaqBody } from 'src/api/apiTypes';
 import {
   borrarPregunta,
@@ -99,10 +95,7 @@ export const useFaqs = () => {
     await queryClient.cancelQueries({ queryKey: FAQ_QUERY_KEY });
     const actual = queryClient.getQueryData<Faq[]>(FAQ_QUERY_KEY) ?? [];
     if (!enVuelo) confirmada = actual;
-    queryClient.setQueryData<Faq[]>(
-      FAQ_QUERY_KEY,
-      ordenarPorIds(actual, ids)
-    );
+    queryClient.setQueryData<Faq[]>(FAQ_QUERY_KEY, ordenarPorIds(actual, ids));
     pendiente = ids;
     if (!enVuelo) {
       guardandoOrden.value = true;

@@ -6,11 +6,21 @@ import {
 
 describe('moverEnLista', () => {
   it('lleva un elemento hacia abajo', () => {
-    expect(moverEnLista(['a', 'b', 'c', 'd'], 0, 2)).toEqual(['b', 'c', 'a', 'd']);
+    expect(moverEnLista(['a', 'b', 'c', 'd'], 0, 2)).toEqual([
+      'b',
+      'c',
+      'a',
+      'd',
+    ]);
   });
 
   it('lleva un elemento hacia arriba', () => {
-    expect(moverEnLista(['a', 'b', 'c', 'd'], 3, 1)).toEqual(['a', 'd', 'b', 'c']);
+    expect(moverEnLista(['a', 'b', 'c', 'd'], 3, 1)).toEqual([
+      'a',
+      'd',
+      'b',
+      'c',
+    ]);
   });
 
   it('no toca la lista original', () => {

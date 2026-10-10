@@ -84,7 +84,9 @@
           role="region"
           :aria-labelledby="`pregunta-${faq.id}`"
           data-test="respuesta"
-        >{{ faq.answer }}</div>
+        >
+          {{ faq.answer }}
+        </div>
       </li>
     </ol>
   </div>
@@ -170,7 +172,9 @@ function estiloDeFila(indice: number) {
 function mover(desde: number, hasta: number) {
   const faq = props.preguntas[desde];
   const nueva = moverEnLista(props.preguntas, desde, hasta);
-  anuncio.value = `«${faq.question}» está ahora en el puesto ${hasta + 1} de ${total.value}.`;
+  anuncio.value = `«${faq.question}» está ahora en el puesto ${hasta + 1} de ${
+    total.value
+  }.`;
   emit(
     'reordenar',
     nueva.map((item) => item.id)
@@ -222,9 +226,7 @@ watch(
     const id = asaPorEnfocar;
     asaPorEnfocar = null;
     await nextTick();
-    listaRef.value
-      ?.querySelector<HTMLElement>(`[data-asa="${id}"]`)
-      ?.focus();
+    listaRef.value?.querySelector<HTMLElement>(`[data-asa="${id}"]`)?.focus();
   },
   { flush: 'post' }
 );
@@ -263,7 +265,9 @@ function alPresionar(evento: PointerEvent, indice: number) {
     desplazamiento: 0,
     mitades,
   };
-  anuncio.value = `Arrastrando «${props.preguntas[indice].question}», puesto ${indice + 1} de ${total.value}.`;
+  anuncio.value = `Arrastrando «${props.preguntas[indice].question}», puesto ${
+    indice + 1
+  } de ${total.value}.`;
 }
 
 /** ¿El evento es del puntero que empezó el arrastre? */
@@ -289,7 +293,9 @@ function alSoltar(evento: PointerEvent) {
   if (!actual || !esDelArrastre(evento, actual)) return;
   arrastre.value = null;
   if (actual.destino === actual.desde) {
-    anuncio.value = `«${actual.titulo}» se queda en el puesto ${actual.desde + 1}.`;
+    anuncio.value = `«${actual.titulo}» se queda en el puesto ${
+      actual.desde + 1
+    }.`;
     return;
   }
   mover(actual.desde, actual.destino);
@@ -304,7 +310,9 @@ function cancelar() {
   const actual = arrastre.value;
   if (!actual) return;
   arrastre.value = null;
-  anuncio.value = `Orden sin cambios: «${actual.titulo}» se queda en el puesto ${actual.desde + 1}.`;
+  anuncio.value = `Orden sin cambios: «${
+    actual.titulo
+  }» se queda en el puesto ${actual.desde + 1}.`;
 }
 
 defineOptions({ name: 'ListaPreguntasDuena' });
