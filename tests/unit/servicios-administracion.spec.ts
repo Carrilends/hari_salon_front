@@ -101,10 +101,15 @@ describe('el botón que borra se lee como tal', () => {
     expect(regla.slice(0, 320)).toContain('var(--m-peligro-texto)');
   });
 
+  /**
+   * El peligro MACIZO solo vive en la confirmación. La franja de móvil (plan 9)
+   * usa `--m-peligro-sobre-tinta`, que es otro token: el macizo daría 2,1:1
+   * sobre carbón.
+   */
   it('y es el único sitio de la fase donde aparece ese color', () => {
     expect(
       leer('src/components/servicePage/ServiceCardAdminActions.vue')
-    ).not.toContain('var(--m-peligro');
+    ).not.toMatch(/var\(--m-peligro\)/);
   });
 });
 

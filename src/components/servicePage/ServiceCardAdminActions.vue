@@ -9,11 +9,12 @@
       type="button"
       class="acciones-admin__boton"
       data-test="editar"
-      :aria-label="`Editar ${servicio.name}`"
-      :title="`Editar ${servicio.name}`"
+      :aria-label="nombres.editar"
+      :title="compacto ? undefined : nombres.editar"
       @click.stop="emit('editar', servicio.id)"
     >
-      <StrokeIcon nombre="lapiz" :tamano="20" />
+      <StrokeIcon nombre="lapiz" :tamano="compacto ? 17 : 20" />
+      <span v-if="compacto" class="acciones-admin__rotulo">Editar</span>
     </button>
 
     <button
@@ -21,23 +22,31 @@
       class="acciones-admin__boton"
       :class="{ 'acciones-admin__boton--oro': enPromocion }"
       data-test="promocion"
-      :aria-label="etiquetaPromocion"
-      :title="etiquetaPromocion"
+      :aria-label="nombres.promocion"
+      :title="compacto ? undefined : nombres.promocion"
       @click.stop="emit('promocion', servicio)"
     >
-      <span v-if="enPromocion" class="acciones-admin__pct">{{ pct }}%</span>
-      <StrokeIcon v-else nombre="etiqueta" :tamano="20" />
+      <template v-if="compacto">
+        <StrokeIcon v-if="!enPromocion" nombre="etiqueta" :tamano="17" />
+        <span class="acciones-admin__rotulo">{{ rotuloPromocion }}</span>
+      </template>
+      <template v-else>
+        <span v-if="enPromocion" class="acciones-admin__pct">{{ pct }}%</span>
+        <StrokeIcon v-else nombre="etiqueta" :tamano="20" />
+      </template>
     </button>
 
     <button
       type="button"
       class="acciones-admin__boton"
+      :class="{ 'acciones-admin__boton--borrar': compacto }"
       data-test="eliminar"
-      :aria-label="`Eliminar ${servicio.name}`"
-      :title="`Eliminar ${servicio.name}`"
+      :aria-label="nombres.eliminar"
+      :title="compacto ? undefined : nombres.eliminar"
       @click.stop="emit('eliminar', servicio.id)"
     >
-      <StrokeIcon nombre="papelera" :tamano="20" />
+      <StrokeIcon nombre="papelera" :tamano="compacto ? 17 : 20" />
+      <span v-if="compacto" class="acciones-admin__rotulo">Borrar</span>
     </button>
   </div>
 </template>
@@ -56,8 +65,9 @@ import type Service from 'src/interfaces/service';
  * Los tres controles de la dueña: editar, promoción y borrar.
  *
  * No dependen del `hover` (D5). En la tarjeta viven sobre el velo, que con
- * puntero grueso está siempre visible; en el renglón de móvil (`compacto`) van
- * apilados en columna y sin velo. Solo emiten: quien decide qué hacer es
+ * puntero grueso está siempre visible, y son de solo icono. En el renglón de
+ * móvil (`compacto`) son una franja al pie de la tarjeta, con texto (plan 9,
+ * V2; tablero AdminMostradorMovil). Solo emiten: quien decide qué hacer es
  * `useServiceAdminActions`.
  *
  * El guardia de `isAdmin` es cosmético —el backend protege cada endpoint con
@@ -67,7 +77,7 @@ import type Service from 'src/interfaces/service';
 const props = withDefaults(
   defineProps<{
     servicio: Service;
-    /** Versión del renglón de móvil: en columna, 44 px, sin velo. */
+    /** Versión del renglón de móvil: franja de tres tercios con texto. */
     compacto?: boolean;
   }>(),
   { compacto: false }
@@ -84,11 +94,36 @@ const authStore = useAuthStore();
 const enPromocion = computed(() => serviceIsOnPromotion(props.servicio));
 const pct = computed(() => promotionPercentDisplay(props.servicio));
 
-const etiquetaPromocion = computed(() =>
-  enPromocion.value
-    ? `Quitar la promoción de ${props.servicio.name}`
-    : `Poner una promoción a ${props.servicio.name}`
+/** Lo que se lee en la franja con la promoción puesta o sin ella. */
+const rotuloPromocion = computed(() =>
+  enPromocion.value ? `${pct.value} % · Quitar` : 'Promo'
 );
+
+/**
+ * Los nombres accesibles. En la tarjeta los botones son de solo icono y el
+ * nombre lo dice todo. En la franja se lee un texto y el nombre tiene que
+ * EMPEZAR por él (WCAG 2.5.3, «etiqueta en el nombre»): quien dicta «pulsa
+ * Borrar» no encuentra un botón que se llama «Eliminar…».
+ */
+const nombres = computed(() => {
+  const nombre = props.servicio.name;
+  if (props.compacto) {
+    return {
+      editar: `Editar ${nombre}`,
+      promocion: enPromocion.value
+        ? `${pct.value} % · Quitar la promoción de ${nombre}`
+        : `Promo: poner una promoción a ${nombre}`,
+      eliminar: `Borrar ${nombre}`,
+    };
+  }
+  return {
+    editar: `Editar ${nombre}`,
+    promocion: enPromocion.value
+      ? `Quitar la promoción de ${nombre}`
+      : `Poner una promoción a ${nombre}`,
+    eliminar: `Eliminar ${nombre}`,
+  };
+});
 
 defineOptions({ name: 'ServiceCardAdminActions' });
 </script>
@@ -133,24 +168,62 @@ defineOptions({ name: 'ServiceCardAdminActions' });
 }
 
 /*
- * Renglón de móvil: fila oscura (carbón), así que borde oro y trazo hueso, sin
- * velo. En columna: tres botones de 44 px en fila se comían ~150 px de los 350
- * del renglón a 390 y el nombre quedaba en una tira de 90. Apilados ocupan 44
- * de ancho; el renglón crece hacia abajo y la foto se estira con él.
+ * Renglón de móvil (plan 9, V2; tablero AdminMostradorMovil): una franja al pie
+ * de la tarjeta, tres tercios de 44 px con icono y texto, separados por
+ * filetes. Sobre carbón: texto hueso, la promoción activa en oro macizo y
+ * «Borrar» en el rosa legible sobre tinta.
  */
 .acciones-admin--compacto {
-  flex-direction: column;
-  gap: 6px;
+  gap: 0;
+  border-top: var(--m-filete-grosor) solid var(--m-filete-oscuro);
 }
 
 .acciones-admin--compacto .acciones-admin__boton {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+  gap: 8px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 0;
   background: transparent;
   color: var(--m-hueso);
+  font-size: 10.5px;
+  letter-spacing: var(--m-tracking-nav);
+  text-transform: uppercase;
 }
 
+.acciones-admin--compacto .acciones-admin__boton + .acciones-admin__boton {
+  border-left: var(--m-filete-grosor) solid var(--m-filete-oscuro);
+}
+
+/*
+ * El tablero pinta la promoción activa con oro al 16 % y el texto en oro: da
+ * 3,8:1 y no llega a 4,5. Oro macizo con texto tinta (5,8:1), como el mismo
+ * control en la tarjeta.
+ */
 .acciones-admin--compacto .acciones-admin__boton--oro {
   background: var(--m-oro);
   color: var(--m-tinta);
+}
+
+/* V4: 7,4:1 sobre carbón; el peligro macizo daría 2,1:1. */
+.acciones-admin--compacto .acciones-admin__boton--borrar {
+  color: var(--m-peligro-sobre-tinta);
+}
+
+/* Dentro de la franja el foco va por dentro: el borde de fuera es del renglón. */
+.acciones-admin--compacto .acciones-admin__boton:focus-visible {
+  outline: 2px solid var(--m-hueso);
+  outline-offset: -4px;
+}
+
+/* «100 % · Quitar» en un tercio de 320 px no cabe entero: se corta, no desborda. */
+.acciones-admin__rotulo {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /**
@@ -159,9 +232,7 @@ defineOptions({ name: 'ServiceCardAdminActions' });
  * («Realce y hundido»).
  */
 @media (hover: hover) and (pointer: fine) {
-  // Antes la pieza subía 1 px con su propia transición; ahora el movimiento es
-  // el global y aquí solo queda el color: el velo se cierra a tinta y el trazo
-  // se enciende en oro (5,8:1 sobre tinta).
+  // El velo se cierra a tinta y el trazo se enciende en oro (5,8:1 sobre tinta).
   .acciones-admin__boton:hover,
   .acciones-admin--compacto .acciones-admin__boton:hover {
     background: var(--m-tinta);
@@ -174,6 +245,11 @@ defineOptions({ name: 'ServiceCardAdminActions' });
     border-color: var(--m-oro-claro);
     background: var(--m-oro-claro);
     color: var(--m-tinta);
+  }
+
+  // «Borrar» no se vuelve oro al pasar: sigue diciendo que borra (9,0:1 sobre tinta).
+  .acciones-admin--compacto .acciones-admin__boton--borrar:hover {
+    color: var(--m-peligro-sobre-tinta);
   }
 }
 </style>

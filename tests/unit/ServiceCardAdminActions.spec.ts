@@ -185,17 +185,59 @@ describe('ServiceCardAdminActions · estilos', () => {
    * nombre del servicio se quedaba en una columna de 90. Apilados ocupan 44 de
    * ancho y el texto conserva más de 150; el renglón crece hacia abajo.
    */
-  it('en el renglón (compacto) apila los botones en columna, a 44 px', () => {
+  /**
+   * Plan 9 (V2): en el renglón ya no van apilados a la derecha. Son una franja
+   * al pie de la tarjeta, tres tercios de 44 px con filete arriba y entre
+   * ellos (tablero AdminMostradorMovil).
+   */
+  it('en el renglón (compacto) es una franja de tres tercios a 44 px, con filete arriba', () => {
     expect(estilos).toMatch(
-      /\.acciones-admin--compacto \{[^}]*flex-direction:\s*column;/
+      /\.acciones-admin--compacto \{[^}]*border-top: var\(--m-filete-grosor\) solid var\(--m-filete-oscuro\);/
+    );
+    expect(estilos).toMatch(
+      /\.acciones-admin--compacto \.acciones-admin__boton \{[^}]*flex: 1 1 0;[^}]*min-width: 0;[^}]*width: auto;/
+    );
+    expect(estilos).toMatch(
+      /\.acciones-admin--compacto \.acciones-admin__boton \+ \.acciones-admin__boton \{[^}]*border-left: var\(--m-filete-grosor\) solid var\(--m-filete-oscuro\);/
     );
     expect(estilos).toMatch(
       /\.acciones-admin__boton \{[^}]*width:\s*var\(--m-tactil-min\);[^}]*height:\s*var\(--m-tactil-min\);/
     );
+    expect(estilos).not.toMatch(/flex-direction:\s*column/);
   });
 
-  it('el disparador de borrar no usa el color de peligro', () => {
-    expect(fuente).not.toContain('var(--m-peligro');
+  /** Foco de revisión 2: el peligro macizo sobre carbón da 2,1:1. */
+  it('el disparador nunca usa el peligro macizo', () => {
+    expect(fuente).not.toMatch(/var\(--m-peligro\)/);
+  });
+
+  it('en la franja «Borrar» va en el rosa legible sobre tinta, también al pasar', () => {
+    expect(estilos).toMatch(
+      /\.acciones-admin--compacto \.acciones-admin__boton--borrar \{[^}]*color: var\(--m-peligro-sobre-tinta\);/
+    );
+    expect(estilos).toMatch(
+      /\.acciones-admin--compacto \.acciones-admin__boton--borrar:hover \{[^}]*color: var\(--m-peligro-sobre-tinta\);/
+    );
+  });
+
+  /** El tablero pinta la promoción activa en oro al 16 %: 3,8:1. */
+  it('la promoción activa de la franja va en oro macizo con texto tinta', () => {
+    expect(estilos).toMatch(
+      /\.acciones-admin--compacto \.acciones-admin__boton--oro \{[^}]*background: var\(--m-oro\);[^}]*color: var\(--m-tinta\);/
+    );
+  });
+
+  it('dentro de la franja el foco se dibuja por dentro, en hueso', () => {
+    expect(estilos).toMatch(
+      /\.acciones-admin--compacto \.acciones-admin__boton:focus-visible \{[^}]*outline: 2px solid var\(--m-hueso\);[^}]*outline-offset: -4px;/
+    );
+  });
+
+  /** Foco de revisión 5: «100 % · Quitar» en un tercio de 320 px. */
+  it('un rótulo que no cabe se corta con puntos suspensivos, no desborda', () => {
+    expect(estilos).toMatch(
+      /\.acciones-admin__rotulo \{[^}]*min-width: 0;[^}]*overflow: hidden;[^}]*white-space: nowrap;[^}]*text-overflow: ellipsis;/
+    );
   });
 
   it('no escribe colores sueltos', () => {
@@ -208,5 +250,95 @@ describe('ServiceCardAdminActions · estilos', () => {
     expect(wrapper.get('[data-test="eliminar"]').classes()).not.toContain(
       'acciones-admin__boton--peligro'
     );
+  });
+});
+
+/**
+ * Plan 9 (V2): la franja del renglón de móvil dice cada acción con texto. Con
+ * texto a la vista, el nombre accesible tiene que EMPEZAR por él (WCAG 2.5.3):
+ * quien dicta «pulsa Borrar» no encuentra un botón que se llama «Eliminar…».
+ */
+describe('ServiceCardAdminActions · la franja del renglón de móvil', () => {
+  it('cada control dice lo suyo con texto: Editar, Promo y Borrar', async () => {
+    const wrapper = montar(SERVICIO, { compacto: true });
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.get('[data-test="editar"]').text()).toBe('Editar');
+    expect(wrapper.get('[data-test="promocion"]').text()).toBe('Promo');
+    expect(wrapper.get('[data-test="eliminar"]').text()).toBe('Borrar');
+  });
+
+  it('con promoción activa dice el porcentaje y «Quitar», sin icono', async () => {
+    const wrapper = montar(EN_PROMOCION, { compacto: true });
+    await wrapper.vm.$nextTick();
+    const promo = wrapper.get('[data-test="promocion"]');
+
+    expect(promo.text()).toBe('30 % · Quitar');
+    expect(promo.find('svg').exists()).toBe(false);
+    expect(promo.classes()).toContain('acciones-admin__boton--oro');
+  });
+
+  it('el nombre accesible empieza por el texto que se ve y nombra el servicio', async () => {
+    const sin = montar(SERVICIO, { compacto: true });
+    const con = montar(EN_PROMOCION, { compacto: true });
+    await sin.vm.$nextTick();
+    await con.vm.$nextTick();
+
+    const casos = [
+      sin.get('[data-test="editar"]'),
+      sin.get('[data-test="promocion"]'),
+      sin.get('[data-test="eliminar"]'),
+      con.get('[data-test="promocion"]'),
+    ];
+    for (const boton of casos) {
+      const nombre = boton.attributes('aria-label') ?? '';
+      expect(nombre.startsWith(boton.text())).toBe(true);
+      expect(nombre).toContain('Bob clásico');
+    }
+    expect(sin.get('[data-test="eliminar"]').attributes('aria-label')).toBe(
+      'Borrar Bob clásico'
+    );
+    expect(con.get('[data-test="promocion"]').attributes('aria-label')).toBe(
+      '30 % · Quitar la promoción de Bob clásico'
+    );
+  });
+
+  it('solo el «Borrar» de la franja lleva la clase del rosa; el de la tarjeta no', async () => {
+    const franja = montar(SERVICIO, { compacto: true });
+    const tarjeta = montar(SERVICIO);
+    await franja.vm.$nextTick();
+    await tarjeta.vm.$nextTick();
+
+    expect(franja.get('[data-test="eliminar"]').classes()).toContain(
+      'acciones-admin__boton--borrar'
+    );
+    expect(tarjeta.get('[data-test="eliminar"]').classes()).not.toContain(
+      'acciones-admin__boton--borrar'
+    );
+  });
+
+  it('en la franja no hay tooltip que repita lo que ya se lee; en la tarjeta sí', async () => {
+    const franja = montar(SERVICIO, { compacto: true });
+    const tarjeta = montar(SERVICIO);
+    await franja.vm.$nextTick();
+    await tarjeta.vm.$nextTick();
+
+    expect(
+      franja.get('[data-test="editar"]').attributes('title')
+    ).toBeUndefined();
+    expect(tarjeta.get('[data-test="editar"]').attributes('title')).toBe(
+      'Editar Bob clásico'
+    );
+  });
+
+  it('la franja sigue avisando con el servicio correcto', async () => {
+    const wrapper = montar(SERVICIO, { compacto: true });
+    await wrapper.vm.$nextTick();
+
+    await wrapper.get('[data-test="promocion"]').trigger('click');
+    await wrapper.get('[data-test="eliminar"]').trigger('click');
+
+    expect(wrapper.emitted('promocion')?.[0]).toEqual([SERVICIO]);
+    expect(wrapper.emitted('eliminar')?.[0]).toEqual(['s1']);
   });
 });
