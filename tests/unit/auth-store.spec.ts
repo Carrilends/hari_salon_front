@@ -111,7 +111,6 @@ describe('auth-store', () => {
   });
 });
 
-
 describe('auth-store · hasPassword (plan 6)', () => {
   beforeEach(() => {
     setActivePinia(createPinia());

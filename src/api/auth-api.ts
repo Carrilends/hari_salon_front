@@ -74,9 +74,7 @@ export const authApi = {
   // `hasPassword` y `emailVerified` al día aunque el perfil persistido sea de
   // otro dispositivo o de antes de crear la contraseña.
   checkStatus: () =>
-    adminServiceApi
-      .get<AuthResponse>('/auth/check-status')
-      .then((r) => r.data),
+    adminServiceApi.get<AuthResponse>('/auth/check-status').then((r) => r.data),
 
   // Cierra la sesión en todos los dispositivos: el backend revoca todos los
   // refresh de la cuenta y limpia la cookie. Lleva Bearer (`@Auth()`).
