@@ -324,6 +324,21 @@ const BOTONES: Boton[] = [
   { archivo: 'components/dialogs/ourContact.vue', clase: 'horarios__whatsapp' },
   { archivo: 'pages/PrivacyPolicyPage.vue', clase: 'politica__alternar', claro: true },
   { archivo: 'pages/PrivacyPolicyPage.vue', clase: 'politica__enlace', claro: true },
+  // Preguntas frecuentes (plan 5): página, caja de ayuda, acordeón, lista de la dueña y sus diálogos.
+  { archivo: 'pages/FaqPage.vue', clase: 'preguntas__agregar' },
+  { archivo: 'pages/FaqPage.vue', clase: 'preguntas__reintentar', claro: true },
+  { archivo: 'components/preguntas/AyudaPreguntas.vue', clase: 'ayuda__whatsapp' },
+  { archivo: 'components/preguntas/AyudaPreguntas.vue', clase: 'ayuda__asistente' },
+  { archivo: 'components/preguntas/AcordeonPreguntas.vue', clase: 'acordeon__pregunta', claro: true },
+  { archivo: 'components/preguntas/ListaPreguntasDuena.vue', clase: 'fila__asa', claro: true },
+  { archivo: 'components/preguntas/ListaPreguntasDuena.vue', clase: 'fila__pregunta', claro: true },
+  { archivo: 'components/preguntas/ListaPreguntasDuena.vue', clase: 'fila__accion', claro: true },
+  { archivo: 'components/preguntas/ListaPreguntasDuena.vue', clase: 'fila__accion--borrar', claro: true },
+  { archivo: 'components/preguntas/PreguntaDialog.vue', clase: 'pregunta-dialogo__cerrar' },
+  { archivo: 'components/preguntas/PreguntaDialog.vue', clase: 'pregunta-dialogo__boton', claro: true },
+  { archivo: 'components/preguntas/PreguntaDialog.vue', clase: 'pregunta-dialogo__boton--macizo' },
+  { archivo: 'components/preguntas/BorrarPreguntaDialog.vue', clase: 'borrar-pregunta__boton', claro: true },
+  { archivo: 'components/preguntas/BorrarPreguntaDialog.vue', clase: 'borrar-pregunta__boton--peligro', claro: true },
 ];
 
 /** El bloque de estilos de un SFC dentro de las consultas de puntero fino. */
