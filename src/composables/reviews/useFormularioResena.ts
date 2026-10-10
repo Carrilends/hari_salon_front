@@ -34,12 +34,17 @@ export function useFormularioResena() {
   const estado = ref<EstadoEnvioResena>('editando');
   const errorEnvio = ref('');
   let duenaDelBorrador: string | null = null;
+  /** Sube cada vez que el formulario se vacía: un envío que vuelve tarde no toca lo nuevo. */
+  let generacion = 0;
+  /** Hay una petición en vuelo, aunque el formulario ya sea de otra cuenta. */
+  let enVuelo = false;
 
   const errores = computed<ErroresResena>(() =>
     intentado.value ? validarResena(campos) : {}
   );
 
   function vaciar(nombre: string): void {
+    generacion += 1;
     campos.nombre = nombre.trim();
     campos.texto = '';
     campos.puntaje = null;
@@ -60,21 +65,29 @@ export function useFormularioResena() {
 
   /** Devuelve el primer campo con error (para enfocarlo) o `null`. */
   async function enviar(): Promise<CampoResena | null> {
-    if (estado.value !== 'editando') return null;
+    if (enVuelo || estado.value !== 'editando') return null;
     intentado.value = true;
     const campo = primerError(validarResena(campos));
     if (campo) return campo;
 
+    const mia = generacion;
+    enVuelo = true;
     estado.value = 'enviando';
     errorEnvio.value = '';
     try {
       await crearResena(cuerpoDeResena(campos));
-      estado.value = 'enviada';
-      void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.all });
     } catch (err) {
-      estado.value = 'editando';
-      errorEnvio.value = mensajeErrorResena(err);
+      enVuelo = false;
+      if (mia === generacion) {
+        estado.value = 'editando';
+        errorEnvio.value = mensajeErrorResena(err);
+      }
+      return null;
     }
+    enVuelo = false;
+    if (mia === generacion) estado.value = 'enviada';
+    // Publicada aunque el formulario sea ya de otra cuenta: la lista se entera.
+    void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.all });
     return null;
   }
 

@@ -184,3 +184,78 @@ describe('useFormularioResena · enviar', () => {
     expect(formulario.estado.value).toBe('enviada');
   });
 });
+
+describe('useFormularioResena · cambio de cuenta con un envío en vuelo', () => {
+  const ANA = { nombre: 'Ana', correo: 'ana@correo.com' };
+
+  /** Una petición de Laura que se resuelve (o se rechaza) cuando el test quiera. */
+  function peticionPendiente() {
+    let resolver: (valor: unknown) => void = () => undefined;
+    let rechazar: (motivo: unknown) => void = () => undefined;
+    mockCrear.mockReturnValueOnce(
+      new Promise((resolve, reject) => {
+        resolver = resolve;
+        rechazar = reject;
+      })
+    );
+    return { resolver, rechazar };
+  }
+
+  /** Ana rellena su reseña válida, sin enviar nada todavía. */
+  function anaLista(formulario: ReturnType<typeof useFormularioResena>) {
+    formulario.preparar(ANA);
+    formulario.campos.puntaje = 5;
+    formulario.campos.texto = 'Corte impecable, volvería';
+  }
+
+  it('con un envío de Laura en vuelo, Ana no puede enviar otra petición', async () => {
+    const { resolver } = peticionPendiente();
+    const formulario = listo();
+    const primero = formulario.enviar();
+
+    formulario.preparar(ANA);
+    anaLista(formulario);
+    const segundo = formulario.enviar();
+
+    expect(await segundo).toBeNull();
+    expect(mockCrear).toHaveBeenCalledTimes(1);
+    resolver({});
+    await primero;
+  });
+
+  it('al llegar la respuesta de Laura, el formulario de Ana queda intacto', async () => {
+    const { resolver } = peticionPendiente();
+    const formulario = listo();
+    const primero = formulario.enviar();
+    formulario.preparar(ANA);
+    anaLista(formulario);
+
+    resolver({ id: 'r1' });
+    await primero;
+
+    expect(formulario.estado.value).toBe('editando');
+    expect(formulario.errorEnvio.value).toBe('');
+    expect(formulario.campos).toEqual({
+      nombre: 'Ana',
+      texto: 'Corte impecable, volvería',
+      puntaje: 5,
+    });
+    expect(mockInvalidar).toHaveBeenCalledWith({ queryKey: ['reviews'] });
+  });
+
+  it('si la petición de Laura falla, el formulario de Ana no recibe el aviso', async () => {
+    const { rechazar } = peticionPendiente();
+    const formulario = listo();
+    const primero = formulario.enviar();
+    formulario.preparar(ANA);
+    anaLista(formulario);
+
+    rechazar(errorDeRed());
+    await primero;
+
+    expect(formulario.estado.value).toBe('editando');
+    expect(formulario.errorEnvio.value).toBe('');
+    expect(formulario.campos.texto).toBe('Corte impecable, volvería');
+    expect(mockInvalidar).not.toHaveBeenCalled();
+  });
+});
