@@ -51,16 +51,22 @@ const routes: RouteRecordRaw[] = [
       },
       { path: '/plans', component: () => import('pages/IndexPage.vue') },
       { path: '/promotions', component: () => import('pages/IndexPage.vue') },
+      /*
+       * La 404 (R3): DENTRO del armazón, para que lleve la cabecera con
+       * «Servicios», «Reservar» y «Más». vue-router 4 casa por especificidad,
+       * no por orden: este comodín solo recoge lo que nadie más casa, y no
+       * ensombrece `/auth/*` (otro registro, más específico). Es dinámica: el
+       * SSG no la prerenderiza (`includeStaticRoutes` solo toma rutas sin
+       * parámetros) y la pinta el cliente sobre el respaldo SPA.
+       */
+      {
+        path: '/:catchAll(.*)*',
+        name: 'not-found',
+        component: () => import('pages/ErrorNotFound.vue'),
+      },
     ],
   },
   authRoutes,
-
-  // Always leave this as last one,
-  // but you can also remove it
-  {
-    path: '/:catchAll(.*)*',
-    component: () => import('pages/ErrorNotFound.vue'),
-  },
 ];
 
 export default routes;
