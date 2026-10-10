@@ -200,7 +200,7 @@ test.describe('menú «Más» · escritorio 1280', () => {
 
     await disparador(page).click();
     await entrada(page, 'quienes-somos').click();
-    await expect(page.locator('.about-dialog')).toBeVisible();
+    await expect(page.locator('[data-test="quienes"]')).toBeVisible();
   });
 
   test('el foco de teclado se ve en las entradas', async ({
