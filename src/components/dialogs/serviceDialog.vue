@@ -745,8 +745,8 @@ const rostros = computed<string[]>(() =>
   border-radius: var(--m-radio-pildora);
 }
 
+/* Pegada al precio, como en los dos tableros: «$45.000  1 h 15 min». */
 .ficha__duracion {
-  margin-left: auto;
   font-size: 13px;
   color: var(--m-piedra-clara);
 }
@@ -801,11 +801,12 @@ const rostros = computed<string[]>(() =>
   outline-offset: 2px;
 }
 
+/* Hueso sobre carbón, 13,5:1: es lo que se viene a leer. */
 .ficha__texto {
   margin: 0;
-  font-size: 15px;
-  line-height: 1.65;
-  color: var(--m-piedra-clara);
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--m-hueso);
   // La descripción del sembrado trae saltos de línea a propósito.
   white-space: pre-wrap;
 }
@@ -819,10 +820,18 @@ const rostros = computed<string[]>(() =>
   list-style: none;
 }
 
+/* Píldoras de 30 px en versalitas piedra clara (los dos tableros). No son
+   botones: no piden los 44 px. */
 .ficha__tag {
-  padding: 4px 10px;
-  font-size: 11.5px;
-  color: var(--m-hueso);
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: 30px;
+  padding: 0 13px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: var(--m-tracking-nav);
+  color: var(--m-piedra-clara);
   border: var(--m-filete-grosor) solid var(--m-filete-oscuro);
   border-radius: var(--m-radio-pildora);
 }
@@ -847,9 +856,12 @@ const rostros = computed<string[]>(() =>
   border-top: var(--m-filete-grosor) solid var(--m-filete-oscuro);
 }
 
+/* «En tu reserva: …» en versalitas, como una etiqueta de estado. */
 .ficha__resumen {
   margin: 0;
-  font-size: 13px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: var(--m-tracking-nav);
   color: var(--m-piedra-clara);
 }
 

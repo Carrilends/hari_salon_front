@@ -1069,3 +1069,41 @@ describe('ficha del servicio · el contrato visual de móvil', () => {
     );
   });
 });
+
+/**
+ * Plan 9: lo que `DetalleDialogo` (escritorio) y `DetalleMovil` dibujan igual y
+ * la fase D dejó distinto. Vale en los dos tamaños.
+ */
+describe('ficha del servicio · el aspecto de los dos tableros', () => {
+  const FUENTE = readFileSync(
+    join(__dirname, '../../src/components/dialogs/serviceDialog.vue'),
+    'utf8'
+  );
+  const ESTILOS = FUENTE.slice(FUENTE.indexOf('<style'));
+  const regla = (selector: string) => {
+    const desde = ESTILOS.indexOf(`${selector} {`);
+    return ESTILOS.slice(desde, ESTILOS.indexOf('}', desde));
+  };
+
+  it('las etiquetas son píldoras de 30 px en versalitas piedra clara', () => {
+    expect(ESTILOS).toMatch(
+      /\.ficha__tag \{[^}]*height: 30px;[^}]*text-transform: uppercase;[^}]*letter-spacing: var\(--m-tracking-nav\);[^}]*color: var\(--m-piedra-clara\);/
+    );
+  });
+
+  it('la descripción se lee en hueso, 14 px con interlineado de 1,75', () => {
+    expect(ESTILOS).toMatch(
+      /\.ficha__texto \{[^}]*font-size: 14px;[^}]*line-height: 1\.75;[^}]*color: var\(--m-hueso\);/
+    );
+  });
+
+  it('la línea de la bolsa va en versalitas', () => {
+    expect(ESTILOS).toMatch(
+      /\.ficha__resumen \{[^}]*text-transform: uppercase;[^}]*letter-spacing: var\(--m-tracking-nav\);/
+    );
+  });
+
+  it('la duración va pegada al precio, no empujada al borde', () => {
+    expect(regla('.ficha__duracion')).not.toContain('margin-left: auto');
+  });
+});
