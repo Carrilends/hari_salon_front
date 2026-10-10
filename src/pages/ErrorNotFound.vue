@@ -252,6 +252,7 @@ useSeo({
   justify-content: center;
   gap: 10px;
   min-height: 48px;
+  padding: 0 20px;
   margin-top: auto;
   border-radius: var(--m-radio-pildora);
   background: var(--m-whatsapp);
@@ -267,11 +268,12 @@ useSeo({
 .pagina-404__atajo--enlace:focus-visible,
 .pagina-404__whatsapp:focus-visible {
   outline: 2px solid var(--m-hueso);
-  outline-offset: 3px;
+  outline-offset: 2px;
 }
 
-/* Por debajo de 900 px tres columnas no caben: filas, como en el móvil. */
-@media (max-width: 899px) {
+/* Por debajo de 1240 px tres columnas no caben (el botón verde, con su relleno,
+   pide unos 281 px de columna): filas, como en el móvil. */
+@media (max-width: 1239px) {
   .pagina-404__atajos {
     flex-direction: column;
     gap: 10px;

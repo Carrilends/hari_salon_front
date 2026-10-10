@@ -107,7 +107,7 @@ describe('ErrorNotFound', () => {
     expect(FUENTE).toMatch(
       /\.pagina-404\s*\{[^}]*background: var\(--m-tinta\);[^}]*color: var\(--m-hueso\);/
     );
-    const estrecho = FUENTE.slice(FUENTE.indexOf('@media (max-width: 899px)'));
+    const estrecho = FUENTE.slice(FUENTE.indexOf('@media (max-width: 1239px)'));
     expect(estrecho).toMatch(/\.pagina-404__atajos\s*\{[^}]*flex-direction: column;/);
   });
 
