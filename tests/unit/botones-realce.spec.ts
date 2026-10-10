@@ -685,3 +685,73 @@ describe('plan 2 · cada botón de «Mis reservas» cambia de color al pasar', (
     }
   });
 });
+
+/**
+ * Plan 3 de las vistas: la bandeja de la dueña (página y cinco componentes).
+ * Mismo repaso que `BOTONES`: color al pasar con un token, dentro del puntero fino.
+ */
+const BOTONES_BANDEJA: Boton[] = [
+  { archivo: 'components/admin-reservas/FilaReserva.vue', clase: 'fila__abrir' },
+  { archivo: 'components/admin-reservas/FilaReserva.vue', clase: 'fila__confirmar' },
+  { archivo: 'components/admin-reservas/PestanasBandeja.vue', clase: 'pestana' },
+  { archivo: 'components/admin-reservas/AvisosFijados.vue', clase: 'aviso__ver' },
+  { archivo: 'components/admin-reservas/AvisosFijados.vue', clase: 'aviso__descartar' },
+  { archivo: 'components/admin-reservas/DetalleReserva.vue', clase: 'detalle__volver' },
+  { archivo: 'components/admin-reservas/DetalleReserva.vue', clase: 'detalle__confirmar' },
+  { archivo: 'components/admin-reservas/DetalleReserva.vue', clase: 'detalle__accion' },
+  { archivo: 'components/admin-reservas/CancelarReservaBandeja.vue', clase: 'cancelar__boton' },
+  { archivo: 'pages/AdminReservationsPage.vue', clase: 'bandeja__boton' },
+  { archivo: 'pages/AdminReservationsPage.vue', clase: 'bandeja__aviso-cerrar' },
+];
+
+describe('plan 3 · cada botón de la bandeja cambia de color al pasar', () => {
+  it.each(BOTONES_BANDEJA)('$clase ($archivo)', ({ archivo, clase }) => {
+    const finos = bloquesFinos(archivo);
+    const patron = new RegExp(`\\.${clase}(?![\\w-])[^,{]*:hover`);
+    const cuerpo = cuerposDe(finos, patron);
+
+    expect(cuerpo).toMatch(
+      /(^|\s)(color|border-color|border-bottom-color|background|background-color): var\(--m-[\w-]+\);/
+    );
+  });
+});
+
+describe('plan 3 · la bandeja · los botones de puro texto o icono llevan m-boton-plano', () => {
+  it.each([
+    ['components/admin-reservas/FilaReserva.vue', 'fila__abrir'],
+    ['components/admin-reservas/PestanasBandeja.vue', 'pestana'],
+    ['components/admin-reservas/AvisosFijados.vue', 'aviso__ver'],
+    ['components/admin-reservas/AvisosFijados.vue', 'aviso__descartar'],
+    ['components/admin-reservas/DetalleReserva.vue', 'detalle__volver'],
+    ['pages/AdminReservationsPage.vue', 'bandeja__aviso-cerrar'],
+  ])('%s · %s lleva m-boton-plano', (archivo, clase) => {
+    const plantilla = leer(archivo).split('<script')[0];
+    const clases = (plantilla.match(/<button\b(?:=>|[^>])*>/g) ?? [])
+      .map((boton) => /\sclass="([^"]*)"/.exec(boton)?.[1].split(/\s+/) ?? [])
+      .filter((lista) => lista.includes(clase));
+
+    expect(clases.length).toBeGreaterThan(0);
+    for (const lista of clases) {
+      expect(lista).toContain('m-boton-plano');
+    }
+  });
+});
+
+describe('plan 3 · la bandeja · los botones anchos no encogen al pulsar', () => {
+  it.each([
+    ['components/admin-reservas/FilaReserva.vue', 'fila__abrir'],
+    ['components/admin-reservas/DetalleReserva.vue', 'detalle__confirmar'],
+    ['components/admin-reservas/DetalleReserva.vue', 'detalle__accion'],
+    ['components/admin-reservas/CancelarReservaBandeja.vue', 'cancelar__boton'],
+  ])('%s · %s lleva m-boton--ancho', (archivo, clase) => {
+    const plantilla = leer(archivo).split('<script')[0];
+    const clases = Array.from(plantilla.matchAll(/\sclass="([^"]*)"/g))
+      .map((c) => c[1].split(/\s+/))
+      .filter((lista) => lista.includes(clase));
+
+    expect(clases.length).toBeGreaterThan(0);
+    for (const lista of clases) {
+      expect(lista).toContain('m-boton--ancho');
+    }
+  });
+});
