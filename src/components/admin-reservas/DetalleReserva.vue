@@ -25,7 +25,9 @@
       <h2 :id="tituloId" class="detalle__nombre" data-test="detalle-nombre">
         {{ nombre }}
       </h2>
-      <p class="detalle__contacto" data-test="detalle-contacto">{{ contacto }}</p>
+      <p class="detalle__contacto" data-test="detalle-contacto">
+        {{ contacto }}
+      </p>
 
       <dl class="detalle__datos">
         <div class="detalle__fila">
@@ -60,15 +62,18 @@
                 class="detalle__servicio"
                 data-test="detalle-servicio"
               >
-                <span>{{ servicio.name }}</span>{{ ' '
-                }}<span class="detalle__precio">{{ precioTexto(servicio.price) }}</span>
+                <span>{{ servicio.name }}</span
+                >{{ ' '
+                }}<span class="detalle__precio">{{
+                  precioTexto(servicio.price)
+                }}</span>
               </li>
             </ul>
             <p class="detalle__total">
               <span class="detalle__total-rotulo">Total</span>
-              <span class="detalle__total-cifra" data-test="detalle-total"
-                >{{ total }}</span
-              >
+              <span class="detalle__total-cifra" data-test="detalle-total">{{
+                total
+              }}</span>
             </p>
           </dd>
         </div>
@@ -80,7 +85,12 @@
         Al confirmar, al mover o al cancelar, la clienta recibe el aviso por
         WhatsApp si dejó su teléfono.
       </p>
-      <p v-if="error" class="detalle__error" role="alert" data-test="error-detalle">
+      <p
+        v-if="error"
+        class="detalle__error"
+        role="alert"
+        data-test="error-detalle"
+      >
         {{ error }}
       </p>
       <button
@@ -88,19 +98,21 @@
         type="button"
         class="detalle__confirmar m-boton--ancho"
         data-test="confirmar-detalle"
-        :disabled="ocupada !== null"
+        :disabled="apagada"
         @click="emit('confirmar', reserva.id)"
       >
-        <StrokeIcon class="detalle__confirmar-icono" nombre="check" :tamano="16" />{{
-          ocupada === 'confirmar' ? 'Confirmando…' : 'Confirmar'
-        }}
+        <StrokeIcon
+          class="detalle__confirmar-icono"
+          nombre="check"
+          :tamano="16"
+        />{{ ocupada === 'confirmar' ? 'Confirmando…' : 'Confirmar' }}
       </button>
       <div v-if="activa" class="detalle__pareja">
         <button
           type="button"
           class="detalle__accion m-boton--ancho"
           data-test="mover"
-          :disabled="ocupada !== null"
+          :disabled="apagada"
           @click="emit('mover', reserva.id)"
         >
           <StrokeIcon nombre="mover-cita" :tamano="16" />Mover
@@ -109,7 +121,7 @@
           type="button"
           class="detalle__accion detalle__accion--peligro m-boton--ancho"
           data-test="cancelar-detalle"
-          :disabled="ocupada !== null"
+          :disabled="apagada"
           @click="emit('cancelar', reserva.id)"
         >
           <StrokeIcon nombre="cancelada" :tamano="16" />{{
@@ -153,9 +165,15 @@ const props = withDefaults(
     reserva: ReservationDto;
     variante?: 'panel' | 'pantalla';
     ocupada?: AccionBandeja | null;
+    /**
+     * Otra reserva tiene una acción en vuelo (la página tiene un solo
+     * cerrojo): los botones se apagan, pero el rótulo solo cambia en el de la
+     * acción que corre, y esa no es de esta ficha.
+     */
+    bloqueada?: boolean;
     error?: string | null;
   }>(),
-  { variante: 'panel', ocupada: null, error: null }
+  { variante: 'panel', ocupada: null, bloqueada: false, error: null }
 );
 
 const emit = defineEmits<{
@@ -186,9 +204,11 @@ const duracion = computed(() =>
 const estilista = computed(() => nombreDeEstilista(props.reserva));
 const asignacion = computed(() => textoAsignacion(props.reserva));
 const total = computed(() => precioTexto(totalDeLaReserva(props.reserva)));
+const apagada = computed(() => props.ocupada !== null || props.bloqueada);
 const activa = computed(
   () =>
-    props.reserva.status === 'pendiente' || props.reserva.status === 'confirmada'
+    props.reserva.status === 'pendiente' ||
+    props.reserva.status === 'confirmada'
 );
 
 defineOptions({ name: 'DetalleReserva' });

@@ -191,12 +191,30 @@ describe('la bandeja · lista (A1–A2)', () => {
 
     mockAdmin.query.isLoading.value = false;
     mockAdmin.query.isError.value = true;
+    mockAdmin.query.data.value = undefined;
     const fallida = montar();
     expect(fallida.find('[data-test="bandeja-error"]').text()).toContain(
       'No se pudieron cargar las reservas.'
     );
     await fallida.find('[data-test="reintentar"]').trigger('click');
     expect(mockAdmin.query.refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('si falla un refresco con la lista ya cargada, la conserva y avisa encima', async () => {
+    mockAdmin.query.isError.value = true;
+    const w = montar();
+
+    expect(w.find('[data-test="bandeja-error"]').exists()).toBe(false);
+    expect(ids(w)).toEqual(['res-1', 'res-2', 'res-5']);
+    expect(w.find('[data-test="bandeja-error-refresco"]').text()).toContain(
+      'No se pudo actualizar la lista.'
+    );
+    await w.find('[data-test="reintentar"]').trigger('click');
+    expect(mockAdmin.query.refetch).toHaveBeenCalledTimes(1);
+
+    mockAdmin.query.isError.value = false;
+    await nextTick();
+    expect(w.find('[data-test="bandeja-error-refresco"]').exists()).toBe(false);
   });
 
   it('dice si está en vivo; si no, ofrece actualizar', async () => {
@@ -391,7 +409,7 @@ describe('la bandeja · acciones (A2–A3)', () => {
     );
   });
 
-  it('con otra acción en vuelo, «Cancelar la cita» espera apagado', async () => {
+  it('con otra reserva en vuelo, la ficha y las demás filas se apagan sin cambiar su rótulo', async () => {
     mockAdmin.confirm.mutateAsync.mockReturnValue(new Promise(() => undefined));
     const w = montar();
     await w
@@ -399,16 +417,61 @@ describe('la bandeja · acciones (A2–A3)', () => {
       .trigger('click');
 
     await abrir(w, 'res-1');
+
+    for (const gancho of ['confirmar-detalle', 'mover', 'cancelar-detalle']) {
+      expect(
+        w.find(`[data-test="${gancho}"]`).attributes('disabled')
+      ).toBeDefined();
+    }
+    expect(w.find('[data-test="confirmar-detalle"]').text()).toBe('Confirmar');
+    expect(w.find('[data-test="cancelar-detalle"]').text()).toBe('Cancelar');
+    const otraFila = w.find('[data-id="res-1"] [data-test="confirmar-fila"]');
+    expect(otraFila.attributes('disabled')).toBeDefined();
+    expect(otraFila.text()).toBe('Confirmar');
+    expect(
+      w.find('[data-id="res-2"] [data-test="confirmar-fila"]').text()
+    ).toBe('Confirmando…');
+  });
+
+  it('si otra acción arranca con «Cancelar» abierto, solo se apaga el botón: se puede volver', async () => {
+    mockAdmin.confirm.mutateAsync.mockReturnValue(new Promise(() => undefined));
+    const w = montar();
+    await abrir(w, 'res-1');
     await w.find('[data-test="cancelar-detalle"]').trigger('click');
 
-    expect(
-      w.findComponent({ name: 'CancelarReservaBandeja' }).props('ocupada')
-    ).toBe(true);
-    expect(
-      w.find('[data-test="confirmar-cancelacion"]').attributes('disabled')
-    ).toBeDefined();
-    await w.find('[data-test="confirmar-cancelacion"]').trigger('click');
+    // La carrera: un `confirmar` de otra fila llega con el diálogo abierto.
+    fila(w, 'res-2').vm.$emit('confirmar', 'res-2');
+    await nextTick();
+
+    const dialogo = w.findComponent({ name: 'CancelarReservaBandeja' });
+    expect(dialogo.props('ocupada')).toBe(false);
+    expect(dialogo.props('bloqueada')).toBe(true);
+    const confirmar = w.find('[data-test="confirmar-cancelacion"]');
+    expect(confirmar.attributes('disabled')).toBeDefined();
+    expect(confirmar.text()).toBe('Cancelar la cita');
+    await confirmar.trigger('click');
     expect(mockAdmin.cancel.mutateAsync).not.toHaveBeenCalled();
+
+    await w.find('[data-test="volver-cancelar"]').trigger('click');
+    expect(w.find('[data-test="cancelar-reserva"]').exists()).toBe(false);
+  });
+
+  it('mientras cancela, el diálogo lo dice y no se cierra', async () => {
+    mockAdmin.cancel.mutateAsync.mockReturnValue(new Promise(() => undefined));
+    const w = montar();
+    await abrir(w, 'res-1');
+    await w.find('[data-test="cancelar-detalle"]').trigger('click');
+
+    await w.find('[data-test="confirmar-cancelacion"]').trigger('click');
+
+    const dialogo = w.findComponent({ name: 'CancelarReservaBandeja' });
+    expect(dialogo.props('ocupada')).toBe(true);
+    expect(w.find('[data-test="confirmar-cancelacion"]').text()).toBe(
+      'Cancelando…'
+    );
+    expect(
+      w.find('[data-test="volver-cancelar"]').attributes('disabled')
+    ).toBeDefined();
   });
 
   it('si la reserva desaparece con la ficha y el diálogo abiertos, los suelta (Foco 1)', async () => {

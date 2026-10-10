@@ -41,7 +41,7 @@
       type="button"
       class="fila__confirmar"
       data-test="confirmar-fila"
-      :disabled="confirmando"
+      :disabled="confirmando || bloqueada"
       :aria-label="
         confirmando ? 'Confirmando…' : `Confirmar la reserva de ${nombre}`
       "
@@ -88,6 +88,8 @@ const props = withDefaults(
     nueva?: boolean;
     compacta?: boolean;
     confirmando?: boolean;
+    /** Otra reserva tiene una acción en vuelo: se apaga sin decir «Confirmando…». */
+    bloqueada?: boolean;
     error?: string | null;
   }>(),
   {
@@ -95,6 +97,7 @@ const props = withDefaults(
     nueva: false,
     compacta: false,
     confirmando: false,
+    bloqueada: false,
     error: null,
   }
 );

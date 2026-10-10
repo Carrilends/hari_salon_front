@@ -12,13 +12,22 @@
       aria-labelledby="cancelar-titulo"
       data-test="cancelar-reserva"
     >
-      <h2 id="cancelar-titulo" class="cancelar__titulo">¿Cancelar esta cita?</h2>
-      <p class="cancelar__resumen" data-test="cancelar-resumen">{{ resumen }}</p>
+      <h2 id="cancelar-titulo" class="cancelar__titulo">
+        ¿Cancelar esta cita?
+      </h2>
+      <p class="cancelar__resumen" data-test="cancelar-resumen">
+        {{ resumen }}
+      </p>
       <p class="cancelar__texto">
         Sale de la lista y la clienta recibe el aviso por WhatsApp si dejó su
         teléfono. No se puede deshacer.
       </p>
-      <p v-if="error" class="cancelar__error" role="alert" data-test="error-cancelar">
+      <p
+        v-if="error"
+        class="cancelar__error"
+        role="alert"
+        data-test="error-cancelar"
+      >
         {{ error }}
       </p>
       <div class="cancelar__acciones">
@@ -35,7 +44,7 @@
           type="button"
           class="cancelar__boton cancelar__boton--peligro m-boton--ancho"
           data-test="confirmar-cancelacion"
-          :disabled="ocupada"
+          :disabled="ocupada || bloqueada"
           @click="emit('confirmar')"
         >
           {{ ocupada ? 'Cancelando…' : 'Cancelar la cita' }}
@@ -68,9 +77,15 @@ const props = withDefaults(
     reserva: ReservationDto | null;
     hoja?: boolean;
     ocupada?: boolean;
+    /**
+     * Otra acción de la página está en vuelo (un solo cerrojo): solo se apaga
+     * «Cancelar la cita». No dice «Cancelando…» ni se vuelve persistente, y
+     * «Volver» sigue vivo: la dueña no queda atrapada esperando a otra reserva.
+     */
+    bloqueada?: boolean;
     error?: string | null;
   }>(),
-  { hoja: false, ocupada: false, error: null }
+  { hoja: false, ocupada: false, bloqueada: false, error: null }
 );
 
 const emit = defineEmits<{

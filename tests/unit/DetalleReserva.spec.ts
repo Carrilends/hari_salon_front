@@ -12,6 +12,7 @@ type Props = {
   reserva: ReservationDto;
   variante: 'panel' | 'pantalla';
   ocupada: AccionBandeja | null;
+  bloqueada: boolean;
   error: string | null;
 };
 
@@ -101,6 +102,18 @@ describe('DetalleReserva', () => {
       ).toBeDefined();
     }
     expect(texto(w, 'confirmar-detalle')).toBe('Confirmando…');
+  });
+
+  it('bloqueada por la acción de otra reserva, se apaga sin decir que confirma ni cancela', () => {
+    const w = montar({ bloqueada: true });
+
+    for (const gancho of ['confirmar-detalle', 'mover', 'cancelar-detalle']) {
+      expect(
+        w.find(`[data-test="${gancho}"]`).attributes('disabled')
+      ).toBeDefined();
+    }
+    expect(texto(w, 'confirmar-detalle')).toBe('Confirmar');
+    expect(texto(w, 'cancelar-detalle')).toBe('Cancelar');
   });
 
   it('un error se lee en el panel', () => {

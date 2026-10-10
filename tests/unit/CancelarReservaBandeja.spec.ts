@@ -21,6 +21,7 @@ type Props = {
   reserva: ReservationDto | null;
   hoja: boolean;
   ocupada: boolean;
+  bloqueada: boolean;
   error: string | null;
 };
 
@@ -56,7 +57,25 @@ describe('CancelarReservaBandeja', () => {
     expect(
       w.find('[data-test="volver-cancelar"]').attributes('disabled')
     ).toBeDefined();
-    expect(w.find('.q-dialog-doble').attributes('data-persistente')).toBe('true');
+    expect(w.find('.q-dialog-doble').attributes('data-persistente')).toBe(
+      'true'
+    );
+  });
+
+  it('bloqueada por otra acción, solo se apaga «Cancelar la cita»: se puede volver', async () => {
+    const w = montar({ bloqueada: true });
+    const confirmar = w.find('[data-test="confirmar-cancelacion"]');
+
+    expect(confirmar.attributes('disabled')).toBeDefined();
+    expect(confirmar.text()).toBe('Cancelar la cita');
+    expect(w.find('.q-dialog-doble').attributes('data-persistente')).toBe(
+      'false'
+    );
+    const volver = w.find('[data-test="volver-cancelar"]');
+    expect(volver.attributes('disabled')).toBeUndefined();
+    await volver.trigger('click');
+    w.findComponent({ name: 'QDialog' }).vm.$emit('update:modelValue', false);
+    expect(w.emitted('update:modelValue')).toEqual([[false], [false]]);
   });
 
   it('mientras cancela, una petición de cierre del diálogo no lo cierra', () => {
@@ -85,15 +104,17 @@ describe('CancelarReservaBandeja', () => {
   });
 
   it('en móvil es una hoja inferior', () => {
-    expect(montar({ hoja: true }).find('.q-dialog-doble').attributes('data-posicion')).toBe(
-      'bottom'
-    );
+    expect(
+      montar({ hoja: true }).find('.q-dialog-doble').attributes('data-posicion')
+    ).toBe('bottom');
     expect(montar().find('.q-dialog-doble').attributes('data-posicion')).toBe(
       'standard'
     );
   });
 
   it('sin reserva no pinta un resumen a medias', () => {
-    expect(montar({ reserva: null }).find('[data-test="cancelar-resumen"]').text()).toBe('');
+    expect(
+      montar({ reserva: null }).find('[data-test="cancelar-resumen"]').text()
+    ).toBe('');
   });
 });

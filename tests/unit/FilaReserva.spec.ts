@@ -13,6 +13,7 @@ type Props = {
   nueva: boolean;
   compacta: boolean;
   confirmando: boolean;
+  bloqueada: boolean;
   error: string | null;
 };
 
@@ -88,6 +89,15 @@ describe('FilaReserva', () => {
 
     expect(boton.attributes('disabled')).toBeDefined();
     expect(boton.text()).toBe('Confirmando…');
+  });
+
+  it('bloqueada por la acción de otra reserva, se apaga sin decir que confirma', () => {
+    const boton = montar({ bloqueada: true }).find(
+      '[data-test="confirmar-fila"]'
+    );
+
+    expect(boton.attributes('disabled')).toBeDefined();
+    expect(boton.text()).toBe('Confirmar');
   });
 
   it('una reserva recién llegada lleva la etiqueta «Nueva»', () => {

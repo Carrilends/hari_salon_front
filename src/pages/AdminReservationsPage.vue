@@ -88,7 +88,7 @@
         </div>
 
         <div
-          v-else-if="query.isError.value"
+          v-else-if="query.isError.value && !query.data.value"
           class="bandeja__error"
           role="alert"
           data-test="bandeja-error"
@@ -107,6 +107,25 @@
         </div>
 
         <template v-else>
+          <!-- Falló un refresco en segundo plano: la lista que había sigue
+               valiendo y se conserva; solo se avisa encima. -->
+          <p
+            v-if="query.isError.value"
+            class="bandeja__error-refresco"
+            role="status"
+            data-test="bandeja-error-refresco"
+          >
+            <span>No se pudo actualizar la lista.</span>
+            <button
+              type="button"
+              class="bandeja__boton"
+              data-test="reintentar"
+              :disabled="query.isFetching.value"
+              @click="() => query.refetch()"
+            >
+              Reintentar
+            </button>
+          </p>
           <p
             v-if="grupos.length === 0"
             class="bandeja__vacio"
@@ -136,6 +155,7 @@
               :nueva="nuevas.includes(r.id)"
               :compacta="esMovil"
               :confirmando="ocupadaDe(r.id) === 'confirmar'"
+              :bloqueada="ocupada !== null"
               :error="errorDe(r.id)"
               @abrir="abrir"
               @confirmar="confirmar"
@@ -162,6 +182,7 @@
         variante="panel"
         :reserva="seleccionada"
         :ocupada="ocupadaDe(seleccionada.id)"
+        :bloqueada="ocupada !== null"
         :error="errorDe(seleccionada.id)"
         @confirmar="confirmar"
         @mover="moverAbierto = true"
@@ -187,6 +208,7 @@
           variante="pantalla"
           :reserva="seleccionada"
           :ocupada="ocupadaDe(seleccionada.id)"
+          :bloqueada="ocupada !== null"
           :error="errorDe(seleccionada.id)"
           @confirmar="confirmar"
           @mover="moverAbierto = true"
@@ -210,12 +232,14 @@
     />
 
     <!-- Un solo cerrojo para toda la página: con cualquier acción en vuelo,
-         «Cancelar la cita» espera apagado. -->
+         «Cancelar la cita» espera apagado (`bloqueada`); «Cancelando…», el
+         diálogo persistente y «Volver» apagado son solo de cancelar. -->
     <CancelarReservaBandeja
       v-model="cancelarAbierto"
       :reserva="seleccionada"
       :hoja="esMovil"
-      :ocupada="ocupada !== null"
+      :ocupada="ocupada?.accion === 'cancelar'"
+      :bloqueada="ocupada !== null"
       :error="errorCancelar"
       @confirmar="cancelarSeleccionada"
     />
@@ -591,6 +615,21 @@ onBeforeUnmount(() => vivos.marcarBandeja(false));
 
 .bandeja__error {
   margin-top: 26px;
+}
+
+.bandeja__error-refresco {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin: 12px 0 0;
+  padding: 6px 6px 6px 14px;
+  border: var(--m-filete-grosor) solid var(--m-filete-oscuro);
+  border-radius: var(--m-radio-tarjeta);
+  background: var(--m-carbon);
+  color: var(--m-hueso);
+  font-size: 13px;
 }
 
 .bandeja__error-texto {
