@@ -79,10 +79,9 @@
                   :class="{ 'politica__punto--activo': activa === seccion.id }"
                   aria-hidden="true"
                 />
-                <span class="politica__indice-numero">{{
-                  seccion.numero
-                }}</span>
-                <span
+                <span class="politica__indice-numero">{{ seccion.numero }}</span
+                >{{ ' '
+                }}<span
                   class="politica__indice-titulo-seccion"
                   data-test="titulo-entrada"
                   >{{ seccion.titulo }}</span
@@ -117,7 +116,10 @@
         >
           <h2 class="politica__h2" tabindex="-1">
             <span class="politica__numero" data-test="numero-seccion">1</span
-            ><span data-test="titulo-seccion">Responsable del tratamiento</span>
+            >{{ ' '
+            }}<span data-test="titulo-seccion"
+              >Responsable del tratamiento</span
+            >
           </h2>
           <p>
             Peluquería Marlene, establecimiento de servicios de belleza ubicado
@@ -155,7 +157,8 @@
         >
           <h2 class="politica__h2" tabindex="-1">
             <span class="politica__numero" data-test="numero-seccion">2</span
-            ><span data-test="titulo-seccion">Marco legal aplicable</span>
+            >{{ ' '
+            }}<span data-test="titulo-seccion">Marco legal aplicable</span>
           </h2>
           <p>
             Esta política se rige por la Constitución Política de Colombia, la
@@ -172,7 +175,8 @@
         >
           <h2 class="politica__h2" tabindex="-1">
             <span class="politica__numero" data-test="numero-seccion">3</span
-            ><span data-test="titulo-seccion">Datos que se recolectan</span>
+            >{{ ' '
+            }}<span data-test="titulo-seccion">Datos que se recolectan</span>
           </h2>
           <p>
             Durante el registro y uso del portal, Peluquería Marlene recolecta
@@ -209,7 +213,10 @@
         >
           <h2 class="politica__h2" tabindex="-1">
             <span class="politica__numero" data-test="numero-seccion">4</span
-            ><span data-test="titulo-seccion">Finalidades del tratamiento</span>
+            >{{ ' '
+            }}<span data-test="titulo-seccion"
+              >Finalidades del tratamiento</span
+            >
           </h2>
           <p>
             Los datos personales se utilizan para las siguientes finalidades:
@@ -256,7 +263,8 @@
         >
           <h2 class="politica__h2" tabindex="-1">
             <span class="politica__numero" data-test="numero-seccion">5</span
-            ><span data-test="titulo-seccion"
+            >{{ ' '
+            }}<span data-test="titulo-seccion"
               >Encargados del tratamiento y transferencia internacional</span
             >
           </h2>
@@ -324,7 +332,8 @@
         >
           <h2 class="politica__h2" tabindex="-1">
             <span class="politica__numero" data-test="numero-seccion">6</span
-            ><span data-test="titulo-seccion">Derechos del titular</span>
+            >{{ ' '
+            }}<span data-test="titulo-seccion">Derechos del titular</span>
           </h2>
           <p>
             Conforme a la Ley 1581 de 2012 y al Decreto 1377 de 2013, el titular
@@ -362,7 +371,8 @@
         >
           <h2 class="politica__h2" tabindex="-1">
             <span class="politica__numero" data-test="numero-seccion">7</span
-            ><span data-test="titulo-seccion">Ejercicio de los derechos</span>
+            >{{ ' '
+            }}<span data-test="titulo-seccion">Ejercicio de los derechos</span>
           </h2>
           <p>
             Para ejercer los derechos descritos, el titular puede comunicarse
@@ -379,7 +389,8 @@
         >
           <h2 class="politica__h2" tabindex="-1">
             <span class="politica__numero" data-test="numero-seccion">8</span
-            ><span data-test="titulo-seccion">Medidas de seguridad</span>
+            >{{ ' '
+            }}<span data-test="titulo-seccion">Medidas de seguridad</span>
           </h2>
           <p>
             Peluquería Marlene implementa medidas técnicas y administrativas
@@ -397,7 +408,8 @@
         >
           <h2 class="politica__h2" tabindex="-1">
             <span class="politica__numero" data-test="numero-seccion">9</span
-            ><span data-test="titulo-seccion">Consentimiento informado</span>
+            >{{ ' '
+            }}<span data-test="titulo-seccion">Consentimiento informado</span>
           </h2>
           <p>
             El tratamiento de los datos personales recolectados a través del
@@ -415,7 +427,7 @@
         >
           <h2 class="politica__h2" tabindex="-1">
             <span class="politica__numero" data-test="numero-seccion">10</span
-            ><span data-test="titulo-seccion">Vigencia</span>
+            >{{ ' ' }}<span data-test="titulo-seccion">Vigencia</span>
           </h2>
           <p>
             La presente política se encuentra vigente desde la fecha indicada al
@@ -619,7 +631,6 @@ defineOptions({
 .politica__enlace {
   display: flex;
   align-items: center;
-  gap: 12px;
   min-height: var(--m-tactil-min);
   padding: 0 4px;
   color: var(--m-piedra);
@@ -631,9 +642,11 @@ defineOptions({
   color: var(--m-tinta);
 }
 
+/* Margen y no `gap`: Safari 13.1 (NF06) no conoce el `gap` de flex. */
 .politica__punto {
   flex: 0 0 6px;
   width: 6px;
+  margin-right: 12px;
   height: 6px;
   border-radius: 50%;
 }
@@ -644,6 +657,7 @@ defineOptions({
 
 .politica__indice-numero {
   flex: 0 0 18px;
+  margin-right: 12px;
   color: var(--m-piedra);
 }
 
@@ -681,15 +695,20 @@ defineOptions({
   color: var(--m-piedra);
 }
 
+/*
+ * Quien llega con `#politica-…` en la URL salta aquí: el título queda bajo la
+ * cabecera fija, con el mismo aire de 16 px que descuenta `irA`. Safari 13.1
+ * lo ignora y el salto queda como antes.
+ */
 .politica__seccion {
   padding-top: 26px;
   border-top: var(--m-filete-grosor) solid var(--m-filete);
+  scroll-margin-top: calc(var(--m-cabecera-alto) + 16px);
 }
 
 .politica__h2 {
   display: flex;
   align-items: baseline;
-  gap: 14px;
   margin: 0 0 12px;
   font-family: var(--m-font-display);
   font-weight: 400;
@@ -702,8 +721,10 @@ defineOptions({
   outline: none;
 }
 
+/* El espacio de texto que lo sigue no pinta en flex: el aire es este margen. */
 .politica__numero {
   flex: 0 0 auto;
+  margin-right: 14px;
   font-size: 18px;
   color: var(--m-oro-profundo);
 }
@@ -861,12 +882,12 @@ defineOptions({
   }
 
   .politica__h2 {
-    gap: 10px;
     margin-bottom: 10px;
     font-size: 20px;
   }
 
   .politica__numero {
+    margin-right: 10px;
     font-size: 16px;
   }
 
@@ -874,6 +895,13 @@ defineOptions({
   .politica__seccion li {
     font-size: 14.5px;
     line-height: 1.65;
+  }
+}
+
+/* La cabecera del armazón baja a su alto de móvil en el mismo corte (699). */
+@media (max-width: 699px) {
+  .politica__seccion {
+    scroll-margin-top: calc(var(--m-cabecera-alto-movil) + 16px);
   }
 }
 

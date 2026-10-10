@@ -84,6 +84,22 @@ describe('Política · el texto legal', () => {
     ).toEqual(TITULOS_SECCIONES);
   });
 
+  /**
+   * Número y título van en dos `<span>`: sin un espacio de texto entre ellos el
+   * HTML prerenderizado, el nombre accesible y Safari 13.1 (sin `gap` en flex)
+   * leen «1Responsable del tratamiento».
+   */
+  it('el número y el título de cada encabezado se leen separados', () => {
+    const encabezados = montar().findAll('[data-test="seccion"] h2');
+
+    expect(normal(encabezados[0].element.textContent ?? '')).toBe(
+      '1 Responsable del tratamiento'
+    );
+    expect(encabezados.map((h) => normal(h.element.textContent ?? ''))).toEqual(
+      TITULOS_SECCIONES.map((t, i) => `${i + 1} ${t}`)
+    );
+  });
+
   it('el teléfono que se lee es el mismo que marca el enlace', () => {
     const tel = montar().get('[data-test="seccion"] a[href^="tel:"]');
 
@@ -128,6 +144,17 @@ describe('Política · el índice', () => {
     expect(
       entradas.map((e) => normal(e.get('[data-test="titulo-entrada"]').text()))
     ).toEqual(TITULOS_SECCIONES);
+  });
+
+  it('el número y el título de cada entrada se leen separados', () => {
+    const entradas = montar().findAll('[data-test="indice-entrada"]');
+
+    expect(normal(entradas[0].element.textContent ?? '')).toBe(
+      '1 Responsable del tratamiento'
+    );
+    expect(entradas.map((e) => normal(e.element.textContent ?? ''))).toEqual(
+      TITULOS_SECCIONES.map((t, i) => `${i + 1} ${t}`)
+    );
   });
 
   /** Foco de revisión 5: sin observador (jsdom, SSG) no revienta. */
@@ -229,6 +256,27 @@ describe('Política · SEO y fuente', () => {
       /\.politica__enlace-texto\s*\{[^}]*overflow-wrap: break-word;/
     );
     expect(ESTILOS).not.toMatch(/overflow-wrap: anywhere/);
+  });
+
+  /** Safari 13.1 (NF06) no conoce `gap` en flex: el aire va en márgenes. */
+  it('el número y el título se separan con margen, no con el gap de flex', () => {
+    expect(ESTILOS).not.toMatch(/\.politica__h2\s*\{[^}]*gap:/);
+    expect(ESTILOS).not.toMatch(/\.politica__enlace\s*\{[^}]*gap:/);
+    expect(ESTILOS).toMatch(/\.politica__numero\s*\{[^}]*margin-right: 14px;/);
+    expect(ESTILOS).toMatch(
+      /\.politica__indice-numero\s*\{[^}]*margin-right: 12px;/
+    );
+    expect(ESTILOS).toMatch(/\.politica__punto\s*\{[^}]*margin-right: 12px;/);
+  });
+
+  /** Quien llega con `#politica-…` en la URL ve el título, no la cabecera fija. */
+  it('cada sección deja sitio a la cabecera fija al saltar a ella', () => {
+    expect(ESTILOS).toMatch(
+      /\.politica__seccion\s*\{[^}]*scroll-margin-top: calc\(var\(--m-cabecera-alto\) \+ 16px\);/
+    );
+    expect(ESTILOS).toMatch(
+      /@media \(max-width: 699px\)[\s\S]*\.politica__seccion\s*\{[^}]*scroll-margin-top: calc\(var\(--m-cabecera-alto-movil\) \+ 16px\);/
+    );
   });
 
   it('el marco se centra por encima de 1280 px', () => {
