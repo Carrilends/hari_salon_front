@@ -129,7 +129,8 @@ defineOptions({ name: 'FilaReserva' });
 
 <style lang="scss" scoped>
 /* Medidas del tablero `AdminReservasB` (escritorio): 86 px de alto, hora en
-   Marcellus 23 px sobre 70 px, filete de oro al 35 %. */
+   Marcellus 23 px, filete de oro al 35 %. La columna de la hora es de 76 px y
+   no de los 70 del tablero: «08:00» mide 73,4 px en Marcellus. */
 .fila {
   position: relative;
   display: flex;
@@ -170,7 +171,7 @@ defineOptions({ name: 'FilaReserva' });
 }
 
 .fila__hora {
-  width: 70px;
+  width: 76px;
   flex-shrink: 0;
 }
 
@@ -289,7 +290,8 @@ defineOptions({ name: 'FilaReserva' });
    atención en esta pantalla (9,4:1 sobre carbón). */
 .fila__error {
   flex-basis: 100%;
-  margin: -4px 0 12px 90px;
+  /* Bajo los datos: la hora (76) más el hueco de `.fila__abrir` (20). */
+  margin: -4px 0 12px 96px;
   color: var(--m-rosa);
   font-size: 12.5px;
 }
@@ -300,8 +302,9 @@ defineOptions({ name: 'FilaReserva' });
   outline-offset: 2px;
 }
 
-/* Compacta (móvil, tablero «La bandeja»): hora de 52 px, servicios en una
-   línea y el estado abajo a la derecha, sin robar el toque a la fila. */
+/* Compacta (móvil, tablero «La bandeja»): hora de 62 px (el tablero dice 52,
+   pero «08:00» mide 60,6 px a 19 px), servicios en una línea y el estado abajo
+   a la derecha, sin robar el toque a la fila. */
 .fila--compacta {
   gap: 0 14px;
   min-height: 0;
@@ -316,7 +319,7 @@ defineOptions({ name: 'FilaReserva' });
 }
 
 .fila--compacta .fila__hora {
-  width: 52px;
+  width: 62px;
 }
 
 .fila--compacta .fila__cifra {
@@ -354,7 +357,7 @@ defineOptions({ name: 'FilaReserva' });
 }
 
 .fila--compacta .fila__error {
-  margin-left: 66px;
+  margin-left: 76px;
 }
 
 /**

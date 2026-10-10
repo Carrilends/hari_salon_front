@@ -109,6 +109,33 @@ describe('la bandeja · contrato visual', () => {
     expect(detalle).toMatch(/padding:[^;]*var\(--m-flotante-despeje\)/);
   });
 
+  it('la columna de la hora cabe «08:00» en Marcellus y el error se alinea con ella', () => {
+    // Medido en Chromium: «08:00» ocupa 73,4 px a 23 px y 60,6 px a 19 px;
+    // con 70 y 52 px la cifra invadía el hueco y casi tocaba el nombre.
+    const css = sinComentarios(
+      estilos(leer('components/admin-reservas/FilaReserva.vue'))
+    );
+    const px = (regla: RegExp) => {
+      const m = css.match(regla);
+      if (!m) throw new Error(`Falta ${regla}`);
+      return Number(m[1]);
+    };
+    const hora = px(/\n\.fila__hora \{[^}]*width: (\d+)px/);
+    const horaCompacta = px(
+      /\.fila--compacta \.fila__hora \{[^}]*width: (\d+)px/
+    );
+    const error = px(/\n\.fila__error \{[^}]*margin: -?\d+px 0 \d+px (\d+)px/);
+    const errorCompacta = px(
+      /\.fila--compacta \.fila__error \{[^}]*margin-left: (\d+)px/
+    );
+
+    expect(hora).toBeGreaterThanOrEqual(74);
+    expect(horaCompacta).toBeGreaterThanOrEqual(61);
+    // Hora + hueco de `.fila__abrir` (20 px; 14 px en compacta).
+    expect(error).toBe(hora + 20);
+    expect(errorCompacta).toBe(horaCompacta + 14);
+  });
+
   it('nadie usa ya el filtro viejo del panel', () => {
     const fuentes = (dir: string): string[] =>
       readdirSync(dir).flatMap((nombre) => {
