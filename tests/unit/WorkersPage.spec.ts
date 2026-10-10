@@ -4,6 +4,8 @@
  * pide, qué mutación se llama con qué, qué se dice en línea y qué con un aviso—.
  * Los anchos se fijan con `fijarViewport`, que sí evalúa las consultas.
  */
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { flushPromises, mount, RouterLinkStub } from '@vue/test-utils';
 import { nextTick, ref, type Ref } from 'vue';
 import type { WorkersWeekResponse } from 'src/api/workers-api';
@@ -563,5 +565,21 @@ describe('WorkersPage · el foco al cerrar el panel en línea', () => {
       pagina.get('[data-test="agregar-estilista"]').element
     );
     pagina.unmount();
+  });
+});
+
+describe('WorkersPage · diálogo a alto completo', () => {
+  it('quita el relleno vertical que Quasar deja al diálogo de la derecha', () => {
+    const fuente = readFileSync(
+      join(__dirname, '../../src/pages/WorkersPage.vue'),
+      'utf8'
+    );
+    expect(fuente).toContain('class="estilistas__dialogo"');
+    const regla =
+      /\.estilistas__dialogo \.q-dialog__inner--minimized\s*\{([^}]*)\}/.exec(
+        fuente
+      );
+    expect(regla?.[1]).toContain('padding-top: 0');
+    expect(regla?.[1]).toContain('padding-bottom: 0');
   });
 });

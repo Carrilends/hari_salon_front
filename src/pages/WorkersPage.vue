@@ -121,6 +121,7 @@
       :maximized="esMovil"
       :position="esMovil ? 'standard' : 'right'"
       full-height
+      class="estilistas__dialogo"
       @update:model-value="alCambiarDialogo"
     >
       <div
@@ -576,5 +577,14 @@ defineOptions({ name: 'WorkersPage' });
   .estilistas__agregar-texto {
     display: none;
   }
+}
+</style>
+
+<style lang="scss">
+/* Quasar deja 24 px arriba y abajo al diálogo de la derecha aunque lleve
+   `full-height`: el panel va a alto completo, pegado al borde. */
+.estilistas__dialogo .q-dialog__inner--minimized {
+  padding-top: 0;
+  padding-bottom: 0;
 }
 </style>
