@@ -52,7 +52,7 @@
         >
           Gracias por contarnos
         </h2>
-        <p class="resena__lede" role="status">
+        <p class="resena__lede resena__lede--exito" role="status">
           Tu reseña ya sale en Testimonios.
         </p>
         <div class="resena__acciones">
@@ -531,7 +531,7 @@ async function alEnviar(): Promise<void> {
   font-size: 25px;
 }
 
-.resena--hoja .resena__lede {
+.resena--hoja .resena__lede:not(.resena__lede--exito) {
   display: none;
 }
 
@@ -564,7 +564,7 @@ async function alEnviar(): Promise<void> {
   }
 
   /* Tinta maciza: el rótulo se enciende en oro (5,8:1 sobre tinta). */
-  .resena__enviar:hover {
+  .resena__enviar:not(:disabled):hover {
     color: var(--m-oro);
   }
 

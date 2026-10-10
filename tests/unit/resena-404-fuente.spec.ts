@@ -112,7 +112,7 @@ describe('el oro claro no es texto sobre claro', () => {
   ])('%s', (ruta) => {
     // La única excepción es el rótulo del botón de tinta maciza al pasar.
     const css = sinComentarios(estilo(leer(ruta))).replace(
-      /\.resena__enviar:hover\s*\{[^}]*\}/g,
+      /\.resena__enviar(?::not\(:disabled\))?:hover\s*\{[^}]*\}/g,
       ''
     );
 

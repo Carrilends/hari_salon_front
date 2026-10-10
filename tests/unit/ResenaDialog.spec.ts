@@ -298,6 +298,11 @@ describe('ResenaDialog · el formulario', () => {
       MENSAJES_RESENA.puntaje
     );
     expect(document.activeElement).toBe(radios(w)[0].element);
+    const enlazado = (document.activeElement as HTMLElement).getAttribute(
+      'aria-describedby'
+    );
+    expect(enlazado).toBe('resena-error-puntaje');
+    expect(document.getElementById('resena-error-puntaje')).not.toBeNull();
   });
 
   it('texto corto: el error del tablero, marcado, enlazado y con el foco', async () => {
@@ -374,6 +379,24 @@ describe('ResenaDialog · el envío', () => {
     expect(enlace?.props('to')).toBe('/testimonios');
     expect(enlace?.text()).toBe('Ver Testimonios →');
     expect(document.activeElement).toBe(w.find('#resena-titulo').element);
+  });
+
+  it('en móvil, tras enviar, la línea del éxito sigue ahí y la regla móvil la excluye', async () => {
+    fijarViewport({ ancho: 390 });
+    mockCrear.mockResolvedValue({});
+    const w = await montar();
+    await abrir();
+    await rellenar(w);
+
+    await enviar(w);
+
+    expect(w.find('.resena__lede--exito').exists()).toBe(true);
+    expect(w.find('.resena__lede--exito').text()).toBe(
+      'Tu reseña ya sale en Testimonios.'
+    );
+    expect(FUENTE).toMatch(
+      /\.resena--hoja \.resena__lede:not\(\.resena__lede--exito\)\s*\{[^}]*display: none;/
+    );
   });
 
   it('«Ver Testimonios →» cierra el diálogo', async () => {

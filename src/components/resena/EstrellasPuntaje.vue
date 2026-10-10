@@ -20,6 +20,8 @@
           :value="n"
           :checked="modelValue === n"
           :aria-label="`${n} de 5`"
+          :aria-invalid="error ? 'true' : undefined"
+          :aria-describedby="error ? idError : undefined"
           @change="emit('update:modelValue', n)"
         />
         <svg

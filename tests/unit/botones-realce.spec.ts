@@ -306,6 +306,14 @@ const BOTONES: Boton[] = [
   { archivo: 'components/auth/CampoAcceso.vue', clase: 'campo-acceso__ojo', claro: true },
   { archivo: 'components/auth/ConsentimientoGoogle.vue', clase: 'consentimiento__boton', claro: true },
   { archivo: 'components/auth/ConsentimientoGoogle.vue', clase: 'consentimiento__boton--macizo' },
+  // Plan 7 — reseña y 404.
+  { archivo: 'components/resena/ResenaDialog.vue', clase: 'resena__cerrar', claro: true },
+  { archivo: 'components/resena/ResenaDialog.vue', clase: 'resena__cancelar', claro: true },
+  { archivo: 'components/resena/ResenaDialog.vue', clase: 'resena__enviar' },
+  { archivo: 'components/resena/ResenaDialog.vue', clase: 'resena__enlace', claro: true },
+  { archivo: 'pages/ErrorNotFound.vue', clase: 'pagina-404__atajo--enlace' },
+  { archivo: 'pages/ErrorNotFound.vue', clase: 'pagina-404__inicio' },
+  { archivo: 'pages/ErrorNotFound.vue', clase: 'pagina-404__whatsapp' },
 ];
 
 /** El bloque de estilos de un SFC dentro de las consultas de puntero fino. */
@@ -702,14 +710,6 @@ const BOTONES_BANDEJA: Boton[] = [
   { archivo: 'components/admin-reservas/CancelarReservaBandeja.vue', clase: 'cancelar__boton' },
   { archivo: 'pages/AdminReservationsPage.vue', clase: 'bandeja__boton' },
   { archivo: 'pages/AdminReservationsPage.vue', clase: 'bandeja__aviso-cerrar' },
-  // Plan 7 — reseña y 404.
-  { archivo: 'components/resena/ResenaDialog.vue', clase: 'resena__cerrar', claro: true },
-  { archivo: 'components/resena/ResenaDialog.vue', clase: 'resena__cancelar', claro: true },
-  { archivo: 'components/resena/ResenaDialog.vue', clase: 'resena__enviar' },
-  { archivo: 'components/resena/ResenaDialog.vue', clase: 'resena__enlace', claro: true },
-  { archivo: 'pages/ErrorNotFound.vue', clase: 'pagina-404__atajo--enlace' },
-  { archivo: 'pages/ErrorNotFound.vue', clase: 'pagina-404__inicio' },
-  { archivo: 'pages/ErrorNotFound.vue', clase: 'pagina-404__whatsapp' },
 ];
 
 describe('plan 3 · cada botón de la bandeja cambia de color al pasar', () => {

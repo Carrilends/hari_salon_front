@@ -85,6 +85,10 @@ describe('EstrellasPuntaje', () => {
     expect(
       conError.find('[data-test="estrellas-puntaje"]').attributes('aria-describedby')
     ).toBe('e1');
+    radios(conError).forEach((r) => {
+      expect(r.attributes('aria-invalid')).toBe('true');
+      expect(r.attributes('aria-describedby')).toBe('e1');
+    });
     conError.unmount();
     wrapper = undefined;
 
@@ -92,6 +96,10 @@ describe('EstrellasPuntaje', () => {
     expect(
       sinError.find('[data-test="estrellas-puntaje"]').attributes('aria-describedby')
     ).toBeUndefined();
+    radios(sinError).forEach((r) => {
+      expect(r.attributes('aria-invalid')).toBeUndefined();
+      expect(r.attributes('aria-describedby')).toBeUndefined();
+    });
   });
 
   it('enfocar() lleva el foco a la marcada, o a la primera', async () => {
