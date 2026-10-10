@@ -228,4 +228,65 @@ describe('ServiceRow', () => {
       fila.get('[data-test="fila-marco"]').find('[data-test="fila-sin-foto"]').exists()
     ).toBe(true);
   });
+
+  /** Tablero AdminMostradorMovil: la rebaja también se ve sobre la foto. */
+  it('con promoción pinta la píldora del porcentaje sobre la foto', () => {
+    const fila = montar({
+      servicio: servicio({ havePromotion: true, porcentageDiscount: 20 }),
+    });
+    const marco = fila.get('[data-test="fila-marco"]');
+
+    expect(marco.get('[data-test="fila-promo-pildora"]').text()).toBe('−20 %');
+  });
+
+  it('sin promoción no hay píldora', () => {
+    expect(montar().find('[data-test="fila-promo-pildora"]').exists()).toBe(
+      false
+    );
+  });
+
+  /** `numeric` de Postgres llega como cadena. */
+  it('un porcentaje que llega como texto se pinta igual', () => {
+    const fila = montar({
+      servicio: servicio({
+        havePromotion: true,
+        porcentageDiscount: '30' as unknown as number,
+      }),
+    });
+
+    expect(fila.get('[data-test="fila-promo-pildora"]').text()).toBe('−30 %');
+  });
+
+  /**
+   * La franja de la dueña (plan 9, V2) va en su propia línea, a todo el ancho,
+   * bajo la foto y el texto. El texto tiene base 0: con `auto`, un nombre largo
+   * pediría su ancho natural y la fila lo mandaría a otra línea.
+   */
+  it('la ranura de acciones ocupa una línea entera bajo la foto y el texto', () => {
+    expect(ESTILOS).toMatch(/\.fila-servicio \{[^}]*flex-wrap: wrap;/);
+    expect(ESTILOS).toMatch(/\.fila-servicio__texto \{[^}]*flex: 1 1 0;/);
+    expect(ESTILOS).toMatch(
+      /\.fila-servicio__acciones \{[^}]*z-index: 2;[^}]*flex: 0 0 100%;/
+    );
+    const acciones = ESTILOS.slice(ESTILOS.indexOf('.fila-servicio__acciones {'));
+    expect(acciones.slice(0, acciones.indexOf('}'))).not.toMatch(
+      /flex-direction:\s*column/
+    );
+  });
+
+  /** En `--m-piedra` sobre carbón el rótulo daba 2,6:1. */
+  it('«Sin foto» se pinta sobre tinta y su rótulo en piedra clara', () => {
+    expect(ESTILOS).toMatch(
+      /\.fila-servicio__sin-foto \{[^}]*background: var\(--m-tinta\);/
+    );
+    expect(ESTILOS).toMatch(
+      /\.fila-servicio__sin-foto-rotulo \{[^}]*color: var\(--m-piedra-clara\);/
+    );
+  });
+
+  it('la píldora va en oro macizo con texto tinta, posada en la esquina de la foto', () => {
+    expect(ESTILOS).toMatch(
+      /\.fila-servicio__promo \{[^}]*position: absolute;[^}]*top: 8px;[^}]*left: 8px;[^}]*background: var\(--m-oro\);[^}]*color: var\(--m-tinta\);/
+    );
+  });
 });

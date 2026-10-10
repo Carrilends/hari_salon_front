@@ -53,6 +53,20 @@
         </svg>
         <span class="fila-servicio__sin-foto-rotulo">Sin foto</span>
       </div>
+
+      <!--
+        La rebaja también se ve sobre la foto, como en la tarjeta (tablero
+        AdminMostradorMovil): el tachado de abajo dice cuánto costaba; la
+        píldora, cuánto se ahorra. Dentro del marco y por debajo del botón
+        estirado, que es quien recibe el toque.
+      -->
+      <span
+        v-if="enPromocion"
+        class="fila-servicio__promo"
+        data-test="fila-promo-pildora"
+      >
+        −{{ porcentaje }} %
+      </span>
     </div>
 
     <div class="fila-servicio__texto">
@@ -111,11 +125,11 @@ import {
   optimizeCloudinaryUrl,
 } from 'src/helpers/cloudinaryUrl';
 import { formatCopDisplay } from 'src/helpers/price-display';
-// `promotionPercentDisplay` no se importa a propósito: el renglón enseña la
-// rebaja con el precio tachado y no con una píldora (no cabe sin apretar el
-// nombre), así que aquí no hace falta el porcentaje.
+// La píldora del porcentaje va sobre la foto (plan 9), donde no aprieta el
+// nombre; el precio tachado sigue al lado del efectivo.
 import {
   effectiveServiceUnitPrice,
+  promotionPercentDisplay,
   serviceIsOnPromotion,
 } from 'src/helpers/service-promotion';
 import { etiquetaDeCategoria } from 'src/helpers/service-category';
@@ -167,6 +181,7 @@ const precioEfectivo = computed(() =>
 const precioBase = computed(() =>
   formatCopDisplay(Number(props.servicio.price ?? 0))
 );
+const porcentaje = computed(() => promotionPercentDisplay(props.servicio));
 </script>
 
 <style scoped lang="scss">
@@ -174,6 +189,8 @@ const precioBase = computed(() =>
 .fila-servicio {
   position: relative;
   display: flex;
+  // La franja de la dueña (plan 9) va en su propia línea, bajo foto y texto.
+  flex-wrap: wrap;
   overflow: hidden;
   background: var(--m-carbon);
   border: var(--m-filete-grosor) solid var(--m-filete-oscuro);
@@ -187,9 +204,9 @@ const precioBase = computed(() =>
 
 /**
  * El marco de la foto, a canto vivo: la esquina la recorta el radio del
- * renglón. Se estira con el renglón (`align-self: stretch`) porque con las
- * acciones de la dueña apiladas el renglón pasa de 104 px y una foto fija
- * dejaría un hueco debajo; nunca baja de 104.
+ * renglón. Se estira con su línea (`align-self: stretch`) porque un nombre de
+ * dos líneas puede pasar de 104 px y una foto fija dejaría un hueco debajo;
+ * nunca baja de 104. La franja de la dueña va en otra línea y no lo estira.
  *
  * La foto va en absoluto dentro, y no como hija flexible con alto `auto`:
  * Cloudinary (`c_limit`) conserva la proporción, así que un retrato aportaba
@@ -221,6 +238,11 @@ const precioBase = computed(() =>
   object-position: center;
 }
 
+/*
+ * Sobre tinta, como el tablero: el hueco sin foto se distingue del carbón del
+ * renglón. El icono va en piedra (no es texto); el rótulo, en piedra clara:
+ * en piedra sobre carbón daba 2,6:1.
+ */
 .fila-servicio__sin-foto {
   box-sizing: border-box;
   display: flex;
@@ -228,6 +250,7 @@ const precioBase = computed(() =>
   align-items: center;
   justify-content: center;
   gap: 6px;
+  background: var(--m-tinta);
   color: var(--m-piedra);
 }
 
@@ -236,11 +259,31 @@ const precioBase = computed(() =>
   font-size: 8.5px;
   text-transform: uppercase;
   letter-spacing: var(--m-tracking-etiqueta);
+  color: var(--m-piedra-clara);
+}
+
+/* La rebaja sobre la foto: tinta sobre oro, 5,8:1 (la misma de la tarjeta). */
+.fila-servicio__promo {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: var(--m-radio-pildora);
+  background: var(--m-oro);
+  color: var(--m-tinta);
+  font-family: var(--m-font-sans);
+  font-size: 11px;
+  white-space: nowrap;
 }
 
 .fila-servicio__texto {
   box-sizing: border-box;
-  flex: 1 1 auto;
+  // Base 0: con `auto` un nombre largo pediría su ancho natural y, con
+  // `flex-wrap`, saltaría a otra línea en vez de partirse.
+  flex: 1 1 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -305,15 +348,16 @@ const precioBase = computed(() =>
   white-space: nowrap;
 }
 
-/** La rellena la fase E, en versión compacta. Por encima del botón estirado. */
+/**
+ * La franja de la dueña (plan 9, V2; la pinta `ServiceCardAdminActions` en
+ * versión compacta): su propia línea, a todo el ancho, bajo la foto y el
+ * texto. Por encima del botón estirado, que si no se comería sus toques.
+ */
 .fila-servicio__acciones {
   position: relative;
   z-index: 2;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 6px;
-  padding: 8px 8px 8px 0;
+  flex: 0 0 100%;
+  min-width: 0;
 }
 
 .fila-servicio__enlace {
