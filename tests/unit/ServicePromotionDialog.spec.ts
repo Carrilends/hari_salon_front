@@ -291,6 +291,68 @@ describe('ServicePromotionDialog · hoja inferior en móvil (V2)', () => {
   });
 });
 
+describe('ServicePromotionDialog · Enter, precio ausente y 100 %', () => {
+  it('Enter con un valor válido aplica, como el botón', async () => {
+    const wrapper = montar();
+
+    await wrapper.get('[data-test="porcentaje"]').setValue('25');
+    await wrapper.get('[data-test="porcentaje"]').trigger('keydown.enter');
+
+    expect(wrapper.emitted('ok')?.[0]).toEqual([25]);
+  });
+
+  it('Enter con un valor inválido no envía y deja el error a la vista', async () => {
+    const wrapper = montar();
+
+    await wrapper.get('[data-test="porcentaje"]').setValue('150');
+    await wrapper.get('[data-test="porcentaje"]').trigger('keydown.enter');
+
+    expect(wrapper.emitted('ok')).toBeUndefined();
+    expect(wrapper.find('[data-test="error-porcentaje"]').exists()).toBe(true);
+  });
+
+  it('sin precio de lista no pinta «$0» ni el «antes»', async () => {
+    const sinPrecio = { ...CORTE, price: undefined } as unknown as Service;
+    const wrapper = montar(sinPrecio);
+
+    expect(wrapper.get('[data-test="promo-servicio"]').text()).not.toContain(
+      '$'
+    );
+    await wrapper.get('[data-test="porcentaje"]').setValue('20');
+    expect(wrapper.find('[data-test="promo-precio-base"]').exists()).toBe(
+      false
+    );
+  });
+
+  it('al 100 % queda en $0 y enseña el de antes', async () => {
+    const wrapper = montar(CORTE);
+
+    await wrapper.get('[data-test="porcentaje"]').setValue('100');
+
+    expect(wrapper.get('[data-test="precio-resultante"]').text()).toContain(
+      '$0'
+    );
+    expect(wrapper.get('[data-test="promo-precio-base"]').text()).toBe(
+      'antes $45.000'
+    );
+  });
+
+  it('la caja se desplaza en pantallas bajas: overflow-y auto, nunca hidden', () => {
+    const fuente = readFileSync(
+      join(
+        __dirname,
+        '../../src/components/dialogs/ServicePromotionDialog.vue'
+      ),
+      'utf8'
+    );
+    const caja = /\.promo \{[^}]*\}/.exec(
+      fuente.slice(fuente.indexOf('<style'))
+    );
+    expect(caja?.[0]).toContain('overflow-y: auto;');
+    expect(caja?.[0]).not.toContain('overflow: hidden');
+  });
+});
+
 /**
  * La paleta: carbón, como los dos tableros que la dibujan (AdminMostradorMovil
  * y AdminDialogosCortos). El CSS no existe en Jest: se lee la fuente.

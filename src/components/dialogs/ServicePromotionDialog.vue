@@ -68,6 +68,7 @@
               :aria-invalid="valido ? 'false' : 'true'"
               aria-describedby="promo-ayuda"
               @input="alEscribir"
+              @keydown.enter.prevent="aplicar"
             />
             <span class="promo__signo" aria-hidden="true">%</span>
           </div>
@@ -80,7 +81,11 @@
               Queda en
               <span class="promo__precio">${{ precioResultante }}</span>
               <!-- El tachado solo se ve: el lector de pantalla oye «antes». -->
-              <span class="promo__precio-base" data-test="promo-precio-base">
+              <span
+                v-if="hayPrecioBase"
+                class="promo__precio-base"
+                data-test="promo-precio-base"
+              >
                 <span class="sr">antes</span>
                 ${{ precioBase }}
               </span>
@@ -225,9 +230,15 @@ const precioBase = computed(() =>
   formatCopDisplay(Number(props.service.price || 0))
 );
 
+/** Sin precio de lista no hay nada que enseñar ni que tachar: ni «$0». */
+const hayPrecioBase = computed(() => Number(props.service.price) > 0);
+
 /** «Cortes de dama · $38.000»; sin categoría, solo el precio. */
 const lineaServicio = computed(() =>
-  [etiquetaDeCategoria(props.service), `$${precioBase.value}`]
+  [
+    etiquetaDeCategoria(props.service),
+    hayPrecioBase.value ? `$${precioBase.value}` : '',
+  ]
     .filter(Boolean)
     .join(' · ')
 );
@@ -273,7 +284,10 @@ defineOptions({ name: 'ServicePromotionDialog' });
   pointer-events: all;
   box-sizing: border-box;
   width: min(500px, calc(100vw - 32px));
-  overflow: hidden;
+  /* No `hidden`: Quasar da a este `<div>` `overflow: auto` y un alto máximo;
+     con `hidden` el contenido se recorta en pantallas bajas y «Aplicar» queda
+     fuera de alcance. `auto` también recorta a la esquina redondeada. */
+  overflow-y: auto;
   border: var(--m-filete-grosor) solid var(--m-oro);
   border-radius: var(--m-radio-panel);
   background: var(--m-carbon);
