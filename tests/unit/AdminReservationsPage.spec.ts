@@ -490,6 +490,73 @@ describe('la bandeja · acciones (A2–A3)', () => {
   });
 });
 
+describe('la bandeja · el foco no se pierde', () => {
+  // Con el control enfocado fuera del documento, el foco cae al <body> y
+  // quien navega con teclado vuelve a empezar desde arriba: la lista lo recoge.
+  const montarEnDocumento = () =>
+    mount(AdminReservationsPage, {
+      attachTo: document.body,
+      global: { components: { QPage, QDialog } },
+    });
+  const enfocado = () => (document.activeElement as HTMLElement | null)?.id;
+
+  it('tras cancelar, el foco vuelve a la lista', async () => {
+    mockAdmin.cancel.mutateAsync.mockResolvedValue(undefined);
+    const w = montarEnDocumento();
+    await abrir(w, 'res-1');
+    await w.find('[data-test="cancelar-detalle"]').trigger('click');
+    const boton = w.find('[data-test="confirmar-cancelacion"]');
+    (boton.element as HTMLElement).focus();
+
+    await boton.trigger('click');
+    await flushPromises();
+
+    expect(enfocado()).toBe('bandeja-panel');
+    w.unmount();
+  });
+
+  it('si la fila confirmada sale de la pestaña, el foco pasa a la lista', async () => {
+    mockAdmin.confirm.mutateAsync.mockImplementation(async () => {
+      // La mutación espera al refresco: al volver, la lista ya es la nueva.
+      mockAdmin.query.data.value = conEstado('res-1', 'confirmada');
+    });
+    const w = montarEnDocumento();
+    const boton = w.find('[data-id="res-1"] [data-test="confirmar-fila"]');
+    (boton.element as HTMLElement).focus();
+
+    await boton.trigger('click');
+    await flushPromises();
+
+    expect(w.find('[data-id="res-1"]').exists()).toBe(false);
+    expect(enfocado()).toBe('bandeja-panel');
+    w.unmount();
+  });
+
+  it('si la reserva desaparece con el foco en la ficha, el foco pasa a la lista (Foco 1)', async () => {
+    const w = montarEnDocumento();
+    await abrir(w, 'res-1');
+    (w.find('[data-test="mover"]').element as HTMLElement).focus();
+
+    mockAdmin.query.data.value = bandeja().filter((r) => r.id !== 'res-1');
+    await flushPromises();
+
+    expect(enfocado()).toBe('bandeja-panel');
+    w.unmount();
+  });
+
+  it('sin acción de por medio no le roba el foco a nadie', async () => {
+    const w = montarEnDocumento();
+    const pestana = w.find('[data-test="pestana-todas"]');
+    (pestana.element as HTMLElement).focus();
+
+    mockAdmin.query.data.value = bandeja().filter((r) => r.id !== 'res-2');
+    await flushPromises();
+
+    expect(document.activeElement).toBe(pestana.element);
+    w.unmount();
+  });
+});
+
 describe('la bandeja · avisos fijados (A5)', () => {
   it('marca la bandeja abierta mientras está montada', () => {
     const w = montar();

@@ -72,6 +72,7 @@
 
       <div
         id="bandeja-panel"
+        ref="panelLista"
         class="bandeja__lista"
         role="tabpanel"
         :aria-labelledby="`pestana-${pestana}`"
@@ -247,7 +248,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+} from 'vue';
 import AvisosFijados from 'src/components/admin-reservas/AvisosFijados.vue';
 import CancelarReservaBandeja from 'src/components/admin-reservas/CancelarReservaBandeja.vue';
 import DetalleReserva from 'src/components/admin-reservas/DetalleReserva.vue';
@@ -349,10 +357,27 @@ const cancelarAbierto = ref(false);
 const errorCancelar = ref<string | null>(null);
 const moverAbierto = ref(false);
 
+const panelLista = ref<HTMLElement | null>(null);
+
+/**
+ * Si lo ocurrido se llevó el control enfocado (la fila salió de la pestaña, la
+ * ficha se soltó), el foco cae al `<body>` y quien usa el teclado vuelve a
+ * empezar desde arriba: lo recoge la lista. Con `forzar`, aunque el foco siga
+ * aún en un diálogo que se está cerrando. Sin `preventScroll`, enfocar la
+ * lista la desplazaría a la vista.
+ */
+async function recogerFoco(forzar = false) {
+  await nextTick();
+  const activo = document.activeElement;
+  const perdido = !activo || activo === document.body || !activo.isConnected;
+  if (forzar || perdido) panelLista.value?.focus({ preventScroll: true });
+}
+
 watch(seleccionada, (reserva) => {
   if (reserva) return;
   cancelarAbierto.value = false;
   moverAbierto.value = false;
+  void recogerFoco();
 });
 
 function ocupadaDe(id: string): AccionBandeja | null {
@@ -387,6 +412,7 @@ async function confirmar(id: string) {
   } finally {
     ocupada.value = null;
   }
+  await recogerFoco();
 }
 
 function pedirCancelar() {
@@ -408,6 +434,8 @@ async function cancelarSeleccionada() {
     await cancel.mutateAsync(objetivo.id);
     cancelarAbierto.value = false;
     seleccionadaId.value = null;
+    // El foco está en «Cancelar la cita», dentro de un diálogo que se cierra.
+    void recogerFoco(true);
   } catch (err) {
     const fallo = falloDeAccion(err, 'cancelar');
     errorCancelar.value = fallo.mensaje;
