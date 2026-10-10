@@ -702,6 +702,14 @@ const BOTONES_BANDEJA: Boton[] = [
   { archivo: 'components/admin-reservas/CancelarReservaBandeja.vue', clase: 'cancelar__boton' },
   { archivo: 'pages/AdminReservationsPage.vue', clase: 'bandeja__boton' },
   { archivo: 'pages/AdminReservationsPage.vue', clase: 'bandeja__aviso-cerrar' },
+  // Plan 7 — reseña y 404.
+  { archivo: 'components/resena/ResenaDialog.vue', clase: 'resena__cerrar', claro: true },
+  { archivo: 'components/resena/ResenaDialog.vue', clase: 'resena__cancelar', claro: true },
+  { archivo: 'components/resena/ResenaDialog.vue', clase: 'resena__enviar' },
+  { archivo: 'components/resena/ResenaDialog.vue', clase: 'resena__enlace', claro: true },
+  { archivo: 'pages/ErrorNotFound.vue', clase: 'pagina-404__atajo--enlace' },
+  { archivo: 'pages/ErrorNotFound.vue', clase: 'pagina-404__inicio' },
+  { archivo: 'pages/ErrorNotFound.vue', clase: 'pagina-404__whatsapp' },
 ];
 
 describe('plan 3 · cada botón de la bandeja cambia de color al pasar', () => {
@@ -753,5 +761,32 @@ describe('plan 3 · la bandeja · los botones anchos no encogen al pulsar', () =
     for (const lista of clases) {
       expect(lista).toContain('m-boton--ancho');
     }
+  });
+});
+
+describe('plan 7 · reseña y 404', () => {
+  it('«Enviar reseña» y «Cerrar» son anchos: se hunden 1 px', () => {
+    const plantilla = leer('components/resena/ResenaDialog.vue').split('<script')[0];
+    const clases = Array.from(plantilla.matchAll(/\sclass="([^"]*)"/g))
+      .map((c) => c[1].split(/\s+/))
+      .filter((lista) => lista.includes('resena__enviar'));
+
+    expect(clases.length).toBe(2);
+    for (const lista of clases) {
+      expect(lista).toContain('m-boton--ancho');
+    }
+  });
+
+  it('el verde de la 404 es un enlace con aspecto de botón', () => {
+    const plantilla = leer('pages/ErrorNotFound.vue').split('<script')[0];
+
+    expect(plantilla).toMatch(/class="pagina-404__whatsapp m-boton"/);
+  });
+
+  it('las tarjetas de la 404 se hunden como tarjetas, no como botones', () => {
+    const plantilla = leer('pages/ErrorNotFound.vue').split('<script')[0];
+    const tarjetas = plantilla.match(/class="pagina-404__atajo pagina-404__atajo--enlace m-tarjeta-pulsable"/g);
+
+    expect(tarjetas).toHaveLength(2);
   });
 });
