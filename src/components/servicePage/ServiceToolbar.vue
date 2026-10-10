@@ -185,7 +185,7 @@
         <button
           v-if="esAdmin"
           type="button"
-          class="barra__boton barra__boton--oro"
+          class="barra__boton barra__boton--oro barra__crear"
           :class="{ 'barra__boton--redondo': !muestraEtiquetas }"
           aria-label="Crear servicio"
           data-test="crear-servicio"
@@ -557,6 +557,12 @@ defineOptions({ name: 'ServiceToolbar' });
 
   .barra__acciones {
     margin-left: auto;
+  }
+
+  // Plan 9, V3: en móvil la dueña crea desde la barra fija de abajo
+  // (`MobileActionBar` en `ServicePage`); aquí sobraría un segundo «Crear».
+  .barra__crear {
+    display: none;
   }
 }
 

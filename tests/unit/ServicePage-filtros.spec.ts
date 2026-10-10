@@ -799,3 +799,65 @@ describe('ServicePage · lo que se lee de la fuente', () => {
     expect(PAGINA).toMatch(/Atajo del inicio con IDs de género no encontrados/);
   });
 });
+
+/**
+ * Plan 9, V3: la barra fija de móvil en `/services` es solo de la dueña, con
+ * «Crear servicio». A la clienta no se le pone: su «Reservar» es el de la
+ * cabecera del portal, y uno solo por pantalla.
+ */
+describe('ServicePage · la barra fija de la dueña', () => {
+  const comoDuena = () => {
+    mockAuth.isAdmin = true;
+    mockAuth.isLoggedIn = true;
+  };
+
+  it('a la dueña le pone la barra de crear, y pulsarla abre el alta', async () => {
+    comoDuena();
+    const wrapper = montar({ ancho: 390, alto: 844 });
+    const barra = wrapper.getComponent({ name: 'MobileActionBar' });
+
+    expect(barra.props('variante')).toBe('crear');
+
+    await barra.get('[data-test="crear-servicio"]').trigger('click');
+
+    expect(
+      wrapper.getComponent({ name: 'ServiceCreateEdit' }).props('modelValue')
+    ).toBe(true);
+  });
+
+  /** Foco de revisión 4. */
+  it('a una clienta no le pone ninguna barra', () => {
+    const wrapper = montar({ ancho: 390, alto: 844 });
+
+    expect(wrapper.findComponent({ name: 'MobileActionBar' }).exists()).toBe(
+      false
+    );
+  });
+
+  it('con la barra puesta, la página reserva sitio para ella', () => {
+    comoDuena();
+    const conBarra = montar({ ancho: 390, alto: 844 });
+    mockAuth.isAdmin = false;
+    mockAuth.isLoggedIn = false;
+    const sinBarra = montar({ ancho: 390, alto: 844 });
+
+    expect(conBarra.get('[data-test="pagina"]').classes()).toContain(
+      'mostrador--con-barra'
+    );
+    expect(sinBarra.get('[data-test="pagina"]').classes()).not.toContain(
+      'mostrador--con-barra'
+    );
+  });
+
+  /** Foco de revisión 3: el pie y el despeje del lanzador, por encima de la barra. */
+  it('el relleno inferior cuenta la barra y el despeje del lanzador', () => {
+    const pagina = readFileSync(
+      join(__dirname, '../../src/pages/ServicePage.vue'),
+      'utf8'
+    );
+
+    expect(pagina).toMatch(
+      /@media \(max-width: 699px\) \{[\s\S]*?\.mostrador--con-barra \{\s*padding-bottom: calc\(var\(--m-barra-movil-alto\) \+ var\(--m-flotante-despeje\)\);/
+    );
+  });
+});

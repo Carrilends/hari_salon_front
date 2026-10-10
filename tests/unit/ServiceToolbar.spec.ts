@@ -16,6 +16,8 @@ import { nextTick } from 'vue';
 import ServiceToolbar from 'src/components/servicePage/ServiceToolbar.vue';
 import { useOptionsStore } from 'src/stores/options-store';
 import type { Tag } from 'src/interfaces/tag';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 const PROPS_BASE = {
   total: 48,
@@ -314,5 +316,27 @@ describe('ServiceToolbar', () => {
     expect(wrapper.find('[data-test="buscador-overlay"]').exists()).toBe(false);
     jest.advanceTimersByTime(2000);
     expect(wrapper.emitted('update:busqueda')).toHaveLength(1);
+  });
+});
+
+/**
+ * Plan 9, V3 · foco de revisión 4: por debajo de 700 px la dueña crea desde la
+ * barra fija de abajo; un segundo «Crear servicio» en la cabecera de la lista
+ * sobraría. Se esconde con el mismo corte en el que aparece la barra.
+ */
+describe('ServiceToolbar · crear en móvil', () => {
+  it('por debajo de 700 px esconde su botón de crear', () => {
+    const fuente = readFileSync(
+      join(__dirname, '../../src/components/servicePage/ServiceToolbar.vue'),
+      'utf8'
+    );
+    const plantilla = fuente.split('<script')[0];
+    const desde = plantilla.indexOf('data-test="crear-servicio"');
+    const apertura = plantilla.lastIndexOf('<button', desde);
+
+    expect(plantilla.slice(apertura, desde)).toContain('barra__crear');
+    expect(fuente).toMatch(
+      /@media \(max-width: 699px\) \{[\s\S]*?\.barra__crear \{\s*display: none;/
+    );
   });
 });

@@ -1,5 +1,9 @@
 <template>
-  <q-page class="mostrador" :style-fn="alturaDelMostrador">
+  <q-page
+    class="mostrador"
+    :class="{ 'mostrador--con-barra': authStore.isAdmin }"
+    :style-fn="alturaDelMostrador"
+  >
     <ServiceToolbar
       class="mostrador__barra"
       :total="totalConocido"
@@ -78,6 +82,19 @@
       @update:services="fetchServices"
     />
     <service-create-edit v-model="dialogCreation" />
+
+    <!--
+      Plan 9, V3: en móvil la dueña crea desde la barra fija de abajo (la barra
+      de la lista esconde su botón por debajo de 700 px). A la clienta no se le
+      pone barra: su «Reservar» es el de la cabecera del portal, y uno solo.
+      `/services` se prerenderiza sin sesión, así que el HTML publicado no la
+      trae.
+    -->
+    <MobileActionBar
+      v-if="authStore.isAdmin"
+      variante="crear"
+      @crear-servicio="dialogCreation = true"
+    />
   </q-page>
 </template>
 
@@ -104,6 +121,7 @@ import {
   useFiltersStore,
 } from 'src/stores/filters-store';
 import serviceCreateEdit from 'src/components/dialogs/serviceCreateEdit.vue';
+import MobileActionBar from 'src/components/index/MobileActionBar.vue';
 
 import type { IndexSection } from 'src/constants/index-sections';
 import { useAuthStore } from 'src/stores/auth-store';
@@ -456,6 +474,12 @@ defineOptions({
 
   .mostrador__cuerpo {
     padding: 16px 0 8px;
+  }
+
+  // Plan 9, V3: con la barra de la dueña, el pie y el despeje del lanzador
+  // (que sube con ella) quedan por encima de la barra.
+  .mostrador--con-barra {
+    padding-bottom: calc(var(--m-barra-movil-alto) + var(--m-flotante-despeje));
   }
 }
 
