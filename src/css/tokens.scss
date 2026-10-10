@@ -236,4 +236,12 @@
   /// página hacia la izquierda. Los canales de `--m-tinta`, como las demás.
   /// No es color de texto: solo eleva el cajón.
   --m-sombra-cajon: -18px 0 44px rgba(22, 19, 15, 0.25);
+
+  /// Plan 7 — reseña y 404.
+
+  /// Subrayado del enlace rosa sobre tinta («o vuelve al inicio →» de la 404,
+  /// tablero Error404B): el rosa al 45 %. Mezclado sobre la tinta da 3,3:1
+  /// contra ella (calculado): se lee como filete. No es color de texto: el
+  /// texto va en `--m-rosa` (11,5:1 sobre tinta).
+  --m-filete-rosa-oscuro: rgba(248, 187, 208, 0.45);
 }

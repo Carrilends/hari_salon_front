@@ -158,6 +158,12 @@ const TRAZOS: Record<string, string[]> = {
     'M8.5 4v4M15.5 4v4',
     'M10 13.5l4 4M14 13.5l-4 4',
   ],
+  /** Tijeras: el atajo «Servicios» de la 404 (tablero Error404B). */
+  tijeras: [
+    'M6 4l12 12M18 4L6 16',
+    'M8.4 19a2.4 2.4 0 1 1-4.8 0 2.4 2.4 0 0 1 4.8 0',
+    'M20.4 19a2.4 2.4 0 1 1-4.8 0 2.4 2.4 0 0 1 4.8 0',
+  ],
 };
 
 const props = withDefaults(defineProps<{ nombre: string; tamano?: number }>(), {
