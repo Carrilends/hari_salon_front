@@ -14,7 +14,7 @@ import { join } from 'node:path';
  */
 const PAGINA = readFileSync(
   join(__dirname, '../../src/pages/PrivacyPolicyPage.vue'),
-  'utf8',
+  'utf8'
 );
 
 describe('Política de Tratamiento de Datos Personales', () => {
@@ -38,7 +38,9 @@ describe('Política de Tratamiento de Datos Personales', () => {
   it('declara que el asistente es voluntario y que se puede reservar sin él', () => {
     // El Capítulo II lo exige como contrapartida del tratamiento asistido: el
     // titular tiene derecho a no usar el canal conversacional.
-    expect(PAGINA).toContain('El uso del asistente conversacional es voluntario');
+    expect(PAGINA).toContain(
+      'El uso del asistente conversacional es voluntario'
+    );
   });
 
   it('dice qué NO recibe el proveedor de juicios', () => {
@@ -49,9 +51,9 @@ describe('Política de Tratamiento de Datos Personales', () => {
   it('las secciones están numeradas sin saltos ni repetidos', () => {
     // Insertar una sección en medio es justo la operación en la que se queda
     // un «5» duplicado y nadie lo ve.
-    const numeros = [...PAGINA.matchAll(/text-weight-bold">\s*(\d+)\./g)].map(
-      (m) => Number(m[1]),
-    );
+    const numeros = [
+      ...PAGINA.matchAll(/data-test="numero-seccion"\s*>\s*(\d+)\s*</g),
+    ].map((m) => Number(m[1]));
 
     expect(numeros.length).toBeGreaterThan(5);
     expect(numeros).toEqual(numeros.map((_n, i) => i + 1));
