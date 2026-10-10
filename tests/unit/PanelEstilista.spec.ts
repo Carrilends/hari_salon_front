@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { mount, RouterLinkStub } from '@vue/test-utils';
 import PanelEstilista from 'src/components/estilistas/PanelEstilista.vue';
 import { MENSAJE_CON_RESERVAS } from 'src/helpers/semana-estilistas';
@@ -240,5 +242,35 @@ describe('PanelEstilista · eliminar', () => {
     expect(
       panel.get('[data-test="confirmar-eliminar"]').attributes('disabled')
     ).toBeDefined();
+  });
+});
+
+describe('PanelEstilista · fix', () => {
+  it('Escape con la confirmación abierta solo la cancela', async () => {
+    const panel = montar();
+    await panel.get('[data-test="eliminar-estilista"]').trigger('click');
+
+    await panel
+      .get('[data-test="panel-estilista"]')
+      .trigger('keydown', { key: 'Escape' });
+
+    expect(panel.find('[data-test="confirmacion-eliminar"]').exists()).toBe(
+      false
+    );
+    expect(panel.emitted('cerrar')).toBeUndefined();
+
+    await panel
+      .get('[data-test="panel-estilista"]')
+      .trigger('keydown', { key: 'Escape' });
+    expect(panel.emitted('cerrar')).toHaveLength(1);
+  });
+
+  it('el enlace a Reservas mide al menos el mínimo táctil', () => {
+    const fuente = readFileSync(
+      join(__dirname, '../../src/components/estilistas/PanelEstilista.vue'),
+      'utf8'
+    );
+    const regla = /\.panel-estilista__enlace\s*\{([^}]*)\}/.exec(fuente);
+    expect(regla?.[1]).toContain('min-height: var(--m-tactil-min)');
   });
 });

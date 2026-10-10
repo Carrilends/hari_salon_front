@@ -4,7 +4,7 @@
     class="panel-estilista"
     data-test="panel-estilista"
     aria-labelledby="panel-estilista-titulo"
-    @keydown.esc="emit('cerrar')"
+    @keydown.esc="alEscape"
   >
     <form
       class="panel-estilista__formulario"
@@ -296,6 +296,15 @@ watch(
   }
 );
 
+/** Escape deshace primero el paso interior (la confirmación) y luego cierra el panel. */
+function alEscape() {
+  if (confirmando.value) {
+    confirmando.value = false;
+    return;
+  }
+  emit('cerrar');
+}
+
 function enviar() {
   const error = validarNombre(nombre.value);
   errorNombre.value = error;
@@ -500,6 +509,9 @@ defineOptions({ name: 'PanelEstilista' });
 }
 
 .panel-estilista__enlace {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--m-tactil-min);
   align-self: flex-start;
   margin-top: 10px;
   padding-bottom: 2px;
