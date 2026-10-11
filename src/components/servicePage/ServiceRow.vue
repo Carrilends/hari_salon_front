@@ -212,7 +212,7 @@ const porcentaje = computed(() => promotionPercentDisplay(props.servicio));
  * Cloudinary (`c_limit`) conserva la proporción, así que un retrato aportaba
  * su alto natural a la fila (2:3 → renglón de 158 px para todo el mundo, y los
  * renglones crecían a medida que cargaban las fotos). En absoluto no aporta
- * alto: lo decide el texto, o las acciones apiladas. Los cuatro lados a mano,
+ * alto: lo decide el texto, o la franja de acciones. Los cuatro lados a mano,
  * no `inset`, que Safari 13.1 y 14.0 descartan.
  *
  * La foto se ve entera (`contain`), centrada; lo que sobra del marco es carbón.

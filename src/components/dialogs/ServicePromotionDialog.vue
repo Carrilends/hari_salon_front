@@ -255,12 +255,18 @@ const foto = computed(() => {
   );
 });
 
+/** Un doble toque, o un segundo Enter durante el cierre, no resuelve dos veces. */
+let enviado = false;
+
 function aplicar() {
-  if (!valido.value) return;
+  if (!valido.value || enviado) return;
+  enviado = true;
   onDialogOK(porcentajeNumero.value);
 }
 
 function quitar() {
+  if (enviado) return;
+  enviado = true;
   emit('quitar');
   onDialogOK(0);
 }
@@ -401,8 +407,12 @@ defineOptions({ name: 'ServicePromotionDialog' });
 
 /* Cifra grande en oro sobre carbón: 4,8:1, y a 32 px es texto grande (≥ 3:1). */
 .promo__entrada {
-  width: 100px;
+  /* Ancho de tres cifras (1–100), pegado al «%»: sin hueco entre ambos. */
+  width: 3.2ch;
   min-height: 48px;
+  text-align: right;
+  -moz-appearance: textfield;
+  appearance: textfield;
   padding: 0;
   border: 0;
   background: transparent;
@@ -410,6 +420,13 @@ defineOptions({ name: 'ServicePromotionDialog' });
   font-family: var(--m-font-display);
   font-size: 32px;
   line-height: 1.1;
+}
+
+/* Se escribe a mano (1–100): la flecha nativa saldría clara sobre el carbón. */
+.promo__entrada::-webkit-inner-spin-button,
+.promo__entrada::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .promo__entrada:focus-visible {

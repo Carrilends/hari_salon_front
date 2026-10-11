@@ -114,6 +114,16 @@ describe('ServicePromotionDialog · poner promoción', () => {
     expect(wrapper.emitted('ok')?.[0]).toEqual([25]);
   });
 
+  it('dos toques seguidos en «Aplicar» resuelven una sola vez', async () => {
+    const wrapper = montar();
+
+    await wrapper.get('[data-test="porcentaje"]').setValue('25');
+    await wrapper.get('[data-test="aplicar"]').trigger('click');
+    await wrapper.get('[data-test="aplicar"]').trigger('click');
+
+    expect(wrapper.emitted('ok')).toHaveLength(1);
+  });
+
   it.each(['0', '101', '', '1e2'])(
     'no deja aplicar «%s», y lo dice junto al campo',
     async (escrito) => {
@@ -178,6 +188,16 @@ describe('ServicePromotionDialog · quitar promoción', () => {
 
     expect(wrapper.emitted('quitar')).toHaveLength(1);
     expect(wrapper.emitted('ok')?.[0]).toEqual([0]);
+  });
+
+  it('dos toques seguidos en «Quitar» resuelven una sola vez', async () => {
+    const wrapper = montar(EN_PROMOCION);
+
+    await wrapper.get('[data-test="quitar"]').trigger('click');
+    await wrapper.get('[data-test="quitar"]').trigger('click');
+
+    expect(wrapper.emitted('quitar')).toHaveLength(1);
+    expect(wrapper.emitted('ok')).toHaveLength(1);
   });
 });
 
@@ -418,6 +438,15 @@ describe('ServicePromotionDialog · el contrato visual', () => {
     );
     expect(ESTILOS).toMatch(
       /\.promo__entrada:focus-visible \{[^}]*outline: 2px solid var\(--m-hueso\);/
+    );
+  });
+
+  it('el número no enseña la flecha nativa clara y queda pegado al «%»', () => {
+    expect(ESTILOS).toMatch(
+      /\.promo__entrada \{[^}]*width: 3\.2ch;[^}]*text-align: right;[^}]*appearance: textfield;/
+    );
+    expect(ESTILOS).toMatch(
+      /\.promo__entrada::-webkit-inner-spin-button,\s*\.promo__entrada::-webkit-outer-spin-button \{[^}]*-webkit-appearance: none;/
     );
   });
 });

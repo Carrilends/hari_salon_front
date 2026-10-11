@@ -228,7 +228,6 @@ describe('ServiceCardAdminActions · estilos', () => {
     );
   });
 
-  /** Foco de revisión 5: «100 % · Quitar» en un tercio de 320 px. */
   /** Hueso sobre oro macizo da ~2,8:1, bajo el 3:1 del indicador de foco. */
   it('el foco de la promoción activa en la franja va en tinta, no en hueso', () => {
     expect(estilos).toMatch(
@@ -242,6 +241,7 @@ describe('ServiceCardAdminActions · estilos', () => {
     );
   });
 
+  /** Foco de revisión 5: «100 % · Quitar» en un tercio de 320 px. */
   it('un rótulo que no cabe se corta con puntos suspensivos, no desborda', () => {
     expect(estilos).toMatch(
       /\.acciones-admin__rotulo \{[^}]*min-width: 0;[^}]*overflow: hidden;[^}]*white-space: nowrap;[^}]*text-overflow: ellipsis;/
