@@ -1,14 +1,13 @@
 /**
- * El éxito dentro del cajón (B5). Antes, al registrar la reserva se abría
- * WhatsApp solo; ahora es un botón verde OPCIONAL con el mismo `wa.me` y el
- * mismo mensaje. Y no se promete ningún correo: el backend no lo envía.
+ * El éxito dentro del cajón (B5). Ya no ofrece «Avisar al salón por WhatsApp»
+ * (plan 06, F7): la reserva ya está en el sistema y la peluquería se entera
+ * sola; mandar el resumen a la línea del negocio, donde contesta el asistente,
+ * se leería como otra reserva. Y no se promete ningún correo: el backend no lo
+ * envía.
  */
 import { mount } from '@vue/test-utils';
 import PantallaExito from 'src/components/reserva/PantallaExito.vue';
 import type { ResumenExito } from 'src/components/reserva/tipos';
-
-const URL_WHATSAPP =
-  'https://wa.me/573208977471?text=%2AReserva%20-%20Hari%20Salon%2A';
 
 const RESUMEN: ResumenExito = {
   fechaTexto: 'Jueves 8 de octubre',
@@ -21,7 +20,6 @@ const RESUMEN: ResumenExito = {
   total: 85000,
   conSesion: true,
   avisoPorWhatsApp: false,
-  urlWhatsApp: URL_WHATSAPP,
 };
 
 const montar = (cambios: Partial<ResumenExito> = {}) =>
@@ -88,17 +86,12 @@ describe('PantallaExito', () => {
     ).not.toContain('con ');
   });
 
-  it('avisar al salón es un enlace a wa.me que se abre solo si lo pulsa', () => {
-    const abrir = jest.spyOn(window, 'open').mockImplementation(() => null);
-    const enlace = montar().get('[data-test="avisar-whatsapp"]');
+  it('no ofrece mandar el resumen por WhatsApp (plan 06, F7)', () => {
+    const wrapper = montar();
 
-    expect(enlace.element.tagName).toBe('A');
-    expect(enlace.attributes('href')).toBe(URL_WHATSAPP);
-    expect(enlace.attributes('target')).toBe('_blank');
-    expect(enlace.attributes('rel')).toBe('noopener');
-    expect(enlace.text()).toContain('Avisar al salón por WhatsApp');
-    expect(abrir).not.toHaveBeenCalled();
-    abrir.mockRestore();
+    expect(wrapper.find('[data-test="avisar-whatsapp"]').exists()).toBe(false);
+    expect(wrapper.html()).not.toContain('wa.me');
+    expect(wrapper.text()).not.toContain('Avisar al salón');
   });
 
   it('con sesión, «Ver mis reservas»', async () => {

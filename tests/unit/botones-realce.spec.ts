@@ -581,7 +581,6 @@ const BOTONES_RESERVA: Boton[] = [
   { archivo: 'components/reserva/PasoCuando.vue', clase: 'cuando__aviso-boton' },
   { archivo: 'components/reserva/PasoCuando.vue', clase: 'cuando__aviso-enlace', claro: true },
   { archivo: 'components/reserva/PasoCuando.vue', clase: 'cuando__reintentar', claro: true },
-  { archivo: 'components/reserva/PantallaExito.vue', clase: 'exito__whatsapp' },
   { archivo: 'components/reserva/PantallaExito.vue', clase: 'exito__seguir', claro: true },
   { archivo: 'components/reserva/PantallaExito.vue', clase: 'exito__principal' },
 ];
@@ -602,7 +601,6 @@ describe('plan 1 · cada botón del cajón de reserva cambia de color al pasar',
 
   it.each([
     ['components/reserva/PasoServicios.vue', 'bolsa__ver'],
-    ['components/reserva/PantallaExito.vue', 'exito__whatsapp'],
   ])('%s · %s lleva m-boton--ancho', (archivo, clase) => {
     const plantilla = leer(archivo).split('<script')[0];
     const clases = Array.from(plantilla.matchAll(/\sclass="([^"]*)"/g))
@@ -613,14 +611,6 @@ describe('plan 1 · cada botón del cajón de reserva cambia de color al pasar',
     for (const lista of clases) {
       expect(lista).toContain('m-boton--ancho');
     }
-  });
-
-  it('el enlace verde de WhatsApp lleva la clase común m-boton', () => {
-    const plantilla = leer('components/reserva/PantallaExito.vue').split(
-      '<script'
-    )[0];
-
-    expect(plantilla).toMatch(/class="exito__whatsapp m-boton m-boton--ancho"/);
   });
 });
 

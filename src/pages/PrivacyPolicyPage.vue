@@ -137,7 +137,7 @@
               >
             </li>
             <li>
-              <strong>Teléfono / WhatsApp:</strong>&nbsp;<a
+              <strong>Teléfono:</strong>&nbsp;<a
                 class="politica__enlace-texto"
                 href="tel:+573208977471"
                 >+57 320 897 7471</a
@@ -191,11 +191,13 @@
             <li>
               Número de teléfono,
               <strong>solo si el titular lo aporta</strong> al reservar, para
-              recibir los avisos de su cita por WhatsApp.
+              recibir los avisos de su cita por WhatsApp, o el número desde el
+              que escribe a la línea de WhatsApp del negocio.
             </li>
             <li>
               El <strong>texto de la conversación</strong>, si el titular decide
-              usar el asistente del portal.
+              usar el asistente, en el portal o en la línea de WhatsApp del
+              negocio.
             </li>
           </ul>
           <p>
@@ -246,8 +248,8 @@
             </li>
             <li>
               Atender sus consultas sobre servicios, disponibilidad y reservas a
-              través del <strong>asistente del portal</strong>, cuyo uso es
-              voluntario.
+              través del <strong>asistente</strong>, en el portal o en la línea
+              de WhatsApp del negocio, cuyo uso es voluntario.
             </li>
             <li>
               Cumplir con las obligaciones legales, contables y contractuales
@@ -291,14 +293,19 @@
               restablecimiento de contraseña y los avisos de la cita.
             </li>
             <li>
-              <strong>Meta</strong> — avisos por la API de WhatsApp Business.
-              Recibe el número de teléfono y el contenido del aviso: fecha,
-              estilista y servicios. No recibe el precio ni datos de terceros.
+              <strong>Meta</strong> — mensajería por la API de WhatsApp
+              Business. Recibe el número de teléfono y el contenido de los
+              avisos de la cita: fecha, estilista y servicios. Si el titular
+              escribe a la línea de WhatsApp del negocio, Meta transporta
+              también esa conversación. Los avisos no llevan el precio ni datos
+              de terceros.
             </li>
             <li>
               <strong>Google (Gemini)</strong> — proveedor del asistente
-              conversacional. Recibe el texto de la conversación de quien abre
-              el chat, para redactar la respuesta.
+              conversacional. Recibe el texto de la conversación de quien habla
+              con el asistente, en el portal o en la línea de WhatsApp del
+              negocio, para redactar la respuesta. El portal no le envía el
+              número desde el que se escribe.
             </li>
             <li>
               <strong>TypeSafe</strong> — verificación de la reserva antes de
@@ -318,10 +325,11 @@
           </p>
           <p class="politica__nota">
             El uso del asistente conversacional es voluntario: el titular puede
-            reservar por el formulario del portal o por WhatsApp sin abrir el
-            chat, y la primera respuesta del asistente advierte de que se trata
-            de un sistema automático y de que el mensaje se procesa con un
-            proveedor ubicado fuera del país.
+            reservar por el formulario del portal sin conversar con él. Quien
+            escribe a la línea de WhatsApp del negocio conversa con el
+            asistente. En los dos canales, la primera respuesta advierte de que
+            se trata de un sistema automático y de que el mensaje se procesa con
+            un proveedor ubicado fuera del país.
           </p>
         </section>
 
@@ -455,8 +463,8 @@ import { useSeo } from 'src/composables/seo/useSeo';
  * `tests/unit/PrivacyPolicyPage.spec.ts`). Si cambia, sube `POLICY_VERSION`, la
  * fecha y `tests/unit/fixtures/politica-texto.ts` en el mismo commit.
  */
-const POLICY_VERSION = '1.2';
-const LAST_UPDATED_LABEL = '10 de octubre de 2026';
+const POLICY_VERSION = '1.3';
+const LAST_UPDATED_LABEL = '14 de octubre de 2026';
 
 /** El índice. Los títulos son los mismos de cada `<h2>` (lo vigila la prueba). */
 const SECCIONES = [

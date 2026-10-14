@@ -398,7 +398,7 @@ describe('useCajonReserva · éxito (B5)', () => {
     abrir.mockRestore();
   });
 
-  it('el resumen nombra a quien asignó el sistema y lleva el wa.me de siempre', async () => {
+  it('el resumen nombra a quien asignó el sistema y ya no lleva wa.me (plan 06, F7)', async () => {
     mockEnviar.mockResolvedValue(CREADA);
     const { cajon } = montar();
     await hastaDatos(cajon);
@@ -416,12 +416,7 @@ describe('useCajonReserva · éxito (B5)', () => {
     ]);
     expect(resumen?.conSesion).toBe(false);
     expect(resumen?.avisoPorWhatsApp).toBe(true);
-    expect(resumen?.urlWhatsApp).toMatch(
-      /^https:\/\/wa\.me\/573208977471\?text=/
-    );
-    expect(decodeURIComponent(resumen?.urlWhatsApp ?? '')).toContain(
-      '*Fecha y Hora:* Jueves 8 de octubre de 2026 a las 10:30'
-    );
+    expect(resumen).not.toHaveProperty('urlWhatsApp');
   });
 
   it('si el sistema asignó la predeterminada, no nombra a ninguna estilista', async () => {
@@ -437,10 +432,8 @@ describe('useCajonReserva · éxito (B5)', () => {
 
     await cajon.confirmar();
 
-    const mensaje = decodeURIComponent(cajon.resumen.value?.urlWhatsApp ?? '');
     expect(cajon.resumen.value?.estilista).toBeNull();
-    expect(mensaje).not.toContain('Sin prefencia');
-    expect(mensaje).not.toContain('*Estilista:*');
+    expect(JSON.stringify(cajon.resumen.value)).not.toContain('Sin prefencia');
   });
 
   it('invalida horas, ocupación y «mis reservas»', async () => {

@@ -60,7 +60,7 @@ describe('Política de Tratamiento de Datos Personales', () => {
   });
 
   it('la versión y la fecha de la política avanzan cuando cambia el contenido', () => {
-    expect(PAGINA).toContain("POLICY_VERSION = '1.2'");
-    expect(PAGINA).toContain('10 de octubre de 2026');
+    expect(PAGINA).toContain("POLICY_VERSION = '1.3'");
+    expect(PAGINA).toContain('14 de octubre de 2026');
   });
 });
