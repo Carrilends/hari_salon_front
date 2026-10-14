@@ -252,6 +252,11 @@
               de WhatsApp del negocio, cuyo uso es voluntario.
             </li>
             <li>
+              Si el titular pide hablar con una persona en la línea de WhatsApp
+              del negocio, y solo entonces, avisar a la responsable por WhatsApp
+              con su nombre, su número y el motivo, para que lo contacte.
+            </li>
+            <li>
               Cumplir con las obligaciones legales, contables y contractuales
               aplicables al negocio.
             </li>
@@ -297,8 +302,9 @@
               Business. Recibe el número de teléfono y el contenido de los
               avisos de la cita: fecha, estilista y servicios. Si el titular
               escribe a la línea de WhatsApp del negocio, Meta transporta
-              también esa conversación. Los avisos no llevan el precio ni datos
-              de terceros.
+              también esa conversación y, si pide hablar con una persona, el
+              aviso a la responsable con su nombre, su número y el motivo. Los
+              avisos de la cita no llevan el precio ni datos de terceros.
             </li>
             <li>
               <strong>Google (Gemini)</strong> — proveedor del asistente

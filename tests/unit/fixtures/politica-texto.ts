@@ -108,6 +108,11 @@ export const TEXTO_LEGAL: PiezaLegal[] = [
   {
     etiqueta: 'li',
     texto:
+      'Si el titular pide hablar con una persona en la línea de WhatsApp del negocio, y solo entonces, avisar a la responsable por WhatsApp con su nombre, su número y el motivo, para que lo contacte.',
+  },
+  {
+    etiqueta: 'li',
+    texto:
       'Cumplir con las obligaciones legales, contables y contractuales aplicables al negocio.',
   },
   {
@@ -128,7 +133,7 @@ export const TEXTO_LEGAL: PiezaLegal[] = [
   {
     etiqueta: 'li',
     texto:
-      'Meta — mensajería por la API de WhatsApp Business. Recibe el número de teléfono y el contenido de los avisos de la cita: fecha, estilista y servicios. Si el titular escribe a la línea de WhatsApp del negocio, Meta transporta también esa conversación. Los avisos no llevan el precio ni datos de terceros.',
+      'Meta — mensajería por la API de WhatsApp Business. Recibe el número de teléfono y el contenido de los avisos de la cita: fecha, estilista y servicios. Si el titular escribe a la línea de WhatsApp del negocio, Meta transporta también esa conversación y, si pide hablar con una persona, el aviso a la responsable con su nombre, su número y el motivo. Los avisos de la cita no llevan el precio ni datos de terceros.',
   },
   {
     etiqueta: 'li',
