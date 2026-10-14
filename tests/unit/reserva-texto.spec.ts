@@ -7,7 +7,6 @@ import {
   cantidadDeServicios,
   diaYNumero,
   duracionAprox,
-  fechaHoraWhatsApp,
   fechaLarga,
   franjaTexto,
   horaCorta,
@@ -73,9 +72,4 @@ describe('reserva-texto', () => {
     expect(iniciales('')).toBe('');
   });
 
-  it('arma la fecha del mensaje de WhatsApp', () => {
-    expect(fechaHoraWhatsApp('2026/10/08', '10:30')).toBe(
-      'Jueves 8 de octubre de 2026 a las 10:30'
-    );
-  });
 });

@@ -127,13 +127,13 @@ describe('Política · el texto legal', () => {
 
     const ficha = wrapper.get('[data-test="version-ficha"]');
     expect(ficha.get('[data-test="version-etiqueta"]').text()).toBe(
-      'Versión 1.2'
+      'Versión 1.3'
     );
     expect(ficha.get('[data-test="version-fecha"]').text()).toBe(
-      'Actualizada el 10 de octubre de 2026'
+      'Actualizada el 14 de octubre de 2026'
     );
     expect(normal(wrapper.get('[data-test="version-linea"]').text())).toBe(
-      'Versión 1.2 · actualizada el 10 de octubre de 2026'
+      'Versión 1.3 · actualizada el 14 de octubre de 2026'
     );
   });
 });

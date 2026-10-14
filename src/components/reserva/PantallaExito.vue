@@ -49,19 +49,6 @@
         </p>
       </article>
 
-      <a
-        class="exito__whatsapp m-boton m-boton--ancho"
-        data-test="avisar-whatsapp"
-        :href="resumen.urlWhatsApp"
-        target="_blank"
-        rel="noopener"
-      >
-        <StrokeIcon nombre="whatsapp" :tamano="20" />
-        Avisar al salón por WhatsApp
-      </a>
-      <p class="exito__opcional">
-        Opcional: abre WhatsApp con el resumen de tu cita.
-      </p>
     </div>
 
     <footer class="exito__pie">
@@ -105,9 +92,10 @@ import { precioTexto } from 'src/helpers/reserva-texto';
  * El éxito dentro del cajón (B5). Es una foto fija de la reserva: la bolsa ya
  * se vació al llegar aquí, así que todo sale de `resumen`.
  *
- * WhatsApp ya no se abre solo: el botón verde es el mismo `wa.me` de antes
- * (`whatsappBooking.ts`) y la clienta decide. Es un enlace de verdad, no una
- * ventana abierta desde código: el navegador no lo trata como emergente.
+ * Ya no ofrece «Avisar al salón por WhatsApp» (plan 06, F7): la reserva ya
+ * está en el sistema y la peluquería se entera sola (correo, panel y su
+ * WhatsApp). Mandar el resumen a la línea del negocio, donde ahora contesta el
+ * asistente, se leería como una reserva nueva.
  */
 defineOptions({ name: 'PantallaExito' });
 
@@ -259,29 +247,6 @@ onMounted(() => {
   font-size: 19px;
 }
 
-.exito__whatsapp {
-  min-height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 22px;
-  border-radius: var(--m-radio-pildora);
-  background: var(--m-whatsapp);
-  color: var(--m-whatsapp-texto);
-  font-family: var(--m-font-sans);
-  font-size: 14px;
-  font-weight: 500;
-  text-decoration: none;
-}
-
-.exito__opcional {
-  margin: 8px 0 0;
-  font-size: 12px;
-  color: var(--m-piedra);
-  text-align: center;
-}
-
 .exito__pie {
   flex-shrink: 0;
   min-height: 84px;
@@ -320,7 +285,6 @@ onMounted(() => {
   cursor: pointer;
 }
 
-.exito__whatsapp:focus-visible,
 .exito__seguir:focus-visible,
 .exito__principal:focus-visible {
   outline: 2px solid var(--m-tinta);
@@ -328,10 +292,6 @@ onMounted(() => {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .exito__whatsapp:hover {
-    background: var(--m-whatsapp-realce);
-  }
-
   .exito__seguir:hover {
     color: var(--m-tinta);
   }

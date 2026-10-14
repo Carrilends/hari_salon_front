@@ -48,8 +48,8 @@ describe('los componentes no vuelven a incrustar el número', () => {
 
   it.each([
     ['components/dialogs/ourContact.vue'],
-    // El `wa.me` de la reserva se mudó de `bookingDialog.vue` al cajón (plan 1).
-    ['composables/booking/useCajonReserva.ts'],
+    // El cajón ya no lleva `wa.me` (plan 06, F7): su vigilancia está en
+    // `useCajonReserva.spec.ts`.
   ])('%s lo toma de `whatsapp-phone` y no lo escribe', (ruta) => {
     const texto = fuente(ruta);
 

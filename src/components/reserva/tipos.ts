@@ -31,6 +31,4 @@ export interface ResumenExito {
   conSesion: boolean;
   /** Dejó teléfono: el backend le escribe por WhatsApp (`reservation.created`). */
   avisoPorWhatsApp: boolean;
-  /** El mismo `wa.me` de antes, con el mismo mensaje. Solo se abre si lo pulsa. */
-  urlWhatsApp: string;
 }

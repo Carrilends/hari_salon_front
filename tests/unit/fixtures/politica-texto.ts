@@ -3,6 +3,9 @@
  * `PrivacyPolicyPage.vue` vigente el 2026-10-09 —versión 1.1—, sin etiquetas y
  * con los espacios colapsados. Cada pieza es un `<p>` o un `<li>` de las
  * secciones, en orden. La versión 1.2 (2026-10-10) solo corrigió el teléfono.
+ * La 1.3 (plan 06, F7) dice que el asistente contesta también en la línea de
+ * WhatsApp del negocio: qué ven Meta y Gemini, y que el teléfono de contacto
+ * del responsable ya no es el de WhatsApp.
  *
  * Aquí se fija la forma del teléfono, no sus dígitos: que sea el de
  * `SALON_PHONE` lo fija `PrivacyPolicyPage.spec.ts`. Si la política cambia de
@@ -31,7 +34,7 @@ export const TEXTO_LEGAL: PiezaLegal[] = [
   },
   { etiqueta: 'li', texto: 'NIT: 35413608' },
   { etiqueta: 'li', texto: 'Correo electrónico: lcarrionalvarez@gmail.com' },
-  { etiqueta: 'li', texto: /^Teléfono \/ WhatsApp: \+57 \d{3} \d{3} \d{4}$/ },
+  { etiqueta: 'li', texto: /^Teléfono: \+57 \d{3} \d{3} \d{4}$/ },
   {
     etiqueta: 'p',
     texto:
@@ -56,12 +59,12 @@ export const TEXTO_LEGAL: PiezaLegal[] = [
   {
     etiqueta: 'li',
     texto:
-      'Número de teléfono, solo si el titular lo aporta al reservar, para recibir los avisos de su cita por WhatsApp.',
+      'Número de teléfono, solo si el titular lo aporta al reservar, para recibir los avisos de su cita por WhatsApp, o el número desde el que escribe a la línea de WhatsApp del negocio.',
   },
   {
     etiqueta: 'li',
     texto:
-      'El texto de la conversación, si el titular decide usar el asistente del portal.',
+      'El texto de la conversación, si el titular decide usar el asistente, en el portal o en la línea de WhatsApp del negocio.',
   },
   {
     etiqueta: 'p',
@@ -100,7 +103,7 @@ export const TEXTO_LEGAL: PiezaLegal[] = [
   {
     etiqueta: 'li',
     texto:
-      'Atender sus consultas sobre servicios, disponibilidad y reservas a través del asistente del portal, cuyo uso es voluntario.',
+      'Atender sus consultas sobre servicios, disponibilidad y reservas a través del asistente, en el portal o en la línea de WhatsApp del negocio, cuyo uso es voluntario.',
   },
   {
     etiqueta: 'li',
@@ -125,12 +128,12 @@ export const TEXTO_LEGAL: PiezaLegal[] = [
   {
     etiqueta: 'li',
     texto:
-      'Meta — avisos por la API de WhatsApp Business. Recibe el número de teléfono y el contenido del aviso: fecha, estilista y servicios. No recibe el precio ni datos de terceros.',
+      'Meta — mensajería por la API de WhatsApp Business. Recibe el número de teléfono y el contenido de los avisos de la cita: fecha, estilista y servicios. Si el titular escribe a la línea de WhatsApp del negocio, Meta transporta también esa conversación. Los avisos no llevan el precio ni datos de terceros.',
   },
   {
     etiqueta: 'li',
     texto:
-      'Google (Gemini) — proveedor del asistente conversacional. Recibe el texto de la conversación de quien abre el chat, para redactar la respuesta.',
+      'Google (Gemini) — proveedor del asistente conversacional. Recibe el texto de la conversación de quien habla con el asistente, en el portal o en la línea de WhatsApp del negocio, para redactar la respuesta. El portal no le envía el número desde el que se escribe.',
   },
   {
     etiqueta: 'li',
@@ -145,7 +148,7 @@ export const TEXTO_LEGAL: PiezaLegal[] = [
   {
     etiqueta: 'p',
     texto:
-      'El uso del asistente conversacional es voluntario: el titular puede reservar por el formulario del portal o por WhatsApp sin abrir el chat, y la primera respuesta del asistente advierte de que se trata de un sistema automático y de que el mensaje se procesa con un proveedor ubicado fuera del país.',
+      'El uso del asistente conversacional es voluntario: el titular puede reservar por el formulario del portal sin conversar con él. Quien escribe a la línea de WhatsApp del negocio conversa con el asistente. En los dos canales, la primera respuesta advierte de que se trata de un sistema automático y de que el mensaje se procesa con un proveedor ubicado fuera del país.',
   },
   {
     etiqueta: 'p',

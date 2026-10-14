@@ -120,13 +120,3 @@ export function iniciales(nombre: string): string {
     .map((parte) => parte.charAt(0).toUpperCase())
     .join('');
 }
-
-/**
- * La fecha del mensaje de WhatsApp (`generateBookingWhatsAppMessage` la recibe
- * ya escrita): 'Jueves 8 de octubre de 2026 a las 10:30'.
- */
-export function fechaHoraWhatsApp(fecha: string, hora: string): string {
-  const p = partesDeFecha(fecha);
-  if (!p) return '';
-  return `${fechaLarga(fecha)} de ${p.anio} a las ${horaCorta(hora)}`;
-}

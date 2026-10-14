@@ -212,9 +212,8 @@ describe('CajonReserva', () => {
     expect(wrapper.find('[data-test="pantalla-exito"]').exists()).toBe(true);
     expect(wrapper.find('[data-test="indicador-pasos"]').exists()).toBe(false);
     expect(abrir).not.toHaveBeenCalled();
-    expect(
-      wrapper.get('[data-test="avisar-whatsapp"]').attributes('href')
-    ).toMatch(/^https:\/\/wa\.me\/573208977471\?text=/);
+    // Plan 06, F7: el éxito ya no ofrece mandar el resumen por WhatsApp.
+    expect(wrapper.find('[data-test="avisar-whatsapp"]').exists()).toBe(false);
     expect(useBookStore().bookings).toHaveLength(0);
     abrir.mockRestore();
   });

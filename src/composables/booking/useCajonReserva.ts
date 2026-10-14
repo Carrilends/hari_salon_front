@@ -24,7 +24,6 @@ import {
   type ErroresDatos,
 } from 'src/helpers/reserva-envio';
 import {
-  fechaHoraWhatsApp,
   fechaLarga,
   franjaTexto,
   horaCorta,
@@ -35,11 +34,6 @@ import {
   type SalonNowParts,
 } from 'src/helpers/businessHours';
 import { effectiveServiceUnitPrice } from 'src/helpers/service-promotion';
-import {
-  buildWhatsAppUrl,
-  generateBookingWhatsAppMessage,
-} from 'src/helpers/whatsappBooking';
-import { WHATSAPP_PHONE } from 'src/constants/whatsapp-phone';
 import type {
   AvisoDisponibilidad,
   CitaElegida,
@@ -100,8 +94,8 @@ function ahoraDelServidor(
  * éxito. Las piezas visuales son presentacionales; todo lo que decide vive
  * aquí, y lo que se manda al backend, en `reserva-envio.ts`.
  *
- * Contiene el `wa.me` del salón (`WHATSAPP_PHONE`), pero nunca lo abre: lo
- * deja en el resumen para el botón opcional del éxito (B5).
+ * Ya no arma ningún `wa.me` (plan 06, F7): el éxito dejó de ofrecer «Avisar al
+ * salón por WhatsApp», porque la reserva ya está en el sistema.
  */
 export function useCajonReserva(abierto: Ref<boolean>) {
   const bolsa = useBookStore();
@@ -485,13 +479,6 @@ export function useCajonReserva(abierto: Ref<boolean>) {
     estilista: string | null,
     sesion: boolean
   ): ResumenExito {
-    const mensaje = generateBookingWhatsAppMessage({
-      bookings: lineas.value,
-      bookingsCost: total.value,
-      bookingsDuration: duracion.value,
-      formattedDateTime: fechaHoraWhatsApp(f, h),
-      stylistName: estilista ?? undefined,
-    });
     return {
       fechaTexto: fechaLarga(f),
       franja: franjaTexto(h, duracion.value),
@@ -504,7 +491,6 @@ export function useCajonReserva(abierto: Ref<boolean>) {
       total: total.value,
       conSesion: sesion,
       avisoPorWhatsApp: telefono.value.trim() !== '',
-      urlWhatsApp: buildWhatsAppUrl(WHATSAPP_PHONE, mensaje),
     };
   }
 
