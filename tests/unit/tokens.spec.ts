@@ -230,3 +230,20 @@ describe('plan 9 · el rosa de «Borrar» sobre tinta', () => {
     expect(valorDe('m-peligro')).toBe('#8e3b5c');
   });
 });
+
+/**
+ * Paleta A de servicios (2026-10-11): el marco claro de las fotos de la lista.
+ * Lleva su contraste con el único texto que va encima.
+ */
+describe('paleta A · el marco claro de las fotos', () => {
+  it('declara el marco arena', () => {
+    expect(valorDe('m-foto-marco-claro')).toBe('#efe7dc');
+  });
+
+  it('anota el contraste de la piedra encima', () => {
+    const [, comentario] =
+      TOKENS.match(/((?:\s*\/\/\/[^\n]*\n)+)\s*--m-foto-marco-claro:/) ?? [];
+
+    expect(comentario).toMatch(/4,8:1/);
+  });
+});

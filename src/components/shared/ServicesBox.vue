@@ -110,12 +110,24 @@ const props = defineProps({
   },
   /**
    * `claro` (defecto) es el de crear/editar, que vive sobre tarjeta blanca;
-   * `oscuro` es el del filtro, que vive sobre tinta. El defecto NO se cambia:
-   * `serviceCreateEdit.vue` monta este componente sin pasar nada.
+   * `oscuro` es el de la hoja de filtros de móvil, que vive sobre tinta. El
+   * carril de escritorio también es `claro` desde la paleta A (2026-10-11).
+   * El defecto NO se cambia: `serviceCreateEdit.vue` monta este componente sin
+   * pasar nada.
    */
   variante: {
     type: String,
     default: 'claro',
+  },
+  /**
+   * Nombre del grupo de radios. Sin él se deriva de la variante. Lo pasa el
+   * filtro: su caja y la de crear/editar son las dos claras y conviven en
+   * `/services` (la dueña abre el formulario con el carril montado), y con el
+   * mismo `name` sus radios serían un solo grupo.
+   */
+  grupo: {
+    type: String,
+    default: '',
   },
   /**
    * Pinta su propia X de «quitar la categoría». Los filtros la apagan y la
@@ -153,10 +165,11 @@ const haySeleccion = computed(
  * El `name` agrupa los radios para que las flechas del teclado funcionen. Se
  * deriva de la variante y no de un contador ni de un aleatorio: tiene que valer
  * lo mismo en el prerenderizado de `build:ssg` y en el navegador, o la
- * hidratación avisa. Dos cajas de la misma variante no coexisten (el carril y la
- * hoja se excluyen por ancho; crear/editar es la clara).
+ * hidratación avisa. Las dos claras sí coexisten (el carril y crear/editar):
+ * por eso el filtro pasa su propio `grupo`. El carril y la hoja se excluyen
+ * por ancho y comparten el suyo.
  */
-const grupoPrincipal = `caja-principal-${props.variante}`;
+const grupoPrincipal = props.grupo || `caja-principal-${props.variante}`;
 
 onMounted(async () => {
   if (props.isEditMode && props.initialSelectedIds?.length > 0) {
@@ -334,6 +347,12 @@ defineExpose({ clear, hydrateFromIds, resetLocalState });
 .caja--claro .caja__titulo,
 .caja--claro .caja__limpiar {
   color: var(--m-piedra);
+}
+
+// El radio marcado, en oro profundo: el oro claro da 2,8:1 sobre claro y no
+// llega al 3:1 de un control.
+.caja--claro .caja__radio input {
+  accent-color: var(--m-oro-profundo);
 }
 
 .caja--claro .caja__filete {

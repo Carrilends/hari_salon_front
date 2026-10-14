@@ -196,14 +196,21 @@ const precioBase = computed(() =>
  * Medidas del lienzo (tablero «Servicios · mostrador en tinta»): 252 px de alto,
  * filete de oro al 35 %, radio de 3 px y la foto a sangre. Nada de bloque de
  * texto debajo: la tarjeta **es** la foto.
+ *
+ * Paleta A (2026-10-11): la lista va sobre hueso, así que el marco es claro
+ * (filete claro, arena donde la foto no llega) y el brillo de carga corre de
+ * arena a nieve. El velo del texto sigue siendo tinta: es lo que hace legible
+ * el hueso sobre cualquier foto.
  */
 .tarjeta-servicio {
+  --m-foto-fondo: var(--m-foto-marco-claro);
+  --m-foto-brillo: var(--m-nieve);
   position: relative;
   height: 252px;
   overflow: hidden;
-  border: var(--m-filete-grosor) solid var(--m-filete-oscuro);
+  border: var(--m-filete-grosor) solid var(--m-filete);
   border-radius: var(--m-radio-tarjeta);
-  background: var(--m-carbon);
+  background: var(--m-foto-marco-claro);
 }
 
 .tarjeta-servicio:hover,
@@ -213,8 +220,8 @@ const precioBase = computed(() =>
 
 /**
  * La foto entera, centrada, nunca recortada: lo que sobra del marco se pinta
- * en carbón, el equivalente cálido del fondo gris del diseño viejo. Recortar
- * le quitaba la cabeza a un retrato en una tarjeta apaisada.
+ * en arena. Recortar le quitaba la cabeza a un retrato en una tarjeta
+ * apaisada.
  */
 .tarjeta-servicio__foto {
   display: block;
@@ -222,13 +229,12 @@ const precioBase = computed(() =>
   height: 100%;
   object-fit: contain;
   object-position: center;
-  background: var(--m-carbon);
+  background: var(--m-foto-marco-claro);
 }
 
 /**
- * Sin foto no se sirve ninguna imagen (D-B2): un marcador gris claro sobre una
- * tarjeta oscura se lee como foto rota, y además sería una petición de red para
- * no decir nada.
+ * Sin foto no se sirve ninguna imagen (D-B2): sería una petición de red para no
+ * decir nada. Icono y rótulo en piedra sobre arena (4,8:1).
  */
 .tarjeta-servicio__sin-foto {
   position: absolute;

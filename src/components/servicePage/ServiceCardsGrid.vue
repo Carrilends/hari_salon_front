@@ -155,6 +155,7 @@ const muestraVacio = computed(
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: var(--m-tracking-etiqueta);
-  color: var(--m-oro);
+  // Sobre hueso: el oro claro daría 2,8:1.
+  color: var(--m-oro-profundo);
 }
 </style>

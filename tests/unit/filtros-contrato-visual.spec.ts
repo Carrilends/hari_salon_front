@@ -133,3 +133,59 @@ describe('contrato visual de los filtros', () => {
     expect(fuente(ARCHIVOS['ServiceFilterFields.vue'])).toMatch(/var\(--m-tactil-min\)/);
   });
 });
+
+/**
+ * Paleta A (2026-10-11): el carril de escritorio va sobre hueso y la hoja de
+ * móvil sigue sobre tinta. Los campos y el árbol se pintan según su variante.
+ */
+describe('paleta A · el carril en claro, la hoja en oscuro', () => {
+  const campos = fuente(ARCHIVOS['ServiceFilterFields.vue']);
+  const carril = fuente(ARCHIVOS['ServiceFilterRail.vue']);
+  const hoja = fuente(ARCHIVOS['serviceFilterDialog.vue']);
+  const caja = fuente(ARCHIVOS['ServicesBox.vue']);
+
+  it('el carril pide la variante clara; la hoja se queda en la oscura por defecto', () => {
+    expect(carril).toMatch(/<service-filter-fields[^>]*variante="claro"/);
+    expect(hoja).not.toMatch(/variante="claro"/);
+    expect(campos).toMatch(/\{ variante: 'oscuro' \}/);
+  });
+
+  it('los campos pasan su variante al árbol de categorías', () => {
+    expect(campos).toMatch(/<services-box[^>]*:variante="variante"/);
+  });
+
+  it('sobre hueso el carril usa filetes claros y el canal claro del riel', () => {
+    expect(carril).toMatch(
+      /\.carril \{[^}]*border-right: var\(--m-filete-grosor\) solid var\(--m-filete\);[^}]*--m-riel-canal: var\(--m-riel-canal-claro\);/
+    );
+    expect(carril).not.toMatch(/var\(--m-filete-oscuro\)/);
+    expect(carril).not.toMatch(/color: var\(--m-oro\);/);
+  });
+
+  /** El oro claro da 2,8:1 sobre hueso: ni texto ni control. */
+  it('en claro, lo dorado de los campos es oro profundo', () => {
+    expect(campos).toMatch(
+      /\.campos--claro \.campos__chip--activo \{[^}]*background: var\(--m-oro-profundo\);/
+    );
+    expect(campos).toMatch(
+      /\.campos--claro \.campos__tick:checked::after \{[^}]*border-color: var\(--m-oro-profundo\);/
+    );
+    expect(campos).toMatch(
+      /\.campos--claro \.campos__rango-valor \{[^}]*color: var\(--m-oro-profundo\);/
+    );
+    expect(campos).toMatch(
+      /\.campos--claro \.campos__perilla input\[type='range'\]::-webkit-slider-thumb \{[^}]*background: var\(--m-oro-profundo\);/
+    );
+  });
+
+  /**
+   * El carril y crear/editar son las dos cajas claras y conviven en
+   * `/services`: con el mismo `name` sus radios serían un solo grupo.
+   */
+  it('el filtro agrupa sus radios con un nombre propio', () => {
+    expect(campos).toMatch(/<services-box[^>]*grupo="caja-principal-filtro"/);
+    expect(caja).toMatch(
+      /props\.grupo \|\| `caja-principal-\$\{props\.variante\}`/
+    );
+  });
+});

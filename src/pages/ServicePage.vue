@@ -4,18 +4,24 @@
     :class="{ 'mostrador--con-barra': authStore.isAdmin }"
     :style-fn="alturaDelMostrador"
   >
-    <ServiceToolbar
-      class="mostrador__barra"
-      :total="totalConocido"
-      :mostrados="services.length"
-      :busqueda="filterService.name"
-      :filtros-activos="externalAmountOfFilters"
-      :es-admin="authStore.isAdmin"
-      :con-carril="hayCarril"
-      @update:busqueda="alBuscar"
-      @abrir-filtros="showFilterDialog = true"
-      @crear-servicio="dialogCreation = true"
-    />
+    <!--
+      La banda tinta (paleta A, 2026-10-11): el único oscuro de la página, como
+      la banda de la carta en el inicio. Lo demás va en hueso.
+    -->
+    <div class="mostrador__banda">
+      <ServiceToolbar
+        class="mostrador__barra"
+        :total="totalConocido"
+        :mostrados="services.length"
+        :busqueda="filterService.name"
+        :filtros-activos="externalAmountOfFilters"
+        :es-admin="authStore.isAdmin"
+        :con-carril="hayCarril"
+        @update:busqueda="alBuscar"
+        @abrir-filtros="showFilterDialog = true"
+        @crear-servicio="dialogCreation = true"
+      />
+    </div>
 
     <div class="mostrador__cuerpo">
       <!--
@@ -410,7 +416,13 @@ defineOptions({
  *
  * Columna, y no fila dentro de una caja: la caja gris con sombra lila era lo que
  * hacía que la página pareciera un formulario dentro de otra página. El fondo
- * tinta se declara aquí porque el `q-layout` lleva una foto de fondo.
+ * se declara aquí porque el `q-layout` lleva una foto de fondo.
+ *
+ * Paleta A (2026-10-11, «banda tinta arriba, carta en hueso»): la página entera
+ * en tinta era la única vista oscura del portal y desentonaba con el inicio,
+ * Mi cuenta y Mis reservas. Ahora el cuerpo va en hueso y el oscuro aparece
+ * una sola vez, en la banda de la barra (`.mostrador__banda`), como la banda
+ * de la carta en el inicio.
  *
  * El alto lo fija `alturaDelMostrador` (el `style-fn`, en `--mostrador-alto`):
  * barra y pie no encogen, el cuerpo se come lo que sobra y, dentro de él, la
@@ -428,9 +440,22 @@ defineOptions({
   height: var(--mostrador-alto);
   min-height: var(--mostrador-alto);
   padding: 0 var(--m-banda-margen) var(--m-flotante-despeje);
+  background: var(--m-hueso);
+  color: var(--m-tinta);
+  font-family: var(--m-font-sans);
+}
+
+/**
+ * La banda tinta, a sangre: se sale del margen de la página con un margen
+ * negativo y lo devuelve como relleno, así la barra sigue alineada con la
+ * lista. La barra pinta sus colores para tinta; el fondo lo pone la banda.
+ */
+.mostrador__banda {
+  flex: none;
+  margin: 0 calc(-1 * var(--m-banda-margen));
+  padding: 0 var(--m-banda-margen);
   background: var(--m-tinta);
   color: var(--m-hueso);
-  font-family: var(--m-font-sans);
 }
 
 .mostrador__barra,
@@ -465,11 +490,18 @@ defineOptions({
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  // Sobre hueso, el canal claro del riel (`m-riel-oro` lo lee de aquí).
+  --m-riel-canal: var(--m-riel-canal-claro);
 }
 
 @media (max-width: 699px) {
   .mostrador {
     padding: 0 var(--m-banda-margen-movil) var(--m-flotante-despeje);
+  }
+
+  .mostrador__banda {
+    margin: 0 calc(-1 * var(--m-banda-margen-movil));
+    padding: 0 var(--m-banda-margen-movil);
   }
 
   .mostrador__cuerpo {

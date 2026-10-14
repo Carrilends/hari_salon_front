@@ -170,12 +170,13 @@ defineOptions({ name: 'ServiceCardAdminActions' });
 /*
  * Renglón de móvil (plan 9, V2; tablero AdminMostradorMovil): una franja al pie
  * de la tarjeta, tres tercios de 44 px con icono y texto, separados por
- * filetes. Sobre carbón: texto hueso, la promoción activa en oro macizo y
- * «Borrar» en el rosa legible sobre tinta.
+ * filetes. Sobre el nieve del renglón (paleta A, 2026-10-11): texto tinta,
+ * la promoción activa en oro macizo y «Borrar» en rosa profundo (7,2:1). El
+ * peligro macizo se queda en la confirmación.
  */
 .acciones-admin--compacto {
   gap: 0;
-  border-top: var(--m-filete-grosor) solid var(--m-filete-oscuro);
+  border-top: var(--m-filete-grosor) solid var(--m-filete);
 }
 
 .acciones-admin--compacto .acciones-admin__boton {
@@ -187,14 +188,14 @@ defineOptions({ name: 'ServiceCardAdminActions' });
   border: 0;
   border-radius: 0;
   background: transparent;
-  color: var(--m-hueso);
+  color: var(--m-tinta);
   font-size: 10.5px;
   letter-spacing: var(--m-tracking-nav);
   text-transform: uppercase;
 }
 
 .acciones-admin--compacto .acciones-admin__boton + .acciones-admin__boton {
-  border-left: var(--m-filete-grosor) solid var(--m-filete-oscuro);
+  border-left: var(--m-filete-grosor) solid var(--m-filete);
 }
 
 /*
@@ -207,18 +208,18 @@ defineOptions({ name: 'ServiceCardAdminActions' });
   color: var(--m-tinta);
 }
 
-/* V4: 7,4:1 sobre carbón; el peligro macizo daría 2,1:1. */
+/* 7,2:1 sobre nieve. El rosa sobre tinta daría 1,8:1 aquí. */
 .acciones-admin--compacto .acciones-admin__boton--borrar {
-  color: var(--m-peligro-sobre-tinta);
+  color: var(--m-rosa-profundo);
 }
 
-/* Dentro de la franja el foco va por dentro: el borde de fuera es del renglón. */
+/* Dentro de la franja el foco va por dentro, en tinta: el borde de fuera es del renglón. */
 .acciones-admin--compacto .acciones-admin__boton:focus-visible {
-  outline: 2px solid var(--m-hueso);
+  outline: 2px solid var(--m-tinta);
   outline-offset: -4px;
 }
 
-/* Hueso sobre oro macizo da ~2,8:1: sobre la promoción activa el foco va en tinta (5,8:1). */
+/* Sobre la promoción activa, tinta también (5,8:1 sobre oro macizo). */
 .acciones-admin--compacto .acciones-admin__boton--oro:focus-visible {
   outline-color: var(--m-tinta);
 }
@@ -257,7 +258,8 @@ defineOptions({ name: 'ServiceCardAdminActions' });
     color: var(--m-tinta);
   }
 
-  // «Borrar» no se vuelve oro al pasar: sigue diciendo que borra (9,0:1 sobre tinta).
+  // «Borrar» no se vuelve oro al pasar: sigue diciendo que borra. Al pasar el
+  // fondo se cierra a tinta, y ahí el rosa legible es el de sobre tinta (9,0:1).
   .acciones-admin--compacto .acciones-admin__boton--borrar:hover {
     color: var(--m-peligro-sobre-tinta);
   }

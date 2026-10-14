@@ -372,12 +372,12 @@ defineOptions({ name: 'ServiceToolbar' });
 
 <style scoped lang="scss">
 /**
- * El fondo tinta lo pone la página, no la barra: así la barra puede ir también
- * dentro de una banda clara si alguna vez hace falta.
+ * El fondo tinta lo pone la página (`.mostrador__banda`), no la barra. Sin
+ * filete abajo: desde la paleta A la barra va en una banda tinta a sangre y el
+ * borde de la banda contra el hueso ya separa.
  */
 .barra {
   padding: 24px 0 18px;
-  border-bottom: var(--m-filete-grosor) solid var(--m-filete-oscuro);
   color: var(--m-hueso);
   font-family: var(--m-font-sans);
 }

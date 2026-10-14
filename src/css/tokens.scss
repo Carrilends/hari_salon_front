@@ -254,3 +254,15 @@
   /// icono sobre fondo oscuro: nunca sobre hueso (1,8:1) ni como fondo.
   --m-peligro-sobre-tinta: #e2a3bc;
 }
+
+/// Paleta A de servicios (2026-10-11): «banda tinta arriba, carta en hueso».
+:root {
+  /// Marco claro de una foto de servicio: lo que la foto (`contain`) deja
+  /// libre en la tarjeta y en el renglón de `/services`, y el hueco de un
+  /// servicio sin foto. Arena, un punto más oscuro que el hueso, para que la
+  /// foto se lea como foto y no se funda con la página. Mismo valor que
+  /// `--m-aviso-fondo` y nombre propio por lo mismo que `--m-riel-canal`: el
+  /// marco es un sitio, no una banda. Encima solo va el «Sin foto» en
+  /// `--m-piedra` (4,8:1, calculado): no es fondo de ningún otro texto.
+  --m-foto-marco-claro: #efe7dc;
+}

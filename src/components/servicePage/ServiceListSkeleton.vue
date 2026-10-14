@@ -47,11 +47,12 @@ const HUECOS = 6;
   gap: var(--m-rejilla-gap);
 }
 
+/** El hueco claro de siempre sobre hueso (paleta A, 2026-10-11). */
 .esqueleto-servicios__hueco {
   height: 252px;
-  border: var(--m-filete-grosor) solid var(--m-filete-oscuro);
+  border: var(--m-filete-grosor) solid var(--m-filete);
   border-radius: var(--m-radio-tarjeta);
-  background: var(--m-carbon);
+  background: var(--m-esqueleto);
   animation: esqueleto-latido 1.4s ease-in-out infinite;
 }
 

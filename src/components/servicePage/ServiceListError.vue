@@ -34,6 +34,7 @@ const emit = defineEmits<{ (e: 'reintentar'): void }>();
 </script>
 
 <style scoped lang="scss">
+/** Sobre la lista en hueso (paleta A, 2026-10-11): tarjeta nieve, filete de oro. */
 .error-lista {
   display: flex;
   flex-direction: column;
@@ -42,7 +43,7 @@ const emit = defineEmits<{ (e: 'reintentar'): void }>();
   padding: 48px 20px;
   border: var(--m-filete-grosor) solid var(--m-oro);
   border-radius: var(--m-radio-tarjeta);
-  background: var(--m-carbon);
+  background: var(--m-nieve);
   text-align: center;
 }
 
@@ -59,7 +60,7 @@ const emit = defineEmits<{ (e: 'reintentar'): void }>();
   margin: 0;
   font-family: var(--m-font-sans);
   font-size: 13.5px;
-  color: var(--m-hueso);
+  color: var(--m-tinta);
 }
 
 .error-lista--compacto .error-lista__texto {
@@ -82,7 +83,7 @@ const emit = defineEmits<{ (e: 'reintentar'): void }>();
 }
 
 .error-lista__reintentar:focus-visible {
-  outline: 2px solid var(--m-hueso);
+  outline: 2px solid var(--m-tinta);
   outline-offset: 2px;
 }
 

@@ -213,9 +213,10 @@ describe('ServiceRow', () => {
     expect(ESTILOS).toMatch(
       /\.fila-servicio__foto \{[^}]*position:\s*absolute;[^}]*top:\s*0;[^}]*right:\s*0;[^}]*bottom:\s*0;[^}]*left:\s*0;[^}]*width:\s*100%;[^}]*height:\s*100%;[^}]*object-fit:\s*contain;[^}]*object-position:\s*center;/
     );
-    // La foto entera, no recortada: lo que sobra del marco se ve carbón.
+    // La foto entera, no recortada: lo que sobra del marco se ve arena
+    // (paleta A, 2026-10-11).
     expect(ESTILOS).toMatch(
-      /\.fila-servicio__marco \{[^}]*background:\s*var\(--m-carbon\);/
+      /\.fila-servicio__marco \{[^}]*background:\s*var\(--m-foto-marco-claro\);/
     );
     expect(ESTILOS).not.toMatch(/object-fit:\s*cover/);
     expect(ESTILOS).not.toMatch(/\.fila-servicio__foto \{[^}]*[\s;]height:\s*auto;/);
@@ -274,13 +275,32 @@ describe('ServiceRow', () => {
     );
   });
 
-  /** En `--m-piedra` sobre carbón el rótulo daba 2,6:1. */
-  it('«Sin foto» se pinta sobre tinta y su rótulo en piedra clara', () => {
+  /** Paleta A: sobre arena, la piedra da 4,8:1 (la piedra clara, 1,5:1). */
+  it('«Sin foto» se pinta sobre el marco arena y su rótulo en piedra', () => {
     expect(ESTILOS).toMatch(
-      /\.fila-servicio__sin-foto \{[^}]*background: var\(--m-tinta\);/
+      /\.fila-servicio__sin-foto \{[^}]*background: var\(--m-foto-marco-claro\);/
     );
     expect(ESTILOS).toMatch(
-      /\.fila-servicio__sin-foto-rotulo \{[^}]*color: var\(--m-piedra-clara\);/
+      /\.fila-servicio__sin-foto-rotulo \{[^}]*color: var\(--m-piedra\);/
+    );
+  });
+
+  it('el renglón es nieve con filete claro, y el brillo de carga corre sobre arena', () => {
+    expect(ESTILOS).toMatch(
+      /\.fila-servicio \{[^}]*background: var\(--m-nieve\);[^}]*border: var\(--m-filete-grosor\) solid var\(--m-filete\);/
+    );
+    expect(ESTILOS).toMatch(
+      /\.fila-servicio__marco \{[^}]*--m-foto-fondo: var\(--m-foto-marco-claro\);[^}]*--m-foto-brillo: var\(--m-nieve\);/
+    );
+  });
+
+  /** El oro claro da 3,2:1 sobre nieve: no es color de texto. */
+  it('nombre en tinta y precio en oro profundo', () => {
+    expect(ESTILOS).toMatch(
+      /\.fila-servicio__nombre \{[^}]*color: var\(--m-tinta\);/
+    );
+    expect(ESTILOS).toMatch(
+      /\.fila-servicio__precio \{[^}]*color: var\(--m-oro-profundo\);/
     );
   });
 

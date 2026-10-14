@@ -37,6 +37,7 @@
     <service-filter-fields
       ref="camposRef"
       :compacto="false"
+      variante="claro"
       @aplicar="alAplicar"
       @cuenta="alContar"
     />
@@ -96,6 +97,9 @@ const limpiar = () => camposRef.value?.limpiar();
  * Se queda quieto junto a la lista, a todo el alto del cuerpo de la página. Si
  * sus filtros no caben en ese hueco desplaza él solo, independiente de la
  * lista, con el riel dorado de `app.scss` (`m-riel-oro` en el `<aside>`).
+ *
+ * Sobre hueso desde la paleta A (2026-10-11): filetes claros, títulos en
+ * tinta y el oro de texto en su versión profunda (el claro da 2,8:1 aquí).
  */
 .carril {
   /*
@@ -115,8 +119,10 @@ const limpiar = () => camposRef.value?.limpiar();
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   padding: 4px 20px 24px var(--carril-holgura-foco);
-  border-right: var(--m-filete-grosor) solid var(--m-filete-oscuro);
+  border-right: var(--m-filete-grosor) solid var(--m-filete);
   font-family: var(--m-font-sans);
+  // Sobre hueso, el canal claro del riel (`m-riel-oro` lo lee de aquí).
+  --m-riel-canal: var(--m-riel-canal-claro);
 }
 
 /**
@@ -136,7 +142,7 @@ const limpiar = () => camposRef.value?.limpiar();
   gap: 8px;
   margin-bottom: 18px;
   padding-bottom: 12px;
-  border-bottom: var(--m-filete-grosor) solid var(--m-filete-oscuro);
+  border-bottom: var(--m-filete-grosor) solid var(--m-filete);
 }
 
 .carril__titulo {
@@ -148,12 +154,13 @@ const limpiar = () => camposRef.value?.limpiar();
   font-size: 19px;
   font-weight: 400;
   line-height: 1.1;
-  color: var(--m-hueso);
+  color: var(--m-tinta);
 }
 
+/// Oro profundo: el claro, como icono sobre hueso, no llega al 3:1.
 .carril__icono {
   flex: 0 0 auto;
-  color: var(--m-oro);
+  color: var(--m-oro-profundo);
 }
 
 .carril__limpiar {
@@ -162,7 +169,7 @@ const limpiar = () => camposRef.value?.limpiar();
   padding: 0 8px;
   border: 0;
   background: transparent;
-  color: var(--m-oro);
+  color: var(--m-oro-profundo);
   font-family: var(--m-font-sans);
   font-size: 11px;
   text-transform: uppercase;
@@ -175,7 +182,7 @@ const limpiar = () => camposRef.value?.limpiar();
 }
 
 .carril__limpiar:focus-visible {
-  outline: 2px solid var(--m-oro);
+  outline: 2px solid var(--m-tinta);
   outline-offset: 2px;
 }
 
@@ -186,7 +193,7 @@ const limpiar = () => camposRef.value?.limpiar();
  */
 @media (hover: hover) and (pointer: fine) {
   .carril__limpiar:hover {
-    color: var(--m-oro-claro);
+    color: var(--m-tinta);
   }
 }
 </style>

@@ -111,17 +111,31 @@ describe('ServiceCard', () => {
 
   /**
    * La foto se ve ENTERA, centrada, y lo que sobra del marco se pinta en
-   * carbón: es el equivalente cálido del fondo gris del diseño viejo. Recortar
-   * (`cover`) le quitaba la cabeza a un retrato en una tarjeta apaisada.
+   * arena (paleta A, 2026-10-11: la lista va sobre hueso). Recortar (`cover`)
+   * le quitaba la cabeza a un retrato en una tarjeta apaisada.
    */
-  it('la foto se ve entera, centrada, sobre carbón y sin recortar', () => {
+  it('la foto se ve entera, centrada, sobre el marco arena y sin recortar', () => {
     expect(ESTILOS).toMatch(
-      /\.tarjeta-servicio__foto \{[^}]*object-fit: contain;[^}]*object-position: center;[^}]*background: var\(--m-carbon\);/
+      /\.tarjeta-servicio__foto \{[^}]*object-fit: contain;[^}]*object-position: center;[^}]*background: var\(--m-foto-marco-claro\);/
     );
     expect(ESTILOS).toMatch(
-      /\.tarjeta-servicio \{[^}]*background: var\(--m-carbon\);/
+      /\.tarjeta-servicio \{[^}]*border: var\(--m-filete-grosor\) solid var\(--m-filete\);[^}]*background: var\(--m-foto-marco-claro\);/
     );
     expect(ESTILOS).not.toContain('object-fit: cover');
+  });
+
+  it('el brillo de carga corre de arena a nieve, no sobre carbón', () => {
+    expect(ESTILOS).toMatch(
+      /\.tarjeta-servicio \{[^}]*--m-foto-fondo: var\(--m-foto-marco-claro\);[^}]*--m-foto-brillo: var\(--m-nieve\);/
+    );
+  });
+
+  /** El velo sigue siendo tinta: es lo que deja leer el hueso sobre la foto. */
+  it('el velo del texto sigue siendo oscuro', () => {
+    expect(ESTILOS).toMatch(/rgba\(22, 19, 15, 0\.94\)/);
+    expect(ESTILOS).toMatch(
+      /\.tarjeta-servicio__nombre \{[^}]*color: var\(--m-hueso\);/
+    );
   });
 
   it('con promoción pinta la píldora, el precio efectivo y el base tachado', () => {

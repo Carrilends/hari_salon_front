@@ -19,6 +19,15 @@ const ARCHIVOS = [
   'pages/ServicePage.vue',
 ];
 
+/** Los que pintan sobre tinta o carbón. El renglón y su franja van sobre nieve. */
+const SOBRE_OSCURO = ARCHIVOS.filter(
+  (ruta) =>
+    ![
+      'components/servicePage/ServiceRow.vue',
+      'components/servicePage/ServiceCardAdminActions.vue',
+    ].includes(ruta)
+);
+
 const sinComentarios = (css: string) =>
   css.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 
@@ -142,10 +151,13 @@ describe('plan 9 · guarda de fuente', () => {
 
   /**
    * Foco de revisión 2: sobre carbón el peligro macizo, el rosa profundo y el
-   * oro profundo dan 2,1:1, 2,1:1 y 2,5:1. Ningún archivo del plan los usa
-   * (el sufijo `-sobre-tinta` es otro token y no cuenta).
+   * oro profundo dan 2,1:1, 2,1:1 y 2,5:1. Ningún archivo que pinte sobre
+   * oscuro los usa (el sufijo `-sobre-tinta` es otro token y no cuenta).
+   *
+   * Desde la paleta A (2026-10-11) el renglón y su franja de acciones van
+   * sobre nieve y sí los usan; tienen su propia guarda, la de abajo.
    */
-  it.each(ARCHIVOS)(
+  it.each(SOBRE_OSCURO)(
     '%s no usa los tokens de fondo claro como color',
     (ruta) => {
       const css = estilos(leer(ruta));
@@ -165,4 +177,19 @@ describe('plan 9 · guarda de fuente', () => {
       }
     }
   );
+
+  /**
+   * La guarda al revés, para la paleta A: el renglón va sobre nieve, y el
+   * hueso y la piedra clara, que son texto para tinta, ahí dan 1,1:1 y 1,7:1.
+   */
+  it('el renglón, sobre nieve, no escribe con los tokens de fondo oscuro', () => {
+    const css = estilos(leer('components/servicePage/ServiceRow.vue'));
+
+    for (const token of ['--m-hueso', '--m-piedra-clara']) {
+      expect({
+        token,
+        usa: new RegExp(`var\\(${token}(?![\\w-])`).test(css),
+      }).toEqual({ token, usa: false });
+    }
+  });
 });

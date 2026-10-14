@@ -163,7 +163,7 @@ describe('ServiceCardAdminActions', () => {
 
 /**
  * Lo que no se puede ver montando (el SCSS está mapeado a un mock): se lee la
- * fuente. el peligro macizo (`--m-peligro`) no aparece (vive solo en la confirmación de borrado; la franja usa `--m-peligro-sobre-tinta`); nada posicionado en absoluto, porque
+ * fuente. el peligro macizo (`--m-peligro`) no aparece (vive solo en la confirmación de borrado; la franja usa `--m-rosa-profundo` sobre nieve desde la paleta A); nada posicionado en absoluto, porque
  * la ranura de la tarjeta ya lo está; ni un color suelto.
  */
 describe('ServiceCardAdminActions · estilos', () => {
@@ -183,17 +183,18 @@ describe('ServiceCardAdminActions · estilos', () => {
   /**
    * Plan 9 (V2): en el renglón ya no van apilados a la derecha. Son una franja
    * al pie de la tarjeta, tres tercios de 44 px con filete arriba y entre
-   * ellos (tablero AdminMostradorMovil).
+   * ellos (tablero AdminMostradorMovil). Filetes claros: el renglón es nieve
+   * desde la paleta A (2026-10-11).
    */
   it('en el renglón (compacto) es una franja de tres tercios a 44 px, con filete arriba', () => {
     expect(estilos).toMatch(
-      /\.acciones-admin--compacto \{[^}]*border-top: var\(--m-filete-grosor\) solid var\(--m-filete-oscuro\);/
+      /\.acciones-admin--compacto \{[^}]*border-top: var\(--m-filete-grosor\) solid var\(--m-filete\);/
     );
     expect(estilos).toMatch(
       /\.acciones-admin--compacto \.acciones-admin__boton \{[^}]*flex: 1 1 0;[^}]*min-width: 0;[^}]*width: auto;/
     );
     expect(estilos).toMatch(
-      /\.acciones-admin--compacto \.acciones-admin__boton \+ \.acciones-admin__boton \{[^}]*border-left: var\(--m-filete-grosor\) solid var\(--m-filete-oscuro\);/
+      /\.acciones-admin--compacto \.acciones-admin__boton \+ \.acciones-admin__boton \{[^}]*border-left: var\(--m-filete-grosor\) solid var\(--m-filete\);/
     );
     expect(estilos).toMatch(
       /\.acciones-admin__boton \{[^}]*width:\s*var\(--m-tactil-min\);[^}]*height:\s*var\(--m-tactil-min\);/
@@ -206,9 +207,13 @@ describe('ServiceCardAdminActions · estilos', () => {
     expect(fuente).not.toMatch(/var\(--m-peligro\)/);
   });
 
-  it('en la franja «Borrar» va en el rosa legible sobre tinta, también al pasar', () => {
+  /**
+   * En reposo la franja es nieve: rosa profundo (7,2:1). Al pasar el botón se
+   * cierra a tinta, y ahí el rosa legible es el de sobre tinta (9,0:1).
+   */
+  it('en la franja «Borrar» va en rosa profundo, y al pasar en el rosa sobre tinta', () => {
     expect(estilos).toMatch(
-      /\.acciones-admin--compacto \.acciones-admin__boton--borrar \{[^}]*color: var\(--m-peligro-sobre-tinta\);/
+      /\.acciones-admin--compacto \.acciones-admin__boton--borrar \{[^}]*color: var\(--m-rosa-profundo\);/
     );
     expect(estilos).toMatch(
       /\.acciones-admin--compacto \.acciones-admin__boton--borrar:hover \{[^}]*color: var\(--m-peligro-sobre-tinta\);/
@@ -222,9 +227,9 @@ describe('ServiceCardAdminActions · estilos', () => {
     );
   });
 
-  it('dentro de la franja el foco se dibuja por dentro, en hueso', () => {
+  it('dentro de la franja el foco se dibuja por dentro, en tinta', () => {
     expect(estilos).toMatch(
-      /\.acciones-admin--compacto \.acciones-admin__boton:focus-visible \{[^}]*outline: 2px solid var\(--m-hueso\);[^}]*outline-offset: -4px;/
+      /\.acciones-admin--compacto \.acciones-admin__boton:focus-visible \{[^}]*outline: 2px solid var\(--m-tinta\);[^}]*outline-offset: -4px;/
     );
   });
 

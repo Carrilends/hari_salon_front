@@ -170,11 +170,35 @@ describe('armazón de la página de servicios', () => {
     expect(PAGINA).not.toContain('box-style');
   });
 
-  it('va sobre tinta, con los márgenes de banda', () => {
-    expect(PAGINA).toMatch(/background: var\(--m-tinta\);/);
-    expect(PAGINA).toMatch(/color: var\(--m-hueso\);/);
+  /**
+   * Paleta A (2026-10-11), «banda tinta arriba, carta en hueso»: la página
+   * entera en tinta era la única vista oscura del portal. El cuerpo va en
+   * hueso y el oscuro aparece una vez, en la banda de la barra.
+   */
+  it('va sobre hueso, con los márgenes de banda', () => {
+    expect(PAGINA).toMatch(
+      /\.mostrador \{[^}]*background: var\(--m-hueso\);[^}]*color: var\(--m-tinta\);/
+    );
     expect(PAGINA).toContain('var(--m-banda-margen)');
     expect(PAGINA).toContain('var(--m-banda-margen-movil)');
+  });
+
+  it('la barra va en una banda tinta a sangre, la única oscura', () => {
+    const plantilla = PAGINA.slice(0, PAGINA.indexOf('</template>\n\n<script'));
+    const banda = plantilla.indexOf('<div class="mostrador__banda">');
+
+    expect(banda).toBeGreaterThan(-1);
+    expect(plantilla.indexOf('<ServiceToolbar')).toBeGreaterThan(banda);
+    expect(PAGINA).toMatch(
+      /\.mostrador__banda \{[^}]*margin: 0 calc\(-1 \* var\(--m-banda-margen\)\);[^}]*padding: 0 var\(--m-banda-margen\);[^}]*background: var\(--m-tinta\);/
+    );
+    expect(PAGINA.match(/background: var\(--m-tinta\);/g)).toHaveLength(1);
+  });
+
+  it('el riel de la lista corre por el canal claro', () => {
+    expect(PAGINA).toMatch(
+      /\.mostrador__lista \{[^}]*--m-riel-canal: var\(--m-riel-canal-claro\);/
+    );
   });
 
   /**

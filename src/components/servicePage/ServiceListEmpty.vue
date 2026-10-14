@@ -57,16 +57,17 @@ const emit = defineEmits<{ (e: 'limpiar-filtros'): void }>();
 </script>
 
 <style scoped lang="scss">
+/** Sobre la lista en hueso (paleta A, 2026-10-11): tarjeta nieve con filete. */
 .vacio-servicios {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
   padding: 56px 20px;
-  border: var(--m-filete-grosor) solid var(--m-filete-oscuro);
+  border: var(--m-filete-grosor) solid var(--m-filete);
   border-radius: var(--m-radio-tarjeta);
-  background: var(--m-carbon);
-  color: var(--m-piedra-clara);
+  background: var(--m-nieve);
+  color: var(--m-piedra);
   text-align: center;
 }
 
@@ -74,14 +75,14 @@ const emit = defineEmits<{ (e: 'limpiar-filtros'): void }>();
   margin: 4px 0 0;
   font-family: var(--m-font-display);
   font-size: 19px;
-  color: var(--m-hueso);
+  color: var(--m-tinta);
 }
 
 .vacio-servicios__pie {
   margin: 0;
   font-family: var(--m-font-sans);
   font-size: 13.5px;
-  color: var(--m-piedra-clara);
+  color: var(--m-piedra);
 }
 
 .vacio-servicios__limpiar {
@@ -91,7 +92,7 @@ const emit = defineEmits<{ (e: 'limpiar-filtros'): void }>();
   border: var(--m-filete-grosor) solid var(--m-oro);
   border-radius: var(--m-radio-pildora);
   background: transparent;
-  color: var(--m-hueso);
+  color: var(--m-tinta);
   font-family: var(--m-font-sans);
   font-size: 11.5px;
   text-transform: uppercase;
@@ -100,7 +101,7 @@ const emit = defineEmits<{ (e: 'limpiar-filtros'): void }>();
 }
 
 .vacio-servicios__limpiar:focus-visible {
-  outline: 2px solid var(--m-oro);
+  outline: 2px solid var(--m-tinta);
   outline-offset: 2px;
 }
 
@@ -110,8 +111,9 @@ const emit = defineEmits<{ (e: 'limpiar-filtros'): void }>();
  * («Realce y hundido»).
  */
 @media (hover: hover) and (pointer: fine) {
+  // Texto sobre claro: al pasar, el oro profundo (el claro daría 3,2:1).
   .vacio-servicios__limpiar:hover {
-    color: var(--m-oro);
+    color: var(--m-oro-profundo);
   }
 }
 </style>

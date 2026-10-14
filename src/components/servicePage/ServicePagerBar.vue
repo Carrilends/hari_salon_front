@@ -154,6 +154,10 @@ defineOptions({ name: 'ServicePagerBar' });
 </script>
 
 <style scoped lang="scss">
+/**
+ * Sobre hueso (paleta A, 2026-10-11): números en tinta y lo dorado que es
+ * texto en oro profundo; el oro claro queda para el filete de la activa.
+ */
 .pie {
   display: flex;
   align-items: center;
@@ -161,8 +165,8 @@ defineOptions({ name: 'ServicePagerBar' });
   flex-wrap: wrap;
   gap: 16px;
   padding: 18px 0 8px;
-  border-top: var(--m-filete-grosor) solid var(--m-filete-oscuro);
-  color: var(--m-hueso);
+  border-top: var(--m-filete-grosor) solid var(--m-filete);
+  color: var(--m-tinta);
   font-family: var(--m-font-sans);
 }
 
@@ -171,7 +175,7 @@ defineOptions({ name: 'ServicePagerBar' });
   font-size: 11px;
   letter-spacing: var(--m-tracking-etiqueta);
   text-transform: uppercase;
-  color: var(--m-oro);
+  color: var(--m-oro-profundo);
 }
 
 .pie__paginacion {
@@ -189,7 +193,7 @@ defineOptions({ name: 'ServicePagerBar' });
   border: 0;
   // El filete de la activa se reserva en todas para que la fila no salte.
   border-bottom: var(--m-filete-grosor) solid transparent;
-  color: var(--m-hueso);
+  color: var(--m-tinta);
   font-family: var(--m-font-display);
   font-size: 16px;
   cursor: pointer;
@@ -197,7 +201,7 @@ defineOptions({ name: 'ServicePagerBar' });
 
 .pie__numero--activa {
   border-bottom-color: var(--m-oro);
-  color: var(--m-oro);
+  color: var(--m-oro-profundo);
 }
 
 .pie__elipsis {
@@ -205,7 +209,7 @@ defineOptions({ name: 'ServicePagerBar' });
   place-items: center;
   min-width: 20px;
   height: var(--m-tactil-min);
-  color: var(--m-piedra-clara);
+  color: var(--m-piedra);
   font-family: var(--m-font-display);
   font-size: 16px;
 }
@@ -215,9 +219,11 @@ defineOptions({ name: 'ServicePagerBar' });
   margin-left: 10px;
   padding: 0 18px;
   background: none;
-  border: var(--m-filete-grosor) solid var(--m-filete-oscuro);
+  // Piedra clara (1,6:1 sobre hueso) y no el filete (1,3:1): la píldora se
+  // dibuja algo más. Lo que la identifica es el rótulo en tinta (16,5:1).
+  border: var(--m-filete-grosor) solid var(--m-piedra-clara);
   border-radius: var(--m-radio-pildora);
-  color: var(--m-hueso);
+  color: var(--m-tinta);
   font-family: var(--m-font-sans);
   font-size: 11.5px;
   letter-spacing: var(--m-tracking-nav);
@@ -232,7 +238,7 @@ defineOptions({ name: 'ServicePagerBar' });
 
 .pie__numero:focus-visible,
 .pie__siguiente:focus-visible {
-  outline: 2px solid var(--m-oro);
+  outline: 2px solid var(--m-tinta);
   outline-offset: 3px;
 }
 
@@ -254,12 +260,11 @@ defineOptions({ name: 'ServicePagerBar' });
  */
 @media (hover: hover) and (pointer: fine) {
   .pie__numero:hover {
-    color: var(--m-oro);
+    color: var(--m-oro-profundo);
   }
 
   .pie__numero--activa:hover {
-    border-bottom-color: var(--m-oro-claro);
-    color: var(--m-oro-claro);
+    border-bottom-color: var(--m-oro-profundo);
   }
 
   .pie__siguiente:hover:not(:disabled) {

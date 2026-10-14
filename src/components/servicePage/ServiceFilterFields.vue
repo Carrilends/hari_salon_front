@@ -1,7 +1,7 @@
 <template>
   <div
     class="campos"
-    :class="{ 'campos--compacto': compacto }"
+    :class="[`campos--${variante}`, { 'campos--compacto': compacto }]"
     data-test="campos"
   >
     <!-- GÉNERO ------------------------------------------------------------ -->
@@ -64,7 +64,8 @@
         :con-limpiar="false"
         :initial-selected-ids="filtersStore.selectedServicesIDs"
         :is-edit-mode="true"
-        variante="oscuro"
+        :variante="variante"
+        grupo="caja-principal-filtro"
         section-title=""
         :contained-scroll="false"
         @selected-services="alCambiarCategoria"
@@ -157,7 +158,14 @@ import { formatCopDisplay } from 'src/helpers/price-display';
 
 defineOptions({ name: 'ServiceFilterFields' });
 
-defineProps<{ compacto: boolean }>();
+/**
+ * `oscuro` (defecto) para la hoja de móvil, que va sobre tinta; `claro` para
+ * el carril de escritorio, que va sobre hueso desde la paleta A (2026-10-11).
+ */
+withDefaults(
+  defineProps<{ compacto: boolean; variante?: 'claro' | 'oscuro' }>(),
+  { variante: 'oscuro' }
+);
 
 const emit = defineEmits<{
   (e: 'aplicar', filtro: FilterService): void;
@@ -550,6 +558,83 @@ defineExpose({ limpiar, aplicar: sendFilter });
   height: var(--m-tactil-min);
 }
 
+// --- Variante clara: el carril de escritorio, sobre hueso (paleta A) ---------
+//
+// Lo de arriba es para tinta (la hoja de móvil). Sobre hueso el oro claro no
+// es color de texto (2,8:1) ni de control (por debajo de 3:1): texto, tick,
+// perilla y activo pasan a `--m-oro-profundo` (5,5:1), como el activo de la
+// caja clara de crear/editar. Los filetes de 1 px van en `--m-filete`; el
+// borde de la casilla, en piedra, porque es lo que dice «aquí se marca».
+
+.campos--claro {
+  color: var(--m-tinta);
+}
+
+.campos--claro .campos__etiqueta,
+.campos--claro .campos__perilla-rotulo,
+.campos--claro .campos__limpiar {
+  color: var(--m-piedra);
+}
+
+.campos--claro .campos__cuenta {
+  background: var(--m-oro-profundo);
+  color: var(--m-nieve);
+}
+
+.campos--claro .campos__filete {
+  border-top-color: var(--m-filete);
+}
+
+.campos--claro .campos__chip {
+  border-color: var(--m-filete);
+  color: var(--m-tinta);
+}
+
+.campos--claro .campos__chip--activo {
+  border-color: var(--m-oro-profundo);
+  background: var(--m-oro-profundo);
+  color: var(--m-nieve);
+}
+
+.campos--claro .campos__tick {
+  border-color: var(--m-piedra);
+}
+
+.campos--claro .campos__tick:checked::after {
+  border-color: var(--m-oro-profundo);
+}
+
+.campos--claro .campos__rango-valor {
+  color: var(--m-oro-profundo);
+}
+
+.campos--claro
+  .campos__perilla
+  input[type='range']::-webkit-slider-runnable-track {
+  background: var(--m-riel-canal-claro);
+  border-color: var(--m-filete);
+}
+
+.campos--claro .campos__perilla input[type='range']::-moz-range-track {
+  background: var(--m-riel-canal-claro);
+  border-color: var(--m-filete);
+}
+
+.campos--claro .campos__perilla input[type='range']::-webkit-slider-thumb {
+  background: var(--m-oro-profundo);
+}
+
+.campos--claro .campos__perilla input[type='range']::-moz-range-thumb {
+  background: var(--m-oro-profundo);
+}
+
+.campos--claro .campos__chip:focus-visible,
+.campos--claro .campos__limpiar:focus-visible,
+.campos--claro .campos__casilla input:focus-visible,
+.campos--claro .campos__perilla input:focus-visible {
+  outline-color: var(--m-tinta);
+}
+
 /**
  * Realce al pasar (solo puntero fino): el COLOR. El movimiento —subir 1 px con
  * sombra suave, hundirse a 0,96 al pulsar— es global, en `app.scss`
@@ -568,6 +653,16 @@ defineExpose({ limpiar, aplicar: sendFilter });
   .campos__chip--activo:hover {
     border-color: var(--m-oro-claro);
     background: var(--m-oro-claro);
+  }
+
+  // Sobre claro el activo es oro profundo macizo: solo el filete se aclara.
+  .campos--claro .campos__chip--activo:hover {
+    border-color: var(--m-oro);
+    background: var(--m-oro-profundo);
+  }
+
+  .campos--claro .campos__limpiar:hover {
+    color: var(--m-oro-profundo);
   }
 }
 </style>
