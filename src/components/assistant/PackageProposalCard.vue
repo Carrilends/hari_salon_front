@@ -45,7 +45,7 @@
       {{ ocupado ? 'Añadiendo…' : `Añadir los ${propuesta.lineas.length}` }}
     </button>
     <p v-if="hecho" class="package-card__nota" role="status">
-      Añadido a tu reserva. Recuerda: elige el día al confirmar.
+      {{ notaHecho }} Recuerda: elige el día al confirmar.
     </p>
     <p v-if="motivoFallo" class="package-card__fallo" role="status">
       {{ motivoFallo }}
@@ -67,6 +67,14 @@ const { añadirVarios } = useAddToBag();
 
 const ocupado = ref(false);
 const hecho = ref(false);
+/** Qué entró de verdad: cada servicio está una vez en la bolsa. */
+const cuenta = ref({ añadidos: 0, yaEstaban: 0 });
+const notaHecho = computed(() => {
+  const { añadidos, yaEstaban } = cuenta.value;
+  if (yaEstaban === 0) return 'Añadido a tu reserva.';
+  if (añadidos === 0) return 'Ya estaba todo en tu bolsa.';
+  return `Añadidos ${añadidos}; ${yaEstaban} ya estaban en tu bolsa.`;
+});
 const motivoFallo = ref<string | null>(null);
 
 /**
@@ -87,6 +95,10 @@ async function anadir() {
   ocupado.value = false;
 
   if (resultado.ok) {
+    cuenta.value = {
+      añadidos: resultado.añadidos,
+      yaEstaban: resultado.yaEstaban,
+    };
     hecho.value = true;
   } else {
     // Un reintento fallido no puede dejar «Añadido» y el error a la vez.

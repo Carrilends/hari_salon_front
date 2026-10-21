@@ -27,37 +27,42 @@ describe('book-store', () => {
     setActivePinia(createPinia());
   });
 
-  test('migrateLegacyBookings converts Service[] to BookingLine[] and merges duplicates', () => {
+  // El servidor acepta cada servicio una vez por cita, así que la bolsa también:
+  // antes guardaba «× 2» y mandaba uno (hallazgo de la F4). Para dos personas,
+  // una cita por persona («Reservar para otra persona»).
+  test('migrateLegacyBookings deja cada servicio una vez, venga de Service[]…', () => {
     const raw = [makeService({ id: 'a' }), makeService({ id: 'a' }), makeService({ id: 'b' })];
     const migrated = migrateLegacyBookings(raw as unknown);
 
-    const byId = new Map(migrated.map((l) => [l.service.id, l.quantity]));
-    expect(byId.get('a')).toBe(2);
-    expect(byId.get('b')).toBe(1);
+    expect(migrated.map((l) => l.service.id)).toEqual(['a', 'b']);
+    expect(migrated[0]).not.toHaveProperty('quantity');
   });
 
-  test('add/increment/decrement/update/remove adjust totals correctly', () => {
+  test('…o de líneas guardadas con cantidad', () => {
+    const migrated = migrateLegacyBookings([
+      { service: makeService({ id: 'a' }), quantity: 3 },
+    ] as unknown);
+
+    expect(migrated).toEqual([{ service: makeService({ id: 'a' }) }]);
+  });
+
+  test('añadir un servicio que ya está no lo duplica ni cambia los totales', () => {
     const store = useBookStore();
-    const s1 = makeService({ id: 's1', price: 5000 });
-    const s2 = makeService({ id: 's2', price: 7000 });
+    const s1 = makeService({ id: 's1', price: 5000, duration: 30 });
+    const s2 = makeService({ id: 's2', price: 7000, duration: 45 });
 
-    store.addBooking(s1);
-    store.addBooking(s1);
-    store.addBooking(s2);
+    expect(store.addBooking(s1)).toBe(true);
+    expect(store.addBooking(s1)).toBe(false);
+    expect(store.addBooking(s2)).toBe(true);
 
-    expect(store.totalBookingQuantity).toBe(3);
-    expect(store.bookingsCost).toBe(5000 * 2 + 7000);
-
-    store.decrementBookingQuantity('s1');
+    expect(store.bookings).toHaveLength(2);
     expect(store.totalBookingQuantity).toBe(2);
     expect(store.bookingsCost).toBe(5000 + 7000);
+    expect(store.bookingsDuration).toBe(30 + 45);
+    expect(store.hasBooking('s1')).toBe(true);
 
-    store.updateBookingQuantity('s2', 3);
-    expect(store.totalBookingQuantity).toBe(4);
-    expect(store.bookingsCost).toBe(5000 + 7000 * 3);
-
-    store.updateBookingQuantity('s2', 0);
-    expect(store.bookings.find((l) => l.service.id === 's2')).toBeUndefined();
+    store.removeBooking('s2');
+    expect(store.hasBooking('s2')).toBe(false);
+    expect(store.bookingsCost).toBe(5000);
   });
 });
-

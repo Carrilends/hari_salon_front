@@ -3,7 +3,7 @@ import { getService } from 'src/composables/services/useService';
 import { useBookStore } from 'src/stores/book-store';
 
 export type ResultadoAñadir =
-  | { ok: true; añadidos: number }
+  | { ok: true; añadidos: number; yaEstaban: number }
   | { ok: false; motivo: string };
 
 const NO_DISPONIBLE = 'Ese servicio ya no está disponible.';
@@ -34,8 +34,10 @@ export const useAddToBag = () => {
     const servicios = await traerTodos(ids);
     if (servicios === null) return { ok: false, motivo: NO_DISPONIBLE };
 
-    for (const servicio of servicios) bookStore.addBooking(servicio);
-    return { ok: true, añadidos: servicios.length };
+    // Cada servicio está una vez en la bolsa: los que ya estaban se cuentan
+    // aparte para que la tarjeta lo diga en vez de fingir que los añadió.
+    const añadidos = servicios.filter((s) => bookStore.addBooking(s)).length;
+    return { ok: true, añadidos, yaEstaban: servicios.length - añadidos };
   };
 
   return {

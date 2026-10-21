@@ -32,12 +32,7 @@
             class="exito__linea"
             data-test="linea-exito"
           >
-            <span
-              >{{ linea.nombre
-              }}<template v-if="linea.cantidad > 1">
-                × {{ linea.cantidad }}</template
-              ></span
-            >
+            <span>{{ linea.nombre }}</span>
             <span class="exito__precio">{{ precioTexto(linea.precio) }}</span>
           </li>
         </ul>

@@ -28,20 +28,33 @@ describe('useAddToBag', () => {
     const resultado = await useAddToBag().añadirServicio('s1');
 
     expect(traer).toHaveBeenCalledWith('s1');
-    expect(resultado).toEqual({ ok: true, añadidos: 1 });
+    expect(resultado).toEqual({ ok: true, añadidos: 1, yaEstaban: 0 });
     expect(useBookStore().bookings).toHaveLength(1);
   });
 
-  it('añadir dos veces el mismo servicio sube su cantidad, no lo duplica', async () => {
+  it('añadir dos veces el mismo servicio no lo duplica y dice que ya estaba', async () => {
     traer.mockResolvedValue(servicio('s1'));
     const bolsa = useAddToBag();
 
     await bolsa.añadirServicio('s1');
+    const segunda = await bolsa.añadirServicio('s1');
+
+    expect(segunda).toEqual({ ok: true, añadidos: 0, yaEstaban: 1 });
+    expect(useBookStore().bookings).toHaveLength(1);
+  });
+
+  it('un paquete con un servicio que ya estaba añade solo los que faltan', async () => {
+    traer.mockImplementation((id: string) => Promise.resolve(servicio(id)));
+    const bolsa = useAddToBag();
     await bolsa.añadirServicio('s1');
 
-    const store = useBookStore();
-    expect(store.bookings).toHaveLength(1);
-    expect(store.bookings[0].quantity).toBe(2);
+    const resultado = await bolsa.añadirVarios(['s1', 's2']);
+
+    expect(resultado).toEqual({ ok: true, añadidos: 1, yaEstaban: 1 });
+    expect(useBookStore().bookings.map((l) => l.service.id)).toEqual([
+      's1',
+      's2',
+    ]);
   });
 
   it('un paquete añade todas sus líneas', async () => {
@@ -49,7 +62,7 @@ describe('useAddToBag', () => {
 
     const resultado = await useAddToBag().añadirVarios(['s1', 's2']);
 
-    expect(resultado).toEqual({ ok: true, añadidos: 2 });
+    expect(resultado).toEqual({ ok: true, añadidos: 2, yaEstaban: 0 });
     expect(useBookStore().bookings).toHaveLength(2);
   });
 

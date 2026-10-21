@@ -307,15 +307,12 @@ watch(esMovil, () => {
   hojaAbierta.value = false;
 });
 
+// Una bolsa guardada por una versión anterior (un `Service[]`, o líneas con
+// «× N») se deja con cada servicio una vez, que es lo que la cita admite.
 onMounted(() => {
   const b = bookingStore.bookings;
   if (b.length) {
-    const first = b[0];
-    if (!(first && typeof first === 'object' && 'quantity' in first)) {
-      bookingStore.$patch({
-        bookings: migrateLegacyBookings(b as unknown),
-      });
-    }
+    bookingStore.$patch({ bookings: migrateLegacyBookings(b as unknown) });
   }
 });
 

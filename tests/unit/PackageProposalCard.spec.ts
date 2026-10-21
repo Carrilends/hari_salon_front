@@ -147,6 +147,16 @@ describe('PackageProposalCard', () => {
     expect(wrapper.text()).toContain('elige el día al confirmar');
   });
 
+  it('si parte del paquete ya estaba en la bolsa, dice qué entró', async () => {
+    añadirVarios.mockResolvedValue({ ok: true, añadidos: 1, yaEstaban: 1 });
+    const wrapper = montar();
+
+    await wrapper.get('[data-test="anadir-paquete"]').trigger('click');
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('Añadidos 1; 1 ya estaban en tu bolsa.');
+  });
+
   it('si la bolsa no pudo con el paquete, lo dice', async () => {
     añadirVarios.mockResolvedValue({
       ok: false,

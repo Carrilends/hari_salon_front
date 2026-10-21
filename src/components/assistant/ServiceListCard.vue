@@ -35,7 +35,7 @@
           </span>
         </span>
         <span v-if="hecho.has(s.id)" class="service-card__hecho" role="status">
-          Añadido
+          {{ yaEstaba.has(s.id) ? 'Ya estaba en tu bolsa' : 'Añadido' }}
         </span>
         <span v-if="fallo[s.id]" class="service-card__fallo" role="status">
           {{ fallo[s.id] }}
@@ -106,6 +106,8 @@ const { añadirServicio } = useAddToBag();
  */
 const ocupado = ref<Set<string>>(new Set());
 const hecho = ref<Set<string>>(new Set());
+/** Los que «Añadir» encontró ya en la bolsa: cada servicio está una vez. */
+const yaEstaba = ref<Set<string>>(new Set());
 const fallo = ref<Record<string, string>>({});
 
 async function anadir(servicio: PresentedService) {
@@ -121,6 +123,9 @@ async function anadir(servicio: PresentedService) {
 
   if (resultado.ok) {
     hecho.value = new Set(hecho.value).add(servicio.id);
+    if (resultado.añadidos === 0) {
+      yaEstaba.value = new Set(yaEstaba.value).add(servicio.id);
+    }
   } else {
     // Un reintento fallido no puede dejar «Añadido» y el error a la vez.
     const hechos = new Set(hecho.value);

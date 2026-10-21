@@ -198,9 +198,10 @@
             type="button"
             class="ficha__anadir m-boton--ancho"
             data-test="anadir-reserva"
+            :disabled="enLaBolsa"
             @click="anadir"
           >
-            Añadir a la reserva
+            {{ enLaBolsa ? 'Ya está en tu bolsa' : 'Añadir a la reserva' }}
           </button>
           <button
             type="button"
@@ -442,6 +443,9 @@ const descuento = computed(() => promotionPercentDisplay(props.service));
  * resumen de aquí abajo es la confirmación de que el servicio entró en la bolsa.
  */
 const anadir = () => bookStore.addBooking(props.service);
+
+/** Cada servicio está una vez en la bolsa: una cita no admite repetidos. */
+const enLaBolsa = computed(() => bookStore.hasBooking(props.service.id));
 
 /**
  * Sale del store, no de las props: la bolsa puede traer servicios que esta ficha

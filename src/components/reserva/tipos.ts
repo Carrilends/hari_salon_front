@@ -26,7 +26,7 @@ export interface ResumenExito {
   fechaTexto: string; // 'Jueves 8 de octubre'
   franja: string; // '10:30 a 11:30'
   estilista: string | null;
-  lineas: Array<{ nombre: string; cantidad: number; precio: number }>;
+  lineas: Array<{ nombre: string; precio: number }>;
   total: number;
   conSesion: boolean;
   /** Dejó teléfono: el backend le escribe por WhatsApp (`reservation.created`). */

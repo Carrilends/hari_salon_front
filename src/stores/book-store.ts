@@ -5,38 +5,24 @@ import type { BookingLine } from 'src/interfaces/booking';
 import type Service from 'src/interfaces/service';
 import { effectiveServiceUnitPrice } from 'src/helpers/service-promotion';
 
-function isBookingLineArray(raw: unknown[]): raw is BookingLine[] {
-  if (raw.length === 0) return true;
-  const first = raw[0];
-  return (
-    first !== null &&
-    typeof first === 'object' &&
-    'service' in first &&
-    'quantity' in first &&
-    typeof (first as BookingLine).quantity === 'number'
-  );
-}
-
-/** Convierte datos persistidos antiguos (Service[]) al formato con cantidad. */
+/**
+ * Convierte lo que haya guardado el navegador al formato actual: cada servicio
+ * una vez. Acepta el `Service[]` más antiguo y las líneas con `quantity` de
+ * antes de 2026-10-21, cuando la bolsa admitía «× 2» que no llegaba a la cita.
+ */
 export function migrateLegacyBookings(raw: unknown): BookingLine[] {
   if (!Array.isArray(raw)) return [];
-  if (raw.length === 0) return [];
-  if (isBookingLineArray(raw)) return raw;
 
-  const merged = new Map<string, BookingLine>();
+  const porId = new Map<string, BookingLine>();
   for (const item of raw) {
-    if (!item || typeof item !== 'object' || !('id' in item)) continue;
-    const s = item as Service;
-    if (!s.id) continue;
-    const prev = merged.get(s.id);
-    if (prev) {
-      prev.quantity += 1;
-      prev.service = s;
-    } else {
-      merged.set(s.id, { service: s, quantity: 1 });
-    }
+    if (!item || typeof item !== 'object') continue;
+    const service = (
+      'service' in item ? (item as { service: unknown }).service : item
+    ) as Service | null;
+    if (!service || typeof service !== 'object' || !service.id) continue;
+    if (!porId.has(service.id)) porId.set(service.id, { service });
   }
-  return Array.from(merged.values());
+  return Array.from(porId.values());
 }
 
 export const useBookStore = defineStore(
@@ -45,39 +31,17 @@ export const useBookStore = defineStore(
     const bookings = ref<BookingLine[]>([]);
     const showDialog = ref(false);
 
-    const updateBookingQuantity = (
-      serviceId: string,
-      quantity: number,
-      service?: Service
-    ) => {
-      const idx = bookings.value.findIndex((line) => line.service.id === serviceId);
-      if (idx === -1) return;
+    const hasBooking = (serviceId: string) =>
+      bookings.value.some((line) => line.service.id === serviceId);
 
-      if (quantity <= 0) {
-        removeBooking(serviceId);
-        return;
-      }
-
-      const currentLine = bookings.value[idx];
-      if (!currentLine) return;
-
-      bookings.value[idx] = {
-        service: service ?? currentLine.service,
-        quantity,
-      };
-    };
-
-    const addBooking = (booking: Service) => {
-      const idx = bookings.value.findIndex((line) => line.service.id === booking.id);
-      if (idx === -1) {
-        bookings.value.push({ service: booking, quantity: 1 });
-        return;
-      }
-
-      const currentLine = bookings.value[idx];
-      if (!currentLine) return;
-
-      updateBookingQuantity(booking.id, currentLine.quantity + 1, booking);
+    /**
+     * Cada servicio entra una vez: el servidor rechaza repetidos en una cita.
+     * Devuelve `false` si ya estaba, para que quien llama lo diga.
+     */
+    const addBooking = (booking: Service): boolean => {
+      if (hasBooking(booking.id)) return false;
+      bookings.value.push({ service: booking });
+      return true;
     };
 
     const removeBooking = (serviceId: string) => {
@@ -90,38 +54,25 @@ export const useBookStore = defineStore(
       bookings.value = [];
     };
 
-    const incrementBookingQuantity = (service: Service) => {
-      addBooking(service);
-    };
-
-    const decrementBookingQuantity = (serviceId: string) => {
-      const line = bookings.value.find((bookingLine) => bookingLine.service.id === serviceId);
-      if (!line || line.quantity <= 1) return;
-      updateBookingQuantity(serviceId, line.quantity - 1);
-    };
-
     const syncBookingWithService = (service: Service) => {
       bookings.value = bookings.value.map((line) =>
-        line.service.id === service.id ? { ...line, service } : line
+        line.service.id === service.id ? { service } : line
       );
     };
 
-    /** Suma de cantidades (cuántas veces hay servicios en el carrito). */
-    const totalBookingQuantity = computed(() =>
-      bookings.value.reduce((sum, line) => sum + line.quantity, 0)
-    );
+    /** Cuántos servicios hay en la bolsa. */
+    const totalBookingQuantity = computed(() => bookings.value.length);
 
     const bookingsCost = computed(() =>
       bookings.value.reduce(
-        (sum, line) =>
-          sum + effectiveServiceUnitPrice(line.service) * line.quantity,
+        (sum, line) => sum + effectiveServiceUnitPrice(line.service),
         0
       )
     );
 
     const bookingsDuration = computed(() =>
       bookings.value.reduce(
-        (sum, line) => sum + (line.service.duration || 0) * line.quantity,
+        (sum, line) => sum + (line.service.duration || 0),
         0
       )
     );
@@ -135,10 +86,8 @@ export const useBookStore = defineStore(
       bookingsDuration,
       showDialog,
       addBooking,
+      hasBooking,
       removeBooking,
-      updateBookingQuantity,
-      incrementBookingQuantity,
-      decrementBookingQuantity,
       syncBookingWithService,
       showDialogFn,
       clearBookings,

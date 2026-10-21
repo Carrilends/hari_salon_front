@@ -1,9 +1,8 @@
 import type Service from './service';
 
-/** Una fila en el carrito: un servicio y cuántas veces se reservó. */
+/** Una fila en el carrito. Cada servicio está una vez: una cita no los repite. */
 export interface BookingLine {
   service: Service;
-  quantity: number;
 }
 
 export type ReservationStatus =

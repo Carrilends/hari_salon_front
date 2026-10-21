@@ -485,8 +485,7 @@ export function useCajonReserva(abierto: Ref<boolean>) {
       estilista,
       lineas: lineas.value.map((l) => ({
         nombre: l.service.name,
-        cantidad: l.quantity,
-        precio: effectiveServiceUnitPrice(l.service) * l.quantity,
+        precio: effectiveServiceUnitPrice(l.service),
       })),
       total: total.value,
       conSesion: sesion,

@@ -504,7 +504,17 @@ describe('ficha del servicio · el pie y la bolsa', () => {
 
     expect(bolsa.bookings).toHaveLength(1);
     expect(bolsa.bookings[0].service.id).toBe('s1');
-    expect(bolsa.bookings[0].quantity).toBe(1);
+  });
+
+  it('con el servicio ya en la bolsa, el botón lo dice y no lo añade otra vez', async () => {
+    const { wrapper, bolsa } = montar();
+    await wrapper.get('[data-test="anadir-reserva"]').trigger('click');
+
+    const boton = wrapper.get('[data-test="anadir-reserva"]');
+    expect(boton.text()).toBe('Ya está en tu bolsa');
+    expect(boton.attributes('disabled')).toBeDefined();
+    await boton.trigger('click');
+    expect(bolsa.bookings).toHaveLength(1);
   });
 
   /**

@@ -14,8 +14,8 @@ const RESUMEN: ResumenExito = {
   franja: '10:30 a 11:30',
   estilista: 'Monica',
   lineas: [
-    { nombre: 'Wolf cut mujer', cantidad: 1, precio: 37000 },
-    { nombre: 'Uñas de gel', cantidad: 1, precio: 48000 },
+    { nombre: 'Wolf cut mujer', precio: 37000 },
+    { nombre: 'Uñas de gel', precio: 48000 },
   ],
   total: 85000,
   conSesion: true,

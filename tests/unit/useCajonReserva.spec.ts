@@ -412,7 +412,7 @@ describe('useCajonReserva · éxito (B5)', () => {
     expect(resumen?.estilista).toBe('Alejandro');
     expect(resumen?.total).toBe(45000);
     expect(resumen?.lineas).toEqual([
-      { nombre: 'Bob clásico', cantidad: 1, precio: 45000 },
+      { nombre: 'Bob clásico', precio: 45000 },
     ]);
     expect(resumen?.conSesion).toBe(false);
     expect(resumen?.avisoPorWhatsApp).toBe(true);

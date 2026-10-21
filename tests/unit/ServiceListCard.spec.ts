@@ -83,6 +83,16 @@ describe('ServiceListCard', () => {
     expect(añadirServicio).toHaveBeenCalledWith('s2');
   });
 
+  it('si el servicio ya estaba en la bolsa, lo dice en vez de «Añadido»', async () => {
+    añadirServicio.mockResolvedValue({ ok: true, añadidos: 0, yaEstaban: 1 });
+    const wrapper = montar();
+
+    await wrapper.findAll('[data-test="anadir"]')[1].trigger('click');
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('Ya estaba en tu bolsa');
+  });
+
   /**
    * Punto 1 del enfoque de revisión. Un dedo nervioso en una conexión lenta
    * añadiría el servicio dos veces y descuadraría el contador de la cabecera.

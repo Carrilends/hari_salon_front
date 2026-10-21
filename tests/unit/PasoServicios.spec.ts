@@ -1,7 +1,7 @@
 /**
  * Paso 1, «Tus servicios» (tablero ReservaCajonPasos, móvil 1) y la bolsa
- * vacía (ReservaCajonEstados). B10: la cantidad de cada línea se conserva y
- * se dice («× 2»), pero sin los botones +/− de antes.
+ * vacía (ReservaCajonEstados). Cada servicio está una sola vez: el servidor
+ * no admite repetidos en una cita (hallazgo de la F4).
  */
 import { mount } from '@vue/test-utils';
 import PasoServicios from 'src/components/reserva/PasoServicios.vue';
@@ -9,7 +9,7 @@ import type { BookingLine } from 'src/interfaces/booking';
 import { servicio } from './fixtures/servicios';
 
 const LINEAS: BookingLine[] = [
-  { service: servicio(), quantity: 1 },
+  { service: servicio() },
   {
     service: servicio({
       id: 's2',
@@ -18,7 +18,6 @@ const LINEAS: BookingLine[] = [
       price: 48000,
       duration: 30,
     }),
-    quantity: 2,
   },
 ];
 
@@ -27,7 +26,7 @@ const montar = (lineas: BookingLine[] = LINEAS) =>
 
 describe('PasoServicios', () => {
   it('cuenta los servicios de la bolsa', () => {
-    expect(montar().text()).toContain('En tu bolsa · 3 servicios');
+    expect(montar().text()).toContain('En tu bolsa · 2 servicios');
   });
 
   it('cada línea: categoría, nombre, precio y duración', () => {
@@ -38,16 +37,14 @@ describe('PasoServicios', () => {
     expect(bob.text()).toContain('$ 45.000');
     expect(bob.text()).toContain('1 h');
     expect(unas.text()).toContain('Uñas');
-    expect(unas.text()).toContain('$ 96.000');
+    expect(unas.text()).toContain('$ 48.000');
   });
 
-  it('una línea repetida dice su cantidad, sin botones para cambiarla', () => {
+  it('ninguna línea dice cantidad: cada servicio está una vez', () => {
     const wrapper = montar();
-    const lineas = wrapper.findAll('[data-test="linea-bolsa"]');
 
-    expect(lineas[0].find('[data-test="cantidad-linea"]').exists()).toBe(false);
-    expect(lineas[1].get('[data-test="cantidad-linea"]').text()).toBe('× 2');
-    expect(lineas[1].findAll('button')).toHaveLength(1);
+    expect(wrapper.find('[data-test="cantidad-linea"]').exists()).toBe(false);
+    expect(wrapper.text()).not.toContain('×');
   });
 
   it('quitar se nombra con el servicio y emite su id', async () => {

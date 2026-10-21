@@ -28,22 +28,14 @@
               {{ etiquetaDeCategoria(linea.service) }}
             </p>
             <p class="bolsa__nombre">
-              {{ linea.service.name
-              }}<span
-                v-if="linea.quantity > 1"
-                class="bolsa__cantidad"
-                data-test="cantidad-linea"
-                >× {{ linea.quantity }}</span
-              >
+              {{ linea.service.name }}
             </p>
             <p class="bolsa__precio">
               <span class="bolsa__importe">{{
-                precioTexto(subtotal(linea))
+                precioTexto(effectiveServiceUnitPrice(linea.service))
               }}</span>
               ·
-              {{
-                formatDurationMinutes(linea.service.duration * linea.quantity)
-              }}
+              {{ formatDurationMinutes(linea.service.duration) }}
             </p>
           </div>
           <button
@@ -130,18 +122,12 @@ const emit = defineEmits<{
   (e: 'abrir-asistente'): void;
 }>();
 
-const cantidad = computed(() =>
-  props.lineas.reduce((total, linea) => total + linea.quantity, 0)
-);
+const cantidad = computed(() => props.lineas.length);
 
 /** 64 px en pantalla, 128 pedidos: nítida en pantalla densa. */
 const fotoDe = (linea: BookingLine) =>
   optimizeCloudinaryUrl(urlDeFotoPrincipal(linea.service), 128) ||
   PLACEHOLDER_IMAGE;
-
-/** El precio que paga: con la promoción aplicada, por la cantidad. */
-const subtotal = (linea: BookingLine) =>
-  effectiveServiceUnitPrice(linea.service) * linea.quantity;
 </script>
 
 <style scoped lang="scss">
@@ -187,13 +173,6 @@ const subtotal = (linea: BookingLine) =>
   font-family: var(--m-font-display);
   font-size: 18px;
   line-height: 1.2;
-}
-
-.bolsa__cantidad {
-  margin-left: 6px;
-  font-family: var(--m-font-sans);
-  font-size: 13px;
-  color: var(--m-piedra);
 }
 
 .bolsa__precio {
