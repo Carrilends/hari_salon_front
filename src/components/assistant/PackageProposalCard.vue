@@ -73,7 +73,8 @@ const notaHecho = computed(() => {
   const { añadidos, yaEstaban } = cuenta.value;
   if (yaEstaban === 0) return 'Añadido a tu reserva.';
   if (añadidos === 0) return 'Ya estaba todo en tu bolsa.';
-  return `Añadidos ${añadidos}; ${yaEstaban} ya estaban en tu bolsa.`;
+  const verbo = yaEstaban === 1 ? 'estaba' : 'estaban';
+  return `Añadimos ${añadidos}; ${yaEstaban} ya ${verbo} en tu bolsa.`;
 });
 const motivoFallo = ref<string | null>(null);
 

@@ -154,7 +154,17 @@ describe('PackageProposalCard', () => {
     await wrapper.get('[data-test="anadir-paquete"]').trigger('click');
     await flushPromises();
 
-    expect(wrapper.text()).toContain('Añadidos 1; 1 ya estaban en tu bolsa.');
+    expect(wrapper.text()).toContain('Añadimos 1; 1 ya estaba en tu bolsa.');
+  });
+
+  it('con varios ya en la bolsa, la nota va en plural', async () => {
+    añadirVarios.mockResolvedValue({ ok: true, añadidos: 2, yaEstaban: 3 });
+    const wrapper = montar();
+
+    await wrapper.get('[data-test="anadir-paquete"]').trigger('click');
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('Añadimos 2; 3 ya estaban en tu bolsa.');
   });
 
   it('si la bolsa no pudo con el paquete, lo dice', async () => {
