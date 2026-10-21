@@ -57,13 +57,13 @@ export const prepareImagesForUpload = async (files: fileWithUrl[]) => {
   files.forEach((img) => promises.push(uploadImageToCloudinary(img, sign)));
   const returners = await Promise.all(promises);
 
-  const amountOfImages = files.length;
-  const randomIndex = Math.floor(Math.random() * amountOfImages);
-  returners.forEach((result, index) => {
+  // Ninguna llega marcada: el servidor conserva la principal que ya había o,
+  // si no hay, toma la primera (`selectPrincipalImage`).
+  returners.forEach((result) => {
     imagesToUpload.push({
       url: result.secure_url,
       publicId: result.public_id,
-      isPrincipal: index === randomIndex,
+      isPrincipal: false,
       version: result.version,
     });
   });

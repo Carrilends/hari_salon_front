@@ -19,7 +19,7 @@ describe('cloudinaryHelpers', () => {
     jest.clearAllMocks();
   });
 
-  test('prepareImagesForUpload firma una vez por el cliente autenticado y marca una imagen principal', async () => {
+  test('prepareImagesForUpload firma una vez por el cliente autenticado y no sortea la principal', async () => {
     const { adminServiceApi } = require('src/api/services-api');
     adminServiceApi.post.mockResolvedValueOnce({
       data: {
@@ -46,7 +46,9 @@ describe('cloudinaryHelpers', () => {
     });
     g.fetch = fetchMock as unknown as typeof fetch;
 
-    jest.spyOn(Math, 'random').mockReturnValue(0); // principal => first
+    // La principal la decide el servidor (conserva la que había o la primera);
+    // antes se sorteaba aquí y la foto del catálogo cambiaba sola.
+    const azar = jest.spyOn(Math, 'random');
 
     const f1 = new File(['a'], 'a.png', { type: 'image/png' });
     const f2 = new File(['b'], 'b.png', { type: 'image/png' });
@@ -55,10 +57,8 @@ describe('cloudinaryHelpers', () => {
 
     expect(adminServiceApi.post).toHaveBeenCalledWith('/cloudinary/sign');
     expect(res).toHaveLength(2);
-    const isPrincipal = (x: unknown): x is { isPrincipal: boolean } =>
-      typeof x === 'object' && x !== null && 'isPrincipal' in x;
-    expect(res.filter(isPrincipal).filter((x) => x.isPrincipal).length).toBe(1);
-    expect(res[0].isPrincipal).toBe(true);
+    expect(res.map((x) => x.isPrincipal)).toEqual([false, false]);
+    expect(azar).not.toHaveBeenCalled();
 
     g.fetch = originalFetch;
     jest.restoreAllMocks();
