@@ -56,6 +56,14 @@
         Seguir viendo servicios
       </button>
       <button
+        type="button"
+        class="exito__seguir m-boton-plano"
+        data-test="otra-persona"
+        @click="emit('otra-persona')"
+      >
+        Reservar para otra persona
+      </button>
+      <button
         v-if="resumen.conSesion"
         type="button"
         class="exito__principal"
@@ -100,6 +108,7 @@ const emit = defineEmits<{
   (e: 'ver-servicios'): void;
   (e: 'ver-mis-reservas'): void;
   (e: 'cerrar'): void;
+  (e: 'otra-persona'): void;
 }>();
 
 const titulo = ref<HTMLElement | null>(null);
@@ -248,9 +257,12 @@ onMounted(() => {
   box-sizing: border-box;
   display: flex;
   align-items: center;
+  /* Tres salidas no caben en una fila a 390 px: la principal baja y se
+     queda a la derecha. */
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 12px;
-  padding: 0 20px;
+  gap: 4px 12px;
+  padding: 12px 20px;
   border-top: var(--m-filete-grosor) solid var(--m-filete);
   background: var(--m-nieve);
 }
@@ -267,6 +279,7 @@ onMounted(() => {
 }
 
 .exito__principal {
+  margin-left: auto;
   min-height: 48px;
   padding: 0 24px;
   border: none;

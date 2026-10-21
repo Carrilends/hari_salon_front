@@ -34,6 +34,7 @@ import {
   type SalonNowParts,
 } from 'src/helpers/businessHours';
 import { effectiveServiceUnitPrice } from 'src/helpers/service-promotion';
+import type Service from 'src/interfaces/service';
 import type {
   AvisoDisponibilidad,
   CitaElegida,
@@ -117,6 +118,16 @@ export function useCajonReserva(abierto: Ref<boolean>) {
   const resumen = ref<ResumenExito | null>(null);
   /** La hora que falló, para «Probar sin preferencia». */
   let horaFallida: string | null = null;
+  /**
+   * Lo de la última reserva creada, para «Reservar para otra persona»: una cita
+   * no repite servicios, así que dos niños con corte son dos citas.
+   */
+  let ultimaReserva: {
+    servicios: Service[];
+    fecha: string;
+    nombre: string;
+    telefono: string;
+  } | null = null;
   /** Cuándo cambió el paso por última vez (abrir el cajón cuenta). */
   let ultimoCambioDePaso = abierto.value ? Date.now() : -Infinity;
 
@@ -503,6 +514,27 @@ export function useCajonReserva(abierto: Ref<boolean>) {
     });
   }
 
+  /**
+   * Arma la cita de la siguiente persona con lo de la anterior: mismos
+   * servicios, mismo día y los datos de contacto (quien reserva suele ser la
+   * misma). La hora y la estilista se eligen de nuevo, y la casilla de
+   * consentimiento vuelve vacía: nunca se premarca.
+   */
+  function reservarOtraPersona() {
+    if (!ultimaReserva) return;
+    const anterior = ultimaReserva;
+    reiniciar();
+    bolsa.clearBookings();
+    for (const servicio of anterior.servicios) bolsa.addBooking(servicio);
+    fecha.value = anterior.fecha;
+    hora.value = null;
+    estilistaId.value = null;
+    nombre.value = anterior.nombre;
+    telefono.value = anterior.telefono;
+    consentimiento.value = false;
+    errores.value = {};
+  }
+
   async function confirmar() {
     if (enviando.value) return;
     errorEnvio.value = null;
@@ -577,6 +609,12 @@ export function useCajonReserva(abierto: Ref<boolean>) {
         // ya pasó y ve el paso en «exito», así que vaciar la bolsa no lo
         // devuelve a «Tus servicios».
         paso.value = 'exito';
+        ultimaReserva = {
+          servicios: lineas.value.map((l) => l.service),
+          fecha: f,
+          nombre: nombre.value,
+          telefono: telefono.value,
+        };
         bolsa.clearBookings();
         nombre.value = '';
         telefono.value = '';
@@ -667,6 +705,7 @@ export function useCajonReserva(abierto: Ref<boolean>) {
     quitarServicio,
     reintentarHuecos,
     confirmar,
+    reservarOtraPersona,
     elegirOtraHora,
     probarSinPreferencia,
   };

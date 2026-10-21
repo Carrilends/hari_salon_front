@@ -379,6 +379,55 @@ describe('useCajonReserva · lo que se envía (B4)', () => {
   });
 });
 
+/**
+ * Una cita es de una persona: el servidor no admite el mismo servicio dos
+ * veces. Para dos niños con corte, dos citas; este atajo arma la segunda con
+ * lo de la primera (decisión de Luis, 2026-10-21).
+ */
+describe('useCajonReserva · reservar para otra persona', () => {
+  it('vuelve a la bolsa con los mismos servicios, el mismo día y los datos de contacto', async () => {
+    mockEnviar.mockResolvedValue(CREADA);
+    const { cajon } = montar();
+    await hastaDatos(cajon, { estilista: 'w-monica' });
+    datosSinSesion(cajon);
+    const servicios = useBookStore().bookings.map((l) => l.service.id);
+    await cajon.confirmar();
+
+    cajon.reservarOtraPersona();
+    await nextTick();
+
+    expect(cajon.paso.value).toBe('servicios');
+    expect(cajon.resumen.value).toBeNull();
+    expect(useBookStore().bookings.map((l) => l.service.id)).toEqual(servicios);
+    expect(cajon.fecha.value).toBe('2026/10/08');
+    expect(cajon.hora.value).toBeNull();
+    expect(cajon.estilistaId.value).toBeNull();
+    expect(cajon.nombre.value).toBe('  Ana María ');
+    expect(cajon.telefono.value).toBe('300 123 4567');
+  });
+
+  it('la casilla de consentimiento vuelve vacía: no se premarca', async () => {
+    mockEnviar.mockResolvedValue(CREADA);
+    const { cajon } = montar();
+    await hastaDatos(cajon);
+    datosSinSesion(cajon);
+    await cajon.confirmar();
+
+    cajon.reservarOtraPersona();
+
+    expect(cajon.consentimiento.value).toBe(false);
+  });
+
+  it('sin una reserva hecha no hace nada', () => {
+    const { cajon } = montar();
+
+    cajon.reservarOtraPersona();
+
+    expect(cajon.paso.value).toBe('servicios');
+    expect(useBookStore().bookings).toHaveLength(0);
+  });
+});
+
 describe('useCajonReserva · éxito (B5)', () => {
   it('pasa a éxito, vacía la bolsa y los datos, y NO abre WhatsApp', async () => {
     const abrir = jest.spyOn(window, 'open').mockImplementation(() => null);

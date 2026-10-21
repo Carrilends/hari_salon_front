@@ -105,6 +105,19 @@ describe('PantallaExito', () => {
     expect(wrapper.find('[data-test="cerrar-exito"]').exists()).toBe(false);
   });
 
+  it.each([true, false])(
+    'ofrece reservar para otra persona (con sesión: %s)',
+    async (conSesion) => {
+      const wrapper = montar({ conSesion });
+
+      const boton = wrapper.get('[data-test="otra-persona"]');
+      expect(boton.text()).toBe('Reservar para otra persona');
+      await boton.trigger('click');
+
+      expect(wrapper.emitted('otra-persona')).toHaveLength(1);
+    }
+  );
+
   it('sin sesión no hay «Mis reservas»: se cierra', async () => {
     const wrapper = montar({ conSesion: false });
 

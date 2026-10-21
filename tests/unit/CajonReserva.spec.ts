@@ -218,6 +218,25 @@ describe('CajonReserva', () => {
     abrir.mockRestore();
   });
 
+  it('«Reservar para otra persona» vuelve a «Tus servicios» con la misma bolsa', async () => {
+    mockEnviar.mockResolvedValue({
+      tipo: 'creada',
+      reserva: { id: 'r1', workerId: 'w-alejandro' },
+    });
+    useBookStore().addBooking(servicio());
+    const wrapper = montar();
+    await hastaDatos(wrapper);
+    await rellenarSinSesion(wrapper);
+    dejarPasarLaPausa();
+    await pulsar(wrapper, '[data-test="continuar"]');
+
+    await pulsar(wrapper, '[data-test="otra-persona"]');
+
+    expect(wrapper.find('[data-test="pantalla-exito"]').exists()).toBe(false);
+    expect(wrapper.get('[data-test="paso-actual"]').text()).toBe('1 Servicios');
+    expect(useBookStore().bookings).toHaveLength(1);
+  });
+
   it('la disponibilidad cambió: vuelve a «Cuándo» con el aviso y sus dos salidas (B6)', async () => {
     useBookStore().addBooking(servicio());
     const wrapper = montar();

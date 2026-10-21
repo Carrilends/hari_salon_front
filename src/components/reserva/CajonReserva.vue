@@ -48,6 +48,7 @@
         :resumen="resumen"
         @ver-servicios="irAServicios"
         @ver-mis-reservas="irAMisReservas"
+        @otra-persona="reservarOtraPersona"
         @cerrar="cerrar"
       />
 
@@ -213,6 +214,7 @@ const {
   reintentarHuecos,
   elegirOtraHora,
   probarSinPreferencia,
+  reservarOtraPersona,
 } = useCajonReserva(toRef(props, 'abierto'));
 
 const cuerpo = ref<HTMLElement | null>(null);
