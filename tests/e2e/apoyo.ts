@@ -26,8 +26,9 @@ export const correoDePrueba = (etiqueta: string) =>
   `e2e+${etiqueta}.${MARCA}@example.test`;
 
 /**
- * Un móvil colombiano de prueba (300 000 0xxx). Con la pila E2E el aviso sale
- * por el adaptador de consola: no se manda nada a ningún número.
+ * Un móvil colombiano de prueba (300 000 1xxx). En la pila E2E el aviso sale
+ * por el adaptador de consola y, además, la API no tiene red de salida
+ * (`bloquear-red.cjs`): no se manda nada a ningún número.
  */
 export const telefonoDePrueba = (n: number) =>
   `300000${String(1000 + (n % 1000)).padStart(4, '0')}`;

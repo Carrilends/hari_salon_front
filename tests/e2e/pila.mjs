@@ -7,8 +7,21 @@
  * Falla cerrada. El `.env` del backend tiene credenciales REALES (WhatsApp
  * Cloud API, correo, Gemini): una API arrancada con él tal cual escribiría a
  * teléfonos de verdad al crear una reserva. Por eso la API de la pila la
- * arranca siempre el propio arnés con `entornoApi()`, que vacía esos tokens, y
- * `comprobarEntornoSeguro()` se niega a seguir si alguno quedara con valor.
+ * arranca siempre el propio arnés, y antes de arrancarla pasan tres filtros
+ * (si uno falla, no arranca nada):
+ *
+ * 1. `comprobarEntornoSeguro()`: el entorno que el arnés va a pasar
+ *    (`entornoApi()`) tiene los tokens vacíos, la base E2E, los puertos y la
+ *    red bloqueada declarada.
+ * 2. `comprobarEntornoEnElBackend()`: con ese entorno, `cwd` en el backend y
+ *    su propio `@nestjs/config` (`ConfigModule.forRoot()`, como la app), el
+ *    `process.env` resultante sigue siendo ese. Si algún día el `.env` ganara
+ *    a una variable del proceso, se detecta aquí, antes de enviar nada.
+ * 3. Una red independiente de lo anterior: la API corre con
+ *    `NODE_OPTIONS=--require tests/e2e/bloquear-red.cjs`, que corta toda
+ *    conexión de salida que no sea a la propia máquina. Aunque los dos filtros
+ *    anteriores fallaran a la vez y la API eligiera la Cloud API, la petición
+ *    no saldría.
  *
  * Precedencia (comprobada en el código del backend, no supuesta):
  * `ConfigModule.forRoot()` de `@nestjs/config` 3.3.0 mezcla
@@ -91,6 +104,24 @@ export const DIR_REGISTROS = resolve(
 );
 export const REGISTRO_API = resolve(DIR_REGISTROS, 'api.log');
 
+/** La red de seguridad independiente (ver `bloquear-red.cjs`). */
+export const BLOQUEAR_RED = resolve(
+  RAIZ_FRONT,
+  'tests',
+  'e2e',
+  'bloquear-red.cjs'
+);
+const CHEQUEO_BACK = resolve(
+  RAIZ_FRONT,
+  'tests',
+  'e2e',
+  'comprobar-entorno-api.cjs'
+);
+
+/** Número y correo de la dueña en la pila: de prueba, nunca los reales. */
+export const WHATSAPP_DUENA_PRUEBA = '573000000001';
+export const CORREO_DUENA_PRUEBA = 'duena.e2e@example.test';
+
 /** Las cuatro variables que la consigna obliga a vaciar. */
 export const TOKENS_VACIOS = [
   'WHATSAPP_TOKEN',
@@ -137,19 +168,21 @@ export function credencialesBd() {
 
 /**
  * El entorno de la API E2E. Lo que no está aquí lo pone el `.env` del backend
- * (JWT, plantillas…), porque `ConfigModule` lo carga debajo de esto.
+ * (JWT, plantillas…), porque `ConfigModule` lo carga debajo de esto; que de
+ * verdad quede debajo lo verifica `comprobarEntornoEnElBackend()`.
  *
- * Además de las cuatro variables de la consigna se vacían o se fijan otras,
- * como segunda red: `WHATSAPP_PHONE_NUMBER_ID` vacío hace que el adaptador de
- * la Cloud API lance ANTES de ir a la red aunque hubiera token
- * (`cloud-api-whatsapp-sender.adapter.ts`), el número de la dueña es uno de
- * prueba, `TYPESAFE_API_KEY` es el nombre que de verdad lee el módulo del
- * asistente, y `TYPEORM_SYNCHRONIZE=false` impide que TypeORM reescriba el
- * esquema de la copia.
+ * Además de las cuatro variables de la consigna se vacían o se fijan otras.
+ * No son una red independiente —dependen del mismo mecanismo que los tokens
+ * vacíos—, pero cierran huecos concretos: `WHATSAPP_PHONE_NUMBER_ID` vacío
+ * hace que el adaptador de la Cloud API lance antes de `fetch`; el número y el
+ * correo de la dueña son de prueba; `TYPESAFE_API_KEY` es el nombre que de
+ * verdad lee el asistente; `TYPEORM_SYNCHRONIZE=false` impide que TypeORM
+ * reescriba el esquema de la copia. La red independiente es `NODE_OPTIONS`.
  *
  * @param {{ conGemini?: boolean }} [opciones] `conGemini` solo lo usa
  *   `yarn e2e:pila` con `E2E_CON_GEMINI=1`: conserva el `GEMINI_API_KEY` del
- *   `.env`. La configuración de Playwright nunca lo pasa.
+ *   `.env` y deja salir la red al host de Gemini. La configuración de
+ *   Playwright nunca lo pasa.
  * @returns {Record<string, string>}
  */
 export function entornoApi({ conGemini = false } = {}) {
@@ -163,18 +196,22 @@ export function entornoApi({ conGemini = false } = {}) {
     EMAIL_PROVIDER: '',
     GEMINI_API_KEY: '',
     TYPESAFE_KEY: '',
-    // Segunda red (ver arriba).
     WHATSAPP_PHONE_NUMBER_ID: '',
-    SALON_OWNER_WHATSAPP: '573000000001',
+    SALON_OWNER_WHATSAPP: WHATSAPP_DUENA_PRUEBA,
+    SALON_NOTIFICATION_EMAIL: CORREO_DUENA_PRUEBA,
     EMAIL_API_KEY: '',
     TYPESAFE_API_KEY: '',
     TYPEORM_SYNCHRONIZE: 'false',
     TYPEORM_LOGGING: 'false',
-    // El aviso por correo a la dueña sale por consola, pero con una dirección
-    // de prueba: el registro no guarda ninguna real.
-    SALON_NOTIFICATION_EMAIL: 'duena.e2e@example.test',
     // El portal E2E vive en 9100: CORS y el socket del panel lo admiten.
     FRONT_URL: URL_PORTAL,
+    // La red independiente: la heredan npm, el CLI de Nest y el proceso de la
+    // API. `E2E_CON_GEMINI` va siempre explícito, para que un `1` olvidado en
+    // la terminal no abra el host de Gemini en `yarn test:e2e`.
+    NODE_OPTIONS: `--require "${BLOQUEAR_RED}"`,
+    E2E_CON_GEMINI: conGemini ? '1' : '0',
+    // Que npm no busque actualizaciones (sería una salida bloqueada más).
+    NPM_CONFIG_UPDATE_NOTIFIER: 'false',
     // Registro sin códigos de color, para poder buscar en él.
     NO_COLOR: '1',
   };
@@ -185,29 +222,97 @@ export function entornoApi({ conGemini = false } = {}) {
 }
 
 /**
- * Se niega a seguir si el entorno pudiera alcanzar un servicio real o la base
- * de desarrollo. `permitirGemini` solo lo usa `yarn e2e:pila`.
+ * El entorno del portal E2E. `VITE_API_URL` se fija a `/api` (relativa: va
+ * por el proxy de `quasar dev` al 3101) para que una URL absoluta en el
+ * `.env` local del front no lleve los flujos a la API de desarrollo. Vite da
+ * prioridad a las `VITE_*` del proceso sobre las del `.env`.
+ */
+export function entornoPortal() {
+  return {
+    DEV_API_TARGET: `http://127.0.0.1:${PUERTO_API}`,
+    VITE_API_URL: '/api',
+    // El socket del panel va directo a la API (no por el proxy): a la de la
+    // pila, no a la de desarrollo del 3001.
+    VITE_WS_URL: `http://127.0.0.1:${PUERTO_API}`,
+    VITE_SITE_URL: URL_PORTAL,
+  };
+}
+
+/**
+ * Se niega a seguir si el entorno que el arnés va a pasar a la API pudiera
+ * alcanzar un servicio real o la base de desarrollo. Comprueba, una por una:
+ * - `WHATSAPP_TOKEN`, `EMAIL_PROVIDER`, `GEMINI_API_KEY` (salvo
+ *   `permitirGemini`), `TYPESAFE_KEY`, `WHATSAPP_PHONE_NUMBER_ID`,
+ *   `EMAIL_API_KEY` y `TYPESAFE_API_KEY` vacías;
+ * - `SALON_OWNER_WHATSAPP` y `SALON_NOTIFICATION_EMAIL` = los de prueba;
+ * - `DB_NAME=HairSalonE2E`, `DB_HOST=127.0.0.1`, `DB_PORT=3334`, `PORT=3101`;
+ * - `TYPEORM_SYNCHRONIZE=false`, `FRONT_URL` = el portal E2E;
+ * - `NODE_OPTIONS` carga `bloquear-red.cjs` (y el archivo existe), y
+ *   `E2E_CON_GEMINI` es `1` solo con `permitirGemini`.
+ * `permitirGemini` solo lo usa `yarn e2e:pila`.
  */
 export function comprobarEntornoSeguro(
   entorno,
   { permitirGemini = false } = {}
 ) {
   const fallos = [];
-  for (const clave of TOKENS_VACIOS) {
+  const exigir = (clave, valor) => {
+    if (entorno[clave] !== valor) fallos.push(`${clave} no es el esperado`);
+  };
+  for (const clave of [
+    ...TOKENS_VACIOS,
+    'WHATSAPP_PHONE_NUMBER_ID',
+    'EMAIL_API_KEY',
+    'TYPESAFE_API_KEY',
+  ]) {
     if (clave === 'GEMINI_API_KEY' && permitirGemini) continue;
     if (entorno[clave] !== '') fallos.push(`${clave} debe estar vacío`);
   }
-  if (entorno.WHATSAPP_PHONE_NUMBER_ID !== '') {
-    fallos.push('WHATSAPP_PHONE_NUMBER_ID debe estar vacío');
-  }
-  if (entorno.DB_NAME !== BD_E2E) fallos.push(`DB_NAME debe ser ${BD_E2E}`);
-  if (entorno.PORT !== String(PUERTO_API)) {
-    fallos.push(`PORT debe ser ${PUERTO_API}`);
+  exigir('SALON_OWNER_WHATSAPP', WHATSAPP_DUENA_PRUEBA);
+  exigir('SALON_NOTIFICATION_EMAIL', CORREO_DUENA_PRUEBA);
+  exigir('DB_NAME', BD_E2E);
+  exigir('DB_HOST', '127.0.0.1');
+  exigir('DB_PORT', String(PUERTO_BD));
+  exigir('PORT', String(PUERTO_API));
+  exigir('TYPEORM_SYNCHRONIZE', 'false');
+  exigir('FRONT_URL', URL_PORTAL);
+  exigir('E2E_CON_GEMINI', permitirGemini ? '1' : '0');
+  if (
+    !existsSync(BLOQUEAR_RED) ||
+    !String(entorno.NODE_OPTIONS ?? '').includes(`--require "${BLOQUEAR_RED}"`)
+  ) {
+    fallos.push('NODE_OPTIONS debe cargar tests/e2e/bloquear-red.cjs');
   }
   if (fallos.length) {
     throw new Error(`Entorno de la API E2E inseguro: ${fallos.join('; ')}.`);
   }
   return entorno;
+}
+
+/**
+ * Comprobación previa al envío, dentro del backend: lanza
+ * `comprobar-entorno-api.cjs` con `cwd = hair_salon_back` y el entorno dado,
+ * que carga el `@nestjs/config` del backend (`ConfigModule.forRoot()`, como
+ * `app.module.ts`) y exige que `process.env` siga siendo ese entorno, clave por
+ * clave. No arranca la API, no abre la base y no envía nada. Lanza si algo no
+ * cuadra; nunca imprime valores.
+ */
+export function comprobarEntornoEnElBackend(entorno) {
+  try {
+    return execFileSync(process.execPath, [CHEQUEO_BACK], {
+      cwd: RAIZ_BACK,
+      env: { ...process.env, ...entorno },
+      input: JSON.stringify(entorno),
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    }).trim();
+  } catch (error) {
+    const detalle = String(error?.stderr ?? '')
+      .split(/\r?\n/)
+      .filter((l) => l.startsWith('comprobar-entorno-api:'))
+      .join(' ');
+    throw new Error(detalle || `comprobar-entorno-api falló: ${error.message}`);
+  }
 }
 
 /**
@@ -311,6 +416,7 @@ async function levantarPila() {
   const entorno = comprobarEntornoSeguro(entornoApi({ conGemini }), {
     permitirGemini: conGemini,
   });
+  console.log(comprobarEntornoEnElBackend(entorno));
 
   for (const puerto of [PUERTO_API, PUERTO_PORTAL]) {
     if (await puertoOcupado(puerto)) {
@@ -346,12 +452,7 @@ async function levantarPila() {
     ['quasar', 'dev', '--port', String(PUERTO_PORTAL)],
     {
       cwd: RAIZ_FRONT,
-      env: {
-        ...process.env,
-        DEV_API_TARGET: `http://127.0.0.1:${PUERTO_API}`,
-        VITE_WS_URL: `http://127.0.0.1:${PUERTO_API}`,
-        VITE_SITE_URL: URL_PORTAL,
-      },
+      env: { ...process.env, ...entornoPortal() },
       stdio: ['ignore', 'inherit', 'inherit'],
       detached: true,
     }
@@ -397,11 +498,11 @@ async function levantarPila() {
       '',
       'Pila E2E en marcha (Ctrl+C para pararla):',
       `  portal   ${URL_PORTAL}`,
-      `  API      ${URL_API}  (base ${BD_E2E}, avisos por consola)`,
+      `  API      ${URL_API}  (base ${BD_E2E}, avisos por consola, red de salida bloqueada)`,
       `  registro ${REGISTRO_API}`,
       `  propietaria de prueba: ${PROPIETARIA.correo} (contraseña en tests/e2e/README.md)`,
       conGemini
-        ? '  Gemini: CON la clave del .env (E2E_CON_GEMINI=1)'
+        ? '  Gemini: CON la clave del .env y su host abierto (E2E_CON_GEMINI=1)'
         : '  Gemini: sin clave',
       '',
     ].join('\n')

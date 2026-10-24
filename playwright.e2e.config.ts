@@ -6,13 +6,18 @@
  * archivo en el 3101 contra la base `HairSalonE2E` y con los tokens de los
  * proveedores vacíos (`entornoApi()`), y con un portal en el 9100.
  *
- * Falla cerrada:
- * - `reuseExistingServer: false` en los dos servidores: si algo ya escucha en
- *   3101 o 9100, Playwright se niega a arrancar en vez de reutilizarlo;
- * - `comprobarEntornoSeguro()` lanza aquí mismo si el entorno de la API
- *   pudiera alcanzar un proveedor real o una base que no sea `HairSalonE2E`;
- * - el proyecto `pila` (`pila-segura.spec.ts`) corre antes que los flujos y,
- *   si falla, los flujos no corren.
+ * Falla cerrada (todo esto pasa al cargar este archivo, antes de que
+ * Playwright arranque ningún `webServer`, salvo lo marcado):
+ * - `comprobarEntornoSeguro()` lanza si el entorno que se va a pasar a la API
+ *   no es exactamente el seguro (tokens vacíos, base E2E, red bloqueada…);
+ * - `comprobarEntornoEnElBackend()` carga el `@nestjs/config` del backend con
+ *   ese entorno y lanza si el `.env` ganara a alguna clave;
+ * - (al arrancar) `reuseExistingServer: false` en los dos servidores: si algo
+ *   ya escucha en 3101 o 9100, Playwright se niega a arrancar;
+ * - (al arrancar) la API corre con `bloquear-red.cjs`: ninguna conexión de
+ *   salida fuera de la propia máquina;
+ * - (al probar) el proyecto `pila` (`pila-segura.spec.ts`) corre antes que los
+ *   flujos y, si falla, los flujos no corren.
  *
  * La base la recrea antes `node tests/e2e/preparar-bd.mjs` (`yarn test:e2e`).
  */
@@ -20,16 +25,24 @@ import { mkdirSync } from 'node:fs';
 import { defineConfig, devices } from '@playwright/test';
 import {
   DIR_REGISTROS,
-  PUERTO_API,
   PUERTO_PORTAL,
   REGISTRO_API,
   URL_PORTAL,
   URL_SALUD,
+  comprobarEntornoEnElBackend,
   comprobarEntornoSeguro,
   entornoApi,
+  entornoPortal,
 } from './tests/e2e/pila.mjs';
 
 const ENTORNO_API = comprobarEntornoSeguro(entornoApi());
+
+// Playwright vuelve a cargar este archivo en cada proceso de pruebas; la
+// comprobación dentro del backend basta en el proceso principal, que es el que
+// arranca los servidores.
+if (!process.env.TEST_WORKER_INDEX) {
+  console.log(comprobarEntornoEnElBackend(ENTORNO_API));
+}
 
 // El registro de la API va a un archivo que lee `pila-segura.spec.ts`. Está
 // fuera del `outputDir`, que Playwright vacía al empezar; `tee` lo trunca en
@@ -69,13 +82,9 @@ export default defineConfig({
       name: 'portal',
       command: `npx quasar dev --port ${PUERTO_PORTAL}`,
       url: URL_PORTAL,
-      env: {
-        DEV_API_TARGET: `http://127.0.0.1:${PUERTO_API}`,
-        // El socket del panel va directo a la API (no por el proxy): a la de
-        // la pila, no a la de desarrollo del 3001.
-        VITE_WS_URL: `http://127.0.0.1:${PUERTO_API}`,
-        VITE_SITE_URL: URL_PORTAL,
-      },
+      // `VITE_API_URL=/api` fijada: los flujos van por el proxy al 3101 aunque
+      // el `.env` local del front dijera otra cosa.
+      env: entornoPortal(),
       reuseExistingServer: false,
       timeout: 300_000,
       stdout: 'ignore',
