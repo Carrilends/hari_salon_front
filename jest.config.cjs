@@ -2,7 +2,12 @@
 module.exports = {
   testEnvironment: 'jsdom',
   testMatch: ['<rootDir>/tests/**/*.spec.(ts|js)'],
-  testPathIgnorePatterns: ['/node_modules/', '<rootDir>/tests/browser-compat/'],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '<rootDir>/tests/browser-compat/',
+    // Flujos E2E de Playwright sobre la pila local (`yarn test:e2e`).
+    '<rootDir>/tests/e2e/',
+  ],
   // `mjs` está aquí por `scripts/recetas-imagenes.mjs`: la prueba de la receta
   // importa el script de verdad, para que receta y marcado no se separen.
   moduleFileExtensions: ['ts', 'js', 'mjs', 'json', 'vue'],

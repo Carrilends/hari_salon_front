@@ -14,6 +14,8 @@
     "test:coverage": "jest --coverage",
     "test:compat": "playwright test",
     "test:compat:report": "playwright show-report",
+    "test:e2e": "node tests/e2e/preparar-bd.mjs && npx playwright test -c playwright.e2e.config.ts",
+    "e2e:pila": "node tests/e2e/pila.mjs",
     "dev": "quasar dev",
     "build": "node scripts/generate-sitemap.mjs && quasar build",
     "build:ssg": "node scripts/generate-sitemap.mjs && quasar ssg generate",
