@@ -169,7 +169,9 @@ let foco: HTMLElement | null = null;
  * nada más abrir el panel —de 154 px a 0, medido— y al cerrarlo la clienta
  * aparecía donde no había elegido. Por eso el cuerpo se fija con un `top`
  * negativo del punto donde estaba: visualmente nada se mueve. Al cerrar se
- * devuelve el scroll a donde estaba.
+ * devuelve el scroll a donde estaba, **redondeado**: Firefox deja el scroll en
+ * medios píxeles (147,5 tras pedir 150, medido) y `scrollTo(0, 147.5)` lo baja a
+ * 147, así que sin redondear la página subía un píxel en cada apertura.
  *
  * `paddingRight` compensa la barra de desplazamiento que desaparece al
  * bloquear. En macOS suele ser 0 (barras superpuestas); donde ocupa sitio, sin
@@ -194,7 +196,7 @@ function liberarElScroll() {
   document.body.classList.remove(SIN_SCROLL);
   document.body.style.top = '';
   document.body.style.paddingRight = '';
-  window.scrollTo(0, scrollGuardado);
+  window.scrollTo(0, Math.round(scrollGuardado));
 }
 
 onMounted(async () => {
