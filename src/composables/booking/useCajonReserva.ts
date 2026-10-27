@@ -34,6 +34,7 @@ import {
   type SalonNowParts,
 } from 'src/helpers/businessHours';
 import { effectiveServiceUnitPrice } from 'src/helpers/service-promotion';
+import { MENSAJE_SESION_CERRADA } from 'src/constants/mensajes-sesion';
 import type Service from 'src/interfaces/service';
 import type {
   AvisoDisponibilidad,
@@ -54,8 +55,7 @@ export const MENSAJE_ERROR_ENVIO =
  */
 export const PAUSA_TRAS_CAMBIO_DE_PASO_MS = 400;
 
-export const MENSAJE_SESION_CERRADA =
-  'Tu sesión se cerró. Escribe tus datos para reservar, o entra de nuevo.';
+export { MENSAJE_SESION_CERRADA };
 
 export const MENSAJE_HORA_PASADA = 'Esa hora ya pasó. Elige otra.';
 
