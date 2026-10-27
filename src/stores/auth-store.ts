@@ -89,10 +89,16 @@ export const useAuthStore = defineStore(
       hasPassword.value = null;
     }
 
-    /** Cierre involuntario: igual que `logout()`, y deja constancia. */
+    /**
+     * Cierre involuntario: igual que `logout()`, y deja constancia, pero solo
+     * si había una sesión (token) o un perfil guardado (correo). Un visitante
+     * anónimo cuya petición recibe un 401 también llega aquí por la renovación
+     * y no debe ver un aviso de una sesión que nunca tuvo.
+     */
     function caducar() {
+      const habiaSesion = !!token.value || !!email.value;
       logout();
-      sesionCaducada.value = true;
+      if (habiaSesion) sesionCaducada.value = true;
     }
 
     function sweepIfExpired() {

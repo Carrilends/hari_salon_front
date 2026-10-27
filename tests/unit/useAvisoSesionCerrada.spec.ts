@@ -1,33 +1,37 @@
 /**
- * RF32 c3: cuando la sesión se cierra sola, el portal lo dice. Un cierre a
- * propósito (`logout()`) no pone `sesionCaducada` y no avisa.
+ * RF32 c3: cuando la sesión se cierra sola, el portal lo dice. Se prueba con el
+ * store real de Pinia; solo lo que tiene efectos (limpiar datos) y `quasar`
+ * van simulados.
  */
 const notify = jest.fn();
 jest.mock('quasar', () => ({ useQuasar: () => ({ notify }) }));
-
-const mockSesion: { estado: { sesionCaducada: boolean } | null } = {
-  estado: null,
-};
-jest.mock('src/stores/auth-store', () => ({
-  useAuthStore: () => mockSesion.estado,
+jest.mock('src/stores/session-cleanup', () => ({
+  limpiarDatosDeSesion: jest.fn(),
 }));
 
-import { nextTick, reactive } from 'vue';
+import { nextTick } from 'vue';
+import { createPinia, setActivePinia } from 'pinia';
+import { useAuthStore } from 'src/stores/auth-store';
 import { useAvisoSesionCerrada } from 'src/composables/auth/useAvisoSesionCerrada';
 import { MENSAJE_SESION_CERRADA } from 'src/constants/mensajes-sesion';
 
-let sesion: { sesionCaducada: boolean };
+const PERFIL = { fullName: 'Ada', email: 'ada@example.com', roles: [] };
+const entrar = (store: ReturnType<typeof useAuthStore>) =>
+  store.setSession('jwt', PERFIL, Date.now() + 60_000);
+
+let store: ReturnType<typeof useAuthStore>;
 
 beforeEach(() => {
   notify.mockReset();
-  sesion = reactive({ sesionCaducada: false });
-  mockSesion.estado = sesion;
-  useAvisoSesionCerrada();
+  setActivePinia(createPinia());
+  store = useAuthStore();
 });
 
 describe('useAvisoSesionCerrada', () => {
   it('avisa una vez cuando la sesión se cierra sola', async () => {
-    sesion.sesionCaducada = true;
+    useAvisoSesionCerrada();
+    entrar(store);
+    store.caducar();
     await nextTick();
 
     expect(notify).toHaveBeenCalledTimes(1);
@@ -35,22 +39,41 @@ describe('useAvisoSesionCerrada', () => {
   });
 
   it('no avisa al cerrar la sesión a propósito', async () => {
-    // `logout()` no toca la bandera.
+    useAvisoSesionCerrada();
+    entrar(store);
+    store.logout();
     await nextTick();
+
     expect(notify).not.toHaveBeenCalled();
   });
 
-  it('no vuelve a avisar sin una sesión nueva entre medias', async () => {
-    sesion.sesionCaducada = true;
+  it('avisa de nuevo si hubo una sesión nueva entre medias', async () => {
+    useAvisoSesionCerrada();
+    entrar(store);
+    store.caducar();
     await nextTick();
-    sesion.sesionCaducada = true;
+    entrar(store);
     await nextTick();
-    expect(notify).toHaveBeenCalledTimes(1);
+    store.caducar();
+    await nextTick();
 
-    sesion.sesionCaducada = false; // setSession
-    await nextTick();
-    sesion.sesionCaducada = true;
-    await nextTick();
     expect(notify).toHaveBeenCalledTimes(2);
+  });
+
+  it('avisa si la bandera ya estaba levantada al montar (restauración fallida al cargar)', () => {
+    store.email = 'ada@example.com'; // perfil guardado, sin token
+    store.caducar(); // lo hace refreshOnce en el boot, antes de montar App
+    useAvisoSesionCerrada();
+
+    expect(notify).toHaveBeenCalledTimes(1);
+  });
+
+  it('un visitante sin sesión que recibe un 401 no ve el aviso', async () => {
+    useAvisoSesionCerrada();
+    store.caducar(); // refreshOnce falla para un anónimo
+    await nextTick();
+
+    expect(store.sesionCaducada).toBe(false);
+    expect(notify).not.toHaveBeenCalled();
   });
 });

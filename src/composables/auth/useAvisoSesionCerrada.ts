@@ -17,5 +17,9 @@ export function useAvisoSesionCerrada(): void {
     (ahora, antes) => {
       if (ahora && !antes) aviso.atencion(MENSAJE_SESION_CERRADA);
     },
+    // El arranque (`boot/auth-expiry`) intenta restaurar la sesión antes de que
+    // monte `App.vue`: si falla, la bandera ya está en verdadero al montar. La
+    // bandera no se persiste, así que solo puede estarlo por ese fallo.
+    { immediate: true },
   );
 }
