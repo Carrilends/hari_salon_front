@@ -131,6 +131,15 @@ describe('el acceso entero, leído de la fuente', () => {
     expect(leer(archivo)).toMatch(/useSeo\(\{[\s\S]*?noindex: true,?\s*\}\);/);
   });
 
+  it.each(['pages/MyReservationsPage.vue', 'pages/AdminReservationsPage.vue'])(
+    '%s no se indexa: Mis reservas y la bandeja llevan noindex',
+    (archivo) => {
+      expect(leer(archivo)).toMatch(
+        /useSeo\(\{[\s\S]*?noindex: true,?\s*\}\);/
+      );
+    }
+  );
+
   it('las cinco páginas siguen fuera del SSG (§7.3)', () => {
     const config = readFileSync(
       join(__dirname, '../../quasar.config.js'),

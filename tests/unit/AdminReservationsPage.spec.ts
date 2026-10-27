@@ -23,6 +23,9 @@ const mockAdmin = {
   refrescar: jest.fn(() => Promise.resolve()),
 };
 
+jest.mock('src/composables/seo/useSeo', () => ({
+  useSeo: jest.fn(),
+}));
 jest.mock('src/composables/reservations/useAdminReservations', () => ({
   useAdminReservations: () => mockAdmin,
 }));

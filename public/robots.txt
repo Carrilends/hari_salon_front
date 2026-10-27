@@ -1,8 +1,9 @@
 User-agent: *
 Allow: /
+Disallow: /auth/
 Disallow: /mi-cuenta
 Disallow: /mis-empleados
-Disallow: /login
-Disallow: /register
+Disallow: /mis-reservas
+Disallow: /reservas
 
-Sitemap: https://peluqueria-marlene-pecas.netlify.app/sitemap.xml
+Sitemap: https://peluqueriamarlene.com/sitemap.xml

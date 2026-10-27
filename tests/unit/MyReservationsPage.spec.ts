@@ -21,6 +21,9 @@ const mockQuery = {
   refetch: jest.fn(),
 };
 const mockCancelar = jest.fn();
+jest.mock('src/composables/seo/useSeo', () => ({
+  useSeo: jest.fn(),
+}));
 jest.mock('src/composables/reservations/useMyReservations', () => ({
   useMyReservations: () => ({
     query: mockQuery,

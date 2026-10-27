@@ -186,6 +186,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { useSeo } from 'src/composables/seo/useSeo';
 import StrokeIcon from 'src/components/shared/StrokeIcon.vue';
 import TarjetaReserva from 'src/components/reservations/TarjetaReserva.vue';
 import FilaPasada from 'src/components/reservations/FilaPasada.vue';
@@ -209,6 +210,13 @@ import type { ReservationDto } from 'src/interfaces/booking';
  * filas, mover y cancelar en diálogos propios, y los resultados en línea:
  * aquí no queda ningún aviso flotante de Quasar.
  */
+useSeo({
+  title: 'Mis reservas | Peluquería Marlene',
+  description: 'Tus reservas en Peluquería Marlene.',
+  path: '/mis-reservas',
+  noindex: true,
+});
+
 defineOptions({ name: 'MyReservationsPage' });
 
 const { query, cancel } = useMyReservations();

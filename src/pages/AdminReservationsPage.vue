@@ -262,6 +262,7 @@ import {
   ref,
   watch,
 } from 'vue';
+import { useSeo } from 'src/composables/seo/useSeo';
 import AvisosFijados from 'src/components/admin-reservas/AvisosFijados.vue';
 import CancelarReservaBandeja from 'src/components/admin-reservas/CancelarReservaBandeja.vue';
 import DetalleReserva from 'src/components/admin-reservas/DetalleReserva.vue';
@@ -303,6 +304,13 @@ import type { ReservationDto } from 'src/interfaces/booking';
  * cancelar), que son los que disparan los cuatro avisos: la página no
  * reproduce ninguna regla, solo traduce sus errores.
  */
+useSeo({
+  title: 'Reservas | Peluquería Marlene',
+  description: 'Bandeja de reservas de Peluquería Marlene.',
+  path: '/reservas',
+  noindex: true,
+});
+
 defineOptions({ name: 'AdminReservationsPage' });
 
 const { query, confirm, cancel, refrescar } = useAdminReservations();

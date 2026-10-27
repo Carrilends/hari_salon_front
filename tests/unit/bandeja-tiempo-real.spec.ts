@@ -32,6 +32,7 @@ const notify = jest.fn();
 const servidor: { reservas: ReservationDto[] } = { reservas: [] };
 const datos = ref<ReservationDto[] | undefined>(undefined);
 
+jest.mock('src/composables/seo/useSeo', () => ({ useSeo: jest.fn() }));
 jest.mock('quasar', () => ({ useQuasar: () => ({ notify }) }));
 jest.mock('vue-router', () => ({ useRouter: () => ({ push: jest.fn() }) }));
 jest.mock('src/stores/auth-store', () => ({

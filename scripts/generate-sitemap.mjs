@@ -1,16 +1,14 @@
 #!/usr/bin/env node
 /**
- * Genera public/sitemap.xml a partir de la lista PUBLIC_ROUTES.
- * Mantenelo sincronizado con src/router/routes.ts.
+ * Genera public/sitemap.xml y public/robots.txt con el dominio del sitio.
+ * El contenido vive en scripts/contenido-seo.mjs (módulo puro con prueba).
  *
  * Variables de entorno:
- *   SITE_URL  -> dominio absoluto (ej: https://peluqueria-marlene-pecas.netlify.app)
+ *   SITE_URL  -> dominio absoluto (ej: https://peluqueriamarlene.com)
  *
  * OJO: este script corre en Node puro, fuera de Vite, asi que NO lee el archivo
- * .env. Si no exportas SITE_URL (o VITE_SITE_URL) en el entorno, se usa el valor
- * por defecto de abajo. En Netlify basta con definir la variable en el panel.
- * El sufijo "pecas" del dominio es el nombre del sitio en Netlify y se mantiene
- * de forma deliberada; no es un resto del branding anterior.
+ * .env. Si no exportas SITE_URL (o VITE_SITE_URL) en el entorno, se usa
+ * https://peluqueriamarlene.com. En Netlify basta con definir la variable.
  *
  * Uso: node scripts/generate-sitemap.mjs
  */
@@ -19,40 +17,25 @@ import { writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  construirRobots,
+  construirSitemap,
+  resolverSiteUrl,
+} from './contenido-seo.mjs';
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const publico = resolve(__dirname, '..', 'public');
 
-const SITE_URL = (process.env.SITE_URL || process.env.VITE_SITE_URL || 'https://peluqueria-marlene-pecas.netlify.app')
-  .replace(/\/$/, '');
+const siteUrl = resolverSiteUrl(process.env);
+const hoy = new Date().toISOString().split('T')[0];
 
-const PUBLIC_ROUTES = [
-  { path: '/', changefreq: 'weekly', priority: '1.0' },
-  { path: '/services', changefreq: 'weekly', priority: '0.9' },
-  { path: '/testimonios', changefreq: 'weekly', priority: '0.7' },
-  { path: '/preguntas-frecuentes', changefreq: 'monthly', priority: '0.6' },
-];
+writeFileSync(resolve(publico, 'sitemap.xml'), construirSitemap(siteUrl, hoy), 'utf8');
+writeFileSync(resolve(publico, 'robots.txt'), construirRobots(siteUrl), 'utf8');
 
-const today = new Date().toISOString().split('T')[0];
-
-const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${PUBLIC_ROUTES.map(
-  (route) => `  <url>
-    <loc>${SITE_URL}${route.path}</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>${route.changefreq}</changefreq>
-    <priority>${route.priority}</priority>
-  </url>`,
-).join('\n')}
-</urlset>
-`;
-
-const outPath = resolve(__dirname, '..', 'public', 'sitemap.xml');
-writeFileSync(outPath, xml, 'utf8');
-
-console.log(`[sitemap] generado en ${outPath} con dominio ${SITE_URL}`);
+console.log(`[sitemap] sitemap.xml y robots.txt generados en ${publico} con dominio ${siteUrl}`);
 
 if (!process.env.SITE_URL && !process.env.VITE_SITE_URL) {
   console.warn(
-    '[sitemap] WARN: ni SITE_URL ni VITE_SITE_URL están definidas; se usó el dominio por defecto. Definilas antes del build para que el sitemap apunte al dominio final.',
+    '[sitemap] WARN: ni SITE_URL ni VITE_SITE_URL están definidas; se usó el dominio por defecto.',
   );
 }
