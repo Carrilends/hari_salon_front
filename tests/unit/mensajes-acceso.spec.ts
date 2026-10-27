@@ -11,6 +11,7 @@ import {
   MENSAJE_DE_RESPALDO,
   MENSAJE_SIN_CONEXION,
   estadoDeError,
+  motivoDeEnlace,
   mensajeDeAcceso,
   type ContextoAcceso,
 } from 'src/helpers/mensajes-acceso';
@@ -134,5 +135,23 @@ describe('estadoDeError', () => {
     expect(estadoDeError(errorDeRed())).toBeUndefined();
     expect(estadoDeError(null)).toBeUndefined();
     expect(estadoDeError('400')).toBeUndefined();
+  });
+});
+
+describe('motivoDeEnlace', () => {
+  it('lee el code de la API, no el texto', () => {
+    expect(motivoDeEnlace(errorHttp(400, 'x', 'TOKEN_CADUCADO'))).toBe(
+      'caducado'
+    );
+    expect(motivoDeEnlace(errorHttp(400, 'x', 'TOKEN_USADO'))).toBe('usado');
+    expect(motivoDeEnlace(errorHttp(400, 'x', 'TOKEN_INVALIDO'))).toBe(
+      'invalido'
+    );
+  });
+
+  it('cualquier otra cosa es inválido', () => {
+    expect(motivoDeEnlace(errorHttp(400, 'caducado'))).toBe('invalido');
+    expect(motivoDeEnlace(null)).toBe('invalido');
+    expect(motivoDeEnlace(new Error('x'))).toBe('invalido');
   });
 });

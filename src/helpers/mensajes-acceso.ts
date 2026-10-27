@@ -87,3 +87,18 @@ export function mensajeDeAcceso(
   }
   return respaldo;
 }
+
+/**
+ * Por qué falló un enlace de verificación. Se lee el `code` que añade la API
+ * (`TOKEN_CADUCADO`, `TOKEN_USADO`, `TOKEN_INVALIDO`), nunca el texto.
+ */
+export function motivoDeEnlace(
+  err: unknown
+): 'caducado' | 'usado' | 'invalido' {
+  if (!err || typeof err !== 'object') return 'invalido';
+  const code = (err as { response?: { data?: { code?: unknown } } }).response
+    ?.data?.code;
+  if (code === 'TOKEN_CADUCADO') return 'caducado';
+  if (code === 'TOKEN_USADO') return 'usado';
+  return 'invalido';
+}

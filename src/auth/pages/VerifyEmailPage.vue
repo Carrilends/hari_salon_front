@@ -1,9 +1,17 @@
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { useVerifyEmail } from 'src/composables/auth/useVerifyEmail';
 import { useAuthStore } from 'src/stores/auth-store';
 import { authApi } from 'src/api/auth-api';
+import {
+  enfocarCampo,
+  useFormularioAcceso,
+  type FormularioAcceso,
+} from 'src/composables/auth/useFormularioAcceso';
+import { isEmail, requerido } from 'src/helpers/validators';
+import { motivoDeEnlace } from 'src/helpers/mensajes-acceso';
+import CampoAcceso from 'src/components/auth/CampoAcceso.vue';
 import { useSeo } from 'src/composables/seo/useSeo';
 import EstadoAcceso from 'src/components/auth/EstadoAcceso.vue';
 
@@ -22,6 +30,20 @@ const token = typeof route.query.token === 'string' ? route.query.token : '';
 const estado = ref<'verificando' | 'confirmado' | 'fallido'>('verificando');
 const reenviando = ref(false);
 const reenviado = ref(false);
+const motivo = ref<'caducado' | 'usado' | 'invalido'>('invalido');
+
+type CampoReenvio = 'correo';
+const formulario: FormularioAcceso<CampoReenvio> =
+  useFormularioAcceso<CampoReenvio>({
+    correo: [
+      requerido('Escribe tu correo.'),
+      isEmail('Escribe un correo válido, como tu@correo.com.'),
+    ],
+  });
+const { valores, errores, tocar, validarTodo } = formulario;
+
+// Con sesión y correo conocido se reenvía a ese; si no, se pide el correo.
+const pideCorreo = computed(() => !(authStore.isLoggedIn && authStore.email));
 
 onMounted(async () => {
   if (!token) {
@@ -33,17 +55,27 @@ onMounted(async () => {
     // Reflejar la verificación en la sesión activa, si la hay.
     if (authStore.isLoggedIn) authStore.emailVerified = true;
     estado.value = 'confirmado';
-  } catch {
+  } catch (err) {
+    motivo.value = motivoDeEnlace(err);
     estado.value = 'fallido';
   }
 });
 
 async function reenviar() {
-  if (!authStore.email || reenviando.value) return;
+  if (reenviando.value) return;
+  let correo = authStore.email;
+  if (pideCorreo.value) {
+    const primero = validarTodo();
+    if (primero) {
+      enfocarCampo(primero);
+      return;
+    }
+    correo = valores.correo.value.trim();
+  }
   reenviando.value = true;
   reenviado.value = false;
   try {
-    await authApi.resendVerification(authStore.email);
+    await authApi.resendVerification(correo);
   } catch {
     // Respuesta neutra igualmente (§7.2).
   } finally {
@@ -122,35 +154,51 @@ async function reenviar() {
       </svg>
     </template>
 
-    <p>
+    <p v-if="motivo === 'caducado'">
+      Este enlace venció. Pide otro y te lo enviamos.
+    </p>
+    <p v-else-if="motivo === 'usado'">
+      Este enlace ya se usó: cada enlace funciona una sola vez.
+    </p>
+    <p v-else>
       Puede que haya vencido o que ya lo hayas usado: cada enlace funciona una
       sola vez.
     </p>
 
     <template #acciones>
-      <template v-if="authStore.isLoggedIn">
+      <form novalidate class="verificar__reenvio" @submit.prevent="reenviar">
+        <campo-acceso
+          v-if="pideCorreo"
+          id="correo"
+          v-model="valores.correo.value"
+          rotulo="Correo"
+          tipo="email"
+          autocomplete="email"
+          marcador="tu@correo.com"
+          :error="errores.correo"
+          @blur="tocar('correo')"
+        />
         <button
-          type="button"
+          type="submit"
           class="acceso-boton m-boton--ancho"
           data-test="reenviar"
           :disabled="reenviando"
           :aria-busy="reenviando ? 'true' : undefined"
-          @click="reenviar"
         >
           {{ reenviando ? 'Enviando…' : 'Enviar otro enlace' }}
         </button>
-        <p class="acceso-vivo" aria-live="polite" data-test="reenvio-estado">
-          {{
-            reenviado
-              ? 'Si tu correo sigue sin confirmar, te enviamos un enlace nuevo.'
-              : ''
-          }}
-        </p>
-      </template>
+      </form>
+      <p class="acceso-vivo" aria-live="polite" data-test="reenvio-estado">
+        {{
+          reenviado
+            ? 'Si tu correo sigue sin confirmar, te enviamos un enlace nuevo.'
+            : ''
+        }}
+      </p>
       <router-link
-        v-else
+        v-if="!authStore.isLoggedIn"
         :to="{ name: 'login' }"
-        class="acceso-boton m-boton m-boton--ancho"
+        class="acceso-secundario"
         data-test="entrar"
         >Entrar</router-link
       >
@@ -165,6 +213,10 @@ async function reenviar() {
 </template>
 
 <style scoped>
+.verificar__reenvio {
+  width: 100%;
+}
+
 /* Indicador propio (A16): un aro de filete con el tramo de arriba en oro. */
 .verificar__indicador {
   display: block;

@@ -12,7 +12,7 @@ export type ErrorHttpDePrueba = {
   message: string;
   response: {
     status: number;
-    data: { statusCode?: number; message?: string | string[] };
+    data: { statusCode?: number; message?: string | string[]; code?: string };
   };
 };
 
@@ -26,14 +26,18 @@ export type ErrorDeRedDePrueba = {
 /** Un error con respuesta, como el que lanza Axios ante un 4xx/5xx. */
 export function errorHttp(
   status: number,
-  message?: string | string[]
+  message?: string | string[],
+  code?: string
 ): ErrorHttpDePrueba {
   return {
     isAxiosError: true,
     message: `Request failed with status code ${status}`,
     response: {
       status,
-      data: message === undefined ? {} : { statusCode: status, message },
+      data:
+        message === undefined
+          ? {}
+          : { statusCode: status, message, ...(code ? { code } : {}) },
     },
   };
 }

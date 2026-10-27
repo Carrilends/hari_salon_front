@@ -137,7 +137,75 @@ describe('VerifyEmailPage', () => {
       'Puede que haya vencido o que ya lo hayas usado: cada enlace funciona una sola vez.'
     );
     expect(enlace(wrapper, 'entrar')?.props('to')).toEqual({ name: 'login' });
-    expect(wrapper.find('[data-test="reenviar"]').exists()).toBe(false);
+    expect(wrapper.find('[data-test="reenviar"]').exists()).toBe(true);
+  });
+
+  it('distingue caducado de ya usado', async () => {
+    mockVerificar.mockRejectedValue(errorHttp(400, 'x', 'TOKEN_CADUCADO'));
+    wrapper = await montar();
+    const texto = () => wrapper?.find('[data-test="estado-acceso"]').text();
+    expect(wrapper.find('h1').text()).toBe('Este enlace ya no sirve');
+    expect(texto()).toContain(
+      'Este enlace venció. Pide otro y te lo enviamos.'
+    );
+    wrapper.unmount();
+
+    mockVerificar.mockRejectedValue(errorHttp(400, 'x', 'TOKEN_USADO'));
+    wrapper = await montar();
+    expect(wrapper.find('h1').text()).toBe('Este enlace ya no sirve');
+    expect(texto()).toContain(
+      'Este enlace ya se usó: cada enlace funciona una sola vez.'
+    );
+  });
+
+  it('enlace caducado sin sesión: pide el correo y reenvía a ese correo', async () => {
+    mockVerificar.mockRejectedValue(errorHttp(400, 'x', 'TOKEN_CADUCADO'));
+    reenviar.mockResolvedValue({ message: 'ok' });
+    wrapper = await montar();
+
+    await wrapper
+      .find('[data-test="campo-correo"]')
+      .setValue('clienta@correo.test');
+    await wrapper.find('[data-test="reenviar"]').trigger('click');
+    await flushPromises();
+
+    expect(reenviar).toHaveBeenCalledWith('clienta@correo.test');
+    expect(wrapper.find('[data-test="reenvio-estado"]').text()).toBe(
+      'Si tu correo sigue sin confirmar, te enviamos un enlace nuevo.'
+    );
+    expect(enlace(wrapper, 'entrar')).toBeDefined();
+  });
+
+  it('sin sesión, un correo vacío o inválido no llama a la API y muestra el error', async () => {
+    mockVerificar.mockRejectedValue(errorHttp(400, 'x', 'TOKEN_CADUCADO'));
+    wrapper = await montar();
+
+    await wrapper.find('[data-test="reenviar"]').trigger('click');
+    await flushPromises();
+    expect(reenviar).not.toHaveBeenCalled();
+    expect(wrapper.text()).toContain('Escribe tu correo.');
+
+    await wrapper.find('[data-test="campo-correo"]').setValue('no-es-correo');
+    await wrapper.find('[data-test="reenviar"]').trigger('click');
+    await flushPromises();
+    expect(reenviar).not.toHaveBeenCalled();
+    expect(wrapper.text()).toContain('Escribe un correo válido');
+  });
+
+  it('el reenvío sin sesión es neutro también si falla', async () => {
+    mockVerificar.mockRejectedValue(errorHttp(400, 'x', 'TOKEN_CADUCADO'));
+    reenviar.mockRejectedValue(errorDeRed());
+    wrapper = await montar();
+
+    await wrapper
+      .find('[data-test="campo-correo"]')
+      .setValue('clienta@correo.test');
+    await wrapper.find('[data-test="reenviar"]').trigger('click');
+    await flushPromises();
+
+    expect(wrapper.find('[data-test="reenvio-estado"]').text()).toBe(
+      'Si tu correo sigue sin confirmar, te enviamos un enlace nuevo.'
+    );
   });
 
   it('enlace malo con sesión: reenvía al correo de la sesión y lo dice en una línea viva', async () => {
