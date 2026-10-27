@@ -389,9 +389,12 @@ defineOptions({
   font-size: 12px;
   letter-spacing: var(--m-tracking-nav);
   color: var(--m-tinta);
+  // Zona táctil (NF01): el `dense` de Quasar la deja en 27 px.
+  min-height: var(--m-tactil-min);
 }
 
 .main-header__cta {
+  min-height: var(--m-tactil-min);
   background: var(--m-tinta);
   color: var(--m-hueso);
   font-family: var(--m-font-sans);
@@ -464,6 +467,11 @@ defineOptions({
 
   // La hamburguesa: 44 × 44, como en el tablero móvil.
   .main-header__mas {
+    min-width: var(--m-tactil-min);
+  }
+
+  // «Servicios» e «Inicio» son solo icono: sin ancho mínimo quedaban en 27 px.
+  .main-header__link {
     min-width: var(--m-tactil-min);
   }
 }

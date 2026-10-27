@@ -95,6 +95,9 @@ defineOptions({ name: 'CatalogBand' });
 
 .catalog-band__ver-todo {
   padding: 0;
+  min-height: var(--m-tactil-min);
+  display: inline-flex;
+  align-items: center;
   background: none;
   border: 0;
   font: inherit;

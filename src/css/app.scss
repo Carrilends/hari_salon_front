@@ -332,3 +332,16 @@ button.m-tarjeta-pulsable:active {
   white-space: nowrap;
   border: 0;
 }
+
+/**
+ * Movimiento reducido (NF02). QDialog fija `--q-transition-duration` en línea,
+ * así que una variable no la vence; esta regla sí, y es el mismo idioma que
+ * usa Quasar en `animations.sass`. Alcanza al cajón de reserva, a la reseña y a
+ * cualquier diálogo con `transition-show`/`transition-hide`.
+ */
+@media (prefers-reduced-motion: reduce) {
+  [class*='q-transition--'] {
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+  }
+}

@@ -409,6 +409,16 @@ const marcadoDe = (evento: Event) =>
   margin-top: 16px;
 }
 
+// «Entra» va dentro de la frase, así que se queda en línea; solo se le da la
+// zona táctil (NF01) y se centra con el texto que lo rodea.
+.datos__entrar .cajon-enlace {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--m-tactil-min);
+  padding: 0 4px;
+  vertical-align: middle;
+}
+
 .datos__fallo {
   margin: 20px 0 0;
   padding: 12px 14px;

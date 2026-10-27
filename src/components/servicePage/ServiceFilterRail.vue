@@ -165,7 +165,7 @@ const limpiar = () => camposRef.value?.limpiar();
 
 .carril__limpiar {
   flex: 0 0 auto;
-  min-height: 28px;
+  min-height: var(--m-tactil-min);
   padding: 0 8px;
   border: 0;
   background: transparent;

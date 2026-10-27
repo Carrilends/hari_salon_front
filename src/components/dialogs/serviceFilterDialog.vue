@@ -236,7 +236,7 @@ function verResultados() {
 
 .hoja__limpiar {
   flex: 0 0 auto;
-  min-height: 32px;
+  min-height: var(--m-tactil-min);
   padding: 0 10px;
   border: 0;
   background: transparent;
