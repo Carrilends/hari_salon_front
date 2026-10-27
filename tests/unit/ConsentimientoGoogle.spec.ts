@@ -46,6 +46,15 @@ describe('ConsentimientoGoogle', () => {
     expect(enlace.attributes('target')).toBe('_blank');
   });
 
+  it('abierto, el título es «Antes de crear tu cuenta» y nombra la sección', () => {
+    const wrapper = montar(true);
+    const titulo = wrapper.find('h2#consentimiento-titulo');
+    const seccion = wrapper.find('[data-test="consentimiento-google"]');
+
+    expect(titulo.text()).toBe('Antes de crear tu cuenta');
+    expect(seccion.attributes('aria-labelledby')).toBe('consentimiento-titulo');
+  });
+
   it('«Acepto» emite aceptar', async () => {
     const wrapper = montar(true);
 
