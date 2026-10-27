@@ -353,3 +353,11 @@ describe('cabecera · consultas de medios (M11)', () => {
     expect(LAYOUT).not.toMatch(/\.addEventListener\(\s*'change'/);
   });
 });
+
+describe('botón Servicios / Inicio de la cabecera', () => {
+  it('compara la ruta sin la barra final, para hidratar igual en /services/', () => {
+    const cuerpo = funcion('function syncServicesNavButton');
+    expect(cuerpo).toContain('rutaSinBarraFinal(route.path)');
+    expect(cuerpo).not.toContain('route.path ===');
+  });
+});

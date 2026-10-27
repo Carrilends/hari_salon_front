@@ -2,6 +2,10 @@
  * Generadores de objetos schema.org (JSON-LD) para inyectar via useSeo({ jsonLd }).
  * Mantenelos centralizados para reusarlos y validarlos facilmente con
  * https://search.google.com/test/rich-results
+ *
+ * Los de listas devuelven `undefined` con la lista vacía: un `"itemListElement":[]`
+ * publicado le diría al buscador que la página no tiene nada (RF62). `useSeo`
+ * omite el bloque cuando le llega `undefined`.
  */
 
 import {
@@ -62,7 +66,10 @@ export interface ServiceItem {
   currency?: string;
 }
 
-export function servicesSchema(items: ServiceItem[]): Record<string, unknown> {
+export function servicesSchema(
+  items: ServiceItem[]
+): Record<string, unknown> | undefined {
+  if (!items.length) return undefined;
   return {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
@@ -97,7 +104,10 @@ export interface FaqItem {
   answer: string;
 }
 
-export function faqPageSchema(items: FaqItem[]): Record<string, unknown> {
+export function faqPageSchema(
+  items: FaqItem[]
+): Record<string, unknown> | undefined {
+  if (!items.length) return undefined;
   return {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
@@ -119,7 +129,10 @@ export interface ReviewItem {
   date?: string;
 }
 
-export function reviewsSchema(items: ReviewItem[]): Record<string, unknown> {
+export function reviewsSchema(
+  items: ReviewItem[]
+): Record<string, unknown> | undefined {
+  if (!items.length) return undefined;
   const ratings = items
     .map((item) => item.rating)
     .filter((rating): rating is number => typeof rating === 'number');

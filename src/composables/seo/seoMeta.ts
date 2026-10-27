@@ -87,3 +87,30 @@ export function buildSeoMeta(seo: ResolvedSeo): QuasarSeoMeta {
 
   return { title: seo.title, meta, link, script };
 }
+
+/**
+ * La meta como un objeto que se calcula cuando se lee, no cuando se crea.
+ *
+ * En el servidor, `useMeta` de Quasar llama a sus opciones una sola vez, en el
+ * `setup`, y guarda el resultado; no lo lee hasta después del render
+ * (`injectServerMeta`, en `onRendered`), cuando `precargarEnServidor` ya trajo
+ * los datos. Con este objeto, lo que Quasar recorre en ese momento es la meta
+ * con los datos: sin él, el JSON-LD del catálogo, las reseñas y las preguntas
+ * saldría siempre vacío en el HTML publicado (RF62).
+ */
+export function metaDiferida(calcular: () => QuasarSeoMeta): QuasarSeoMeta {
+  return {
+    get title() {
+      return calcular().title;
+    },
+    get meta() {
+      return calcular().meta;
+    },
+    get link() {
+      return calcular().link;
+    },
+    get script() {
+      return calcular().script;
+    },
+  };
+}

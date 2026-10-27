@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/vue-query';
 import { servicesApi } from 'src/api/services-api';
 import { queryKeys } from 'src/api/query-keys';
 import type { ReviewItem } from 'src/api/apiTypes';
+import { precargarEnServidor } from 'src/composables/shared/precargarEnServidor';
 
 const getReviews = async (): Promise<ReviewItem[]> => {
   const { data } = await servicesApi.get<ReviewItem[]>('/reviews');
@@ -10,13 +11,16 @@ const getReviews = async (): Promise<ReviewItem[]> => {
 };
 
 export const useReviews = () => {
-  const { data, isPending, isLoading, isError, isFetching, refetch } = useQuery<
+  const { data, isPending, isLoading, isError, isFetching, refetch, suspense } = useQuery<
     ReviewItem[]
   >({
     queryKey: queryKeys.reviews.all,
     queryFn: getReviews,
     staleTime: 1000 * 60,
   });
+
+  // Inicio y Testimonios se publican con sus reseñas (RF62).
+  precargarEnServidor(suspense);
 
   const reviews = computed(() => data.value ?? []);
   const averageScore = computed(() => {

@@ -6,7 +6,7 @@ This is the **frontend** of the thesis monorepo. The parent `../CLAUDE.md` is au
 
 ## Stack
 
-Vue 3 + Quasar 2 (Vite) with the **SSG** extension (`quasar-app-extension-ssg`). State via Pinia (with `pinia-plugin-persistedstate`); server state via **TanStack Vue Query**; forms via vee-validate + yup; head/meta via `@vueuse/head`; HTTP via Axios; Cloudinary with **no SDK** — signed uploads and delivery URLs are hand-rolled in `src/helpers/cloudinaryHelpers.ts`. Package manager is **yarn** (a `yarn.lock` is committed).
+Vue 3 + Quasar 2 (Vite) with the **SSG** extension (`quasar-app-extension-ssg`). State via Pinia (with `pinia-plugin-persistedstate`); server state via **TanStack Vue Query**; forms via vee-validate + yup; head/meta via Quasar's `useMeta` (the `Meta` plugin); HTTP via Axios; Cloudinary with **no SDK** — signed uploads and delivery URLs are hand-rolled in `src/helpers/cloudinaryHelpers.ts`. Package manager is **yarn** (a `yarn.lock` is committed).
 
 ## Commands
 
@@ -35,7 +35,7 @@ yarn test:compat:report    # open last Playwright HTML report
 npx playwright test --project=firefox-78   # one project (also chromium-chrome87, webkit-safari13)
 ```
 
-Playwright config auto-spawns `npx quasar dev` on `PW_PORT` (default `9000`) and **reuses an existing server** — `yarn dev` in another terminal is fine. Workers=1, retries=0, traces retained on failure. Jest explicitly **excludes** `tests/browser-compat/` so the two suites don't collide.
+Playwright config auto-spawns `npx quasar dev` on `PW_PORT` (default `9000`) and **reuses an existing server** — `yarn dev` in another terminal is fine. Workers=1, retries=0, traces retained on failure. `playwright.ssg.config.ts` is separate: it serves the generated `dist/ssg` with `yarn serve:ssg --port 9200` (never reused) and runs `tests/ssg/`. Jest explicitly **excludes** `tests/browser-compat/`, `tests/e2e/` and `tests/ssg/` so the suites don't collide.
 
 There is **no `typecheck` script**; type checking runs via `vite-plugin-checker` (vue-tsc with `tsconfig.vue-tsc.json`) during `quasar dev`/`build`.
 
@@ -43,7 +43,7 @@ There is **no `typecheck` script**; type checking runs via `vite-plugin-checker`
 
 ### Boot order matters
 
-`quasar.config.js` boots files in this order: `i18n` → `main` → `svg-icons` → `auth-expiry` → `head`. `main.ts` only installs `VueQueryPlugin`; `auth-expiry.ts` guards `typeof window === 'undefined'` because it must no-op under SSG. Anything new that touches `window`, `localStorage`, or `document` must do the same — SSG runs boot code in Node during `quasar ssg generate`.
+`quasar.config.js` boots files in this order: `i18n` → `main` → `svg-icons` → `auth-expiry` (there is no `head` boot). `main.ts` installs `VueQueryPlugin` with a fresh `QueryClient` per render (`staleTime` 60 s; no retries on the server), writes the cache into the page as `window.__VQ_STATE__` after an SSG render and `hydrate`s it in the browser before mounting; `auth-expiry.ts` guards `typeof window === 'undefined'` because it must no-op under SSG. Anything new that touches `window`, `localStorage`, or `document` must do the same — SSG runs boot code in Node during `quasar ssg generate`.
 
 ### SSG vs SPA routing
 
@@ -61,7 +61,7 @@ There is **no `typecheck` script**; type checking runs via `vite-plugin-checker`
 
 ### SEO and SSG-rendered metadata
 
-`src/composables/seo/` (`useSeo.ts`, `structuredData.ts`) feeds `@vueuse/head` and emits Schema.org JSON-LD. The old stale values ("Peluquería Pecas", AR locale, ARS currency) are **gone**; `tests/unit/salon-branding.spec.ts` is a regression net that fails if anyone reintroduces them, and it also pins the opening hours against `businessHours.ts`. Business data comes from `src/constants/salon-location.ts`. Canonical/OG URLs are built from `VITE_SITE_URL`.
+`src/composables/seo/` (`useSeo.ts`, `structuredData.ts`) feeds Quasar's `useMeta` (not `@vueuse/head`: only the `Meta` plugin's tags reach the prerendered HTML) and emits Schema.org JSON-LD. On the server Quasar evaluates `useMeta` once, in `setup`, but reads it after the render, so `useSeo` hands it `metaDiferida` (getters) to pick up the prefetched data. The list builders return `undefined` for an empty list, so no `"itemListElement":[]` is ever published. The old stale values ("Peluquería Pecas", AR locale, ARS currency) are **gone**; `tests/unit/salon-branding.spec.ts` is a regression net that fails if anyone reintroduces them, and it also pins the opening hours against `businessHours.ts`. Business data comes from `src/constants/salon-location.ts`. Canonical/OG URLs are built from `VITE_SITE_URL`.
 
 ### Visual remodel: the landing page is done, the rest is not
 
@@ -70,7 +70,8 @@ The remodel designed on 2026-09-30 (direction "B · Bandas alternas": alternatin
 - `src/components/index/` — the five bands the landing page is made of: `HeroBand`, `CatalogBand` (the **only** dark band), `ReviewAssistantBand`, `SiteFooterBand`, `MobileActionBar`. Flat markup, no Quasar components: they need styling, not behaviour. Each has its spec in `tests/unit/`.
 - `src/pages/IndexPage.vue` composes them in **one tree**; responsiveness is CSS at a single **700 px** breakpoint (`@media (max-width: 699px)`). The old `matchMedia`-in-JS with two parallel trees and two `style-fn` is gone — `tests/unit/IndexPage.spec.ts` fails if it comes back.
 - `src/css/tokens.scss` — the palette and rhythm as `--m-*` custom properties, each with its measured contrast. **Use `var(--m-*)`, never a loose hex.** Three traps documented there: light gold (`--m-oro`) is 2.8:1 on bone and is *not* a text color (use `--m-oro-profundo`), text on the WhatsApp green must be dark (9.3:1), never white (2.0:1), and `--m-filete-rosa` only underlines, it is not a text color either.
-- **Reviews are client-side only.** The `/` route is prerendered and Vue Query does not resolve during `quasar ssg generate`, so **whatever the band paints while loading is the published, indexed HTML**. It paints a neutral skeleton — never a claim like "no reviews yet", which would be a lie in the file that ships. Same reason the band reserves a `min-height` at both widths.
+- **Reviews are prerendered with real data.** `useReviews` (like `useServices` and `useFaqs`) waits for its query on the server through `precargarEnServidor` (`onServerPrefetch`), so the `/` published by `quasar ssg generate` already carries a review, and the browser hydrates from `window.__VQ_STATE__` with the same one (`useRotatingReview` always starts at index 0 for that reason). While a browser still waits, the band paints a neutral skeleton — never a claim like "no reviews yet" — and it keeps its `min-height` at both widths.
+- **The build needs the API.** `yarn build:ssg` requires `SSG_API_URL` (an absolute URL with `/api`; a relative `/api` resolves nowhere in Node) and fails without it (`SSG_API_URL es obligatoria para generar las páginas`), or when the API answers with an error. It ends with `scripts/verificar-ssg.mjs`, which fails if the catalogue, the reviews or the FAQs come out empty or `__VQ_STATE__` is missing. Locally: `yarn e2e:pila`, `node tests/ssg/preparar-datos.mjs`, `SSG_API_URL=http://localhost:3101/api yarn build:ssg`, then `npx playwright test -c playwright.ssg.config.ts` (serves `dist/ssg` on 9200).
 - **The assistant chips come from `INTENT_CHIPS`** (`src/composables/assistant/intentChips.ts`), never hand-written labels: `intentChips.spec.ts` checks every chip against a tool the assistant really has. They open the panel through `abrirCon(prompt)`, and `AssistantPanel` sends that prompt on mount.
 - **One floating button per screen.** The assistant's launcher is it. `MobileActionBar` marks `body.m-con-barra-movil` while mounted so `AssistantLauncher` lifts above the fixed bar. There is no review FAB any more: reviews are requested through "Deja la tuya" (landing), Mis reservas and Testimonios, all via `solicitar()`. While the panel is **open** the launcher's FAB is unmounted (`v-if="!open"`): on mobile the panel *is* the screen, and on desktop a bubble over the scrim competes with the panel's own close button.
 - **Shared panel state**: `src/composables/assistant/useAssistantPanel.ts` and `src/composables/reviews/useReviewDialog.ts` hold module-level state, because the landing bands and the shell open the same two panels from opposite ends of the tree.

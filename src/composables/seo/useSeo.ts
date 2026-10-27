@@ -1,7 +1,8 @@
 import { computed, unref, type MaybeRef } from 'vue';
 import { useMeta } from 'quasar';
 import { SITE_URL } from './site-url';
-import { buildSeoMeta } from './seoMeta';
+import { buildSeoMeta, metaDiferida } from './seoMeta';
+import { EN_SERVIDOR } from 'src/composables/shared/en-servidor';
 
 export interface SeoOptions {
   title: MaybeRef<string>;
@@ -54,5 +55,7 @@ export function useSeo(options: SeoOptions) {
     });
   });
 
-  useMeta(() => meta.value);
+  // En el servidor, Quasar lee la meta después del render, con los datos ya
+  // precargados; `metaDiferida` hace que la lea entonces y no en el `setup`.
+  useMeta(EN_SERVIDOR ? metaDiferida(() => meta.value) : () => meta.value);
 }

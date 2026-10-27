@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/vue-query';
 import { useServicesStore } from 'src/stores/service-store';
 import { PRECIO_ESCALA_MAX, PRECIO_ESCALA_MIN } from 'src/stores/filters-store';
 import { servicesApi } from 'src/api/services-api';
+import { precargarEnServidor } from 'src/composables/shared/precargarEnServidor';
 import Service from 'src/interfaces/service';
 
 type ApiDataWithCount = [Service[], number];
@@ -56,7 +57,7 @@ export const useServices = () => {
 
   const logs = ref(0);
 
-  const { isLoading, data, isFetching, error } = useQuery<ApiDataWithCount>({
+  const { isLoading, data, isFetching, error, suspense } = useQuery<ApiDataWithCount>({
     queryKey: ['services', filterService, refetch],
     queryFn: ({ queryKey }) => {
       const [, filterService] = queryKey;
@@ -68,23 +69,26 @@ export const useServices = () => {
   // Usamos un computed para acceder a los servicios del store, ya que el store es el "estado principal"
   const services = computed(() => storeService.services);
 
-  // Observamos los cambios en 'data' para actualizar el store y los logs
-  watch(
-    data,
-    (newValue) => {
-      if (newValue) {
-        const [apiServices, recordsCount] = newValue;
-        if (apiServices && apiServices.length > 0) {
-          storeService.setServices(apiServices);
-        } else {
-          // Opcional: limpiar el store si no hay servicios para la página actual
-          storeService.setServices([]);
-        }
-        logs.value = recordsCount;
+  // Copia la respuesta al store, que es lo que pinta la página, y guarda el total.
+  const volcar = (newValue: ApiDataWithCount | undefined) => {
+    if (newValue) {
+      const [apiServices, recordsCount] = newValue;
+      if (apiServices && apiServices.length > 0) {
+        storeService.setServices(apiServices);
+      } else {
+        // Opcional: limpiar el store si no hay servicios para la página actual
+        storeService.setServices([]);
       }
-    },
-    { immediate: true }
-  );
+      logs.value = recordsCount;
+    }
+  };
+
+  watch(data, volcar, { immediate: true });
+
+  // En `build:ssg` el `watch` de arriba solo corre al crearse, con `data` aún
+  // vacía: la precarga le pasa la respuesta a mano, para que el catálogo salga
+  // pintado en el HTML publicado (RF62).
+  precargarEnServidor(suspense, volcar);
 
   // Función para cambiar de página
   const setPage = (newPage: number) => {

@@ -156,6 +156,7 @@ import {
 } from 'src/composables/shared/menuMas';
 import { horarioDeHoy } from 'src/helpers/businessHours';
 import { politicaDeResena } from 'src/helpers/resena';
+import { rutaSinBarraFinal } from 'src/helpers/ruta-sin-barra';
 import { authApi } from 'src/api/auth-api';
 
 type HeaderActionButton = {
@@ -324,11 +325,12 @@ const serviceHomeButton = ref<HeaderActionButton>({
 });
 
 function syncServicesNavButton() {
-  if (route.path === '/') {
+  const ruta = rutaSinBarraFinal(route.path);
+  if (ruta === '/') {
     serviceHomeButton.value.icon = 'las la-cut';
     serviceHomeButton.value.label = 'Servicios';
     serviceHomeButton.value.method = () => router.push('/services');
-  } else if (route.path === '/services') {
+  } else if (ruta === '/services') {
     serviceHomeButton.value.icon = 'home';
     serviceHomeButton.value.label = 'Inicio';
     serviceHomeButton.value.method = () => router.push('/');

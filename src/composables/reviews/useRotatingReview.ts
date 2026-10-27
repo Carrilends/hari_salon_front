@@ -16,6 +16,8 @@ const MINIMO_PARA_ROTAR = 3;
 export const useRotatingReview = (intervaloMs = 8000) => {
   const { reviews, isLoading } = useReviews();
 
+  // Siempre desde la primera: el servidor la pinta en el HTML y el navegador
+  // tiene que hidratar la misma (un índice al azar no casaría).
   const indice = ref(0);
   const pausado = ref(false);
   const montado = ref(false);
@@ -70,9 +72,10 @@ export const useRotatingReview = (intervaloMs = 8000) => {
     total,
     rotando,
     /**
-     * Con SSG esto es `true` en el HTML publicado: Vue Query no resuelve
-     * durante `quasar ssg generate`. La banda lo usa para enseñar un hueco
-     * neutro en vez de afirmar que el salón no tiene reseñas.
+     * Mientras no hay datos. Con SSG la consulta se precarga
+     * (`precargarEnServidor`), así que el HTML publicado ya trae las reseñas;
+     * la banda usa esto para el hueco neutro de un navegador que aún espera,
+     * nunca para afirmar que el salón no tiene reseñas.
      */
     cargando: isLoading,
     // `pausar` y `reanudar` tocan el temporizador a mano en vez de confiar en

@@ -10,6 +10,7 @@ import {
   type Faq,
 } from 'src/api/faqs-api';
 import { ordenarPorIds } from 'src/helpers/orden-preguntas';
+import { precargarEnServidor } from 'src/composables/shared/precargarEnServidor';
 
 export const FAQ_QUERY_KEY = ['faqs'] as const;
 
@@ -20,11 +21,14 @@ type UpdateFaqPayload = {
 
 export const useFaqs = () => {
   const queryClient = useQueryClient();
-  const { data, isLoading, isFetching, isError, refetch } = useQuery<Faq[]>({
+  const { data, isLoading, isFetching, isError, refetch, suspense } = useQuery<Faq[]>({
     queryKey: FAQ_QUERY_KEY,
     queryFn: listarPreguntas,
     staleTime: 1000 * 60,
   });
+
+  // Preguntas frecuentes se publica con sus preguntas (RF62).
+  precargarEnServidor(suspense);
 
   const invalidar = () =>
     queryClient.invalidateQueries({ queryKey: FAQ_QUERY_KEY });

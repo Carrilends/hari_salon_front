@@ -18,7 +18,7 @@
     "e2e:pila": "node tests/e2e/pila.mjs",
     "dev": "quasar dev",
     "build": "node scripts/generate-sitemap.mjs && quasar build",
-    "build:ssg": "node scripts/generate-sitemap.mjs && quasar ssg generate",
+    "build:ssg": "node scripts/generate-sitemap.mjs && quasar ssg generate && node scripts/verificar-ssg.mjs",
     "serve:ssg": "quasar ssg serve dist/ssg",
     "generate:sitemap": "node scripts/generate-sitemap.mjs",
     "optimizar:imagenes": "node scripts/optimizar-imagenes.mjs"

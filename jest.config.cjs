@@ -7,6 +7,9 @@ module.exports = {
     '<rootDir>/tests/browser-compat/',
     // Flujos E2E de Playwright sobre la pila local (`yarn test:e2e`).
     '<rootDir>/tests/e2e/',
+    // Páginas pregeneradas, con Playwright sobre `dist/ssg`
+    // (`playwright.ssg.config.ts`).
+    '<rootDir>/tests/ssg/',
   ],
   // `mjs` está aquí por `scripts/recetas-imagenes.mjs`: la prueba de la receta
   // importa el script de verdad, para que receta y marcado no se separen.
@@ -34,6 +37,8 @@ module.exports = {
     // `import.meta.env`, que ts-jest no puede compilar a CommonJS.
     '^(?:src/composables/seo|\\.)/site-url$': '<rootDir>/tests/siteUrlMock.ts',
     '^(?:src/api|\\.)/ws-url$': '<rootDir>/tests/wsUrlMock.ts',
+    '^(?:src/composables/shared|\\.)/en-servidor$':
+      '<rootDir>/tests/enServidorMock.ts',
     '^(?:src/constants|\\.)/whatsapp-phone$':
       '<rootDir>/tests/whatsappPhoneMock.ts',
     '^(?:src/constants|\\.)/google-client-id$':
