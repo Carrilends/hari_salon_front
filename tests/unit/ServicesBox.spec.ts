@@ -168,6 +168,26 @@ describe('ServicesBox · regresión de su API', () => {
     expect(wrapper.emitted('selectedServices')?.at(-1)?.[0]).toEqual([]);
   });
 
+  it('hidratar con [principal, sub] marca ambos y emite los dos ids en ese orden', async () => {
+    const wrapper = montar({ isEditMode: true, initialSelectedIds: ['p1', 'c1'] });
+    await flushPromises();
+
+    expect(wrapper.emitted('selectedServices')?.at(-1)?.[0]).toEqual(['p1', 'c1']);
+    expect(
+      (wrapper.findAll('[data-test="principal"]')[0].element as HTMLInputElement).checked
+    ).toBe(true);
+    expect(
+      wrapper.findAll('[data-test="categoria-chip"]')[0].attributes('aria-pressed')
+    ).toBe('true');
+  });
+
+  it('hidratar con solo la subcategoría vacía la selección (por eso los atajos llevan la principal)', async () => {
+    const wrapper = montar({ isEditMode: true, initialSelectedIds: ['c1'] });
+    await flushPromises();
+
+    expect(wrapper.emitted('selectedServices')?.at(-1)?.[0]).toEqual([]);
+  });
+
   it('sigue exponiendo los tres métodos que usa crear/editar', async () => {
     const wrapper = montar();
     await flushPromises();

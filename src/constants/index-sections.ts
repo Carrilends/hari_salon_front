@@ -29,7 +29,10 @@ export const INDEX_SECTIONS: IndexSection[] = [
       'Redefine tu estilo con cortes modernos, clásicos y servicios de barbería profesional. Afeitado con navaja, arreglo de barba y cuidados especiales para el caballero actual.',
     filterFormat: {
       genres: ['47b511ec-2288-4a83-aa51-947d81ecc29b'],
-      services: ['83c6a558-805c-4156-94f6-fa7ea55c7d84'],
+      services: [
+        'ead486e4-d86e-4481-954c-4b2eb5915be2',
+        '83c6a558-805c-4156-94f6-fa7ea55c7d84',
+      ],
     },
   },
   {
@@ -39,7 +42,10 @@ export const INDEX_SECTIONS: IndexSection[] = [
       'Transforma tu look con cortes a la medida, alisados permanentes o temporales y tratamientos que cuidan tu cabello mientras realzan tu belleza natural.',
     filterFormat: {
       genres: ['9d53d0d4-225d-4e2d-b8c1-636e8252986f'],
-      services: ['fb2460ea-0400-44d5-a0dc-13275cf33462'],
+      services: [
+        'ead486e4-d86e-4481-954c-4b2eb5915be2',
+        'fb2460ea-0400-44d5-a0dc-13275cf33462',
+      ],
     },
   },
   {

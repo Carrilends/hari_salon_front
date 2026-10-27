@@ -678,6 +678,38 @@ describe('ServicePage · el atajo del inicio', () => {
     ).toBe(2);
   });
 
+  it('el atajo con [principal, sub] aplica ambos ids y no lanza una segunda búsqueda', async () => {
+    useOptionsStore().setPrincipalServices([
+      { id: 'cabello', name: 'Cabello', selected: false },
+    ]);
+    history.replaceState(
+      {
+        service: {
+          ...TARJETA,
+          filterFormat: { genres: ['g2'], services: ['cabello', 's9'] },
+        },
+      },
+      ''
+    );
+    const wrapper = montar({ ancho: 1280 });
+    await nextTick();
+    const consulta = servicios().filterService.value;
+
+    expect(consulta.selectedServicesIDs).toEqual(['cabello', 's9']);
+    expect(consulta.selectedGenres).toEqual(['g2']);
+    expect(
+      wrapper.getComponent({ name: 'ServiceToolbar' }).props('filtrosActivos')
+    ).toBe(3);
+
+    // La hidratación del árbol emite los mismos dos ids: no cambia nada.
+    const antes = JSON.stringify(consulta);
+    await wrapper
+      .getComponent({ name: 'ServiceFilterRail' })
+      .vm.$emit('aplicar', filtro({ selectedGenres: ['g2'], selectedServicesIDs: ['cabello', 's9'] }));
+    await nextTick();
+    expect(JSON.stringify(servicios().filterService.value)).toBe(antes);
+  });
+
   it('en móvil aplica el filtro y abre la hoja', async () => {
     llegarDesdeElInicio();
     const wrapper = montar({ ancho: 390 });
