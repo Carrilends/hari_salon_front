@@ -2,11 +2,11 @@ import { boot } from 'quasar/wrappers'
 import {
   QueryClient,
   VueQueryPlugin,
-  hydrate,
   type DehydratedState,
 } from '@tanstack/vue-query';
 import { activarActiveTactil } from 'src/helpers/activar-active-tactil';
 import { estadoPrecargado } from 'src/composables/shared/precargarEnServidor';
+import { hidratarSinDesajuste } from 'src/composables/shared/hidratacion';
 
 declare global {
   interface Window {
@@ -47,9 +47,10 @@ function guionDelEstado(estado: DehydratedState, nonce?: string): string {
  *   escriben en el HTML como `window.__VQ_STATE__`. Va por su propio
  *   canal, no por el estado de Pinia (`__INITIAL_STATE__`): los datos del
  *   servidor son de Vue Query.
- * - En el navegador, `hydrate` la recoge antes de montar: la hidratación pinta
- *   lo mismo que el HTML y no hay desajuste. Como la página se generó hace
- *   más de `staleTime`, Vue Query la refresca en segundo plano al montar.
+ * - En el navegador, `hidratarSinDesajuste` la recoge antes de montar, sin
+ *   recargar al montar: la primera pintura es la del HTML por viejo que sea, y
+ *   lo que esté viejo se refresca en segundo plano en cuanto la app está
+ *   montada.
  */
 export default boot(({ app, ssrContext }) => {
   // iOS Safari no pinta `:active` en un toque sin un oyente de `touchstart`:
@@ -76,7 +77,7 @@ export default boot(({ app, ssrContext }) => {
       );
     });
   } else if (window.__VQ_STATE__) {
-    hydrate(queryClient, window.__VQ_STATE__);
+    hidratarSinDesajuste(app, queryClient, window.__VQ_STATE__);
     delete window.__VQ_STATE__;
   }
 
