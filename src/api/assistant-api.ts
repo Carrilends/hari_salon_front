@@ -88,6 +88,7 @@ export type PackagePresentation = PackageProposal & { tipo: 'paquete' };
 export interface TextPresentation {
   tipo: 'texto';
   lineas: string[];
+  clase?: 'lista' | 'escritura';
 }
 
 /** Agenda de la dueña (solo WhatsApp); la web no la pinta. */

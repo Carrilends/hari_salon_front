@@ -74,7 +74,7 @@ export function attachRefreshInterceptor(instance: AxiosInstance): void {
       throw error;
     }
     config._retried = true;
-    await refreshOnce(); // si falla, propaga y la sesión queda cerrada
+    await refreshOnce(); // si falla, propaga; solo un 400/401 cierra la sesión
     return instance(config); // reintento único con el access token nuevo
   });
 }
