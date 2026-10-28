@@ -87,10 +87,18 @@ defineOptions({ name: 'SiteFooterBand' });
    Aquí no tapa nada y deja la pantalla con un solo flotante, el del
    asistente, que es la regla acordada. */
 .footer-band__admin {
-  padding: 0 0 2px;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--m-tactil-min);
+  min-width: var(--m-tactil-min);
+  padding: 0;
   background: none;
   border: 0;
-  border-bottom: var(--m-filete-grosor) solid var(--m-filete-oscuro);
+  // El filete va en el texto, no en el borde: el borde bajaría con la zona táctil.
+  text-decoration: underline;
+  text-decoration-thickness: var(--m-filete-grosor);
+  text-decoration-color: var(--m-filete-oscuro);
+  text-underline-offset: 4px;
   font: inherit;
   font-size: 12px;
   letter-spacing: var(--m-tracking-nav);

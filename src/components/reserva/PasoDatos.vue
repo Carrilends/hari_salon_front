@@ -383,7 +383,8 @@ const marcadoDe = (evento: Event) =>
 
 .datos__consentimiento {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  min-height: var(--m-tactil-min);
   gap: 12px;
   margin-top: 16px;
   font-size: 12.5px;
@@ -414,9 +415,17 @@ const marcadoDe = (evento: Event) =>
 .datos__entrar .cajon-enlace {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   min-height: var(--m-tactil-min);
+  min-width: var(--m-tactil-min);
   padding: 0 4px;
   vertical-align: middle;
+  // El filete va en el texto, no en el borde: el borde bajaría con la zona táctil.
+  border-bottom: 0;
+  text-decoration: underline;
+  text-decoration-thickness: var(--m-filete-grosor);
+  text-decoration-color: var(--m-filete-rosa);
+  text-underline-offset: 3px;
 }
 
 .datos__fallo {

@@ -37,24 +37,30 @@ for (const viewport of ANCHOS) {
       expect(alto!.height).toBeLessThanOrEqual(64);
     });
 
-    test('«Ver todo» mide al menos 44 px de alto', async ({ page }) => {
+    test('«Ver todo» mide al menos 44 × 44 px', async ({ page }) => {
       await servirApiVacia(page);
       await irA(page, '/');
-      const nodo = page.locator('[data-test="ver-todo"]');
-      await expect(nodo).toBeVisible();
-      expect((await nodo.boundingBox())!.height).toBeGreaterThanOrEqual(43.9);
+      await mide44(page.locator('[data-test="ver-todo"]'));
     });
 
-    test('«Limpiar» de la hoja de filtros mide al menos 44 px de alto', async ({ page }) => {
+    test('«Limpiar» de la hoja de filtros mide al menos 44 × 44 px', async ({ page }) => {
       await servirApiVacia(page);
       await irA(page, '/services');
       await page.locator('[data-test="boton-filtros"]').first().click();
       const nodo = page.locator('[data-test="hoja-filtros"] [data-test="limpiar"]');
       await expect(nodo).toBeVisible();
-      expect((await nodo.boundingBox())!.height).toBeGreaterThanOrEqual(43.9);
+      await mide44(nodo);
     });
 
-    test('«Entra» del paso de datos mide al menos 44 px de alto', async ({ page }) => {
+    test('«¿Eres administrador?» del pie mide al menos 44 × 44 px', async ({ page }) => {
+      await servirApiVacia(page);
+      await irA(page, '/');
+      const nodo = page.locator('[data-test="admin"]');
+      await nodo.scrollIntoViewIfNeeded();
+      await mide44(nodo);
+    });
+
+    test('«Entra» del paso de datos mide al menos 44 × 44 px', async ({ page }) => {
       await prepararConBolsa(page);
       await irA(page, '/');
       await page.locator('.main-header__cta').click();
@@ -69,9 +75,9 @@ for (const viewport of ANCHOS) {
         await page.locator('[data-test="continuar"]').click();
         await expect(page.locator('[data-test="entrar"]')).toBeVisible({ timeout: 1000 });
       }).toPass();
-      const nodo = page.locator('[data-test="entrar"]');
-      await expect(nodo).toBeVisible();
-      expect((await nodo.boundingBox())!.height).toBeGreaterThanOrEqual(43.9);
+      await mide44(page.locator('[data-test="entrar"]'));
+      await mide44(page.locator('label.datos__consentimiento'));
+      // La casilla y su rótulo son un solo control: el rótulo es la zona táctil.
     });
   });
 }
