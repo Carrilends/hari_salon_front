@@ -54,7 +54,11 @@ export async function refreshOnce(): Promise<void> {
         session.expiresIn * 1000 + Date.now(),
       );
     } catch (error) {
-      auth.caducar();
+      // Solo un rechazo real de la cookie cierra la sesión. Un fallo de red o
+      // un 5xx (el back reiniciándose) no: la petición original falla y la
+      // sesión sigue en pie para el siguiente intento.
+      const status = (error as AxiosError).response?.status;
+      if (status === 400 || status === 401) auth.caducar();
       throw error;
     } finally {
       refreshPromise = null;

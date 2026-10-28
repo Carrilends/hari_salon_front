@@ -82,11 +82,31 @@ export interface ServicesPresentation {
 export type PackagePresentation = PackageProposal & { tipo: 'paquete' };
 
 /**
+ * Texto que el sistema añade tal cual (lista de reservas, frase de la
+ * estilista). En la web ya viaja dentro de `reply`: el widget no lo pinta.
+ */
+export interface TextPresentation {
+  tipo: 'texto';
+  lineas: string[];
+}
+
+/** Agenda de la dueña (solo WhatsApp); la web no la pinta. */
+export interface AgendaPresentation {
+  tipo: 'agenda';
+  lineas: string[];
+  hayMas: boolean;
+}
+
+/**
  * Lo que el backend adjunta a la respuesta para que el widget lo pinte. Unión
  * discriminada por `tipo`: una clase nueva de tarjeta es una variante más, no
  * un cambio en el contrato de las que ya existen.
  */
-export type AssistantPresentation = PackagePresentation | ServicesPresentation;
+export type AssistantPresentation =
+  | PackagePresentation
+  | ServicesPresentation
+  | TextPresentation
+  | AgendaPresentation;
 
 export interface AssistantReply {
   conversationId?: string;

@@ -80,10 +80,28 @@ describe('refreshOnce (petición única)', () => {
     );
   });
 
-  it('si la renovación falla, cierra la sesión (como caducada) y propaga el error', async () => {
-    refresh.mockRejectedValue(new Error('401'));
-    await expect(refreshOnce()).rejects.toThrow();
-    expect(caducar).toHaveBeenCalledTimes(1);
-    expect(setSession).not.toHaveBeenCalled();
+  it.each([400, 401])(
+    'si la renovación responde %i, cierra la sesión (como caducada) y propaga el error',
+    async (status) => {
+      refresh.mockRejectedValue({ response: { status } });
+      await expect(refreshOnce()).rejects.toBeDefined();
+      expect(caducar).toHaveBeenCalledTimes(1);
+      expect(setSession).not.toHaveBeenCalled();
+    }
+  );
+
+  it('un error de red al renovar NO cierra la sesión y propaga el error', async () => {
+    refresh.mockRejectedValue(new Error('Network Error'));
+    await expect(refreshOnce()).rejects.toThrow('Network Error');
+    expect(caducar).not.toHaveBeenCalled();
   });
+
+  it.each([500, 502, 503])(
+    'un %i al renovar NO cierra la sesión y propaga el error',
+    async (status) => {
+      refresh.mockRejectedValue({ response: { status } });
+      await expect(refreshOnce()).rejects.toBeDefined();
+      expect(caducar).not.toHaveBeenCalled();
+    }
+  );
 });

@@ -150,6 +150,26 @@ describe('la bandeja · la clienta y la estilista (A4)', () => {
     );
   });
 
+  it('con cuenta y sin contacto usa el nombre de la cuenta si el back lo trae', () => {
+    expect(
+      nombreDeClienta(
+        reserva({ userId: 'u-9', contact: null, accountName: 'Cuenta Prueba' })
+      )
+    ).toBe('Cuenta Prueba');
+  });
+
+  it('el contacto manda sobre el nombre de la cuenta', () => {
+    expect(nombreDeClienta(reserva({ accountName: 'Cuenta Prueba' }))).toBe(
+      'Andrea Ruiz'
+    );
+  });
+
+  it('un accountName en blanco cae a la etiqueta genérica', () => {
+    expect(
+      nombreDeClienta(reserva({ userId: 'u-9', contact: null, accountName: ' ' }))
+    ).toBe('Clienta con cuenta');
+  });
+
   it('un contacto con el nombre en blanco tampoco', () => {
     const sinNombre = reserva({
       contact: { name: '   ', phone: '3001234567', email: null },

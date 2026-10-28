@@ -158,12 +158,15 @@ export function textoDelPie(pestana: PestanaBandeja): string {
 }
 
 /**
- * `GET /reservations` no trae el nombre de la cuenta: una reserva hecha con
- * sesión y sin teléfono llega con `contact: null` (plan 1, B4).
+ * Una reserva hecha con sesión y sin teléfono llega con `contact: null` (plan
+ * 1, B4); entonces se usa el nombre de la cuenta (`accountName`) y, si el back
+ * no lo trae, una etiqueta genérica.
  */
 export function nombreDeClienta(r: ReservationDto): string {
   const nombre = r.contact?.name?.trim();
   if (nombre) return nombre;
+  const cuenta = r.accountName?.trim();
+  if (cuenta) return cuenta;
   return r.userId ? 'Clienta con cuenta' : 'Clienta sin nombre';
 }
 

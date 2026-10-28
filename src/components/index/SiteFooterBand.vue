@@ -144,7 +144,7 @@ defineOptions({ name: 'SiteFooterBand' });
  */
 @media (hover: hover) and (pointer: fine) {
   .footer-band__admin:hover {
-    border-bottom-color: var(--m-oro);
+    text-decoration-color: var(--m-oro);
     color: var(--m-oro);
   }
 

@@ -27,7 +27,9 @@ export default boot(async () => {
   // Renovación preventiva: un minuto antes de que expire el access token.
   const id = setInterval(() => {
     if (auth.token && auth.expiresAt - Date.now() < 60_000) {
-      void refreshOnce().catch(() => auth.caducar());
+      // Si falla por red/5xx no se cierra la sesión; si el token llega a
+      // vencer, `sweepIfExpired` lo cierra. Un 400/401 ya lo cerró refreshOnce.
+      void refreshOnce().catch(() => undefined);
     }
   }, 30_000);
 

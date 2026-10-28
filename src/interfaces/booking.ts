@@ -37,6 +37,8 @@ export interface ReservationDto {
   status: ReservationStatus;
   userId: string | null;
   contact: { name: string; phone: string; email?: string | null } | null;
+  /** Nombre de la cuenta (solo en `GET /reservations` de la dueña). */
+  accountName?: string | null;
   services: ReservationServiceLine[];
 }
 
