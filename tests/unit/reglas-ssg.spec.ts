@@ -6,14 +6,26 @@ import { verificarPaginas } from '../../scripts/reglas-ssg.mjs';
 
 type Bloque = Record<string, unknown>;
 
+type Consulta = { queryKey: unknown[]; state: { data: unknown } };
+
+/** Una consulta deshidratada, con la forma que escribe `dehydrate`. */
+const consulta = (queryKey: unknown[], data: unknown): Consulta => ({
+  queryKey,
+  state: { data },
+});
+
+const RESENA_EN_CACHE = consulta(['reviews'], [{ id: 'r1', description: 'Quedé muy contenta' }]);
+
 function pagina({
   jsonLd = [],
   cuerpo = '',
   conEstado = true,
+  consultas = [],
 }: {
   jsonLd?: Bloque[];
   cuerpo?: string;
   conEstado?: boolean;
+  consultas?: Consulta[];
 }): string {
   const scripts = jsonLd
     .map(
@@ -22,7 +34,10 @@ function pagina({
     )
     .join('');
   const estado = conEstado
-    ? '<script>window.__VQ_STATE__={"queries":[]};document.currentScript.remove()</script>'
+    ? `<script>window.__VQ_STATE__=${JSON.stringify({
+        mutations: [],
+        queries: consultas,
+      })};document.currentScript.remove()</script>`
     : '';
   return `<!DOCTYPE html><html><head>${scripts}${estado}</head><body><div id="q-app">${cuerpo}</div></body></html>`;
 }
@@ -50,18 +65,26 @@ const RESENAS: Bloque = {
 
 function buenas() {
   return {
-    inicio: pagina({ cuerpo: '<blockquote>«Quedé muy contenta»</blockquote>' }),
+    inicio: pagina({
+      cuerpo: '<blockquote>«Quedé muy contenta»</blockquote>',
+      consultas: [RESENA_EN_CACHE],
+    }),
     catalogo: pagina({
       jsonLd: [CATALOGO],
       cuerpo: '<h3>Corte &amp; peinado</h3><span>$20.000</span>',
+      consultas: [
+        consulta(['services', { page: 1 }, 0], [[{ id: 's1', name: 'Corte & peinado' }], 1]),
+      ],
     }),
     testimonios: pagina({
       jsonLd: [RESENAS],
       cuerpo: '<p>Quedé muy contenta</p>',
+      consultas: [RESENA_EN_CACHE],
     }),
     preguntas: pagina({
       jsonLd: [PREGUNTAS],
       cuerpo: '<span>¿Cuánto dura un corte?</span>',
+      consultas: [consulta(['faqs'], [{ id: 'f1', question: '¿Cuánto dura un corte?' }])],
     }),
   };
 }
@@ -130,5 +153,65 @@ describe('reglas del HTML pregenerado', () => {
       conEstado: false,
     });
     expect(verificarPaginas(paginas).join('\n')).toMatch(/__VQ_STATE__/);
+  });
+
+  it('falla si el estado de Vue Query va vacío ({"queries":[]})', () => {
+    const paginas = buenas();
+    paginas.catalogo = pagina({
+      jsonLd: [CATALOGO],
+      cuerpo: '<h3>Corte &amp; peinado</h3>',
+      consultas: [],
+    });
+    expect(verificarPaginas(paginas).join('\n')).toMatch(/catalogo.*services/);
+  });
+
+  it('falla si la consulta esperada viaja sin datos', () => {
+    const paginas = buenas();
+    paginas.preguntas = pagina({
+      jsonLd: [PREGUNTAS],
+      cuerpo: '<span>¿Cuánto dura un corte?</span>',
+      consultas: [consulta(['faqs'], [])],
+    });
+    paginas.inicio = pagina({
+      cuerpo: '<blockquote>«Quedé muy contenta»</blockquote>',
+      consultas: [consulta(['faqs'], [{ id: 'f1' }])],
+    });
+    const errores = verificarPaginas(paginas).join('\n');
+    expect(errores).toMatch(/preguntas.*faqs/);
+    expect(errores).toMatch(/inicio.*reviews/);
+  });
+
+  it('falla si el catálogo viaja con la lista de servicios vacía', () => {
+    const paginas = buenas();
+    paginas.catalogo = pagina({
+      jsonLd: [CATALOGO],
+      cuerpo: '<h3>Corte &amp; peinado</h3>',
+      consultas: [consulta(['services', {}, 0], [[], 0])],
+    });
+    expect(verificarPaginas(paginas).join('\n')).toMatch(/catalogo.*services/);
+  });
+
+  it('falla si el estado no es JSON legible', () => {
+    const paginas = buenas();
+    paginas.testimonios = paginas.testimonios.replace(
+      'window.__VQ_STATE__={',
+      'window.__VQ_STATE__={roto'
+    );
+    expect(verificarPaginas(paginas).join('\n')).toMatch(/testimonios.*__VQ_STATE__/);
+  });
+
+  it('falla si viaja una consulta que no se precarga (["service",""])', () => {
+    const paginas = buenas();
+    paginas.catalogo = pagina({
+      jsonLd: [CATALOGO],
+      cuerpo: '<h3>Corte &amp; peinado</h3>',
+      consultas: [
+        consulta(['services', {}, 0], [[{ id: 's1' }], 1]),
+        consulta(['service', ''], {}),
+      ],
+    });
+    expect(verificarPaginas(paginas).join('\n')).toMatch(
+      /catalogo.*no se precargan.*\["service",""\]/
+    );
   });
 });

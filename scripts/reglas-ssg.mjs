@@ -17,6 +17,35 @@ export const PAGINAS = {
 
 const VACIOS = ['"itemListElement":[]', '"mainEntity":[]', '"review":[]'];
 
+/**
+ * La consulta que cada página tiene que llevar precargada en
+ * `window.__VQ_STATE__` (la raíz de su clave) y cómo saber si trae datos.
+ */
+const LISTA = (data) => Array.isArray(data) && data.length > 0;
+export const CONSULTAS_ESPERADAS = {
+  inicio: { raiz: 'reviews', conDatos: LISTA },
+  // `POST /service/search` devuelve `[servicios, total]`.
+  catalogo: { raiz: 'services', conDatos: (data) => Array.isArray(data) && LISTA(data[0]) },
+  testimonios: { raiz: 'reviews', conDatos: LISTA },
+  preguntas: { raiz: 'faqs', conDatos: LISTA },
+};
+
+/**
+ * El estado de Vue Query que escribe `src/boot/main.ts`, interpretado.
+ * `undefined` si no está; `null` si está pero no es JSON legible.
+ */
+export function estadoVueQuery(html) {
+  const encontrado = html.match(
+    /window\.__VQ_STATE__=([\s\S]*?);document\.currentScript\.remove\(\)<\/script>/
+  );
+  if (!encontrado) return undefined;
+  try {
+    return JSON.parse(encontrado[1]);
+  } catch {
+    return null;
+  }
+}
+
 /** Los bloques `application/ld+json` de la página, ya interpretados. */
 export function bloquesJsonLd(html) {
   const bloques = [];
@@ -67,8 +96,33 @@ export function verificarPaginas(paginas) {
   const errores = [];
 
   for (const [nombre, html] of Object.entries(paginas)) {
-    if (!html.includes('window.__VQ_STATE__=')) {
+    const estado = estadoVueQuery(html);
+    const esperada = CONSULTAS_ESPERADAS[nombre];
+    if (estado === undefined) {
       errores.push(`${nombre}: falta window.__VQ_STATE__ (el estado de Vue Query para hidratar).`);
+    } else if (estado === null || !Array.isArray(estado.queries)) {
+      errores.push(`${nombre}: window.__VQ_STATE__ no es un estado legible.`);
+    } else if (esperada) {
+      const deLaPagina = estado.queries.filter(
+        (consulta) => Array.isArray(consulta.queryKey) && consulta.queryKey[0] === esperada.raiz
+      );
+      if (!deLaPagina.some((consulta) => esperada.conDatos(consulta.state?.data))) {
+        errores.push(
+          `${nombre}: window.__VQ_STATE__ no lleva la consulta «${esperada.raiz}» con datos.`
+        );
+      }
+      // Solo viaja lo precargado: otra consulta se pintó «cargando» en el HTML
+      // y el navegador la hidrataría con datos (desajuste).
+      const ajenas = estado.queries.filter(
+        (consulta) => !deLaPagina.includes(consulta)
+      );
+      if (ajenas.length) {
+        errores.push(
+          `${nombre}: window.__VQ_STATE__ lleva consultas que no se precargan: ${ajenas
+            .map((consulta) => JSON.stringify(consulta.queryKey))
+            .join(', ')}.`
+        );
+      }
     }
     for (const vacio of VACIOS) {
       if (html.includes(vacio)) {

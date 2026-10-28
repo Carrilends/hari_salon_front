@@ -15,6 +15,7 @@ import {
   onlineManager,
 } from '@tanstack/vue-query';
 import { useMyReservations } from 'src/composables/reservations/useMyReservations';
+import { queryKeys } from 'src/api/query-keys';
 
 const mockCancelar = jest.fn();
 jest.mock('src/api/reservations-api', () => ({
@@ -22,16 +23,15 @@ jest.mock('src/api/reservations-api', () => ({
   cancelReservation: (id: string) => mockCancelar(id),
 }));
 
-function montar() {
+function montar(queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: false, enabled: false } },
+})) {
   let resultado!: ReturnType<typeof useMyReservations>;
   const Anfitrion = defineComponent({
     setup() {
       resultado = useMyReservations();
       return () => null;
     },
-  });
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false, enabled: false } },
   });
   mount(Anfitrion, {
     global: { plugins: [[VueQueryPlugin, { queryClient }]] },
@@ -64,5 +64,26 @@ describe('useMyReservations · cancelar sin conexión', () => {
     expect(mockCancelar).toHaveBeenCalledWith('r1');
     expect(resultado).toBe(sinRed);
     expect(cancel.isPaused.value).toBe(false);
+  });
+});
+
+describe('useMyReservations · frescura', () => {
+  /**
+   * El portal da `staleTime: 60_000` por defecto (las páginas pregeneradas
+   * hidratan sin volver a pedir). «Mis reservas» no: vuelve a preguntar al
+   * montar y al recuperar el foco, como antes.
+   */
+  it('nunca se da por fresca aunque el cliente diga 60 s', () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false, enabled: false, staleTime: 60_000 },
+      },
+    });
+    montar(queryClient);
+
+    const consulta = queryClient
+      .getQueryCache()
+      .find({ queryKey: queryKeys.reservations.me });
+    expect(consulta?.options).toMatchObject({ staleTime: 0 });
   });
 });

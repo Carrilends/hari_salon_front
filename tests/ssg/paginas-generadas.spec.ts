@@ -7,8 +7,12 @@
  *
  *   yarn e2e:pila                                   # API en el 3101
  *   node tests/ssg/preparar-datos.mjs               # preguntas de prueba si faltan
- *   SSG_API_URL=http://localhost:3101/api yarn build:ssg
+ *   NODE_OPTIONS="--require $PWD/tests/ssg/vigilar-peticiones.cjs" \
+ *     SSG_API_URL=http://localhost:3101/api yarn build:ssg
  *   npx playwright test -c playwright.ssg.config.ts
+ *
+ * `vigilar-peticiones.cjs` hace fallar la compilación si el render construye
+ * una URL relativa `/api/…` o abre una conexión fuera de `SSG_API_URL`.
  *
  * Sin JavaScript: lo que ve un rastreador o quien abre la página con la red
  * lenta. Con JavaScript: que la hidratación encuentra en el HTML lo mismo que

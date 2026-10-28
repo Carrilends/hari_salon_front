@@ -3,7 +3,10 @@ import { useQuery } from '@tanstack/vue-query';
 import { servicesApi } from 'src/api/services-api';
 import { queryKeys } from 'src/api/query-keys';
 import type { ReviewItem } from 'src/api/apiTypes';
-import { precargarEnServidor } from 'src/composables/shared/precargarEnServidor';
+import {
+  META_PRECARGADA,
+  precargarEnServidor,
+} from 'src/composables/shared/precargarEnServidor';
 
 const getReviews = async (): Promise<ReviewItem[]> => {
   const { data } = await servicesApi.get<ReviewItem[]>('/reviews');
@@ -16,6 +19,7 @@ export const useReviews = () => {
   >({
     queryKey: queryKeys.reviews.all,
     queryFn: getReviews,
+    meta: META_PRECARGADA,
     staleTime: 1000 * 60,
   });
 

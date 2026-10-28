@@ -1,5 +1,33 @@
 import { onServerPrefetch } from 'vue';
+import {
+  dehydrate,
+  type DehydratedState,
+  type Query,
+  type QueryClient,
+} from '@tanstack/vue-query';
 import { EN_SERVIDOR } from './en-servidor';
+
+/**
+ * La marca (`meta` de `useQuery`) de las consultas que se precargan. Solo esas
+ * viajan en `window.__VQ_STATE__` (`estadoPrecargado`); quien llame a
+ * `precargarEnServidor` la pone en su consulta.
+ */
+export const META_PRECARGADA = { precargada: true } as const;
+
+/**
+ * La caché que viaja en el HTML: las consultas precargadas que resolvieron.
+ *
+ * Ninguna otra. Una consulta sin precarga que resuelva mientras el render
+ * espera a otra se pintó «cargando» en el HTML: si viajara, el navegador
+ * hidrataría con datos (desajuste), y un `watch` sin `immediate` no se
+ * enteraría nunca de esos datos.
+ */
+export function estadoPrecargado(queryClient: QueryClient): DehydratedState {
+  return dehydrate(queryClient, {
+    shouldDehydrateQuery: (query: Query) =>
+      query.state.status === 'success' && query.meta?.precargada === true,
+  });
+}
 
 /** Lo que devuelve el `suspense()` de un `useQuery`, en lo que importa aquí. */
 interface ResultadoConsulta<T> {
@@ -19,6 +47,8 @@ interface ResultadoConsulta<T> {
  *   servidor un `watch` solo corre una vez, al crearse (Vue no lo vuelve a
  *   disparar durante el render): quien copie los datos a otro sitio, como
  *   `useServices` al store, lo hace aquí.
+ *
+ * La consulta tiene que llevar `meta: META_PRECARGADA`, o no viaja al HTML.
  *
  * En el navegador no hace nada.
  */

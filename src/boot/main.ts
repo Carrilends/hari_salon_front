@@ -2,11 +2,11 @@ import { boot } from 'quasar/wrappers'
 import {
   QueryClient,
   VueQueryPlugin,
-  dehydrate,
   hydrate,
   type DehydratedState,
 } from '@tanstack/vue-query';
 import { activarActiveTactil } from 'src/helpers/activar-active-tactil';
+import { estadoPrecargado } from 'src/composables/shared/precargarEnServidor';
 
 declare global {
   interface Window {
@@ -42,8 +42,9 @@ function guionDelEstado(estado: DehydratedState, nonce?: string): string {
  * - Un `QueryClient` por página: este boot corre una vez por cada render de
  *   `quasar ssg generate`, así que ninguna página hereda la caché de otra.
  * - En el servidor, los composables esperan a su consulta con
- *   `onServerPrefetch` (`precargarEnServidor`), y al terminar el render la
- *   caché se escribe en el HTML como `window.__VQ_STATE__`. Va por su propio
+ *   `onServerPrefetch` (`precargarEnServidor`), y al terminar el render esas
+ *   consultas (solo las marcadas `META_PRECARGADA`, `estadoPrecargado`) se
+ *   escriben en el HTML como `window.__VQ_STATE__`. Va por su propio
  *   canal, no por el estado de Pinia (`__INITIAL_STATE__`): los datos del
  *   servidor son de Vue Query.
  * - En el navegador, `hydrate` la recoge antes de montar: la hidratación pinta
@@ -70,7 +71,7 @@ export default boot(({ app, ssrContext }) => {
     const contexto = ssrContext as unknown as ContextoDeRender;
     contexto.onRendered(() => {
       contexto._meta.headTags += guionDelEstado(
-        dehydrate(queryClient),
+        estadoPrecargado(queryClient),
         contexto.nonce
       );
     });

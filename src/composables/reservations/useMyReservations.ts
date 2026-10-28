@@ -23,6 +23,10 @@ export function useMyReservations() {
   const query = useQuery<ReservationDto[]>({
     queryKey: queryKeys.reservations.me,
     queryFn: fetchMyReservations,
+    // El portal da 60 s por defecto (`src/boot/main.ts`, para hidratar las
+    // páginas pregeneradas). «Mis reservas» vuelve a preguntar al montar y al
+    // recuperar el foco, como siempre.
+    staleTime: 0,
   });
 
   const cancel = useMutation({

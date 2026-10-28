@@ -4,7 +4,10 @@ import { useQuery } from '@tanstack/vue-query';
 import { useServicesStore } from 'src/stores/service-store';
 import { PRECIO_ESCALA_MAX, PRECIO_ESCALA_MIN } from 'src/stores/filters-store';
 import { servicesApi } from 'src/api/services-api';
-import { precargarEnServidor } from 'src/composables/shared/precargarEnServidor';
+import {
+  META_PRECARGADA,
+  precargarEnServidor,
+} from 'src/composables/shared/precargarEnServidor';
 import Service from 'src/interfaces/service';
 
 type ApiDataWithCount = [Service[], number];
@@ -64,6 +67,7 @@ export const useServices = () => {
       return getServices(filterService as fiilterService);
     },
     placeholderData: (previousData) => previousData,
+    meta: META_PRECARGADA,
   });
 
   // Usamos un computed para acceder a los servicios del store, ya que el store es el "estado principal"

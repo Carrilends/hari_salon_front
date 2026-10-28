@@ -23,6 +23,10 @@ export function useAdminReservations() {
   const query = useQuery<ReservationDto[]>({
     queryKey: queryKeys.reservations.all,
     queryFn: fetchAllReservations,
+    // El portal da 60 s por defecto (`src/boot/main.ts`, para hidratar las
+    // páginas pregeneradas). La bandeja vuelve a preguntar al montar y al
+    // recuperar el foco, como siempre.
+    staleTime: 0,
   });
 
   /** Vuelve a pedir la lista: tras una acción propia o un error que la deja vieja. */

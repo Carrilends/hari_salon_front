@@ -10,7 +10,10 @@ import {
   type Faq,
 } from 'src/api/faqs-api';
 import { ordenarPorIds } from 'src/helpers/orden-preguntas';
-import { precargarEnServidor } from 'src/composables/shared/precargarEnServidor';
+import {
+  META_PRECARGADA,
+  precargarEnServidor,
+} from 'src/composables/shared/precargarEnServidor';
 
 export const FAQ_QUERY_KEY = ['faqs'] as const;
 
@@ -24,6 +27,7 @@ export const useFaqs = () => {
   const { data, isLoading, isFetching, isError, refetch, suspense } = useQuery<Faq[]>({
     queryKey: FAQ_QUERY_KEY,
     queryFn: listarPreguntas,
+    meta: META_PRECARGADA,
     staleTime: 1000 * 60,
   });
 

@@ -7,12 +7,45 @@
  * propietaria de prueba. Servicios y reseñas solo se comprueban; si faltan,
  * sale con código 1 sin inventarlos.
  *
- * Solo habla con la API de la pila (`URL_API`, el 3101): nunca con la de
- * desarrollo. Requiere `yarn e2e:pila` en marcha.
+ * Falla cerrada, como `tests/e2e/preparar-bd.mjs`, antes de escribir nada:
+ * - el destino tiene que ser exactamente la API de la pila,
+ *   `http://127.0.0.1:3101/api` (se puede pedir otro con `SSG_DATOS_API`, pero
+ *   solo para que la negativa sea comprobable: cualquier otro valor sale con
+ *   código 2 sin hacer ninguna petición);
+ * - `GET /health` tiene que responder 200;
+ * - la propietaria de prueba (`duena.e2e@example.test`, que solo existe en
+ *   `HairSalonE2E`, la crea `yarn e2e:pila`) tiene que poder entrar.
+ * Nunca habla con la API de desarrollo (3001). Requiere `yarn e2e:pila` en
+ * marcha.
  *
  * Uso: node tests/ssg/preparar-datos.mjs
  */
-import { PROPIETARIA, URL_API } from '../e2e/pila.mjs';
+import { PROPIETARIA, URL_API as URL_PILA, URL_SALUD } from '../e2e/pila.mjs';
+
+const DESTINO_UNICO = 'http://127.0.0.1:3101/api';
+const URL_API = process.env.SSG_DATOS_API ?? URL_PILA;
+
+class Negativa extends Error {}
+
+function comprobarDestino() {
+  if (URL_PILA !== DESTINO_UNICO || URL_API !== DESTINO_UNICO) {
+    throw new Negativa(
+      `preparar-datos se niega: el destino es «${URL_API}» y solo puede ser «${DESTINO_UNICO}» (la pila E2E). No se ha hecho ninguna petición.`
+    );
+  }
+}
+
+async function comprobarPila() {
+  let salud;
+  try {
+    salud = await fetch(URL_SALUD);
+  } catch (error) {
+    throw new Negativa(`preparar-datos se niega: ${URL_SALUD} no responde (${error.message}). ¿Está \`yarn e2e:pila\` en marcha?`);
+  }
+  if (salud.status !== 200) {
+    throw new Negativa(`preparar-datos se niega: ${URL_SALUD} respondió HTTP ${salud.status}.`);
+  }
+}
 
 const PREGUNTAS_DE_PRUEBA = [
   {
@@ -42,6 +75,17 @@ async function pedir(ruta, opciones = {}) {
 }
 
 async function principal() {
+  comprobarDestino();
+  await comprobarPila();
+  const { token } = await pedir('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email: PROPIETARIA.correo, password: PROPIETARIA.contrasena }),
+  }).catch((error) => {
+    throw new Negativa(
+      `preparar-datos se niega: la propietaria de prueba no entra en ${URL_API} (${error.message}); no es la pila E2E.`
+    );
+  });
+
   const [servicios] = await pedir('/service/search', {
     method: 'POST',
     body: JSON.stringify({
@@ -66,10 +110,6 @@ async function principal() {
     return;
   }
 
-  const { token } = await pedir('/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({ email: PROPIETARIA.correo, password: PROPIETARIA.contrasena }),
-  });
   for (const pregunta of PREGUNTAS_DE_PRUEBA) {
     await pedir('/faqs', {
       method: 'POST',
@@ -82,5 +122,5 @@ async function principal() {
 
 principal().catch((error) => {
   console.error(`[preparar-datos] ${error.message}`);
-  process.exit(1);
+  process.exit(error instanceof Negativa ? 2 : 1);
 });

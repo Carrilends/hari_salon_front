@@ -30,9 +30,12 @@ jest.mock('@tanstack/vue-query', () => {
   const { ref } = require('vue');
   const estado = {
     suspense: jest.fn(),
+    opciones: [] as Array<{ meta?: Record<string, unknown> }>,
   };
   return {
-    useQuery: () => ({
+    useQuery: (opciones: { meta?: Record<string, unknown> }) => {
+      estado.opciones.push(opciones);
+      return {
       isLoading: ref(true),
       isPending: ref(true),
       isFetching: ref(true),
@@ -41,7 +44,8 @@ jest.mock('@tanstack/vue-query', () => {
       data: ref(undefined),
       refetch: jest.fn(),
       suspense: estado.suspense,
-    }),
+      };
+    },
     useQueryClient: () => ({}),
     useMutation: () => ({}),
     __estado: estado,
@@ -58,7 +62,10 @@ import { useServicesStore } from 'src/stores/service-store';
 import type Service from 'src/interfaces/service';
 
 const { __estado: consulta } = jest.requireMock('@tanstack/vue-query') as {
-  __estado: { suspense: jest.Mock };
+  __estado: {
+    suspense: jest.Mock;
+    opciones: Array<{ meta?: Record<string, unknown> }>;
+  };
 };
 const registrar = onServerPrefetch as unknown as jest.Mock;
 
@@ -74,7 +81,12 @@ beforeEach(() => {
   setActivePinia(createPinia());
   registrar.mockReset();
   consulta.suspense.mockReset();
+  consulta.opciones.length = 0;
 });
+
+/** La marca que deja pasar la consulta a `window.__VQ_STATE__`. */
+const marcada = () =>
+  expect(consulta.opciones[0].meta).toEqual({ precargada: true });
 
 describe('precarga en el servidor', () => {
   it('el catálogo espera su consulta y la deja en el store que pinta la página', async () => {
@@ -86,6 +98,7 @@ describe('precarga en el servidor', () => {
     expect(useServicesStore().services).toEqual([SERVICIO]);
     expect(services.value).toEqual([SERVICIO]);
     expect(totalServices.value).toBe(7);
+    marcada();
   });
 
   it('si la API falla, la precarga falla (y con ella la generación)', async () => {
@@ -104,6 +117,7 @@ describe('precarga en el servidor', () => {
     await precargaRegistrada()();
 
     expect(consulta.suspense).toHaveBeenCalledTimes(1);
+    marcada();
   });
 
   it('las preguntas esperan su consulta', async () => {
@@ -113,5 +127,6 @@ describe('precarga en el servidor', () => {
     await precargaRegistrada()();
 
     expect(consulta.suspense).toHaveBeenCalledTimes(1);
+    marcada();
   });
 });

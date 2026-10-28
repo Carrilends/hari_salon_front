@@ -5,7 +5,10 @@
  * de reserva (que, en el backend, también cancelaba).
  */
 const invalidateQueries = jest.fn(() => Promise.resolve());
-const opcionesConsulta: Array<{ queryKey: readonly unknown[] }> = [];
+const opcionesConsulta: Array<{
+  queryKey: readonly unknown[];
+  staleTime?: number;
+}> = [];
 const opcionesMutacion: Array<{
   mutationFn: (id: string) => Promise<unknown>;
   onSuccess?: () => unknown;
@@ -51,6 +54,17 @@ describe('useAdminReservations', () => {
     useAdminReservations();
 
     expect(opcionesConsulta[0].queryKey).toEqual(queryKeys.reservations.all);
+  });
+
+  /**
+   * El `QueryClient` del portal da `staleTime: 60_000` por defecto (para que
+   * las páginas pregeneradas hidraten sin volver a pedir). La bandeja no: tiene
+   * que volver a preguntar al montar y al recuperar el foco, como antes.
+   */
+  it('la bandeja nunca se da por fresca: staleTime 0', () => {
+    useAdminReservations();
+
+    expect(opcionesConsulta[0].staleTime).toBe(0);
   });
 
   it('confirmar llama al PATCH de confirmar y refresca la lista', async () => {
