@@ -3,6 +3,7 @@
  * `PrivacyPolicyPage.vue` vigente el 2026-10-09 —versión 1.1—, sin etiquetas y
  * con los espacios colapsados. Cada pieza es un `<p>` o un `<li>` de las
  * secciones, en orden. La versión 1.2 (2026-10-10) solo corrigió el teléfono.
+ * La 1.5 (2026-10-28) añade la eliminación de la cuenta desde «Mi cuenta» en los derechos del titular: qué se borra, qué se conserva, la gestión de la cita por WhatsApp y que nadie usa los datos para otra finalidad sin autorización expresa.
  * La 1.4 (2026-10-28) añade a Cloudinary, Netlify y Railway, cambia «transferencia» por «transmisión», quita el Decreto 587 de 2016 y deja de prometer avisos por correo a la clienta. La 1.3 (plan 06, F7) dice que el asistente contesta también en la línea de
  * WhatsApp del negocio: qué ven Meta y Gemini, y que el teléfono de contacto
  * del responsable ya no es el de WhatsApp.
@@ -198,6 +199,26 @@ export const TEXTO_LEGAL: PiezaLegal[] = [
     etiqueta: 'li',
     texto:
       'Presentar quejas ante la Superintendencia de Industria y Comercio (SIC) por infracciones al régimen de protección de datos.',
+  },
+  {
+    etiqueta: 'p',
+    texto:
+      'La cuenta se puede eliminar desde «Mi cuenta», en la sección «Cerrar sesión», confirmando con la contraseña o, si se creó con Google, con el correo. Al eliminarla:',
+  },
+  {
+    etiqueta: 'li',
+    texto:
+      'Se borran la cuenta, el acceso, las sesiones abiertas y las conversaciones con el asistente.',
+  },
+  {
+    etiqueta: 'li',
+    texto:
+      'Se conservan las citas vigentes, con el nombre y un contacto, hasta que se cumplan o se cancelen; después, el historial hasta su borrado automático. Las reseñas se conservan sin el nombre.',
+  },
+  {
+    etiqueta: 'p',
+    texto:
+      'Eliminar la cuenta no cancela las citas vigentes: para cambiarlas o cancelarlas después, el titular escribe al WhatsApp del salón. Ni el responsable ni los encargados del tratamiento usan estos datos para una finalidad distinta sin autorización expresa del titular.',
   },
   {
     etiqueta: 'p',

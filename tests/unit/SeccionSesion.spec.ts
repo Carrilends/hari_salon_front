@@ -3,6 +3,14 @@
  * pinta y avisa; la página hace el trabajo.
  */
 import { mount } from '@vue/test-utils';
+// «Eliminar mi cuenta» tiene su propia prueba (EliminarCuenta.spec.ts).
+jest.mock('src/components/cuenta/EliminarCuenta.vue', () => ({
+  __esModule: true,
+  default: {
+    name: 'EliminarCuenta',
+    template: '<div data-test="doble-eliminar" />',
+  },
+}));
 import SeccionSesion from 'src/components/cuenta/SeccionSesion.vue';
 
 const montar = (

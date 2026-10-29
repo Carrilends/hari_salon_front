@@ -19,6 +19,7 @@ const PIEZAS = [
   'components/cuenta/SeccionCorreo.vue',
   'components/cuenta/SeccionContrasena.vue',
   'components/cuenta/SeccionSesion.vue',
+  'components/cuenta/EliminarCuenta.vue',
 ];
 const PAGINA = 'pages/MyAccountPage.vue';
 const TODOS = PIEZAS.concat(PAGINA);
@@ -31,6 +32,7 @@ const CON_CONTROLES = [
   'components/cuenta/SeccionCorreo.vue',
   'components/cuenta/SeccionContrasena.vue',
   'components/cuenta/SeccionSesion.vue',
+  'components/cuenta/EliminarCuenta.vue',
   PAGINA,
 ];
 
@@ -108,12 +110,16 @@ describe('Mi cuenta, leída de la fuente', () => {
     expect(primerDocument).toBeGreaterThan(script.indexOf('watch(seccion'));
   });
 
-  it('la única llamada a un aviso flotante es el logro de «en todos»', () => {
+  it('la página solo avisa con el logro de «en todos»; entre las piezas, solo «Eliminar mi cuenta» avisa', () => {
     const script = scriptDe(leer(PAGINA));
     expect(script.match(/aviso\.\w+\(/g)).toEqual(['aviso.logro(']);
-    PIEZAS.forEach((archivo) => {
-      expect(leer(archivo)).not.toMatch(/useAviso/);
-    });
+    // «Tu cuenta se eliminó.» sale desde el diálogo porque tras el 204 se
+    // navega al inicio y no queda sitio en línea.
+    PIEZAS.filter((a) => !a.endsWith('EliminarCuenta.vue')).forEach(
+      (archivo) => {
+        expect(leer(archivo)).not.toMatch(/useAviso/);
+      }
+    );
   });
 
   it('el oro claro no es color de texto en ninguna pieza clara', () => {

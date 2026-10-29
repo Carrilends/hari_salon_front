@@ -1,6 +1,12 @@
 import { servicesApi, adminServiceApi } from './services-api';
 import type { AuthResponse } from './apiTypes';
 
+/** Confirmación del borrado: `password` si la cuenta la tiene, si no `email`. */
+export interface DeleteAccountBody {
+  password?: string;
+  email?: string;
+}
+
 export interface GenericMessage {
   message: string;
 }
@@ -80,4 +86,13 @@ export const authApi = {
   // refresh de la cuenta y limpia la cookie. Lleva Bearer (`@Auth()`).
   logoutAll: (): Promise<void> =>
     adminServiceApi.post<void>('/auth/logout-all').then(() => undefined),
+
+  // Elimina la cuenta de la clienta (`DELETE /auth/me`, `@Auth()`). Se confirma
+  // con la contraseña o, si la cuenta no tiene (Google), con el correo. 204 sin
+  // cuerpo; el servidor limpia la cookie del refresh. 422 = confirmación
+  // equivocada, 403 = cuenta de administración, 429 = demasiados intentos.
+  deleteAccount: (body: DeleteAccountBody): Promise<void> =>
+    adminServiceApi
+      .delete<void>('/auth/me', { data: body })
+      .then(() => undefined),
 };

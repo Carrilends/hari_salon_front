@@ -87,3 +87,38 @@ export function errorDeCuenta(
   }
   return respaldo;
 }
+
+export const MENSAJE_ELIMINAR_CLAVE = 'La contraseña no es correcta.';
+export const MENSAJE_ELIMINAR_CORREO =
+  'El correo no coincide con el de tu cuenta.';
+export const MENSAJE_ELIMINAR_INTENTOS =
+  'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.';
+export const MENSAJE_ELIMINAR_ADMIN =
+  'Las cuentas de administración no se pueden eliminar desde el portal.';
+export const MENSAJE_ELIMINAR_RESPALDO =
+  'No pudimos eliminar tu cuenta. Inténtalo de nuevo en un momento.';
+
+/**
+ * Error de `DELETE /auth/me` (eliminar la cuenta):
+ * - 422: la confirmación no coincide (contraseña, o correo si la cuenta no
+ *   tiene contraseña).
+ * - 429: cinco confirmaciones fallidas en 15 minutos.
+ * - 403: cuenta de administración.
+ * - 401: la sesión caducó (el interceptor ya intentó renovarla); NO es la
+ *   confirmación, que el servidor contesta con 422.
+ */
+export function errorDeEliminar(err: unknown, conContrasena: boolean): string {
+  const estado = estadoDeError(err);
+  if (estado === undefined) {
+    const e = err as { request?: unknown; code?: string } | null;
+    return e && (e.request !== undefined || e.code === 'ERR_NETWORK')
+      ? MENSAJE_SIN_CONEXION
+      : MENSAJE_ELIMINAR_RESPALDO;
+  }
+  if (estado === 422)
+    return conContrasena ? MENSAJE_ELIMINAR_CLAVE : MENSAJE_ELIMINAR_CORREO;
+  if (estado === 429) return MENSAJE_ELIMINAR_INTENTOS;
+  if (estado === 403) return MENSAJE_ELIMINAR_ADMIN;
+  if (estado === 401) return MENSAJE_SESION_CADUCADA;
+  return MENSAJE_ELIMINAR_RESPALDO;
+}

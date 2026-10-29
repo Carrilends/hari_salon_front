@@ -392,6 +392,29 @@
               (SIC) por infracciones al régimen de protección de datos.
             </li>
           </ul>
+          <p>
+            La cuenta se puede eliminar desde «Mi cuenta», en la sección
+            «Cerrar sesión», confirmando con la contraseña o, si se creó con
+            Google, con el correo. Al eliminarla:
+          </p>
+          <ul>
+            <li>
+              <strong>Se borran</strong> la cuenta, el acceso, las sesiones
+              abiertas y las conversaciones con el asistente.
+            </li>
+            <li>
+              <strong>Se conservan</strong> las citas vigentes, con el nombre y
+              un contacto, hasta que se cumplan o se cancelen; después, el
+              historial hasta su borrado automático. Las reseñas se conservan
+              sin el nombre.
+            </li>
+          </ul>
+          <p>
+            Eliminar la cuenta no cancela las citas vigentes: para cambiarlas o
+            cancelarlas después, el titular escribe al WhatsApp del salón. Ni el
+            responsable ni los encargados del tratamiento usan estos datos para
+            una finalidad distinta sin autorización expresa del titular.
+          </p>
         </section>
 
         <section
@@ -485,7 +508,7 @@ import { useSeo } from 'src/composables/seo/useSeo';
  * `tests/unit/PrivacyPolicyPage.spec.ts`). Si cambia, sube `POLICY_VERSION`, la
  * fecha y `tests/unit/fixtures/politica-texto.ts` en el mismo commit.
  */
-const POLICY_VERSION = '1.4';
+const POLICY_VERSION = '1.5';
 const LAST_UPDATED_LABEL = '28 de octubre de 2026';
 
 /** El índice. Los títulos son los mismos de cada `<h2>` (lo vigila la prueba). */

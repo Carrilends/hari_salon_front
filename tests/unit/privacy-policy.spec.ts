@@ -71,7 +71,21 @@ describe('Política de Tratamiento de Datos Personales', () => {
   });
 
   it('la versión y la fecha de la política avanzan cuando cambia el contenido', () => {
-    expect(PAGINA).toContain("POLICY_VERSION = '1.4'");
+    expect(PAGINA).toContain("POLICY_VERSION = '1.5'");
     expect(PAGINA).toContain('28 de octubre de 2026');
+  });
+
+  it('1.5: explica cómo eliminar la cuenta, qué se borra y qué se conserva', () => {
+    const plano = PAGINA.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+    expect(plano).toContain('La cuenta se puede eliminar desde «Mi cuenta»');
+    expect(plano).toContain(
+      'Se borran la cuenta, el acceso, las sesiones abiertas y las conversaciones con el asistente'
+    );
+    expect(plano).toContain('Se conservan las citas vigentes');
+    expect(plano).toContain('Las reseñas se conservan sin el nombre');
+    expect(plano).toContain('escribe al WhatsApp del salón');
+    expect(plano).toContain(
+      'usan estos datos para una finalidad distinta sin autorización expresa'
+    );
   });
 });

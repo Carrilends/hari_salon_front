@@ -47,6 +47,8 @@
         }}
       </button>
     </div>
+
+    <eliminar-cuenta />
   </marco-seccion>
 </template>
 
@@ -62,6 +64,7 @@
  */
 import AvisoAcceso from 'src/components/auth/AvisoAcceso.vue';
 import MarcoSeccion from 'src/components/cuenta/MarcoSeccion.vue';
+import EliminarCuenta from 'src/components/cuenta/EliminarCuenta.vue';
 
 withDefaults(
   defineProps<{
