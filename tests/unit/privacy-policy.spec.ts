@@ -31,8 +31,19 @@ describe('Política de Tratamiento de Datos Personales', () => {
   it('dice que hay tratamiento fuera de Colombia y lo llama por su nombre legal', () => {
     // Ley 1581 de 2012: la transferencia internacional hay que declararla, no
     // insinuarla.
-    expect(PAGINA).toContain('transferencia internacional');
+    expect(PAGINA).toContain('transmisión internacional');
+    expect(PAGINA).not.toContain('transferencia internacional');
     expect(PAGINA).toContain('fuera de Colombia');
+  });
+
+  it.each(['Cloudinary', 'Netlify', 'Railway'])('nombra a %s', (e) => {
+    expect(PAGINA).toContain(`<strong>${e}</strong>`);
+  });
+
+  it('no cita el Decreto 587 de 2016 y no promete avisos de la cita por correo a la clienta', () => {
+    expect(PAGINA).not.toContain('587');
+    expect(PAGINA).toContain('A la clienta no le envía avisos de la cita');
+    expect(PAGINA).toContain('Por correo electrónico solo recibe');
   });
 
   it('declara que el asistente es voluntario y que se puede reservar sin él', () => {
@@ -60,7 +71,7 @@ describe('Política de Tratamiento de Datos Personales', () => {
   });
 
   it('la versión y la fecha de la política avanzan cuando cambia el contenido', () => {
-    expect(PAGINA).toContain("POLICY_VERSION = '1.3'");
-    expect(PAGINA).toContain('14 de octubre de 2026');
+    expect(PAGINA).toContain("POLICY_VERSION = '1.4'");
+    expect(PAGINA).toContain('28 de octubre de 2026');
   });
 });

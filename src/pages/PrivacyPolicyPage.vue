@@ -163,8 +163,8 @@
           <p>
             Esta política se rige por la Constitución Política de Colombia, la
             <strong>Ley 1581 de 2012</strong> (Régimen General de Protección de
-            Datos Personales), el <strong>Decreto 1377 de 2013</strong>, el
-            <strong>Decreto 587 de 2016</strong> y demás normas concordantes.
+            Datos Personales), el <strong>Decreto 1377 de 2013</strong> y demás
+            normas concordantes.
           </p>
         </section>
 
@@ -243,8 +243,9 @@
             <li>
               Enviar al titular los
               <strong>avisos de su cita</strong> —creación, cambio de hora,
-              cancelación y confirmación— por correo electrónico y, si aportó su
-              teléfono, por WhatsApp.
+              cancelación y confirmación— por WhatsApp, si aportó su teléfono.
+              Por correo electrónico solo recibe la verificación de su cuenta y
+              el restablecimiento de su contraseña.
             </li>
             <li>
               Atender sus consultas sobre servicios, disponibilidad y reservas a
@@ -272,7 +273,7 @@
             <span class="politica__numero" data-test="numero-seccion">5</span
             >{{ ' '
             }}<span data-test="titulo-seccion"
-              >Encargados del tratamiento y transferencia internacional</span
+              >Encargados del tratamiento y transmisión internacional</span
             >
           </h2>
           <p>
@@ -281,9 +282,9 @@
             <strong>por cuenta y según las instrucciones</strong> del
             establecimiento, y no para finalidades propias. Varios de ellos
             están ubicados <strong>fuera de Colombia</strong>, de modo que
-            existe una <strong>transferencia internacional</strong> de datos en
-            los términos de la Ley 1581 de 2012. Cada uno recibe únicamente lo
-            imprescindible para su función:
+            existe una <strong>transmisión internacional</strong> de datos en
+            los términos de la Ley 1581 de 2012 y del Decreto 1377 de 2013. Cada
+            uno recibe únicamente lo imprescindible para su función:
           </p>
           <ul>
             <li>
@@ -294,8 +295,11 @@
             </li>
             <li>
               <strong>Resend</strong> — correo transaccional. Recibe la
-              dirección de correo para enviar la verificación de la cuenta, el
-              restablecimiento de contraseña y los avisos de la cita.
+              dirección de correo para enviar la verificación de la cuenta y el
+              restablecimiento de contraseña, y a la propietaria los avisos de
+              las reservas (nueva, cambio de hora, cancelación y confirmación),
+              con la fecha, el servicio, la estilista y el nombre y teléfono de
+              quien reservó. A la clienta no le envía avisos de la cita.
             </li>
             <li>
               <strong>Meta</strong> — mensajería por la API de WhatsApp
@@ -322,12 +326,24 @@
               ni el identificador de su cuenta, ni el identificador de su
               reserva.
             </li>
+            <li>
+              <strong>Cloudinary</strong> — imágenes del catálogo. Guarda las
+              fotos de los servicios y de las estilistas que sube la propietaria
+              desde el panel de administración. No recibe datos de la clientela.
+            </li>
+            <li>
+              <strong>Netlify</strong> — alojamiento del portal. Sirve el sitio
+              web al navegador de quien lo visita.
+            </li>
+            <li>
+              <strong>Railway</strong> — alojamiento de la API y de la base de
+              datos, donde se guardan las cuentas y las reservas.
+            </li>
           </ul>
           <p>
-            El portal, su base de datos y las imágenes del catálogo se alojan en
-            infraestructura de proveedores también ubicados fuera de Colombia,
-            que actúan como custodios y no emplean la información para ninguna
-            finalidad propia.
+            Estos proveedores están también ubicados fuera de Colombia y actúan
+            como custodios: no emplean la información para ninguna finalidad
+            propia.
           </p>
           <p class="politica__nota">
             El uso del asistente conversacional es voluntario: el titular puede
@@ -469,8 +485,8 @@ import { useSeo } from 'src/composables/seo/useSeo';
  * `tests/unit/PrivacyPolicyPage.spec.ts`). Si cambia, sube `POLICY_VERSION`, la
  * fecha y `tests/unit/fixtures/politica-texto.ts` en el mismo commit.
  */
-const POLICY_VERSION = '1.3';
-const LAST_UPDATED_LABEL = '14 de octubre de 2026';
+const POLICY_VERSION = '1.4';
+const LAST_UPDATED_LABEL = '28 de octubre de 2026';
 
 /** El índice. Los títulos son los mismos de cada `<h2>` (lo vigila la prueba). */
 const SECCIONES = [
@@ -489,7 +505,7 @@ const SECCIONES = [
   {
     id: 'politica-encargados',
     numero: 5,
-    titulo: 'Encargados del tratamiento y transferencia internacional',
+    titulo: 'Encargados del tratamiento y transmisión internacional',
   },
   { id: 'politica-derechos', numero: 6, titulo: 'Derechos del titular' },
   { id: 'politica-ejercicio', numero: 7, titulo: 'Ejercicio de los derechos' },

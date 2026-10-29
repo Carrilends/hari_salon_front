@@ -3,7 +3,7 @@
  * `PrivacyPolicyPage.vue` vigente el 2026-10-09 —versión 1.1—, sin etiquetas y
  * con los espacios colapsados. Cada pieza es un `<p>` o un `<li>` de las
  * secciones, en orden. La versión 1.2 (2026-10-10) solo corrigió el teléfono.
- * La 1.3 (plan 06, F7) dice que el asistente contesta también en la línea de
+ * La 1.4 (2026-10-28) añade a Cloudinary, Netlify y Railway, cambia «transferencia» por «transmisión», quita el Decreto 587 de 2016 y deja de prometer avisos por correo a la clienta. La 1.3 (plan 06, F7) dice que el asistente contesta también en la línea de
  * WhatsApp del negocio: qué ven Meta y Gemini, y que el teléfono de contacto
  * del responsable ya no es el de WhatsApp.
  *
@@ -18,7 +18,7 @@ export const TITULOS_SECCIONES = [
   'Marco legal aplicable',
   'Datos que se recolectan',
   'Finalidades del tratamiento',
-  'Encargados del tratamiento y transferencia internacional',
+  'Encargados del tratamiento y transmisión internacional',
   'Derechos del titular',
   'Ejercicio de los derechos',
   'Medidas de seguridad',
@@ -43,7 +43,7 @@ export const TEXTO_LEGAL: PiezaLegal[] = [
   {
     etiqueta: 'p',
     texto:
-      'Esta política se rige por la Constitución Política de Colombia, la Ley 1581 de 2012 (Régimen General de Protección de Datos Personales), el Decreto 1377 de 2013, el Decreto 587 de 2016 y demás normas concordantes.',
+      'Esta política se rige por la Constitución Política de Colombia, la Ley 1581 de 2012 (Régimen General de Protección de Datos Personales), el Decreto 1377 de 2013 y demás normas concordantes.',
   },
   {
     etiqueta: 'p',
@@ -98,7 +98,7 @@ export const TEXTO_LEGAL: PiezaLegal[] = [
   {
     etiqueta: 'li',
     texto:
-      'Enviar al titular los avisos de su cita —creación, cambio de hora, cancelación y confirmación— por correo electrónico y, si aportó su teléfono, por WhatsApp.',
+      'Enviar al titular los avisos de su cita —creación, cambio de hora, cancelación y confirmación— por WhatsApp, si aportó su teléfono. Por correo electrónico solo recibe la verificación de su cuenta y el restablecimiento de su contraseña.',
   },
   {
     etiqueta: 'li',
@@ -118,7 +118,7 @@ export const TEXTO_LEGAL: PiezaLegal[] = [
   {
     etiqueta: 'p',
     texto:
-      'Para operar el portal, Peluquería Marlene se apoya en proveedores que tratan datos personales por cuenta y según las instrucciones del establecimiento, y no para finalidades propias. Varios de ellos están ubicados fuera de Colombia, de modo que existe una transferencia internacional de datos en los términos de la Ley 1581 de 2012. Cada uno recibe únicamente lo imprescindible para su función:',
+      'Para operar el portal, Peluquería Marlene se apoya en proveedores que tratan datos personales por cuenta y según las instrucciones del establecimiento, y no para finalidades propias. Varios de ellos están ubicados fuera de Colombia, de modo que existe una transmisión internacional de datos en los términos de la Ley 1581 de 2012 y del Decreto 1377 de 2013. Cada uno recibe únicamente lo imprescindible para su función:',
   },
   {
     etiqueta: 'li',
@@ -128,7 +128,7 @@ export const TEXTO_LEGAL: PiezaLegal[] = [
   {
     etiqueta: 'li',
     texto:
-      'Resend — correo transaccional. Recibe la dirección de correo para enviar la verificación de la cuenta, el restablecimiento de contraseña y los avisos de la cita.',
+      'Resend — correo transaccional. Recibe la dirección de correo para enviar la verificación de la cuenta y el restablecimiento de contraseña, y a la propietaria los avisos de las reservas (nueva, cambio de hora, cancelación y confirmación), con la fecha, el servicio, la estilista y el nombre y teléfono de quien reservó. A la clienta no le envía avisos de la cita.',
   },
   {
     etiqueta: 'li',
@@ -146,9 +146,24 @@ export const TEXTO_LEGAL: PiezaLegal[] = [
       'TypeSafe — verificación de la reserva antes de crearla, para que el asistente no agende algo distinto de lo que se pidió. Recibe los últimos mensajes de la conversación y los nombres de los servicios con el día y la hora propuestos. No recibe el nombre del titular, ni su teléfono, ni el identificador de su cuenta, ni el identificador de su reserva.',
   },
   {
+    etiqueta: 'li',
+    texto:
+      'Cloudinary — imágenes del catálogo. Guarda las fotos de los servicios y de las estilistas que sube la propietaria desde el panel de administración. No recibe datos de la clientela.',
+  },
+  {
+    etiqueta: 'li',
+    texto:
+      'Netlify — alojamiento del portal. Sirve el sitio web al navegador de quien lo visita.',
+  },
+  {
+    etiqueta: 'li',
+    texto:
+      'Railway — alojamiento de la API y de la base de datos, donde se guardan las cuentas y las reservas.',
+  },
+  {
     etiqueta: 'p',
     texto:
-      'El portal, su base de datos y las imágenes del catálogo se alojan en infraestructura de proveedores también ubicados fuera de Colombia, que actúan como custodios y no emplean la información para ninguna finalidad propia.',
+      'Estos proveedores están también ubicados fuera de Colombia y actúan como custodios: no emplean la información para ninguna finalidad propia.',
   },
   {
     etiqueta: 'p',
