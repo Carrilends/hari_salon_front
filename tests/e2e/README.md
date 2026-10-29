@@ -1,15 +1,16 @@
 # Flujos E2E sobre la pila local segura
 
-Cuatro flujos de punta a punta en Chromium, con un navegador de verdad contra una
+Flujos de punta a punta en Chromium, con un navegador de verdad contra una
 API de verdad, más una comprobación previa de que esa API es la segura:
 
-| Archivo                         | Qué comprueba                                                                                                                                                                                                                                                       |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pila-segura.spec.ts`           | Corre primero (proyecto `pila`). La API responde en el 3101, la red de salida está cortada en su proceso, el aviso de WhatsApp de una reserva sale por el adaptador de consola y la reserva queda en `HairSalonE2E`. Si falla, los flujos no corren.                |
-| `reserva-sin-cuenta.spec.ts`    | Portada → catálogo → un servicio a la bolsa → cajón → primer día con huecos y primera hora → datos con el consentimiento marcado a mano → pantalla de éxito; el `POST` fue al proxy del portal y la fila está en `HairSalonE2E`.                                    |
-| `cuenta-y-mis-reservas.spec.ts` | Registro → reserva con la sesión iniciada → «Mis reservas» la muestra pendiente → cancelarla → pasa a cancelada.                                                                                                                                                    |
-| `bandeja-confirma.spec.ts`      | Reserva creada por la API → la propietaria entra → la bandeja la muestra pendiente → «Confirmar» → aparece confirmada.                                                                                                                                              |
-| `hora-ocupada.spec.ts`          | Se lee por la API el primer hueco libre de mañana de una estilista; la visitante lo elige en el cajón; otra persona lo ocupa por la API antes de que confirme; al confirmar, el cajón avisa «La disponibilidad cambió y ya no hay tiempo suficiente con … a las …». |
+| Archivo                         | Qué comprueba                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pila-segura.spec.ts`           | Corre primero (proyecto `pila`). La API responde en el 3101, la red de salida está cortada en su proceso, el aviso de WhatsApp de una reserva sale por el adaptador de consola y la reserva queda en `HairSalonE2E`. Si falla, los flujos no corren.                                                                                                                                              |
+| `reserva-sin-cuenta.spec.ts`    | Portada → catálogo → un servicio a la bolsa → cajón → primer día con huecos y primera hora → datos con el consentimiento marcado a mano → pantalla de éxito; el `POST` fue al proxy del portal y la fila está en `HairSalonE2E`.                                                                                                                                                                  |
+| `cuenta-y-mis-reservas.spec.ts` | Registro → reserva con la sesión iniciada → «Mis reservas» la muestra pendiente → cancelarla → pasa a cancelada.                                                                                                                                                                                                                                                                                  |
+| `bandeja-confirma.spec.ts`      | Reserva creada por la API → la propietaria entra → la bandeja la muestra pendiente → «Confirmar» → aparece confirmada.                                                                                                                                                                                                                                                                            |
+| `hora-ocupada.spec.ts`          | Se lee por la API el primer hueco libre de mañana de una estilista; la visitante lo elige en el cajón; otra persona lo ocupa por la API antes de que confirme; al confirmar, el cajón avisa «La disponibilidad cambió y ya no hay tiempo suficiente con … a las …».                                                                                                                               |
+| `eliminar-cuenta.spec.ts`       | Cuenta → «Cerrar sesión» → «Eliminar mi cuenta» con contraseña (una errónea no borra) → portada con el aviso → no puede entrar ni renovar la sesión → la cita sigue en la bandeja con nombre y teléfono (o con el correo si no dio teléfono), la «para otra persona» conserva su nombre y la reseña queda como «Clienta del salón»; una cuenta de administración no ve la acción y la API da 403. |
 
 `apoyo.ts` reúne lo común: las rutas reales de la API (`POST /service/search`,
 `GET /workers/availability`, `POST /reservations`), las fechas en hora de Bogotá y
@@ -145,8 +146,8 @@ permitido=loopback autoprueba=ok`, es decir, la red está cortada en el proceso 
 - **Propietaria de prueba:** `duena.e2e@example.test`, contraseña `DuenaE2e2026`.
   Se registra por la API (`POST /api/auth/register`) y se promueve con
   `UPDATE users SET roles = ARRAY['admin']` dentro de `HairSalonE2E`
-  (`asegurarPropietaria()` en `pila.mjs`; la llaman `bandeja-confirma.spec.ts` y
-  `yarn e2e:pila`). Solo existe en la copia desechable.
+  (`asegurarPropietaria()` en `pila.mjs`; la llaman `bandeja-confirma.spec.ts`,
+  `eliminar-cuenta.spec.ts` y `yarn e2e:pila`). Solo existe en la copia desechable.
 - Clientas de prueba registradas por el flujo 2: contraseña `ClaveE2e2026`.
 
 ## Notas

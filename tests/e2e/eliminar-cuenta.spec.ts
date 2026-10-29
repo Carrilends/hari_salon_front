@@ -143,8 +143,9 @@ async function reservaEnLaListaDeLaDuena(
 }
 
 /**
- * Abre «Mi cuenta» tras entrar. Se usa la barra de la cuenta si existe; si no,
- * una navegación completa recupera la sesión con la cookie de renovación.
+ * Desde la sesión recién iniciada en «Mi cuenta»: va a «Cerrar sesión» por el
+ * índice lateral (sin recargar: el token vive en memoria), pulsa «Eliminar mi
+ * cuenta» y devuelve el diálogo abierto.
  */
 async function abrirEliminar(page: Page) {
   await irASesion(page);
@@ -170,6 +171,29 @@ test('con teléfono: la clienta elimina su cuenta y su cita sigue en la bandeja 
     name: nombre,
     phone: telefono,
   });
+  // c4: una cita «para otra persona» (contacto con otro nombre) con su cuenta.
+  const otraPersona = `Otra Persona E2E ${MARCA}`;
+  const idOtra = await reservarConCuenta(request, token, {
+    name: otraPersona,
+    phone: telefonoDePrueba(42),
+  });
+  // c5: una reseña con el nombre que ella puso.
+  const nombreResena = `Nombre Propio E2E ${MARCA}`;
+  const resena = await request.post(`${URL_API}/reviews`, {
+    headers: { Authorization: `Bearer ${token}` },
+    data: {
+      name: nombreResena,
+      description: 'Reseña de prueba del flujo E2E',
+      score: 5,
+    },
+  });
+  expect(resena.status()).toBe(201);
+  expect(
+    JSON.stringify(await (await request.get(`${URL_API}/reviews`)).json())
+  ).toContain(nombreResena);
+  // La cookie de renovación del registro existe antes de borrar.
+  const antes = await request.storageState();
+  expect(antes.cookies.some((c) => c.name === 'marlene_rt')).toBe(true);
 
   await entrarEnElPortal(page, correo, CONTRASENA_DE_PRUEBA, SESION);
   const dialogo = await abrirEliminar(page);
@@ -195,6 +219,24 @@ test('con teléfono: la clienta elimina su cuenta y su cita sigue en la bandeja 
   expect(intento.status()).toBe(401);
   const renovar = await request.post(`${URL_API}/auth/refresh`);
   expect(renovar.status()).toBe(401);
+  const vieja = await request.get(`${URL_API}/reservations/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  expect(vieja.status()).toBe(401);
+
+  // c4: la cita «para otra persona» conserva ese nombre y su teléfono.
+  const otra = await reservaEnLaListaDeLaDuena(request, idOtra);
+  expect(otra.status).toBe('pendiente');
+  expect(otra.userId).toBeNull();
+  expect(otra.contact?.name).toBe(otraPersona);
+  expect(otra.contact?.phone).toContain(telefonoDePrueba(42).slice(-7));
+
+  // c5: la reseña se queda sin el nombre de la clienta.
+  const resenas = JSON.stringify(
+    await (await request.get(`${URL_API}/reviews`)).json()
+  );
+  expect(resenas).not.toContain(nombreResena);
+  expect(resenas).toContain('Clienta del salón');
 
   // c3: la cita sigue, sin cancelar, con nombre y teléfono, sin cuenta.
   const reserva = await reservaEnLaListaDeLaDuena(request, id);
@@ -279,8 +321,9 @@ test('una cuenta de administración no ve «Eliminar mi cuenta» y la API la rec
     SESION
   );
   await irASesion(page);
-  await expect(page.locator('[data-test="bloque-eliminar"]')).toHaveCount(0);
+  // Primero que la sección esté pintada; solo entonces la ausencia vale.
   await expect(page.getByText('Cerrar sesión en todos').first()).toBeVisible();
+  await expect(page.locator('[data-test="bloque-eliminar"]')).toHaveCount(0);
   await expect(page.locator('[data-test="eliminar-cuenta"]')).toHaveCount(0);
 
   const token = await tokenDe(
