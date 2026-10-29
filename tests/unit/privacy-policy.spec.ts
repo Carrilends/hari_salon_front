@@ -79,7 +79,7 @@ describe('Política de Tratamiento de Datos Personales', () => {
     const plano = PAGINA.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
     expect(plano).toContain('La cuenta se puede eliminar desde «Mi cuenta»');
     expect(plano).toContain(
-      'Se borran la cuenta, el acceso, las sesiones abiertas y las conversaciones con el asistente'
+      'Se borran la cuenta, el acceso, las sesiones abiertas y las conversaciones con el asistente en el portal'
     );
     expect(plano).toContain('Se conservan las citas vigentes');
     expect(plano).toContain('Las reseñas se conservan sin el nombre');

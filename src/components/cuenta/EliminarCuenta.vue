@@ -39,7 +39,7 @@
         <p class="eliminar-hoja__rotulo">Se borra</p>
         <ul class="eliminar-hoja__lista" data-test="eliminar-borra">
           <li>Tu cuenta y tu acceso, con todas tus sesiones abiertas.</li>
-          <li>Tus conversaciones con el asistente.</li>
+          <li>Tus conversaciones con el asistente en el portal.</li>
         </ul>
 
         <p class="eliminar-hoja__rotulo">Se conserva</p>

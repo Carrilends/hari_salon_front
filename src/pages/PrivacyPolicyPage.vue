@@ -393,14 +393,14 @@
             </li>
           </ul>
           <p>
-            La cuenta se puede eliminar desde «Mi cuenta», en la sección
-            «Cerrar sesión», confirmando con la contraseña o, si se creó con
-            Google, con el correo. Al eliminarla:
+            La cuenta se puede eliminar desde «Mi cuenta», en la sección «Cerrar
+            sesión», confirmando con la contraseña o, si se creó con Google, con
+            el correo. Al eliminarla:
           </p>
           <ul>
             <li>
               <strong>Se borran</strong> la cuenta, el acceso, las sesiones
-              abiertas y las conversaciones con el asistente.
+              abiertas y las conversaciones con el asistente en el portal.
             </li>
             <li>
               <strong>Se conservan</strong> las citas vigentes, con el nombre y

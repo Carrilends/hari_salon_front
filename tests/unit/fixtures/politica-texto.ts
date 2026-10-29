@@ -208,7 +208,7 @@ export const TEXTO_LEGAL: PiezaLegal[] = [
   {
     etiqueta: 'li',
     texto:
-      'Se borran la cuenta, el acceso, las sesiones abiertas y las conversaciones con el asistente.',
+      'Se borran la cuenta, el acceso, las sesiones abiertas y las conversaciones con el asistente en el portal.',
   },
   {
     etiqueta: 'li',
