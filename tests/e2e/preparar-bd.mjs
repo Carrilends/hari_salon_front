@@ -6,7 +6,17 @@
  *   2. levanta SOLO el servicio `db` de `../hair_salon_back` y espera a que
  *      acepte conexiones (nunca `api`: arrancaría con el `.env` real);
  *   3. `DROP DATABASE IF EXISTS "HairSalonE2E"` y
- *      `CREATE DATABASE "HairSalonE2E" TEMPLATE "HairSalon"`.
+ *      `CREATE DATABASE "HairSalonE2E" TEMPLATE "HairSalon"`;
+ *   4. aplica a la copia las migraciones del backend que le falten
+ *      (`npm run migration:run` en `../hair_salon_back` con
+ *      `DB_NAME=HairSalonE2E`) y comprueba que la copia queda con todas.
+ *
+ * El paso 4 existe porque la base de desarrollo puede ir por detrás del código
+ * (migrarla es decisión de Luis): la copia se pone al día sin tocar el
+ * original. `data-source.ts` carga el `.env` con `dotenv/config`, que nunca
+ * pisa una variable que el proceso ya trae, así que `DB_NAME`, `DB_HOST` y
+ * `DB_PORT` del arnés ganan. Y aun así se comprueba al final, en la copia, que
+ * cada migración del backend está registrada.
  *
  * La copia lleva la misma `COLLATION_VERSION` que guarda la plantilla. El
  * volumen de desarrollo se creó con glibc 2.36 y la imagen actual trae la 2.41:
@@ -24,7 +34,17 @@
  * rechaza.
  */
 import { execFileSync } from 'node:child_process';
-import { BD_E2E, BD_ORIGEN, RAIZ_BACK, esPrograma, psql } from './pila.mjs';
+import { readdirSync } from 'node:fs';
+import { resolve } from 'node:path';
+import {
+  BD_E2E,
+  BD_ORIGEN,
+  BLOQUEAR_RED,
+  PUERTO_BD,
+  RAIZ_BACK,
+  esPrograma,
+  psql,
+} from './pila.mjs';
 
 export class NegativaBd extends Error {}
 
@@ -135,6 +155,69 @@ export async function prepararBd() {
   }
   console.log(
     `preparar-bd: «${destino}» recreada como copia de «${BD_ORIGEN}».`
+  );
+
+  migrarCopia(destino);
+}
+
+/** Las migraciones del backend, por nombre de clase (p. ej. `WorkerAbsences1794355200000`). */
+function migracionesDelBackend() {
+  const dir = resolve(RAIZ_BACK, 'src', 'database', 'migrations');
+  return readdirSync(dir)
+    .filter((f) => /^\d+-.+\.ts$/.test(f) && !f.endsWith('.spec.ts'))
+    .map((f) => {
+      const m = /^(\d+)-(.+)\.ts$/.exec(f);
+      return `${m[2]}${m[1]}`;
+    });
+}
+
+/**
+ * Aplica a la copia las migraciones pendientes. Solo a `HairSalonE2E`: el
+ * destino se vuelve a comprobar aquí, y el entorno del proceso hijo fija la
+ * base, el host y el puerto (con la red de salida cortada, como la API).
+ */
+export function migrarCopia(destino) {
+  if (destino !== BD_E2E) {
+    throw new NegativaBd(
+      `preparar-bd se niega a migrar «${destino}»: solo migra «${BD_E2E}».`
+    );
+  }
+  try {
+    execFileSync('npm', ['run', '--silent', 'migration:run'], {
+      cwd: RAIZ_BACK,
+      stdio: ['ignore', 'ignore', 'pipe'],
+      env: {
+        ...process.env,
+        DB_NAME: destino,
+        DB_HOST: '127.0.0.1',
+        DB_PORT: String(PUERTO_BD),
+        TYPEORM_LOGGING: 'false',
+        NODE_OPTIONS: `--require "${BLOQUEAR_RED}"`,
+        NPM_CONFIG_UPDATE_NOTIFIER: 'false',
+        NO_COLOR: '1',
+      },
+    });
+  } catch (error) {
+    const detalle = error?.stderr?.toString().trim() || error.message;
+    throw new Error(`No se pudieron migrar «${destino}»: ${detalle}`);
+  }
+
+  const registradas = new Set(
+    psql(destino, 'SELECT name FROM migrations', { tuplas: true })
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean)
+  );
+  const faltan = migracionesDelBackend().filter((n) => !registradas.has(n));
+  if (faltan.length) {
+    throw new Error(
+      `«${destino}» sigue sin estas migraciones tras migrar: ${faltan.join(
+        ', '
+      )}.`
+    );
+  }
+  console.log(
+    `preparar-bd: «${destino}» al día con las ${registradas.size} migraciones del backend.`
   );
 }
 

@@ -175,7 +175,7 @@ test('marcar una ausencia mueve una cita, cancela otra y cierra esas horas en el
     dialogo.getByRole('heading', { name: 'Qué pasa con sus citas' })
   ).toBeVisible();
   await expect(dialogo.locator('[data-test="resumen-ausencia"]')).toContainText(
-    `${ESTILISTA_A} · ${fechaLarga(manana)} · 10:00 a. m. a 12:00 p. m.`
+    `${ESTILISTA_A} · ${fechaLarga(manana)} · 10:00 – 12:00`
   );
   const lineaMueve = dialogo
     .locator('[data-test="impacto-ausencia"]')
@@ -183,11 +183,15 @@ test('marcar una ausencia mueve una cita, cancela otra y cierra esas horas en el
   const lineaCancela = dialogo
     .locator('[data-test="impacto-ausencia"]')
     .filter({ hasText: CLIENTA_CANCELA });
-  await expect(lineaMueve).toContainText('10:00 a. m.');
+  await expect(lineaMueve.locator('[data-test="hora-impacto"]')).toHaveText(
+    '10:00'
+  );
   await expect(lineaMueve.locator('[data-test="destino-impacto"]')).toHaveText(
     `pasa a ${ESTILISTA_B}`
   );
-  await expect(lineaCancela).toContainText('11:00 a. m.');
+  await expect(lineaCancela.locator('[data-test="hora-impacto"]')).toHaveText(
+    '11:00'
+  );
   await expect(
     lineaCancela.locator('[data-test="destino-impacto"]')
   ).toHaveText('se cancela');
@@ -214,7 +218,7 @@ test('marcar una ausencia mueve una cita, cancela otra y cierra esas horas en el
   const ausencia = panel.locator('[data-test="ausencia"]');
   await expect(ausencia).toHaveCount(1);
   await expect(ausencia.locator('[data-test="franja-ausencia"]')).toHaveText(
-    '10:00 a. m. a 12:00 p. m.'
+    '10:00 – 12:00'
   );
 
   // 3. La bandeja: la movida con B; la cancelada fuera, con su aviso fijado.

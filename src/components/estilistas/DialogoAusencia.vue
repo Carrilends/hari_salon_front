@@ -94,7 +94,6 @@
           </div>
         </div>
         <p v-if="horario" class="ausencia__ayuda" data-test="horario-dia">
-          <!-- Sin punto final: la hora ya acaba en «p. m.». -->
           Horario de ese día: {{ horario }}
         </p>
       </template>
@@ -121,7 +120,9 @@
             class="ausencia__cita"
             data-test="impacto-ausencia"
           >
-            <span class="ausencia__cita-hora">{{ l.hora }}</span>
+            <span class="ausencia__cita-hora" data-test="hora-impacto">{{
+              l.hora
+            }}</span>
             <span class="ausencia__cita-quien">
               <span class="ausencia__cita-clienta">{{ l.clienta }}</span>
               <span class="ausencia__cita-servicios">{{ l.servicios }}</span>
@@ -242,12 +243,12 @@ import {
   cuentaDeImpactos,
   fechaDeAusencia,
   franjaDeAusencia,
-  horaDoce,
   horarioDelDia,
   lineaDeImpacto,
   mensajeDeAusencia,
   opcionesDesde,
   opcionesHasta,
+  rangoDelPanel,
 } from 'src/helpers/ausencias';
 
 /**
@@ -294,7 +295,7 @@ const hastas = computed(() =>
 const horario = computed(() => {
   if (!fechaValida.value) return '';
   const { abre, cierra } = horarioDelDia(fecha.value);
-  return `${horaDoce(abre)} a ${horaDoce(cierra)}`;
+  return rangoDelPanel(abre, cierra);
 });
 
 /** Una hora que ya no está entre las opciones pasa a la primera que haya. */

@@ -15,7 +15,7 @@ jest.mock('src/composables/workers/useAusencias', () => ({
   }),
 }));
 
-/** Hoy en el salón: miércoles 11 de noviembre de 2026, 7:00 a. m. */
+/** Hoy en el salón: miércoles 11 de noviembre de 2026, 7:00. */
 jest.mock('src/helpers/businessHours', () => ({
   ...jest.requireActual('src/helpers/businessHours'),
   getSalonNowParts: () => ({
@@ -112,17 +112,21 @@ describe('DialogoAusencia · elegir', () => {
     expect(desde[desde.length - 1]).toBe('19:30');
     expect(desde).toHaveLength(24);
     expect(textos(d, '[data-test="desde-ausencia"]').slice(0, 2)).toEqual([
-      '8:00 a. m.',
-      '8:30 a. m.',
+      '8:00',
+      '8:30',
     ]);
-    expect(textos(d, '[data-test="desde-ausencia"]')).toContain('12:00 p. m.');
+    expect(textos(d, '[data-test="desde-ausencia"]')).toContain('12:00');
 
     // «Hasta» empieza media hora después de «desde» y acaba al cierre.
     await d.get('[data-test="desde-ausencia"]').setValue('10:00');
     const hasta = valores(d, '[data-test="hasta-ausencia"]');
     expect(hasta[0]).toBe('10:30');
     expect(hasta[hasta.length - 1]).toBe('20:00');
-    expect(textos(d, '[data-test="hasta-ausencia"]').pop()).toBe('8:00 p. m.');
+    expect(textos(d, '[data-test="hasta-ausencia"]').pop()).toBe('20:00');
+
+    expect(d.get('[data-test="horario-dia"]').text()).toBe(
+      'Horario de ese día: 8:00 – 20:00'
+    );
 
     // El sábado abre a las 9:00 y cierra a las 19:00.
     await d.get('[data-test="fecha-ausencia"]').setValue(SABADO);
@@ -130,6 +134,9 @@ describe('DialogoAusencia · elegir', () => {
     expect(sabado[0]).toBe('09:00');
     expect(sabado[sabado.length - 1]).toBe('18:30');
     expect(valores(d, '[data-test="hasta-ausencia"]').pop()).toBe('19:00');
+    expect(d.get('[data-test="horario-dia"]').text()).toBe(
+      'Horario de ese día: 9:00 – 19:00'
+    );
   });
 
   it('la fecha empieza hoy y no deja elegir días pasados', async () => {
@@ -194,17 +201,17 @@ describe('DialogoAusencia · vista previa y resultado', () => {
     await verQuePasa(d);
 
     expect(d.get('[data-test="resumen-ausencia"]').text()).toContain(
-      'Estilista A · Jueves 12 de noviembre · 10:00 a. m. a 12:00 p. m.'
+      'Estilista A · Jueves 12 de noviembre · 10:00 – 12:00'
     );
     const lineas = d.findAll('[data-test="impacto-ausencia"]');
     expect(lineas).toHaveLength(2);
-    expect(lineas[0].text()).toContain('10:00 a. m.');
+    expect(lineas[0].get('[data-test="hora-impacto"]').text()).toBe('10:00');
     expect(lineas[0].text()).toContain('Ana Prueba');
     expect(lineas[0].text()).toContain('Corte');
     expect(lineas[0].get('[data-test="destino-impacto"]').text()).toBe(
       'pasa a Estilista B'
     );
-    expect(lineas[1].text()).toContain('11:00 a. m.');
+    expect(lineas[1].get('[data-test="hora-impacto"]').text()).toBe('11:00');
     expect(lineas[1].text()).toContain('Tinte, Peinado');
     expect(lineas[1].get('[data-test="destino-impacto"]').text()).toBe(
       'se cancela'
@@ -248,7 +255,7 @@ describe('DialogoAusencia · vista previa y resultado', () => {
       'pasó a Estilista B'
     );
     const pendiente = d.get('[data-test="sin-resolver"]');
-    expect(pendiente.text()).toContain('11:00 a. m.');
+    expect(pendiente.text()).toContain('11:00 · Cliente registrado');
     expect(pendiente.text()).toContain('revísala en la bandeja');
 
     await d.get('[data-test="listo-ausencia"]').trigger('click');

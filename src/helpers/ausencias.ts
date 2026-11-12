@@ -1,7 +1,8 @@
 /**
- * Las ausencias de las estilistas dichas como las lee la dueña: horas en
- * 12 horas («10:00 a. m.»), fechas largas, la franja de cada ausencia, lo que
- * pasa con cada cita y los errores de la API en palabras.
+ * Las ausencias de las estilistas dichas como las lee la dueña: horas como el
+ * resto del panel («10:00 – 12:00», `H:mm` de 24 h), fechas largas, la franja
+ * de cada ausencia, lo que pasa con cada cita y los errores de la API en
+ * palabras.
  *
  * Puro (sin Vue ni red). El horario del día sale de `businessHours.ts`, que
  * replica `salon-schedule.ts` del backend: aquí no se repite ninguna hora.
@@ -9,13 +10,14 @@
 import type { AbsenceImpact } from 'src/api/workers-api';
 import { getBusinessDayBounds } from 'src/helpers/businessHours';
 import { partesEnBogota } from 'src/helpers/my-reservations';
-import { DIAS, MESES } from 'src/helpers/reserva-texto';
+import { DIAS, MESES, horaCorta } from 'src/helpers/reserva-texto';
+import { horaYFechaEnSalon } from 'src/helpers/semana-estilistas';
 
 export const PASO_MIN = 30;
 
 export interface OpcionDeHora {
   valor: string; // 'HH:mm', lo que viaja a la API
-  texto: string; // '10:00 a. m.', lo que lee la dueña
+  texto: string; // '10:00', lo que lee la dueña
 }
 
 const dos = (n: number) => String(n).padStart(2, '0');
@@ -31,15 +33,14 @@ export function aMinutos(hhmm: string): number {
   return h * 60 + m;
 }
 
-/**
- * Minutos desde medianoche → '10:00 a. m.' / '12:00 p. m.'. Mismo formato que
- * `horaEnDoceHoras` del backend y que el horario del pie del portal.
- */
-export function horaDoce(minutos: number): string {
-  const h = Math.floor(minutos / 60);
-  const sufijo = h < 12 ? 'a. m.' : 'p. m.';
-  const h12 = h % 12 === 0 ? 12 : h % 12;
-  return `${h12}:${dos(minutos % 60)} ${sufijo}`;
+/** Minutos desde medianoche → '8:00' / '13:30', con `horaCorta` del portal. */
+export function horaDelPanel(minutos: number): string {
+  return horaCorta(aHHmm(minutos));
+}
+
+/** Un rango de horas como en el resto del panel: '10:00 – 12:00'. */
+export function rangoDelPanel(desde: number, hasta: number): string {
+  return `${horaDelPanel(desde)} – ${horaDelPanel(hasta)}`;
 }
 
 /** Apertura y cierre de ese día ('YYYY-MM-DD'), con festivos y fin de semana. */
@@ -50,7 +51,7 @@ export function horarioDelDia(ymd: string): { abre: number; cierra: number } {
 
 const opcion = (min: number): OpcionDeHora => ({
   valor: aHHmm(min),
-  texto: horaDoce(min),
+  texto: horaDelPanel(min),
 });
 
 /** «Desde»: de la apertura a media hora antes del cierre, cada 30 min. */
@@ -89,14 +90,14 @@ export function fechaDeAusencia(iso: string): string {
   return fechaLargaDeYmd(ymdDelSalon(iso));
 }
 
-/** Un instante → '10:00 a. m.' en el salón. */
-export function horaDoceDe(iso: string): string {
-  return horaDoce(partesEnBogota(iso).minutoDelDia);
+/** Un instante → '10:00' en el salón (el formateador de las citas de hoy). */
+export function horaDe(iso: string): string {
+  return horaYFechaEnSalon(iso).hora;
 }
 
 /**
  * La franja de una ausencia: «Todo el día» si cubre el horario entero de ese
- * día; si no, «10:00 a. m. a 12:00 p. m.».
+ * día; si no, «10:00 – 12:00».
  */
 export function franjaDeAusencia(startsAt: string, endsAt: string): string {
   const inicio = partesEnBogota(startsAt);
@@ -107,7 +108,7 @@ export function franjaDeAusencia(startsAt: string, endsAt: string): string {
   const minFin =
     ymdDelSalon(endsAt) === ymd ? partesEnBogota(endsAt).minutoDelDia : cierra;
   if (inicio.minutoDelDia <= abre && minFin >= cierra) return 'Todo el día';
-  return `${horaDoce(inicio.minutoDelDia)} a ${horaDoce(minFin)}`;
+  return rangoDelPanel(inicio.minutoDelDia, minFin);
 }
 
 export interface LineaDeImpacto {
@@ -133,7 +134,7 @@ export function lineaDeImpacto(
     : `${tiempo === 'futuro' ? 'pasa' : 'pasó'} a ${nueva}`;
   return {
     id: impacto.reservationId,
-    hora: horaDoceDe(impacto.scheduledAt),
+    hora: horaDe(impacto.scheduledAt),
     clienta: impacto.customerName?.trim() || 'Clienta sin nombre',
     servicios: impacto.services.length
       ? impacto.services.join(', ')

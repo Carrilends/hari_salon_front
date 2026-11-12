@@ -281,7 +281,7 @@ describe('PanelEstilista · ausencias', () => {
     ).toEqual(['Jueves 8 de octubre', 'Viernes 9 de octubre']);
     expect(
       filas.map((f) => f.get('[data-test="franja-ausencia"]').text())
-    ).toEqual(['Todo el día', '10:00 a. m. a 12:00 p. m.']);
+    ).toEqual(['Todo el día', '10:00 – 12:00']);
     expect(panel.get('[data-test="advertencia-quitar"]').text()).toContain(
       'las citas movidas o canceladas no vuelven'
     );
