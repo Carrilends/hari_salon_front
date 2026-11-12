@@ -48,8 +48,13 @@ export const useAusencias = (habilitado: Ref<boolean>) => {
   };
 
   const quitar = async (id: string): Promise<void> => {
-    await removeAbsence(id);
-    await refrescar();
+    try {
+      await removeAbsence(id);
+    } finally {
+      // También tras un fallo (p. ej. 404 porque ya la quitaron): la lista
+      // mostrada puede estar vieja.
+      await refrescar();
+    }
   };
 
   return {

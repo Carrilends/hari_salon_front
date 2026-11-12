@@ -82,7 +82,10 @@ export function isReschedulable(res: ReservationDto, now: Date): boolean {
  * Definidos en `hair_salon_back/src/reservations/infrastructure/http/
  * reservation-domain-exception.filter.ts`.
  */
-type RescheduleConflictReason = 'estilista_ocupada' | 'hora_ocupada';
+type RescheduleConflictReason =
+  | 'estilista_ocupada'
+  | 'hora_ocupada'
+  | 'estilista_ausente';
 
 /**
  * Texto para un fallo al cambiar la fecha de una cita.
@@ -118,6 +121,9 @@ export function rescheduleErrorMessage(
   }
   if (reason === 'hora_ocupada') {
     return 'No queda ninguna estilista libre a esa hora.';
+  }
+  if (reason === 'estilista_ausente') {
+    return 'La estilista no está disponible a esa hora';
   }
   return 'Esa hora ya está ocupada. Elige otra.';
 }

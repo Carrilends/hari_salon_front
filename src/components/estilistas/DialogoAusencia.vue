@@ -38,8 +38,16 @@
           data-test="fecha-ausencia"
           type="date"
           :min="hoy"
+          aria-describedby="ausencia-fecha-pista"
           required
         />
+        <!-- Safari de escritorio 13.1 no trae selector: ahí se escribe a mano. -->
+        <span
+          id="ausencia-fecha-pista"
+          class="ausencia__pista"
+          data-test="pista-fecha"
+          >AAAA-MM-DD</span
+        >
 
         <fieldset class="ausencia__modo">
           <legend class="ausencia__etiqueta">Cuánto falta</legend>
@@ -429,6 +437,7 @@ defineOptions({ name: 'DialogoAusencia' });
   flex-direction: column;
   box-sizing: border-box;
   width: min(480px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
   max-height: calc(100dvh - 48px);
   border: var(--m-filete-grosor) solid var(--m-filete);
   border-radius: var(--m-radio-panel);
@@ -516,6 +525,13 @@ defineOptions({ name: 'DialogoAusencia' });
   margin: 0;
   padding: 0;
   border: 0;
+}
+
+.ausencia__pista {
+  display: block;
+  margin-top: 4px;
+  color: var(--m-piedra);
+  font-size: 0.75rem;
 }
 
 .ausencia__modo .ausencia__etiqueta {

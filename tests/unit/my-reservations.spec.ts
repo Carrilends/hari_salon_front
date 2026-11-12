@@ -174,6 +174,12 @@ describe('rescheduleErrorMessage', () => {
     expect(mensaje).toContain('ninguna estilista libre');
   });
 
+  it('estilista_ausente: la estilista no está disponible a esa hora', () => {
+    expect(
+      rescheduleErrorMessage(conflicto('estilista_ausente'), res())
+    ).toBe('La estilista no está disponible a esa hora');
+  });
+
   it('un 409 sin motivo se queda en el texto genérico de siempre', () => {
     // Compatibilidad: si el backend fuera anterior a este cambio, inventarse una
     // de las dos causas sería peor que no decir cuál.

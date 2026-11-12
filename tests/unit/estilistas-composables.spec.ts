@@ -263,4 +263,14 @@ describe('useAusencias', () => {
     expect(claves).toContainEqual(queryKeys.workerAvailability.all);
     expect(claves).toContainEqual(queryKeys.reservations.all);
   });
+
+  it('quitar refresca la lista aunque el borrado falle (404)', async () => {
+    (fetchAbsences as jest.Mock).mockResolvedValue([]);
+    (removeAbsence as jest.Mock).mockRejectedValue({ response: { status: 404 } });
+    const { resultado, queryClient } = montar(() => useAusencias(ref(true)));
+    const invalidar = jest.spyOn(queryClient, 'invalidateQueries');
+    await expect(resultado.quitar('a1')).rejects.toBeDefined();
+    const claves = invalidar.mock.calls.map((c) => (c[0] as { queryKey: unknown }).queryKey);
+    expect(claves).toContainEqual(queryKeys.absences.all);
+  });
 });

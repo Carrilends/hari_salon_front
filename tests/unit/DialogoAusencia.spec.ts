@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs';
+import { join } from 'path';
 /**
  * El diálogo de «Marcar ausencia» (Task 9 del plan de ausencias): fecha, día
  * completo o franja, vista previa, confirmación y resultado. `useAusencias` se
@@ -323,6 +325,24 @@ describe('DialogoAusencia · errores', () => {
     await verQuePasa(d);
     expect(d.get('[data-test="error-ausencia"]').text()).toBe(
       'No se pudo revisar la agenda. Revisa la conexión e inténtalo de nuevo.'
+    );
+  });
+
+  it('la fecha lleva una pista visible AAAA-MM-DD para navegadores sin selector de fecha', () => {
+    const d = montar();
+    expect(d.get('[data-test="pista-fecha"]').text()).toBe('AAAA-MM-DD');
+    expect(
+      d.get('[data-test="fecha-ausencia"]').attributes('aria-describedby')
+    ).toBe('ausencia-fecha-pista');
+  });
+
+  it('el alto máximo tiene respaldo en vh antes de dvh (Safari 13.1)', () => {
+    const fuente = readFileSync(
+      join(__dirname, '../../src/components/estilistas/DialogoAusencia.vue'),
+      'utf8'
+    );
+    expect(fuente).toMatch(
+      /max-height:\s*calc\(100vh - 48px\);\s*max-height:\s*calc\(100dvh - 48px\)/
     );
   });
 });
