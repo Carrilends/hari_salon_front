@@ -34,6 +34,10 @@ export const queryKeys = {
      */
     week: (lunes: string) => ['worker-availability', 'semana', lunes] as const,
   },
+  absences: {
+    /** Ausencias en curso o futuras de las estilistas (GET /absences). */
+    all: ['absences'] as const,
+  },
   reviews: {
     /** Reseñas públicas (GET /reviews): Testimonios y la banda del inicio. */
     all: ['reviews'] as const,

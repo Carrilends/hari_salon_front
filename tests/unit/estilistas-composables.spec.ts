@@ -9,6 +9,10 @@ jest.mock('src/api/workers-api', () => ({
   createWorker: jest.fn(),
   updateWorker: jest.fn(),
   removeWorker: jest.fn(),
+  fetchAbsences: jest.fn(),
+  previewAbsence: jest.fn(),
+  markAbsence: jest.fn(),
+  removeAbsence: jest.fn(),
 }));
 jest.mock('src/api/reservations-api', () => ({
   fetchAllReservations: jest.fn(),
@@ -20,9 +24,14 @@ import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query';
 import {
   createWorker,
   fetchWorkersWeek,
+  fetchAbsences,
+  markAbsence,
+  previewAbsence,
+  removeAbsence,
   removeWorker,
   updateWorker,
 } from 'src/api/workers-api';
+import { useAusencias } from 'src/composables/workers/useAusencias';
 import { fetchAllReservations } from 'src/api/reservations-api';
 import { queryKeys } from 'src/api/query-keys';
 import { useWorkers } from 'src/composables/workers/useWorkers';
@@ -193,5 +202,65 @@ describe('useWorkers', () => {
       response: { status: 409 },
     });
     expect(invalidar).not.toHaveBeenCalled();
+  });
+});
+
+describe('useAusencias', () => {
+  const entrada = { workerId: 'w1', date: '2026-11-12' };
+  const plan = {
+    workerId: 'w1',
+    workerName: 'Estilista A',
+    startsAt: '2026-11-12T13:00:00.000Z',
+    endsAt: '2026-11-13T01:00:00.000Z',
+    impacts: [],
+  };
+
+  it('lista las ausencias cuando está habilitado', async () => {
+    (fetchAbsences as jest.Mock).mockResolvedValue([]);
+    const { resultado } = montar(() => useAusencias(ref(true)));
+    await hasta(() => resultado.ausencias.value !== undefined);
+    expect(fetchAbsences).toHaveBeenCalledTimes(1);
+  });
+
+  it('no pide nada si no está habilitado', async () => {
+    montar(() => useAusencias(ref(false)));
+    await flushPromises();
+    expect(fetchAbsences).not.toHaveBeenCalled();
+  });
+
+  it('previsualizar llama POST /absences/preview y no invalida', async () => {
+    (fetchAbsences as jest.Mock).mockResolvedValue([]);
+    (previewAbsence as jest.Mock).mockResolvedValue(plan);
+    const { resultado, queryClient } = montar(() => useAusencias(ref(true)));
+    const invalidar = jest.spyOn(queryClient, 'invalidateQueries');
+    await expect(resultado.previsualizar(entrada)).resolves.toEqual(plan);
+    expect(previewAbsence).toHaveBeenCalledWith(entrada);
+    expect(invalidar).not.toHaveBeenCalled();
+  });
+
+  it('marcar invalida semana, reservas, disponibilidad y ausencias', async () => {
+    (fetchAbsences as jest.Mock).mockResolvedValue([]);
+    const resultadoApi = { ...plan, absenceId: 'a1', sinResolver: [] };
+    (markAbsence as jest.Mock).mockResolvedValue(resultadoApi);
+    const { resultado, queryClient } = montar(() => useAusencias(ref(true)));
+    const invalidar = jest.spyOn(queryClient, 'invalidateQueries');
+    await expect(resultado.marcar(entrada)).resolves.toEqual(resultadoApi);
+    expect(markAbsence).toHaveBeenCalledWith(entrada);
+    const claves = invalidar.mock.calls.map((c) => (c[0] as { queryKey: unknown }).queryKey);
+    expect(claves).toContainEqual(queryKeys.workerAvailability.all);
+    expect(claves).toContainEqual(queryKeys.reservations.all);
+    expect(claves).toContainEqual(queryKeys.absences.all);
+  });
+
+  it('quitar llama DELETE y refresca', async () => {
+    (fetchAbsences as jest.Mock).mockResolvedValue([]);
+    (removeAbsence as jest.Mock).mockResolvedValue(undefined);
+    const { resultado, queryClient } = montar(() => useAusencias(ref(true)));
+    const invalidar = jest.spyOn(queryClient, 'invalidateQueries');
+    await resultado.quitar('a1');
+    expect(removeAbsence).toHaveBeenCalledWith('a1');
+    const claves = invalidar.mock.calls.map((c) => (c[0] as { queryKey: unknown }).queryKey);
+    expect(claves).toContainEqual(queryKeys.workerAvailability.all);
+    expect(claves).toContainEqual(queryKeys.reservations.all);
   });
 });

@@ -26,6 +26,7 @@ export function diasCon(usados: number[]): WorkersWeekDay[] {
     date,
     usedMinutes: usados[i] ?? 0,
     capacityMinutes: CAPACIDAD[i],
+    absentMinutes: 0,
   }));
 }
 
