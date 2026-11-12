@@ -117,6 +117,23 @@
         >
           Ir a Reservas →
         </router-link>
+
+        <template v-if="!estilista.isDefault">
+          <hr class="panel-estilista__filete" />
+          <p class="panel-estilista__antetitulo">Ausencias</p>
+          <ListaAusencias
+            :worker-id="estilista.id"
+            :worker-name="estilista.name"
+          />
+          <button
+            type="button"
+            class="panel-estilista__marcar"
+            data-test="marcar-ausencia"
+            @click="marcando = true"
+          >
+            Marcar ausencia
+          </button>
+        </template>
       </template>
 
       <div class="panel-estilista__pie">
@@ -206,12 +223,31 @@
         </template>
       </div>
     </form>
+
+    <q-dialog
+      v-model="marcando"
+      :maximized="esMovil"
+      transition-show="slide-up"
+      transition-hide="slide-down"
+    >
+      <div class="panel-estilista__hoja-ausencia">
+        <DialogoAusencia
+          v-if="trabajadora"
+          :worker="trabajadora"
+          @hecho="marcando = false"
+          @cerrar="marcando = false"
+        />
+      </div>
+    </q-dialog>
   </aside>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
 import StrokeIcon from 'src/components/shared/StrokeIcon.vue';
+import DialogoAusencia from './DialogoAusencia.vue';
+import ListaAusencias from './ListaAusencias.vue';
+import { useConsultaMedios } from 'src/composables/shared/useConsultaMedios';
 import type { WorkersWeekWorker } from 'src/api/workers-api';
 import {
   MENSAJE_CON_RESERVAS,
@@ -230,6 +266,10 @@ import {
  * en línea: el error del nombre bajo el campo, el de guardar y el éxito sobre
  * el botón, y el 409 del borrado como un candado en lugar del botón (no hay
  * nada que reintentar). Un fallo de red al borrar, en cambio, deja reintentar.
+ *
+ * Las ausencias son la excepción: `ListaAusencias` y `DialogoAusencia` hablan
+ * con `useAusencias` por su cuenta, porque marcar una pasa por una vista
+ * previa y un resultado que no caben en un emit.
  */
 const props = defineProps<{
   modo: 'crear' | 'editar';
@@ -254,9 +294,17 @@ const campo = ref<HTMLInputElement | null>(null);
 const nombre = ref('');
 const errorNombre = ref<string | null>(null);
 const confirmando = ref(false);
+/** El diálogo de «Marcar ausencia» (a pantalla completa en el móvil). */
+const marcando = ref(false);
+const esMovil = useConsultaMedios('(max-width: 599px)', false);
 
 const titulo = computed(() =>
   props.modo === 'crear' ? 'Agregar estilista' : props.estilista?.name ?? ''
+);
+const trabajadora = computed(() =>
+  props.estilista
+    ? { id: props.estilista.id, name: props.estilista.name }
+    : null
 );
 const inicial = computed(() => inicialDe(props.estilista?.name ?? ''));
 const resumen = computed(() => resumenDeSemana(props.estilista?.days ?? []));
@@ -277,12 +325,16 @@ const describedBy = computed(() =>
 );
 
 /** Otra estilista (u otro modo): nombre nuevo, sin errores ni confirmación, foco al campo. */
+// Dos fuentes y no un getter que devuelve un arreglo: un arreglo nuevo en cada
+// refresco de la semana (misma estilista, objeto nuevo) dispararía esto y
+// cerraría el diálogo de ausencia justo cuando enseña el resultado.
 watch(
-  () => [props.modo, props.estilista?.id] as const,
+  [() => props.modo, () => props.estilista?.id],
   () => {
     nombre.value = props.modo === 'editar' ? props.estilista?.name ?? '' : '';
     errorNombre.value = null;
     confirmando.value = false;
+    marcando.value = false;
     void nextTick(() => campo.value?.focus());
   },
   { immediate: true }
@@ -527,6 +579,28 @@ defineOptions({ name: 'PanelEstilista' });
   text-underline-offset: 4px;
 }
 
+.panel-estilista__marcar {
+  align-self: flex-start;
+  min-height: var(--m-tactil-min);
+  margin-top: 12px;
+  padding: 0 18px;
+  border: var(--m-filete-grosor) solid var(--m-oro);
+  border-radius: var(--m-radio-pildora);
+  background: transparent;
+  color: var(--m-hueso);
+  font-family: var(--m-font-sans);
+  font-size: 0.72rem;
+  letter-spacing: var(--m-tracking-nav);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+/* El diálogo cuelga del body: su caja la pone `DialogoAusencia`. */
+.panel-estilista__hoja-ausencia {
+  display: flex;
+  justify-content: center;
+}
+
 .panel-estilista__pie {
   display: flex;
   flex-direction: column;
@@ -623,6 +697,7 @@ defineOptions({ name: 'PanelEstilista' });
 }
 
 .panel-estilista__cerrar:focus-visible,
+.panel-estilista__marcar:focus-visible,
 .panel-estilista__guardar:focus-visible,
 .panel-estilista__eliminar:focus-visible,
 .panel-estilista__cancelar:focus-visible,
@@ -644,6 +719,11 @@ defineOptions({ name: 'PanelEstilista' });
 
   .panel-estilista__eliminar:hover {
     border-color: var(--m-oro);
+  }
+
+  .panel-estilista__marcar:hover {
+    border-color: var(--m-oro-claro);
+    color: var(--m-oro-claro);
   }
 
   .panel-estilista__cancelar:hover {

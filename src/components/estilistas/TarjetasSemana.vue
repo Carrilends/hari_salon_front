@@ -9,7 +9,7 @@
       data-test="tarjeta-estilista"
       :aria-label="`Editar a ${fila.name} · ${formatearDuracion(
         fila.resumen.usados
-      )} en la semana`"
+      )} en la semana${fila.ausencias}`"
       @click="emit('elegir', fila.id)"
     >
       <span class="tarjetas-semana__cabeza">
@@ -45,6 +45,13 @@
           >
           <span v-if="cabeceras[i]?.esHoy" class="sr" data-test="hoy-texto"
             >hoy</span
+          >
+          <span
+            v-if="dia.absentMinutes > 0"
+            class="tarjetas-semana__ausente"
+            data-test="ausente-dia"
+            aria-hidden="true"
+            >Aus.</span
           >
         </span>
       </span>
@@ -86,6 +93,7 @@ import type { WorkersWeekResponse } from 'src/api/workers-api';
 import {
   cabecerasDeDias,
   formatearDuracion,
+  diasAusentes,
   inicialDe,
   resumenDeSemana,
 } from 'src/helpers/semana-estilistas';
@@ -94,7 +102,9 @@ import {
  * La semana en tarjetas (móvil, < 900 px): cada estilista es un botón entero
  * con su total y siete mini-barras. Las mini-barras se esconden del lector de
  * pantalla: la tarjeta se nombra con su total («Editar a Alejandro · 22 h en
- * la semana»); el panel solo muestra el total semanal, no el detalle por día.
+ * la semana») y, si falta algún día, con esos días («· ausente el jueves 8»);
+ * el panel solo muestra el total semanal, no el detalle por día. A la vista,
+ * el día ausente lleva «Aus.» bajo su letra.
  */
 const props = defineProps<{
   semana: WorkersWeekResponse;
@@ -106,7 +116,11 @@ const emit = defineEmits<{ (e: 'elegir', id: string): void }>();
 
 const cabeceras = computed(() => cabecerasDeDias(props.semana.days, props.hoy));
 const conResumen = computed(() =>
-  props.semana.workers.map((w) => ({ ...w, resumen: resumenDeSemana(w.days) }))
+  props.semana.workers.map((w) => ({
+    ...w,
+    resumen: resumenDeSemana(w.days),
+    ausencias: diasAusentes(w.days, cabeceras.value),
+  }))
 );
 const filas = computed(() => conResumen.value.filter((w) => !w.isDefault));
 const porDefecto = computed(
@@ -220,6 +234,13 @@ defineOptions({ name: 'TarjetasSemana' });
   text-decoration: underline;
   text-decoration-thickness: var(--m-filete-grosor);
   text-underline-offset: 3px;
+}
+
+.tarjetas-semana__ausente {
+  color: var(--m-oro);
+  font-size: 0.5625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .tarjetas-semana__defecto {

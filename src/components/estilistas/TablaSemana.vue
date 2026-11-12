@@ -72,6 +72,12 @@
             aria-hidden="true"
             >{{ formatearDuracion(dia.usedMinutes) }}</span
           >
+          <span
+            v-if="dia.absentMinutes > 0"
+            class="tabla-semana__ausente"
+            data-test="ausente-dia"
+            >{{ textoAusente(dia) }}</span
+          >
         </td>
         <td class="tabla-semana__total" data-test="total-semana">
           <span class="tabla-semana__cifra">{{
@@ -131,12 +137,14 @@ import {
   formatearDuracion,
   inicialDe,
   resumenDeSemana,
+  textoAusente,
 } from 'src/helpers/semana-estilistas';
 
 /**
  * La semana en tabla (escritorio, ≥ 900 px): una fila por estilista
  * asignable, sus siete barras y su total; «Sin preferencia» aparte, sin botón.
- * Solo pinta: elegir una fila lo decide la página.
+ * El día con ausencia lo dice con texto («Ausente», o «Ausente 2 h» si es una
+ * franja). Solo pinta: elegir una fila lo decide la página.
  */
 const props = defineProps<{
   semana: WorkersWeekResponse;
@@ -283,6 +291,15 @@ defineOptions({ name: 'TablaSemana' });
   color: var(--m-piedra-clara);
   font-size: 0.72rem;
   font-variant-numeric: tabular-nums;
+}
+
+.tabla-semana__ausente {
+  display: block;
+  margin-top: 3px;
+  color: var(--m-oro);
+  font-size: 0.625rem;
+  letter-spacing: var(--m-tracking-nav);
+  text-transform: uppercase;
 }
 
 .tabla-semana__total {

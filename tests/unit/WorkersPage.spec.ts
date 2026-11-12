@@ -68,6 +68,21 @@ jest.mock('src/composables/workers/useWorkers', () => ({
   useWorkers: () => mockMutaciones.actual,
 }));
 
+// El panel lista las ausencias de la elegida: aquí no hay ninguna.
+jest.mock('src/composables/workers/useAusencias', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { computed } = require('vue');
+  return {
+    useAusencias: () => ({
+      ausencias: computed(() => []),
+      cargando: computed(() => false),
+      previsualizar: jest.fn(),
+      marcar: jest.fn(),
+      quitar: jest.fn(),
+    }),
+  };
+});
+
 import WorkersPage from 'src/pages/WorkersPage.vue';
 
 const QDialogDoble = {

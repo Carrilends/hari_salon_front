@@ -1,10 +1,64 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { nextTick } from 'vue';
-import { mount, RouterLinkStub } from '@vue/test-utils';
+import { flushPromises, mount, RouterLinkStub } from '@vue/test-utils';
 import PanelEstilista from 'src/components/estilistas/PanelEstilista.vue';
 import { MENSAJE_CON_RESERVAS } from 'src/helpers/semana-estilistas';
+import type { AbsenceItem } from 'src/api/workers-api';
 import { semanaDePrueba } from './fixtures/estilistas';
+
+/** Las ausencias de la semana de prueba (Bogotá = UTC−5). */
+const mockAusencias: { lista: AbsenceItem[]; quitar: jest.Mock } = {
+  lista: [],
+  quitar: jest.fn(),
+};
+jest.mock('src/composables/workers/useAusencias', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { computed } = require('vue');
+  return {
+    useAusencias: () => ({
+      ausencias: computed(() => mockAusencias.lista),
+      cargando: computed(() => false),
+      previsualizar: jest.fn(),
+      marcar: jest.fn(),
+      quitar: mockAusencias.quitar,
+    }),
+  };
+});
+
+const AUSENCIAS: AbsenceItem[] = [
+  {
+    // Viernes 9, de 10:00 a 12:00.
+    id: 'a-2',
+    workerId: 'w-mon',
+    workerName: 'Monica',
+    startsAt: '2026-10-09T15:00:00.000Z',
+    endsAt: '2026-10-09T17:00:00.000Z',
+  },
+  {
+    // Jueves 8, todo el día (8:00 a 20:00).
+    id: 'a-1',
+    workerId: 'w-mon',
+    workerName: 'Monica',
+    startsAt: '2026-10-08T13:00:00.000Z',
+    endsAt: '2026-10-09T01:00:00.000Z',
+  },
+  {
+    id: 'a-3',
+    workerId: 'w-ale',
+    workerName: 'Alejandro',
+    startsAt: '2026-10-08T13:00:00.000Z',
+    endsAt: '2026-10-09T01:00:00.000Z',
+  },
+];
+
+const QDialogDoble = {
+  name: 'QDialog',
+  props: ['modelValue', 'maximized', 'position'],
+  emits: ['update:modelValue'],
+  template:
+    '<div v-if="modelValue" data-test="dialogo-ausencia"><slot /></div>',
+};
 
 const MONICA = semanaDePrueba().workers[1];
 const DEFECTO = semanaDePrueba().workers[3];
@@ -36,7 +90,9 @@ const montar = (
 ) =>
   mount(PanelEstilista, {
     props: { ...BASE, ...props },
-    global: { stubs: { RouterLink: RouterLinkStub } },
+    global: {
+      stubs: { RouterLink: RouterLinkStub, 'q-dialog': QDialogDoble },
+    },
     ...opciones,
   });
 
@@ -166,6 +222,98 @@ describe('PanelEstilista · editar', () => {
     await panel.get('[data-test="cerrar-panel"]').trigger('click');
 
     expect(panel.emitted('cerrar')).toHaveLength(2);
+  });
+});
+
+describe('PanelEstilista · ausencias', () => {
+  beforeEach(() => {
+    mockAusencias.lista = [];
+    mockAusencias.quitar = jest.fn().mockResolvedValue(undefined);
+  });
+
+  it('«Marcar ausencia» abre el diálogo de esa estilista', async () => {
+    const panel = montar();
+    expect(panel.find('[data-test="dialogo-ausencia"]').exists()).toBe(false);
+
+    const boton = panel.get('[data-test="marcar-ausencia"]');
+    expect(boton.text()).toBe('Marcar ausencia');
+    expect(boton.attributes('type')).toBe('button');
+    await boton.trigger('click');
+
+    const dialogo = panel.getComponent({ name: 'DialogoAusencia' });
+    expect(dialogo.props('worker')).toEqual({ id: 'w-mon', name: 'Monica' });
+    expect(panel.emitted('guardar')).toBeUndefined();
+
+    dialogo.vm.$emit('hecho');
+    await nextTick();
+    expect(panel.find('[data-test="dialogo-ausencia"]').exists()).toBe(false);
+  });
+
+  it('el refresco de la semana tras marcar no cierra el diálogo ni toca el nombre', async () => {
+    const panel = montar();
+    await campo(panel).setValue('Monica R');
+    await panel.get('[data-test="marcar-ausencia"]').trigger('click');
+
+    // Misma estilista, objeto nuevo: lo que llega al invalidar la semana.
+    await panel.setProps({ estilista: { ...MONICA, days: [...MONICA.days] } });
+
+    expect(panel.find('[data-test="dialogo-ausencia"]').exists()).toBe(true);
+    expect(campo(panel).element.value).toBe('Monica R');
+  });
+
+  it('la predeterminada y una estilista nueva no tienen ausencias', () => {
+    for (const panel of [
+      montar({ estilista: DEFECTO }),
+      montar({ modo: 'crear', estilista: null }),
+    ]) {
+      expect(panel.find('[data-test="marcar-ausencia"]').exists()).toBe(false);
+      expect(panel.find('[data-test="lista-ausencias"]').exists()).toBe(false);
+    }
+  });
+
+  it('lista las ausencias próximas de esa estilista, en orden, con su franja', () => {
+    mockAusencias.lista = AUSENCIAS;
+    const panel = montar();
+
+    const filas = panel.findAll('[data-test="ausencia"]');
+    expect(
+      filas.map((f) => f.get('[data-test="fecha-ausencia"]').text())
+    ).toEqual(['Jueves 8 de octubre', 'Viernes 9 de octubre']);
+    expect(
+      filas.map((f) => f.get('[data-test="franja-ausencia"]').text())
+    ).toEqual(['Todo el día', '10:00 a. m. a 12:00 p. m.']);
+    expect(panel.get('[data-test="advertencia-quitar"]').text()).toContain(
+      'las citas movidas o canceladas no vuelven'
+    );
+  });
+
+  it('sin ausencias próximas, lo dice', () => {
+    expect(montar().get('[data-test="sin-ausencias"]').text()).toBe(
+      'No tiene ausencias próximas.'
+    );
+  });
+
+  it('«Quitar» quita esa ausencia; si falla, lo dice', async () => {
+    mockAusencias.lista = AUSENCIAS;
+    const panel = montar();
+
+    const quitar = panel.findAll('[data-test="quitar-ausencia"]')[0];
+    expect(quitar.attributes('aria-label')).toBe(
+      'Quitar la ausencia del jueves 8 de octubre'
+    );
+    await quitar.trigger('click');
+    await flushPromises();
+    expect(mockAusencias.quitar).toHaveBeenCalledWith('a-1');
+    expect(panel.emitted('guardar')).toBeUndefined();
+
+    mockAusencias.quitar.mockRejectedValueOnce({
+      response: { status: 404, data: {} },
+    });
+    await panel.findAll('[data-test="quitar-ausencia"]')[1].trigger('click');
+    await flushPromises();
+    expect(panel.get('[data-test="error-ausencias"]').text()).toBe(
+      'Esa ausencia ya no estaba: la lista se actualizó.'
+    );
   });
 });
 

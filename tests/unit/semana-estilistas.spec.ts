@@ -16,7 +16,16 @@ import {
   textoCarga,
   validarNombre,
 } from 'src/helpers/semana-estilistas';
-import { DIAS, HOY, diasCon, reservaDePrueba } from './fixtures/estilistas';
+import { mount } from '@vue/test-utils';
+import TablaSemana from 'src/components/estilistas/TablaSemana.vue';
+import TarjetasSemana from 'src/components/estilistas/TarjetasSemana.vue';
+import {
+  DIAS,
+  HOY,
+  diasCon,
+  reservaDePrueba,
+  semanaDePrueba,
+} from './fixtures/estilistas';
 
 describe('las fechas de la semana', () => {
   it('suma días cruzando de mes', () => {
@@ -232,5 +241,57 @@ describe('los mensajes', () => {
     expect(validarNombre(' a ')).toBe('Escribe al menos 2 caracteres.');
     expect(validarNombre('Ana')).toBeNull();
     expect(validarNombre('x'.repeat(121))).toBe('Máximo 120 caracteres.');
+  });
+});
+
+describe('semana marca Ausente', () => {
+  /** Monica falta el jueves 8 entero (12 h) y el viernes 9 de 10:00 a 12:00. */
+  const conAusencias = () => {
+    const semana = semanaDePrueba();
+    const monica = semana.workers[1];
+    monica.days = monica.days.map((d) =>
+      d.date === '2026-10-08'
+        ? { ...d, absentMinutes: 720 }
+        : d.date === '2026-10-09'
+        ? { ...d, absentMinutes: 120 }
+        : d
+    );
+    return semana;
+  };
+  const props = () => ({
+    semana: conAusencias(),
+    hoy: HOY,
+    seleccionada: null,
+  });
+
+  it('la tabla dice «Ausente» en el día, con las horas si no es el día entero', () => {
+    const filas = mount(TablaSemana, { props: props() }).findAll(
+      '[data-test="fila-estilista"]'
+    );
+
+    const celdas = filas[1].findAll('[data-test="celda-dia"]');
+    expect(celdas[3].get('[data-test="ausente-dia"]').text()).toBe('Ausente');
+    expect(celdas[4].get('[data-test="ausente-dia"]').text()).toBe(
+      'Ausente 2 h'
+    );
+    expect(celdas[2].find('[data-test="ausente-dia"]').exists()).toBe(false);
+    expect(filas[0].find('[data-test="ausente-dia"]').exists()).toBe(false);
+  });
+
+  it('las tarjetas lo marcan en el día y lo dicen en el nombre de la tarjeta', () => {
+    const tarjetas = mount(TarjetasSemana, { props: props() }).findAll(
+      '[data-test="tarjeta-estilista"]'
+    );
+
+    const dias = tarjetas[1].findAll('[data-test="mini-dia"]');
+    expect(dias[3].find('[data-test="ausente-dia"]').exists()).toBe(true);
+    expect(dias[4].find('[data-test="ausente-dia"]').exists()).toBe(true);
+    expect(dias[2].find('[data-test="ausente-dia"]').exists()).toBe(false);
+    expect(tarjetas[1].attributes('aria-label')).toBe(
+      'Editar a Monica · 46 h en la semana · ausente el jueves 8 y el viernes 9'
+    );
+    expect(tarjetas[0].attributes('aria-label')).toBe(
+      'Editar a Alejandro · 22 h en la semana'
+    );
   });
 });

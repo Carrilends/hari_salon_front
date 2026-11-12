@@ -166,6 +166,33 @@ export function textoCarga(usados: number, capacidad: number): string {
   )}`;
 }
 
+/** «Ausente» si falta todo el horario de ese día; si no, «Ausente 2 h». */
+export function textoAusente(dia: WorkersWeekDay): string {
+  return dia.capacityMinutes > 0 && dia.absentMinutes >= dia.capacityMinutes
+    ? 'Ausente'
+    : `Ausente ${formatearDuracion(dia.absentMinutes)}`;
+}
+
+/** « · ausente el jueves 8 y el viernes 9» para el nombre de la tarjeta; '' si no falta. */
+export function diasAusentes(
+  dias: WorkersWeekDay[],
+  cabeceras: CabeceraDia[]
+): string {
+  const nombres = dias
+    .map((d, i) =>
+      d.absentMinutes > 0 && cabeceras[i]
+        ? `el ${cabeceras[i].nombreLargo} ${cabeceras[i].numero}`
+        : null
+    )
+    .filter((n): n is string => n !== null);
+  if (!nombres.length) return '';
+  const lista =
+    nombres.length === 1
+      ? nombres[0]
+      : `${nombres.slice(0, -1).join(', ')} y ${nombres[nombres.length - 1]}`;
+  return ` · ausente ${lista}`;
+}
+
 export interface ResumenSemana {
   usados: number;
   capacidad: number;
