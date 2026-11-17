@@ -70,6 +70,20 @@ describe('reservationEventEffects — tabla evento → aviso + claves', () => {
       expect(fx.notice.message).toBe('La peluquería movió la cita de Ana');
     });
 
+    it('si solo cambia la estilista, dice a quién pasó y no repite la hora', () => {
+      const soloEstilista = {
+        ...rescheduledByAdmin,
+        previousScheduledAt: rescheduledByAdmin.scheduledAt,
+        workerChanged: true,
+        workerName: 'Estilista B',
+      };
+      const fx = reservationEventEffects(soloEstilista, asIs);
+      expect(fx.notice.message).toBe(
+        `La cita de ${soloEstilista.customerName} pasó a Estilista B`
+      );
+      expect(fx.notice.caption).toBe(soloEstilista.scheduledAt);
+    });
+
     it('invalida las tres claves: cambian dos ventanas', () => {
       const fx = reservationEventEffects(rescheduledByCustomer, asIs);
       expect(fx.invalidate).toEqual(ALL_THREE);

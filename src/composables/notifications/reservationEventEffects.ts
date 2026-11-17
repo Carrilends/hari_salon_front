@@ -72,6 +72,19 @@ export function reservationEventEffects(
         invalidate: WINDOW_AND_LIST,
       };
     case 'reservation.rescheduled':
+      // Misma hora y otra estilista (p. ej. por una ausencia): «10:00 → 10:00»
+      // no diría nada; lo que cambió es quién la atiende.
+      if (event.workerChanged && event.previousScheduledAt === event.scheduledAt) {
+        return {
+          notice: {
+            type: 'info',
+            icon: 'update',
+            message: `La cita de ${who} pasó a ${event.workerName}`,
+            caption: formatDateTime(event.scheduledAt),
+          },
+          invalidate: WINDOW_AND_LIST,
+        };
+      }
       return {
         notice: {
           type: 'info',
