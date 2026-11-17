@@ -1,7 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const PORT = Number(process.env.PW_PORT ?? 9000);
-const BASE_URL = `http://localhost:${PORT}`;
+// PW_BASE_URL permite apuntar a un quasar dev del anfitrion desde un contenedor.
+const BASE_URL = process.env.PW_BASE_URL ?? `http://localhost:${PORT}`;
 
 export default defineConfig({
   testDir: './tests/browser-compat',
@@ -30,15 +31,20 @@ export default defineConfig({
   },
   projects: [
     {
-      name: 'chromium-chrome87',
-      use: { ...devices['Desktop Chrome'] },
+      name: 'chrome',
+      use: { ...devices['Desktop Chrome'], channel: 'chrome' },
     },
     {
-      name: 'firefox-78',
+      name: 'edge',
+      use: { ...devices['Desktop Edge'], channel: 'msedge' },
+    },
+    {
+      name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
     },
     {
-      name: 'webkit-safari13',
+      // Safari se prueba con el motor WebKit de Playwright.
+      name: 'webkit-safari',
       use: { ...devices['Desktop Safari'] },
     },
   ],

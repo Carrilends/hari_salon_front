@@ -32,7 +32,7 @@ npx jest -t "name fragment"            # single test by name
 
 yarn test:compat           # Playwright browser-compat (tests/browser-compat)
 yarn test:compat:report    # open last Playwright HTML report
-npx playwright test --project=firefox-78   # one project (also chromium-chrome87, webkit-safari13)
+npx playwright test --project=firefox   # one project (also chrome, edge, webkit-safari)
 ```
 
 Playwright config auto-spawns `npx quasar dev` on `PW_PORT` (default `9000`) and **reuses an existing server** — `yarn dev` in another terminal is fine. Workers=1, retries=0, traces retained on failure. `playwright.ssg.config.ts` is separate: it serves the generated `dist/ssg` with `yarn serve:ssg --port 9200` (never reused) and runs `tests/ssg/`. Jest explicitly **excludes** `tests/browser-compat/`, `tests/e2e/` and `tests/ssg/` so the suites don't collide.
@@ -132,7 +132,7 @@ yarn optimizar:imagenes    # reads imagenes-originales/, writes public/people/
   `women-hair-cut.jpg` is used **twice**, in the hero and as the catalogue's fourth
   card (not the fourth), so its recipe is the union of both sets of widths.
 - **Every WebP goes inside a `<picture>` with a JPEG behind it**, never as a loose
-  `src`: NF06 (Tabla 44) promises **Safari 13.1+** and WebP only arrives in Safari 14.
+  `src`: the build target still covers old Safari (13.1) even though NF03 no longer promises it (only current Chrome, Edge, Firefox and Safari), and WebP only arrives in Safari 14.
   That is what `FotoResponsiva.vue` is for — the same mistake `100dvh` already cost a
   whole review.
 - **`FotoResponsiva`'s shape is load-order-sensitive, and all three details are

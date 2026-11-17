@@ -1,68 +1,35 @@
-# NF06 — Compatibilidad con navegadores modernos
+# NF03 — Compatibilidad con navegadores actuales
 
-> Tabla 44 de `tesis/Requerimientos.md`. Soporte verificado en **Chrome 87+, Firefox 78+, Edge 88+ y Safari 13.1+**. El portal debe renderizar y operar sin errores en los navegadores soportados.
+El portal debe funcionar en las **versiones actuales de Chrome, Edge, Firefox y Safari**, en móvil y en computador. Decisión de Luis (2026-11-17): se descartan las versiones viejas (Chrome 87, Firefox 78, Edge 88, Safari 13.1). `build.target` de `quasar.config.js` se deja como estaba (el código se sigue generando para un rango amplio), pero ya no es una promesa.
 
 ## Cómo se verifica
 
-Suite Playwright que ejecuta un smoke test sobre los **tres motores de renderizado** que cubren los 4 navegadores requeridos:
+Suite Playwright que corre completa en cuatro proyectos:
 
-| Proyecto Playwright | Motor    | Navegadores cubiertos |
-|---------------------|----------|-----------------------|
-| `chromium-chrome87` | Blink    | Chrome 87+, Edge 88+  |
-| `firefox-78`        | Gecko    | Firefox 78+           |
-| `webkit-safari13`   | WebKit   | Safari 13.1+          |
+| Proyecto        | Navegador                                   |
+|-----------------|---------------------------------------------|
+| `chrome`        | Google Chrome instalado (`channel: 'chrome'`) |
+| `edge`          | Microsoft Edge instalado (`channel: 'msedge'`) |
+| `firefox`       | Firefox de Playwright                       |
+| `webkit-safari` | Motor WebKit de Playwright (Safari)         |
 
-Los **targets declarativos** del bundle ya están en `quasar.config.js` (`build.target.browser: ['edge88','firefox78','chrome87','safari13.1']`), por lo que Vite/Babel/autoprefixer transpilan y prefijan para ese rango.
+Chrome y Edge usan los navegadores instalados en la máquina; Firefox y WebKit vienen con Playwright. Móvil (390 px) y computador (1280 px) se cubren con los viewports de cada prueba.
 
-Para cada navegador, el test recorre las rutas públicas:
-
-- `/` (home)
-- `/services`
-- `/testimonios`
-- `/preguntas-frecuentes`
-- `/politica-tratamiento-datos`
-
-Verifica que el HTTP status sea < 400, que el root `#q-app` esté visible (Vue montó), y captura un screenshot full-page como evidencia.
-
-## Requisitos previos (una sola vez)
-
-```bash
-cd hari_salon_front
-yarn add -D @playwright/test --ignore-engines   # ya está en package.json
-npx playwright install chromium firefox webkit
-```
-
-> Si tu versión de Node es > 20, `yarn` puede bloquear por el campo `engines`. Por eso los comandos abajo se invocan vía `npx`, que no aplica esa validación.
+`render.spec.ts` recorre las rutas públicas (`/`, `/services`, `/testimonios`, `/preguntas-frecuentes`, `/politica-tratamiento-datos`): status < 400, `#q-app` visible y captura full-page. Las demás pruebas comprueban geometría, menú, asistente, movimiento reducido, zonas de toque y peso del inicio.
 
 ## Ejecución
 
 ```bash
 cd hari_salon_front
-npx playwright test                # corre los 3 proyectos × 5 rutas = 15 tests
-npx playwright show-report         # abre el reporte HTML con capturas
+npx playwright install firefox webkit   # una vez; Chrome y Edge deben estar instalados
+npx playwright test                     # los cuatro proyectos
+npx playwright test --project=firefox   # uno solo
+npx playwright show-report
 ```
 
-El servidor de desarrollo se levanta automáticamente (`npx quasar dev` en `http://localhost:9000`) gracias a `webServer` en `playwright.config.ts`. Si ya tienes `quasar dev` corriendo, Playwright lo reutiliza (`reuseExistingServer: true`).
-
-## Salida esperada
-
-```
-Running 15 tests using 1 worker
-  ✓  [chromium-chrome87] renderiza home (/)
-  ✓  [firefox-78]        renderiza home (/)
-  ✓  [webkit-safari13]   renderiza home (/)
-  ...
-  15 passed
-```
-
-## Evidencia para la tesis
-
-- **Reporte HTML**: `hari_salon_front/playwright-report/index.html` (incluye miniaturas y traces).
-- **Capturas full-page**: `hari_salon_front/test-results/render-renderiza-<ruta>--<engine>/<engine>-<slug>.png`. Se sugiere anexar al menos una captura por motor en el capítulo de pruebas.
-- **Configuración declarativa**: `hari_salon_front/quasar.config.js:44-47` (targets de build).
+`quasar dev` se levanta solo en `http://localhost:9000` (`PW_PORT`) o se reutiliza si ya corre.
 
 ## Archivos relacionados
 
-- `hari_salon_front/playwright.config.ts` — configuración (3 proyectos, webServer, reporter).
-- `hari_salon_front/tests/browser-compat/render.spec.ts` — smoke test.
-- `hari_salon_front/quasar.config.js` — `build.target.browser` con las versiones del NF06.
+- `playwright.config.ts` — los cuatro proyectos y el `webServer`.
+- `tests/browser-compat/*.spec.ts` — las pruebas.
