@@ -310,6 +310,7 @@ import { getService } from 'src/composables/services/useService';
 import { useBookStore } from 'src/stores/book-store';
 import ServicesBox from '../shared/ServicesBox.vue';
 import StrokeIcon from '../shared/StrokeIcon.vue';
+import ConfirmarDialog from './ConfirmarDialog.vue';
 import { useAviso } from 'src/composables/shared/useAviso';
 import {
   ERROR_SIN_IMAGENES,
@@ -572,10 +573,20 @@ const updateService = async () => {
 
 const close = () => {
   $q.dialog({
-    title: 'Cancelar creación',
-    message: '¿Estás seguro de que deseas cancelar la creación del servicio?',
-    cancel: true,
-    persistent: true,
+    component: ConfirmarDialog,
+    componentProps: props.isEditMode
+      ? {
+          titulo: 'Descartar cambios',
+          texto: 'Los cambios que hiciste en este servicio no se guardarán.',
+          textoCancelar: 'Seguir editando',
+          textoConfirmar: 'Descartar',
+        }
+      : {
+          titulo: 'Cancelar creación',
+          texto: 'El servicio que estabas creando no se guardará.',
+          textoCancelar: 'Seguir creando',
+          textoConfirmar: 'Descartar',
+        },
   }).onOk(() => {
     formData.value = {
       name: '',
@@ -781,11 +792,13 @@ const close = () => {
   color: var(--m-tinta);
 }
 
+/* El mismo margen que el contenido de cada paso (24 px de Quasar): sin él, los
+   botones quedaban pegados al borde inferior e izquierdo del diálogo. */
 .paso__navegacion {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  padding-top: 8px;
+  padding: 8px 24px 24px;
 }
 
 /**

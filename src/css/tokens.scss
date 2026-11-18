@@ -222,6 +222,12 @@
   /// tape los controles, más 8 px de hueco. Si la píldora cambia de sitio o de
   /// alto, esto cambia con ella (lo vigila `tokens.spec.ts`). No es un color.
   --m-flotante-despeje: calc(18px + 48px + 8px);
+
+  /// Lo que un pie centrado reserva a cada lado para que el lanzador (18 px
+  /// del borde derecho y unos 150 de ancho con el rótulo «Asistente») quepa en
+  /// su misma fila sin tapar nada. Simétrico, para que lo centrado siga en el
+  /// centro. Lo usa el pie del mostrador de servicios en escritorio.
+  --m-lanzador-reserva: 180px;
 }
 
 /// Plan 1 — reserva: el cajón por pasos (spec §1 de las vistas restantes).

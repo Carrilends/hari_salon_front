@@ -109,19 +109,24 @@ describe('armazón de la página de servicios', () => {
 
   /**
    * El lanzador del asistente flota abajo a la derecha (18 px del borde, 48 de
-   * alto) y el pie está siempre a la vista: sin despeje, «Siguiente» quedaba
-   * debajo de la píldora. El relleno inferior del mostrador es el token del
-   * despeje, a todos los anchos; nada de 40/28 px sueltos.
+   * alto) y el pie está siempre a la vista. En escritorio (2026-11-17) el pie
+   * centra su contenido y reserva a los lados el ancho del lanzador, que se
+   * posa en su fila: el mostrador ya no lleva relleno inferior. En móvil el
+   * pie ocupa todo el ancho y sigue el despeje bajo él. Nada de px sueltos.
    */
-  it('el pie termina por encima del lanzador del asistente', () => {
+  it('el pie no queda debajo del lanzador del asistente', () => {
+    const PIE = leer('src/components/servicePage/ServicePagerBar.vue');
     expect(PAGINA).toMatch(
-      /\.mostrador \{[^}]*padding: 0 var\(--m-banda-margen\) var\(--m-flotante-despeje\);/
+      /\.mostrador \{[^}]*padding: 0 var\(--m-banda-margen\);/
     );
     expect(PAGINA).toMatch(
       /padding: 0 var\(--m-banda-margen-movil\) var\(--m-flotante-despeje\);/
     );
     expect(PAGINA).not.toMatch(
       /padding: 0 var\(--m-banda-margen(-movil)?\) \d+px;/
+    );
+    expect(PIE).toMatch(
+      /\.pie \{[^}]*justify-content: center;[^}]*padding: 18px var\(--m-lanzador-reserva\) 20px;/
     );
   });
 

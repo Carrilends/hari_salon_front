@@ -428,18 +428,19 @@ defineOptions({
  * barra y pie no encogen, el cuerpo se come lo que sobra y, dentro de él, la
  * lista desplaza.
  *
- * El relleno inferior es el despeje del lanzador del asistente, que flota abajo
- * a la derecha: con el pie siempre a la vista, sin él la píldora tapaba
- * «Siguiente». Cuesta 34 px de lista en escritorio y 46 en móvil (frente a
- * los 40 y 28 de antes), y no hay forma más barata de no taparlo a todos los
- * anchos.
+ * En escritorio (2026-11-17) no hay relleno inferior: el pie centra su
+ * contenido y reserva a los lados el ancho del lanzador del asistente
+ * (`--m-lanzador-reserva`), así la píldora se posa en la fila del pie, a la
+ * derecha, y la lista gana los 74 px que antes se iban en el despeje. En móvil
+ * el pie ocupa todo el ancho, así que ahí sigue el despeje del lanzador
+ * (`--m-flotante-despeje`), que flota debajo.
  */
 .mostrador {
   display: flex;
   flex-direction: column;
   height: var(--mostrador-alto);
   min-height: var(--mostrador-alto);
-  padding: 0 var(--m-banda-margen) var(--m-flotante-despeje);
+  padding: 0 var(--m-banda-margen);
   background: var(--m-hueso);
   color: var(--m-tinta);
   font-family: var(--m-font-sans);

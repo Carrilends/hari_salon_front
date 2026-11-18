@@ -158,13 +158,20 @@ defineOptions({ name: 'ServicePagerBar' });
  * Sobre hueso (paleta A, 2026-10-11): números en tinta y lo dorado que es
  * texto en oro profundo; el oro claro queda para el filete de la activa.
  */
+/**
+ * Todo centrado —resumen, números y «Siguiente»— y, a los lados, la reserva
+ * del lanzador del asistente (2026-11-17): la píldora se posa en esta misma
+ * fila, a la derecha, en vez de flotar debajo y comerse 74 px de lista. Los
+ * 20 px de abajo ponen el centro de la fila a 42 px del borde, el mismo que
+ * el de la píldora (18 + 48 / 2).
+ */
 .pie {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   flex-wrap: wrap;
-  gap: 16px;
-  padding: 18px 0 8px;
+  gap: 8px 24px;
+  padding: 18px var(--m-lanzador-reserva) 20px;
   border-top: var(--m-filete-grosor) solid var(--m-filete);
   color: var(--m-tinta);
   font-family: var(--m-font-sans);
@@ -244,7 +251,7 @@ defineOptions({ name: 'ServicePagerBar' });
 
 @media (max-width: 699px) {
   .pie {
-    justify-content: center;
+    gap: 16px;
     padding: 16px 0 6px;
   }
 
