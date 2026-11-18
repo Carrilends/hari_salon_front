@@ -7,8 +7,9 @@
 
 # La API se sirve bajo el propio dominio del sitio para que la cookie de sesion
 # sea de primera parte (Fase 3b, decision estructural S5). DEBE ir ANTES del
-# catch-all: Netlify aplica la primera regla que casa. El public/_redirects se
-# procesa despues, asi que no la ensombrece.
+# catch-all: Netlify aplica la primera regla que casa. Ojo: Netlify procesa un
+# public/_redirects ANTES que este archivo, asi que no debe existir uno con un
+# catch-all: ensombrecia esta regla y /api/* devolvia el index.html (2026-11-17).
 # Destino: la API en Railway (desplegada el 2026-11-17, docs/despliegue/registro.md).
 [[redirects]]
   from = "/api/*"
@@ -16,7 +17,7 @@
   status = 200
   force = true
 
-# El _redirects en public/ tambien se respeta. Esto es solo redundancia explicita.
+# Respaldo SPA: las rutas sin HTML prerenderizado (ej: /mi-cuenta) caen al index.
 [[redirects]]
   from = "/*"
   to = "/index.html"
