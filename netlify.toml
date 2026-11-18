@@ -11,11 +11,17 @@
 # public/_redirects ANTES que este archivo, asi que no debe existir uno con un
 # catch-all: ensombrecia esta regla y /api/* devolvia el index.html (2026-11-17).
 # Destino: la API en Railway (desplegada el 2026-11-17, docs/despliegue/registro.md).
+# `signed`: Netlify firma cada peticion del proxy (cabecera `x-nf-sign`, JWS
+# HS256) con el valor de la variable de entorno NETLIFY_PROXY_SECRET del
+# proyecto (la variable, no el secreto, va aqui). La API, con el mismo secreto,
+# solo asi se cree la IP de la clienta que manda Netlify
+# (hair_salon_back/src/common/netlify-client-ip.ts).
 [[redirects]]
   from = "/api/*"
   to = "https://hairsalonback-production.up.railway.app/api/:splat"
   status = 200
   force = true
+  signed = "NETLIFY_PROXY_SECRET"
 
 # Respaldo SPA: las rutas sin HTML prerenderizado (ej: /mi-cuenta) caen al index.
 [[redirects]]
