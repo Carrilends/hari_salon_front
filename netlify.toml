@@ -9,11 +9,10 @@
 # sea de primera parte (Fase 3b, decision estructural S5). DEBE ir ANTES del
 # catch-all: Netlify aplica la primera regla que casa. El public/_redirects se
 # procesa despues, asi que no la ensombrece.
-# ### Reemplazar <backend> por la URL real de Railway cuando se despliegue el
-# ### backend (Tarea 4 de tesis/EstadoDespliegue.md, aun pendiente).
+# Destino: la API en Railway (desplegada el 2026-11-17, docs/despliegue/registro.md).
 [[redirects]]
   from = "/api/*"
-  to = "https://REEMPLAZAR-backend.up.railway.app/api/:splat"
+  to = "https://hairsalonback-production.up.railway.app/api/:splat"
   status = 200
   force = true
 
