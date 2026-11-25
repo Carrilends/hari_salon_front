@@ -1,6 +1,7 @@
 import { computed, unref, type MaybeRef } from 'vue';
 import { useMeta } from 'quasar';
 import { SITE_URL } from './site-url';
+import { rutaCanonica } from './ruta-canonica';
 import { buildSeoMeta, metaDiferida } from './seoMeta';
 import { EN_SERVIDOR } from 'src/composables/shared/en-servidor';
 
@@ -47,7 +48,7 @@ export function useSeo(options: SeoOptions) {
     return buildSeoMeta({
       title: unref(options.title),
       description: unref(options.description),
-      canonical: path && SITE_URL ? absoluteUrl(path) : undefined,
+      canonical: path && SITE_URL ? absoluteUrl(rutaCanonica(path)) : undefined,
       ogImage: absoluteUrl(unref(options.image) || DEFAULT_OG_IMAGE),
       ogType: unref(options.ogType) || 'website',
       noindex: Boolean(unref(options.noindex)),

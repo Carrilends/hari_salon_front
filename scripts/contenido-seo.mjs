@@ -26,6 +26,13 @@ export const RUTAS_PRIVADAS = [
 
 const sinBarraFinal = (url) => url.replace(/\/+$/, '');
 
+/**
+ * La ruta como la sirve Netlify: con barra final (`/services` → 301 a
+ * `/services/`). Misma regla que `rutaCanonica` del portal
+ * (`src/composables/seo/ruta-canonica.ts`); `ruta-canonica.spec.ts` las cruza.
+ */
+const conBarraFinal = (path) => (path.endsWith('/') ? path : `${path}/`);
+
 /** Orden: SITE_URL, VITE_SITE_URL, dominio por defecto. */
 export function resolverSiteUrl(env = {}) {
   return sinBarraFinal(
@@ -37,7 +44,7 @@ export function construirSitemap(siteUrl, hoy) {
   const base = sinBarraFinal(siteUrl);
   const urls = RUTAS_PUBLICAS.map(
     (ruta) => `  <url>
-    <loc>${base}${ruta.path}</loc>
+    <loc>${base}${conBarraFinal(ruta.path)}</loc>
     <lastmod>${hoy}</lastmod>
     <changefreq>${ruta.changefreq}</changefreq>
     <priority>${ruta.priority}</priority>

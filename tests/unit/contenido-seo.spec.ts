@@ -19,9 +19,10 @@ describe('contenido SEO', () => {
   it('el mapa del sitio lista las páginas públicas con el dominio dado', () => {
     const xml = construirSitemap(DOMINIO, '2026-01-02');
     for (const ruta of RUTAS_PUBLICAS) {
-      expect(xml).toContain(`<loc>${DOMINIO}${ruta.path}</loc>`);
+      const servida = ruta.path === '/' ? '/' : `${ruta.path}/`;
+      expect(xml).toContain(`<loc>${DOMINIO}${servida}</loc>`);
     }
-    expect(xml).toContain(`<loc>${DOMINIO}/politica-tratamiento-datos</loc>`);
+    expect(xml).toContain(`<loc>${DOMINIO}/politica-tratamiento-datos/</loc>`);
     expect(xml).toContain('<lastmod>2026-01-02</lastmod>');
     expect(xml).not.toContain('netlify');
   });
